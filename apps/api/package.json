@@ -6,14 +6,20 @@
 	"scripts": {
 		"dev": "tsx watch --clear-screen=false src/server.ts",
 		"typecheck": "tsc -p .",
-		"test": "vitest run"
+		"test": "vitest run",
+		"seed": "tsx src/scripts/setup.ts",
+		"demo": "tsx src/scripts/demo.ts"
 	},
 	"dependencies": {
+		"@better-auth/passkey": "1.7.10",
+		"@spendid/db": "workspace:*",
+		"@spendid/emails": "workspace:*",
 		"@spendid/shared": "workspace:*",
+		"better-auth": "1.7.10",
+		"bullmq": "6.3.15",
 		"drizzle-orm": "0.45.4",
 		"fastify": "5.12.7",
 		"ioredis": "6.0.0",
-		"postgres": "3.4.9",
 		"zod": "4.6.7"
 	},
 	"devDependencies": {

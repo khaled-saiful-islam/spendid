@@ -1,15 +1,27 @@
+import { createDb } from "@spendid/db";
 import { buildApp } from "./app";
+import { createAuth, sessionLookup } from "./auth/auth";
 import { loadEnv } from "./config/env";
-import { createDatabase } from "./infra/db";
+import { createOutbox } from "./email/outbox";
 import { createRedis } from "./infra/redis";
+import { createMeRepository } from "./modules/me/me.repository";
 
 const env = loadEnv();
-const database = createDatabase(env.DATABASE_URL);
+const database = createDb(env.DATABASE_URL);
 const cache = createRedis(env.REDIS_URL);
+const outbox = createOutbox(database.db, cache.redis);
+const auth = createAuth({
+	env,
+	db: database.db,
+	redis: cache.redis,
+	sendEmail: outbox.send,
+});
 
 const app = await buildApp({
 	checks: { database: database.ping, redis: cache.ping },
 	version: process.env.npm_package_version ?? "0.0.0",
+	auth,
+	me: { session: sessionLookup(auth), repo: createMeRepository(database.db) },
 	logger:
 		env.NODE_ENV === "development"
 			? { level: env.LOG_LEVEL, transport: { target: "pino-pretty" } }
@@ -19,7 +31,7 @@ const app = await buildApp({
 async function shutdown(signal: string): Promise<void> {
 	app.log.info({ signal }, "shutting down");
 	await app.close();
-	await Promise.allSettled([database.close(), cache.close()]);
+	await Promise.allSettled([outbox.close(), database.close(), cache.close()]);
 	process.exit(0);
 }
 

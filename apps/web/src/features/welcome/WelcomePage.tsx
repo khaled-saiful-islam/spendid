@@ -23,8 +23,14 @@ export function WelcomePage() {
 				<Logo />
 				<nav className="flex items-center gap-1">
 					<ThemeToggle />
-					<Link to="/app" className={buttonClass("ink", "md")}>
-						Preview the app
+					<Link
+						to="/signin"
+						className={buttonClass("ghost", "md", "hidden sm:inline-flex")}
+					>
+						Sign in
+					</Link>
+					<Link to="/signup" className={buttonClass("ink", "md")}>
+						Create account
 					</Link>
 				</nav>
 			</header>
@@ -56,12 +62,12 @@ export function WelcomePage() {
 								seconds and keeps that one number honest, every day.
 							</p>
 							<div className="mt-8 flex flex-wrap gap-3">
-								<Link to="/app" className={buttonClass("coin", "lg")}>
-									Preview the app
+								<Link to="/signup" className={buttonClass("coin", "lg")}>
+									Create a free account
 								</Link>
-								<a href="#capture-title" className={buttonClass("ghost", "lg")}>
-									See how it works
-								</a>
+								<Link to="/signin" className={buttonClass("ghost", "lg")}>
+									I have an account
+								</Link>
 							</div>
 						</motion.div>
 

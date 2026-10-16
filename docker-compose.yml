@@ -15,13 +15,15 @@ x-node: &node
     - nm_web:/app/apps/web/node_modules
     - nm_worker:/app/apps/worker/node_modules
     - nm_shared:/app/packages/shared/node_modules
+    - nm_db:/app/packages/db/node_modules
+    - nm_emails:/app/packages/emails/node_modules
     - pnpm_store:/pnpm-store
 
 services:
   deps:
     <<: *node
     container_name: spendid-deps
-    command: pnpm install --child-concurrency=2 --network-concurrency=6
+    command: pnpm install --no-frozen-lockfile --child-concurrency=2 --network-concurrency=6
     restart: "no"
 
   db:
@@ -61,6 +63,16 @@ services:
     ports:
       - "8604:8025"
 
+  # Applies database migrations, then seeds the admin account. Runs once per `make up`.
+  migrate:
+    <<: *node
+    container_name: spendid-migrate
+    command: sh -c "pnpm --filter @spendid/db migrate && pnpm --filter @spendid/api run seed"
+    restart: "no"
+    depends_on:
+      deps: { condition: service_completed_successfully }
+      db: { condition: service_healthy }
+
   api:
     <<: *node
     container_name: spendid-api
@@ -68,8 +80,7 @@ services:
     ports:
       - "8601:8601"
     depends_on:
-      deps: { condition: service_completed_successfully }
-      db: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
       redis: { condition: service_healthy }
 
   worker:
@@ -77,8 +88,9 @@ services:
     container_name: spendid-worker
     command: pnpm --filter @spendid/worker dev
     depends_on:
-      deps: { condition: service_completed_successfully }
+      migrate: { condition: service_completed_successfully }
       redis: { condition: service_healthy }
+      mail: { condition: service_started }
 
   web:
     <<: *node
@@ -99,3 +111,5 @@ volumes:
   nm_web:
   nm_worker:
   nm_shared:
+  nm_db:
+  nm_emails:

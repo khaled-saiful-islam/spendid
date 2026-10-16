@@ -10,7 +10,7 @@
 		"check": "biome check apps/api/src apps/worker/src packages/shared/src apps/web/src/components apps/web/src/features apps/web/src/lib apps/web/src/routes apps/web/src/main.tsx",
 		"fix": "biome check --write apps/api/src apps/worker/src packages/shared/src apps/web/src/components apps/web/src/features apps/web/src/lib apps/web/src/routes apps/web/src/main.tsx",
 		"typecheck": "pnpm -r typecheck",
-		"test": "pnpm -r test"
+		"test": "pnpm -r --workspace-concurrency=1 test"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.5.15",

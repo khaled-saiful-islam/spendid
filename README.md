@@ -22,6 +22,18 @@ make up        # first run installs dependencies inside Docker (a few minutes)
 
 Postgres is on `localhost:8602`, Redis on `localhost:8603`.
 
+## Test accounts
+
+`make up` seeds the admin. `make demo` adds normal people.
+
+| Sign in with | Password | Who |
+|---|---|---|
+| `admin` | `admin` | Admin — manages accounts and the app, never sees spending (dev only; production refuses this password) |
+| `maya` | `demo1234` | Normal person, already set up |
+| `adam` | `demo1234` | Normal person, goes through onboarding on first sign-in |
+
+New sign-ups get a confirmation email — open Mailpit at http://localhost:8604 to click it.
+
 ## Commands
 
 | Command | Does |
@@ -29,6 +41,8 @@ Postgres is on `localhost:8602`, Redis on `localhost:8603`.
 | `make up` / `make down` | Start / stop (data is kept) |
 | `make logs s=api` | Follow logs for one service (`api`, `web`, `worker`, `db`) |
 | `make install` | Reinstall after editing a `package.json` |
+| `make demo` | Create the demo people above |
+| `make db-generate` | New migration after editing `packages/db/src/schema` |
 | `make test` | Unit + API tests |
 | `make typecheck` | TypeScript 7 across all packages |
 | `make check` / `make fix` | Biome lint + format |
@@ -41,6 +55,8 @@ apps/api        Fastify 5 API (Better Auth, agent, routes)
 apps/web        React 19 PWA (Vite, TanStack Router + Query, Tailwind 4, Motion)
 apps/worker     BullMQ jobs (receipts, email, recap, reminders)
 packages/shared Zod schemas, money math, shared types
+packages/db     Drizzle schema, migrations (applied by the `migrate` service on every `make up`)
+packages/emails React Email templates + the email job contract
 docker/         Dev image
 ```
 

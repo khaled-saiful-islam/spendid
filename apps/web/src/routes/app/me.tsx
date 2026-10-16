@@ -1,14 +1,11 @@
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { CircleUserRound } from "lucide-react";
-import { EmptyState } from "@/components/ui/EmptyState";
+import { MePage } from "@/features/me/MePage";
+import { meQuery } from "@/lib/me";
 
 export const Route = createFileRoute("/app/me")({
-	component: () => (
-		<EmptyState
-			icon={CircleUserRound}
-			title="Me"
-			body="Your profile, home currency, budget style, app lock, email settings, and export or delete your data."
-			milestone="M1"
-		/>
-	),
+	component: function MeRoute() {
+		const { data: me } = useSuspenseQuery(meQuery);
+		return me ? <MePage me={me} /> : null;
+	},
 });

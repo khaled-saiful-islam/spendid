@@ -105,23 +105,24 @@
   }
 }
 
-@layer utilities {
-  /* Overlapping pangolin scales — Spendid's background texture. */
-  .bg-scales {
-    background-image: radial-gradient(
-      circle at 50% 0,
-      transparent 0 13px,
-      var(--scale-stroke) 13px 15px,
-      transparent 15px
-    );
-    background-size: 30px 15px;
-  }
-  .num {
-    font-family: var(--font-display);
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: "tnum";
-  }
-  .pb-safe {
-    padding-bottom: max(env(safe-area-inset-bottom), 0.75rem);
-  }
+/* Overlapping pangolin scales — Spendid's background texture. */
+@utility bg-scales {
+  background-image: radial-gradient(
+    circle at 50% 0,
+    transparent 0 13px,
+    var(--scale-stroke) 13px 15px,
+    transparent 15px
+  );
+  background-size: 30px 15px;
+}
+
+/* Money and big numbers: display face with aligned digits. */
+@utility num {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+@utility pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom), 0.75rem);
 }

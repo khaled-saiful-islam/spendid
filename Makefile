@@ -2,7 +2,7 @@
 COMPOSE := docker compose
 NODE_RUN := $(COMPOSE) run --rm --no-deps deps
 
-.PHONY: help env up down restart logs ps sh-api install check fix typecheck test reset
+.PHONY: help env up down restart logs ps sh-api install check fix typecheck test demo db-generate reset
 
 help: ## Show commands
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-10s %s\n", $$1, $$2}'
@@ -33,7 +33,7 @@ sh-api: ## Shell inside the API container
 	$(COMPOSE) exec api sh
 
 install: ## Reinstall dependencies after editing a package.json
-	$(NODE_RUN) pnpm install
+	$(NODE_RUN) pnpm install --no-frozen-lockfile --child-concurrency=2
 	$(COMPOSE) restart api worker web
 
 check: ## Lint + format check (Biome)
@@ -47,6 +47,12 @@ typecheck: ## Type-check every package
 
 test: ## Run unit + API tests
 	$(NODE_RUN) pnpm test
+
+demo: ## Create demo people: maya (set up) and adam (new) — password demo1234
+	$(COMPOSE) exec api pnpm --filter @spendid/api run demo
+
+db-generate: ## Create a migration after editing packages/db/src/schema
+	$(NODE_RUN) pnpm --filter @spendid/db generate
 
 reset: ## DANGER: stop and delete all data volumes
 	@read -p "Delete ALL Spendid data? [y/N] " ok && [ "$$ok" = "y" ]

@@ -10,7 +10,14 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AppRouteRouteImport } from './routes/app/route'
+import { Route as CheckEmailRouteImport } from './routes/check-email'
+import { Route as ForgotRouteImport } from './routes/forgot'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as ResetRouteImport } from './routes/reset'
+import { Route as SigninRouteImport } from './routes/signin'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as AppActivityRouteImport } from './routes/app/activity'
 import { Route as AppFamilyRouteImport } from './routes/app/family'
@@ -21,9 +28,44 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppRouteRoute = AppRouteRouteImport.update({
   id: '/app',
   path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckEmailRoute = CheckEmailRouteImport.update({
+  id: '/check-email',
+  path: '/check-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotRoute = ForgotRouteImport.update({
+  id: '/forgot',
+  path: '/forgot',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetRoute = ResetRouteImport.update({
+  id: '/reset',
+  path: '/reset',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SigninRoute = SigninRouteImport.update({
+  id: '/signin',
+  path: '/signin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
@@ -50,6 +92,13 @@ const AppMeRoute = AppMeRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteRouteWithChildren
+  '/admin': typeof AdminRoute
+  '/check-email': typeof CheckEmailRoute
+  '/forgot': typeof ForgotRoute
+  '/onboarding': typeof OnboardingRoute
+  '/reset': typeof ResetRoute
+  '/signin': typeof SigninRoute
+  '/signup': typeof SignupRoute
   '/app/activity': typeof AppActivityRoute
   '/app/family': typeof AppFamilyRoute
   '/app/me': typeof AppMeRoute
@@ -57,6 +106,13 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/check-email': typeof CheckEmailRoute
+  '/forgot': typeof ForgotRoute
+  '/onboarding': typeof OnboardingRoute
+  '/reset': typeof ResetRoute
+  '/signin': typeof SigninRoute
+  '/signup': typeof SignupRoute
   '/app/activity': typeof AppActivityRoute
   '/app/family': typeof AppFamilyRoute
   '/app/me': typeof AppMeRoute
@@ -66,6 +122,13 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteRouteWithChildren
+  '/admin': typeof AdminRoute
+  '/check-email': typeof CheckEmailRoute
+  '/forgot': typeof ForgotRoute
+  '/onboarding': typeof OnboardingRoute
+  '/reset': typeof ResetRoute
+  '/signin': typeof SigninRoute
+  '/signup': typeof SignupRoute
   '/app/activity': typeof AppActivityRoute
   '/app/family': typeof AppFamilyRoute
   '/app/me': typeof AppMeRoute
@@ -74,13 +137,44 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/app' | '/app/activity' | '/app/family' | '/app/me' | '/app/'
+    | '/'
+    | '/app'
+    | '/admin'
+    | '/check-email'
+    | '/forgot'
+    | '/onboarding'
+    | '/reset'
+    | '/signin'
+    | '/signup'
+    | '/app/activity'
+    | '/app/family'
+    | '/app/me'
+    | '/app/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/app/activity' | '/app/family' | '/app/me' | '/app'
+  to:
+    | '/'
+    | '/admin'
+    | '/check-email'
+    | '/forgot'
+    | '/onboarding'
+    | '/reset'
+    | '/signin'
+    | '/signup'
+    | '/app/activity'
+    | '/app/family'
+    | '/app/me'
+    | '/app'
   id:
     | '__root__'
     | '/'
     | '/app'
+    | '/admin'
+    | '/check-email'
+    | '/forgot'
+    | '/onboarding'
+    | '/reset'
+    | '/signin'
+    | '/signup'
     | '/app/activity'
     | '/app/family'
     | '/app/me'
@@ -90,6 +184,13 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRouteRoute: typeof AppRouteRouteWithChildren
+  AdminRoute: typeof AdminRoute
+  CheckEmailRoute: typeof CheckEmailRoute
+  ForgotRoute: typeof ForgotRoute
+  OnboardingRoute: typeof OnboardingRoute
+  ResetRoute: typeof ResetRoute
+  SigninRoute: typeof SigninRoute
+  SignupRoute: typeof SignupRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -101,11 +202,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app': {
       id: '/app'
       path: '/app'
       fullPath: '/app'
       preLoaderRoute: typeof AppRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/check-email': {
+      id: '/check-email'
+      path: '/check-email'
+      fullPath: '/check-email'
+      preLoaderRoute: typeof CheckEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot': {
+      id: '/forgot'
+      path: '/forgot'
+      fullPath: '/forgot'
+      preLoaderRoute: typeof ForgotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset': {
+      id: '/reset'
+      path: '/reset'
+      fullPath: '/reset'
+      preLoaderRoute: typeof ResetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signin': {
+      id: '/signin'
+      path: '/signin'
+      fullPath: '/signin'
+      preLoaderRoute: typeof SigninRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/': {
@@ -160,6 +310,13 @@ const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRouteRoute: AppRouteRouteWithChildren,
+  AdminRoute: AdminRoute,
+  CheckEmailRoute: CheckEmailRoute,
+  ForgotRoute: ForgotRoute,
+  OnboardingRoute: OnboardingRoute,
+  ResetRoute: ResetRoute,
+  SigninRoute: SigninRoute,
+  SignupRoute: SignupRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

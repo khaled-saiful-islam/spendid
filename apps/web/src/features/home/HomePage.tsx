@@ -1,7 +1,9 @@
 import { formatMinor } from "@spendid/shared";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { CountUp } from "@/components/money/CountUp";
 import { SafeDial } from "@/components/money/SafeDial";
+import { meQuery } from "@/lib/me";
 
 // Preview numbers until real data arrives in M2.
 const PREVIEW = {
@@ -19,6 +21,8 @@ function greeting(date: Date): string {
 }
 
 export function HomePage() {
+	const { data: me } = useSuspenseQuery(meQuery);
+	const firstName = me?.user.name.split(" ")[0] ?? "";
 	const now = new Date();
 	const day = now.toLocaleDateString(undefined, {
 		weekday: "long",
@@ -31,7 +35,7 @@ export function HomePage() {
 			<div>
 				<p className="text-ink-soft">{day}</p>
 				<h1 className="mt-1 text-[clamp(2rem,7vw,2.8rem)] font-bold">
-					{greeting(now)}
+					{greeting(now)}, {firstName}
 				</h1>
 			</div>
 

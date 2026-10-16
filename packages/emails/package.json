@@ -1,0 +1,26 @@
+{
+	"name": "@spendid/emails",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"scripts": {
+		"typecheck": "tsc -p .",
+		"test": "vitest run"
+	},
+	"dependencies": {
+		"@react-email/components": "1.0.12",
+		"@react-email/render": "2.1.0",
+		"react": "19.3.1",
+		"react-dom": "19.3.1",
+		"zod": "4.6.7"
+	},
+	"devDependencies": {
+		"@types/react": "19.3.0",
+		"@types/react-dom": "19.3.0",
+		"typescript": "7.0.2",
+		"vitest": "5.0.5"
+	}
+}

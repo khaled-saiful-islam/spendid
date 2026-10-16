@@ -8,8 +8,8 @@ Dev: `make up` → web http://localhost:8600 · API http://localhost:8601 · Mai
 | # | Milestone | Status |
 |---|---|---|
 | M0 | Scaffold + design system + app shell + animated welcome | ✅ |
-| M1 | Auth, roles, emails (verify / reset), onboarding, passkey lock | ⏳ |
-| M2 | Money core + Safe-to-spend orb + budgets + goals | ☐ |
+| M1 | Auth, roles, emails (verify / reset), onboarding, passkey lock | ✅ |
+| M2 | Money core + Safe-to-spend orb + budgets + goals | ⏳ |
 | M3 | Voice capture + one-breath logging | ☐ |
 | M4 | Receipt camera + line items + price memory + warranty vault | ☐ |
 | M5 | AI layer: agent, ask-your-money, token guard | ☐ |
@@ -33,7 +33,8 @@ Dev: `make up` → web http://localhost:8600 · API http://localhost:8601 · Mai
 
 ## M1 — Accounts
 - Better Auth (email + password, admin plugin, impersonation off), Drizzle schema + migrations.
-- Seed `admin` / `admin`; demo user `maya` / `demo1234` via `make demo`.
+- Seed `admin` / `admin`; demo people `maya` (set up) and `adam` (new) / `demo1234` via `make demo`.
+- Admin role has no impersonate / set-password / set-email — admins can't take over accounts.
 - Sign-up, sign-in, sign-out, forgot / reset password, verify email (Mailpit).
 - Email pipeline: React Email templates → BullMQ → nodemailer; `email_log`.
 - Onboarding: home currency, monthly income, budget method, language.
