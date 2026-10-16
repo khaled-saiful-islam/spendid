@@ -86,8 +86,8 @@ export const moneyApi = {
 /** After any money change: refresh the numbers that depend on it. */
 export function refreshMoney(queryClient: QueryClient): Promise<void> {
 	return Promise.all(
-		["summary", "transactions", "goals", "budgets"].map((key) =>
-			queryClient.invalidateQueries({ queryKey: [key] }),
+		["summary", "transactions", "goals", "budgets", "streak", "insights"].map(
+			(key) => queryClient.invalidateQueries({ queryKey: [key] }),
 		),
 	).then(() => undefined);
 }

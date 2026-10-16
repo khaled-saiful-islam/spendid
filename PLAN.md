@@ -16,8 +16,8 @@ Dev: `make up` → web http://localhost:8600 · API http://localhost:8601 · Mai
 | M6 | Admin console + AI cockpit | ✅ |
 | M7 | Family Circle: connections, sharing, pulse, goal jars, bill split | ✅ |
 | M8 | Insights + all notification emails + Money Wrapped | ✅ |
-| M9 | Delight: Pip, streaks, nightly check-in, impulse pause | ⏳ |
-| M10 | Trust + polish: export / delete, hide balances, BM, PWA, E2E, phone audit, docs | ☐ |
+| M9 | Delight: Pip, streaks, nightly check-in, impulse pause | ✅ |
+| M10 | Trust + polish: export / delete, hide balances, BM, PWA, E2E, phone audit, docs | ⏳ |
 
 ---
 
@@ -105,6 +105,7 @@ Dev: `make up` → web http://localhost:8600 · API http://localhost:8601 · Mai
 
 ## M9 — Delight
 - Pip the pangolin (moods, reactions), streaks, nightly check-in, impulse pause wishlist.
+- Done: Pip on Home, drawn in SVG; mood = today's safe-to-spend (shining ≥60% left, calm, worried <20%, curled up when over, sleepy 11pm–6am) with one line about it; hops when something is logged. Streak = days in a row with spending logged or a check-in (today doesn't break it until it ends); milestones 3/7/14/30/60/100/365 celebrate once. Nightly check-in from 8pm local. Impulse pause on Plan: 48-hour wait with a ring, hours of work from income, skip (counts as saved) or still want it (opens the expense form filled in).
 
 ## M10 — Trust and polish
 - Export (JSON / CSV / images) and full delete; hide balances; Bahasa Melayu; PWA install + offline shell.

@@ -128,7 +128,11 @@ export function CaptureHost() {
 				onClose={capture.close}
 				title="Add an expense"
 			>
-				<ExpenseForm homeCurrency={homeCurrency} onDone={capture.close} />
+				<ExpenseForm
+					homeCurrency={homeCurrency}
+					prefill={state.view === "type" ? state.prefill : undefined}
+					onDone={capture.close}
+				/>
 			</Sheet>
 
 			<Sheet

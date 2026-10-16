@@ -8,6 +8,8 @@ import { meQuery } from "@/lib/me";
 import { goalsQuery, summaryQuery } from "@/lib/money-api";
 import { capture } from "../capture/capture-store";
 import { TransactionRow, useCategoryMap } from "../money/TransactionRow";
+import { CheckInCard } from "../pip/CheckInCard";
+import { PipCorner } from "../pip/PipCorner";
 import { GoalJar } from "../plan/GoalJar";
 import { PendingReceipts } from "../scan/PendingReceipts";
 import { AskCard } from "./AskCard";
@@ -16,6 +18,7 @@ import { SafeCard } from "./SafeCard";
 
 function greeting(date: Date): string {
 	const h = date.getHours();
+	if (h < 5) return "Up late";
 	if (h < 12) return "Good morning";
 	if (h < 18) return "Good afternoon";
 	return "Good evening";
@@ -45,6 +48,10 @@ export function HomePage() {
 					{greeting(now)}, {firstName}
 				</h1>
 			</div>
+
+			<PipCorner summary={summary} />
+
+			<CheckInCard summary={summary} />
 
 			<PendingReceipts />
 

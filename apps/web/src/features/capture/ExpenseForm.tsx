@@ -1,4 +1,4 @@
-import { formatMinor, type Transaction } from "@spendid/shared";
+import { formatMinor, minorDigits, type Transaction } from "@spendid/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Trash2 } from "lucide-react";
 import { motion } from "motion/react";
@@ -11,6 +11,7 @@ import { cn } from "@/lib/cn";
 import { ApiError } from "@/lib/http";
 import { categoriesQuery, moneyApi, refreshMoney } from "@/lib/money-api";
 import { currencyOptions } from "../onboarding/options";
+import type { TypePrefill } from "./capture-store";
 import {
 	applyShorthand,
 	type Day,
@@ -26,6 +27,7 @@ import { ShopSuggestions } from "./ShopSuggestions";
 interface ExpenseFormProps {
 	homeCurrency: string;
 	editing?: Transaction;
+	prefill?: TypePrefill;
 	onDone: () => void;
 }
 
@@ -37,12 +39,24 @@ const chipOff = "border-line text-ink-soft hover:border-plum-300";
 export function ExpenseForm({
 	homeCurrency,
 	editing,
+	prefill,
 	onDone,
 }: ExpenseFormProps) {
 	const queryClient = useQueryClient();
 	const { data: categories = [] } = useQuery(categoriesQuery);
 	const [draft, setDraft] = useState<Draft>(() =>
-		editing ? draftFrom(editing) : emptyDraft(homeCurrency),
+		editing
+			? draftFrom(editing)
+			: prefill
+				? {
+						...emptyDraft(prefill.currency),
+						merchant: prefill.merchant,
+						amountText: (
+							prefill.amountMinor /
+							10 ** minorDigits(prefill.currency)
+						).toFixed(minorDigits(prefill.currency)),
+					}
+				: emptyDraft(homeCurrency),
 	);
 	const [shorthand, setShorthand] = useState("");
 	const [pickedByHand, setPickedByHand] = useState(Boolean(editing));

@@ -4,11 +4,18 @@ import { useSyncExternalStore } from "react";
 export type CaptureState =
 	| { view: "closed" }
 	| { view: "menu" }
-	| { view: "type" }
+	| { view: "type"; prefill?: TypePrefill }
 	| { view: "voice" }
 	| { view: "scan" }
 	| { view: "receipt"; receiptId: string }
 	| { view: "edit"; transaction: Transaction };
+
+/** Start the Type-it form with known details (e.g. a wishlist item you decided to buy). */
+export interface TypePrefill {
+	merchant: string;
+	amountMinor: number;
+	currency: string;
+}
 
 let state: CaptureState = { view: "closed" };
 const listeners = new Set<() => void>();
@@ -22,6 +29,7 @@ function set(next: CaptureState): void {
 export const capture = {
 	openMenu: () => set({ view: "menu" }),
 	openType: () => set({ view: "type" }),
+	openTypeWith: (prefill: TypePrefill) => set({ view: "type", prefill }),
 	openVoice: () => set({ view: "voice" }),
 	openScan: () => set({ view: "scan" }),
 	openReceipt: (receiptId: string) => set({ view: "receipt", receiptId }),

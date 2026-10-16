@@ -20,6 +20,7 @@ import { createAdminRepository } from "./modules/admin/admin.repository";
 import { createAdminService } from "./modules/admin/admin.service";
 import { createAskAgent } from "./modules/ask/ask.agent";
 import { createVoiceService } from "./modules/capture/voice.service";
+import { createDelightService } from "./modules/delight/delight.service";
 import { createFamilyRepository } from "./modules/family/family.repository";
 import {
 	createFamilyService,
@@ -169,6 +170,7 @@ const app = await buildApp({
 		}),
 	},
 	insights: { session, insights },
+	delight: { session, delight: createDelightService(database.db) },
 	notify: {
 		session,
 		notifier: notifications.notifier,

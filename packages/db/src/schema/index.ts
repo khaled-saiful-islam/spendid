@@ -1,6 +1,7 @@
 export * from "./admin";
 export * from "./ai";
 export * from "./auth";
+export * from "./delight";
 export * from "./email";
 export * from "./family";
 export * from "./insights";

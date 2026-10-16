@@ -1,5 +1,6 @@
 export * from "./ask";
 export * from "./categories";
+export * from "./delight";
 export * from "./family";
 export * from "./fx";
 export * from "./health";
