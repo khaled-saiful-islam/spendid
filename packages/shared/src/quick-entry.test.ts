@@ -44,6 +44,11 @@ describe("parseQuickEntry", () => {
 		});
 	});
 
+	it("drops stray punctuation around the description", () => {
+		expect(parseQuickEntry("Lunch, 20").description).toBe("Lunch");
+		expect(parseQuickEntry("coffee - 6.50.").description).toBe("Coffee");
+	});
+
 	it("leaves the amount empty when there is no number", () => {
 		expect(parseQuickEntry("groceries")).toMatchObject({
 			amount: null,

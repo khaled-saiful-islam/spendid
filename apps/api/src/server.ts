@@ -1,9 +1,13 @@
 import { createDb } from "@spendid/db";
+import { createExpenseExtractor } from "./ai/extract-expenses";
+import { createAiGuard } from "./ai/guard";
+import { createTranscriber } from "./ai/speech";
 import { buildApp } from "./app";
 import { createAuth, sessionLookup } from "./auth/auth";
 import { loadEnv } from "./config/env";
 import { createOutbox } from "./email/outbox";
 import { createRedis } from "./infra/redis";
+import { createVoiceService } from "./modules/capture/voice.service";
 import { createMeRepository } from "./modules/me/me.repository";
 import { createCategoryRepository } from "./modules/money/categories.repository";
 import { createFxRepository } from "./modules/money/fx.repository";
@@ -26,6 +30,13 @@ const session = sessionLookup(auth);
 const categories = createCategoryRepository(database.db);
 const transactions = createTransactionRepository(database.db);
 const fx = createFxRepository(database.db);
+const ilmu = { baseUrl: env.ILMU_BASE_URL, apiKey: env.ILMU_API_KEY };
+const guard = createAiGuard({
+	db: database.db,
+	redis: cache.redis,
+	defaultMonthlyTokens: env.AI_MONTHLY_TOKENS_DEFAULT,
+	configured: env.ILMU_API_KEY.length > 0,
+});
 
 const app = await buildApp({
 	checks: { database: database.ping, redis: cache.ping },
@@ -44,6 +55,18 @@ const app = await buildApp({
 		}),
 		summary: createSummaryService(database.db),
 		plan: createPlanRepository(database.db),
+	},
+	capture: {
+		session,
+		guard,
+		voice: createVoiceService({
+			db: database.db,
+			guard,
+			categories,
+			transcriber: createTranscriber({ ...ilmu, model: env.ILMU_ASR_MODEL }),
+			extract: createExpenseExtractor({ ...ilmu, model: env.ILMU_TEXT_MODEL }),
+			asrModel: env.ILMU_ASR_MODEL,
+		}),
 	},
 	logger:
 		env.NODE_ENV === "development"

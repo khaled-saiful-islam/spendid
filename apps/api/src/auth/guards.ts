@@ -53,3 +53,17 @@ export function requireAdmin(lookup: SessionLookup) {
 		}
 	};
 }
+
+/** Money and AI are for people, not the admin role: admins get 403. */
+export function requireMember(lookup: SessionLookup) {
+	const userGuard = requireUser(lookup);
+	return async (req: FastifyRequest, reply: FastifyReply): Promise<void> => {
+		await userGuard(req, reply);
+		if (reply.sent) return;
+		if (req.user?.role === "admin") {
+			reply
+				.code(403)
+				.send({ success: false, error: "Admin accounts don't hold money." });
+		}
+	};
+}

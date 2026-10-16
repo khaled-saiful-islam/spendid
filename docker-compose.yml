@@ -77,6 +77,7 @@ services:
     <<: *node
     container_name: spendid-api
     command: pnpm --filter @spendid/api dev
+    restart: unless-stopped
     ports:
       - "8601:8601"
     depends_on:
@@ -87,6 +88,7 @@ services:
     <<: *node
     container_name: spendid-worker
     command: pnpm --filter @spendid/worker dev
+    restart: unless-stopped
     depends_on:
       migrate: { condition: service_completed_successfully }
       redis: { condition: service_healthy }
@@ -96,6 +98,10 @@ services:
     <<: *node
     container_name: spendid-web
     command: pnpm --filter @spendid/web dev
+    restart: unless-stopped
+    environment:
+      # Keeps the dev server's memory modest; Docker here is shared with other stacks.
+      NODE_OPTIONS: --max-old-space-size=640
     ports:
       - "8600:8600"
     depends_on:

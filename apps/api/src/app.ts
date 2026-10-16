@@ -7,6 +7,10 @@ import type { SessionLookup } from "./auth/guards";
 import { authRoutes } from "./auth/routes";
 import { registerErrorHandler } from "./http/errors";
 import {
+	type CaptureDeps,
+	captureRoutes,
+} from "./modules/capture/capture.routes";
+import {
 	type HealthChecks,
 	healthRoutes,
 } from "./modules/health/health.routes";
@@ -23,6 +27,7 @@ export interface AppDeps {
 	auth?: Auth;
 	me?: { session: SessionLookup; repo: MeRepository };
 	money?: MoneyDeps;
+	capture?: CaptureDeps;
 }
 
 /** Builds the Fastify app without listening, so tests can `inject` requests. */
@@ -45,6 +50,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 			if (deps.auth) await api.register(authRoutes, { auth: deps.auth });
 			if (deps.me) await api.register(meRoutes, deps.me);
 			if (deps.money) await api.register(moneyRoutes, deps.money);
+			if (deps.capture) await api.register(captureRoutes, deps.capture);
 		},
 		{ prefix: "/api" },
 	);

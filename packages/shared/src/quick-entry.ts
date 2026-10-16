@@ -13,6 +13,7 @@ export interface QuickEntry {
 /** Only unambiguous markers — "$" alone could be USD, SGD or AUD, so it is not mapped. */
 const CURRENCY_TOKENS: Record<string, string> = {
 	rm: "MYR",
+	ringgit: "MYR",
 	myr: "MYR",
 	usd: "USD",
 	us$: "USD",
@@ -78,7 +79,12 @@ export function parseQuickEntry(text: string): QuickEntry {
 	if (last?.index !== undefined)
 		rest = rest.slice(0, last.index) + rest.slice(last.index + last[0].length);
 
-	const description = capitalise(rest.replace(/\s+/g, " ").trim());
+	const description = capitalise(
+		rest
+			.replace(/\s+/g, " ")
+			.replace(/^[\s,.;:\u2013-]+|[\s,.;:\u2013-]+$/g, "")
+			.trim(),
+	);
 	return {
 		amount,
 		currency,

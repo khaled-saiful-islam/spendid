@@ -5,9 +5,9 @@ import {
 	type TransactionInput,
 	type TransactionPatch,
 } from "@spendid/shared";
-import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
-import { requireUser, type SessionLookup } from "../../auth/guards";
+import { requireMember, type SessionLookup } from "../../auth/guards";
 import { badRequest } from "../../http/app-error";
 import type { CategoryRepository } from "./categories.repository";
 import type { PlanRepository } from "./plan.repository";
@@ -31,19 +31,6 @@ const ListQuery = z.object({
 	categoryId: z.uuid().optional(),
 	q: z.string().trim().max(80).optional(),
 });
-
-/** Money is for people, not the admin role: admins get 403 on every money route. */
-function requireMember(session: SessionLookup) {
-	const userGuard = requireUser(session);
-	return async (req: FastifyRequest, reply: FastifyReply): Promise<void> => {
-		await userGuard(req, reply);
-		if (reply.sent) return;
-		if (req.user?.role === "admin")
-			reply
-				.code(403)
-				.send({ success: false, error: "Admin accounts don't hold money." });
-	};
-}
 
 const uid = (req: FastifyRequest): string => req.user?.id ?? "";
 

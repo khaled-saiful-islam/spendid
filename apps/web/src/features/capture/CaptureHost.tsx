@@ -3,6 +3,7 @@ import { ChevronRight, Keyboard, Mic, ScanLine } from "lucide-react";
 import { Sheet } from "@/components/ui/Sheet";
 import { cn } from "@/lib/cn";
 import { meQuery } from "@/lib/me";
+import { VoiceCapture } from "../voice/VoiceCapture";
 import { capture, useCapture } from "./capture-store";
 import { ExpenseForm } from "./ExpenseForm";
 
@@ -12,7 +13,7 @@ const MODES = [
 		icon: Mic,
 		title: "Say it",
 		hint: "Talk naturally, even several things at once",
-		ready: "M3",
+		ready: null,
 	},
 	{
 		id: "scan",
@@ -78,7 +79,9 @@ export function CaptureHost() {
 									<button
 										type="button"
 										data-autofocus
-										onClick={capture.openType}
+										onClick={
+											id === "voice" ? capture.openVoice : capture.openType
+										}
 										className={cn(rowClass, "hover:bg-surface-2")}
 									>
 										{content}
@@ -88,6 +91,14 @@ export function CaptureHost() {
 						);
 					})}
 				</ul>
+			</Sheet>
+
+			<Sheet
+				open={state.view === "voice"}
+				onClose={capture.close}
+				title="Say it"
+			>
+				<VoiceCapture />
 			</Sheet>
 
 			<Sheet

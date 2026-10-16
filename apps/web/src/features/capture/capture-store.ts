@@ -5,6 +5,7 @@ export type CaptureState =
 	| { view: "closed" }
 	| { view: "menu" }
 	| { view: "type" }
+	| { view: "voice" }
 	| { view: "edit"; transaction: Transaction };
 
 let state: CaptureState = { view: "closed" };
@@ -19,6 +20,7 @@ function set(next: CaptureState): void {
 export const capture = {
 	openMenu: () => set({ view: "menu" }),
 	openType: () => set({ view: "type" }),
+	openVoice: () => set({ view: "voice" }),
 	edit: (transaction: Transaction) => set({ view: "edit", transaction }),
 	close: () => set({ view: "closed" }),
 };

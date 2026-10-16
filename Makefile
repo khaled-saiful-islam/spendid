@@ -32,9 +32,10 @@ ps: ## Show containers
 sh-api: ## Shell inside the API container
 	$(COMPOSE) exec api sh
 
-install: ## Reinstall dependencies after editing a package.json
-	$(NODE_RUN) pnpm install --no-frozen-lockfile --child-concurrency=2
-	$(COMPOSE) restart api worker web
+install: ## Reinstall dependencies after editing a package.json (pauses Node services to save memory)
+	$(COMPOSE) stop web worker api
+	$(NODE_RUN) pnpm install --no-frozen-lockfile --child-concurrency=1 --network-concurrency=3
+	$(COMPOSE) start api worker web
 
 check: ## Lint + format check (Biome)
 	$(NODE_RUN) pnpm check

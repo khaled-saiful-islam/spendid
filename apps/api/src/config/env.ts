@@ -18,6 +18,13 @@ const EnvSchema = z
 		SEED_ADMIN_USERNAME: z.string().min(3).default("admin"),
 		SEED_ADMIN_PASSWORD: z.string().min(1).default("admin"),
 		SEED_ADMIN_EMAIL: z.email().default("admin@spendid.local"),
+		// ILMU (OpenAI-compatible). An empty key turns AI features off; typing still works.
+		ILMU_BASE_URL: z.url().default("https://api.ilmu.ai/v1"),
+		ILMU_API_KEY: z.string().default(""),
+		ILMU_TEXT_MODEL: z.string().min(1).default("ilmu-v3.1"),
+		ILMU_VISION_MODEL: z.string().min(1).default("ilmu-vision-v1.3"),
+		ILMU_ASR_MODEL: z.string().min(1).default("ilmu-asr-v4.2"),
+		AI_MONTHLY_TOKENS_DEFAULT: z.coerce.number().int().min(0).default(200_000),
 	})
 	.superRefine((env, ctx) => {
 		if (env.NODE_ENV !== "production") return;

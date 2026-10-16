@@ -10,8 +10,8 @@ Dev: `make up` → web http://localhost:8600 · API http://localhost:8601 · Mai
 | M0 | Scaffold + design system + app shell + animated welcome | ✅ |
 | M1 | Auth, roles, emails (verify / reset), onboarding, passkey lock | ✅ |
 | M2 | Money core + Safe-to-spend orb + budgets + goals | ✅ |
-| M3 | Voice capture + one-breath logging | ⏳ |
-| M4 | Receipt camera + line items + price memory + warranty vault | ☐ |
+| M3 | Voice capture + one-breath logging | ✅ |
+| M4 | Receipt camera + line items + price memory + warranty vault | ⏳ |
 | M5 | AI layer: agent, ask-your-money, token guard | ☐ |
 | M6 | Admin console + AI cockpit | ☐ |
 | M7 | Family Circle: connections, sharing, pulse, goal jars, bill split | ☐ |
@@ -55,6 +55,8 @@ Dev: `make up` → web http://localhost:8600 · API http://localhost:8601 · Mai
 - Full-screen listening sheet: live waveform, captions, auto-stop.
 - ILMU ASR → parser → multiple draft cards → one-tap save / edit.
 - **Test**: "Grab 15, coffee 6, and 40 for dinner" → 3 cards.
+- Done: AI usage ledger (`ai_usage`, counts only) + per-person allowance (`ai_limit`, default `AI_MONTHLY_TOKENS_DEFAULT`) pulled forward from M5; audio billed at 25 tokens/second.
+- Measured: ~0.5 s listening + ~2.5 s understanding (ilmu-v3.1); hedged second request after 2.5 s, offline read after 9 s.
 
 ## M4 — Receipt camera
 - OpenCV.js in a Web Worker: edge overlay, steady auto-capture, crop + deskew; gallery / PDF upload.
