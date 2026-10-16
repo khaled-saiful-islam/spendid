@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-/** Tables that hold people's money. The admin module must never import them. */
+/** Tables that hold people's money or family links. The admin module must never import them. */
 const MONEY_TABLES = [
 	"transaction",
 	"transactionItem",
@@ -11,6 +11,13 @@ const MONEY_TABLES = [
 	"goal",
 	"warranty",
 	"category",
+	"connection",
+	"shareGrant",
+	"familyInvite",
+	"goalMember",
+	"goalDeposit",
+	"reaction",
+	"split",
 ];
 const dir = __dirname;
 
@@ -30,7 +37,7 @@ describe("admin boundary", () => {
 					expect(names, `${file} imports ${table}`).not.toContain(table);
 			}
 			expect(source, `${file} reaches into money modules`).not.toMatch(
-				/from\s*"\.\.\/(money|receipts|ask|capture)\//,
+				/from\s*"\.\.\/(money|receipts|ask|capture|family)\//,
 			);
 		}
 	});

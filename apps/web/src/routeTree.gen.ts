@@ -21,9 +21,13 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as AppActivityRouteImport } from './routes/app/activity'
 import { Route as AppAskRouteImport } from './routes/app/ask'
-import { Route as AppFamilyRouteImport } from './routes/app/family'
 import { Route as AppMeRouteImport } from './routes/app/me'
 import { Route as AppPlanRouteImport } from './routes/app/plan'
+import { Route as JoinTokenRouteImport } from './routes/join.$token'
+import { Route as SplitTokenRouteImport } from './routes/split.$token'
+import { Route as AppFamilyIndexRouteImport } from './routes/app/family/index'
+import { Route as AppFamilyUserIdRouteImport } from './routes/app/family/$userId'
+import { Route as AppFamilySplitRouteImport } from './routes/app/family/split'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -85,11 +89,6 @@ const AppAskRoute = AppAskRouteImport.update({
   path: '/ask',
   getParentRoute: () => AppRouteRoute,
 } as any)
-const AppFamilyRoute = AppFamilyRouteImport.update({
-  id: '/family',
-  path: '/family',
-  getParentRoute: () => AppRouteRoute,
-} as any)
 const AppMeRoute = AppMeRouteImport.update({
   id: '/me',
   path: '/me',
@@ -98,6 +97,31 @@ const AppMeRoute = AppMeRouteImport.update({
 const AppPlanRoute = AppPlanRouteImport.update({
   id: '/plan',
   path: '/plan',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const JoinTokenRoute = JoinTokenRouteImport.update({
+  id: '/join/$token',
+  path: '/join/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SplitTokenRoute = SplitTokenRouteImport.update({
+  id: '/split/$token',
+  path: '/split/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppFamilyIndexRoute = AppFamilyIndexRouteImport.update({
+  id: '/family/',
+  path: '/family/',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppFamilyUserIdRoute = AppFamilyUserIdRouteImport.update({
+  id: '/family/$userId',
+  path: '/family/$userId',
+  getParentRoute: () => AppRouteRoute,
+} as any)
+const AppFamilySplitRoute = AppFamilySplitRouteImport.update({
+  id: '/family/split',
+  path: '/family/split',
   getParentRoute: () => AppRouteRoute,
 } as any)
 
@@ -113,10 +137,14 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/app/activity': typeof AppActivityRoute
   '/app/ask': typeof AppAskRoute
-  '/app/family': typeof AppFamilyRoute
   '/app/me': typeof AppMeRoute
   '/app/plan': typeof AppPlanRoute
+  '/join/$token': typeof JoinTokenRoute
+  '/split/$token': typeof SplitTokenRoute
   '/app/': typeof AppIndexRoute
+  '/app/family/$userId': typeof AppFamilyUserIdRoute
+  '/app/family/split': typeof AppFamilySplitRoute
+  '/app/family/': typeof AppFamilyIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -129,10 +157,14 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/app/activity': typeof AppActivityRoute
   '/app/ask': typeof AppAskRoute
-  '/app/family': typeof AppFamilyRoute
   '/app/me': typeof AppMeRoute
   '/app/plan': typeof AppPlanRoute
+  '/join/$token': typeof JoinTokenRoute
+  '/split/$token': typeof SplitTokenRoute
   '/app': typeof AppIndexRoute
+  '/app/family/$userId': typeof AppFamilyUserIdRoute
+  '/app/family/split': typeof AppFamilySplitRoute
+  '/app/family': typeof AppFamilyIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -147,10 +179,14 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/app/activity': typeof AppActivityRoute
   '/app/ask': typeof AppAskRoute
-  '/app/family': typeof AppFamilyRoute
   '/app/me': typeof AppMeRoute
   '/app/plan': typeof AppPlanRoute
+  '/join/$token': typeof JoinTokenRoute
+  '/split/$token': typeof SplitTokenRoute
   '/app/': typeof AppIndexRoute
+  '/app/family/$userId': typeof AppFamilyUserIdRoute
+  '/app/family/split': typeof AppFamilySplitRoute
+  '/app/family/': typeof AppFamilyIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -166,10 +202,14 @@ export interface FileRouteTypes {
     | '/signup'
     | '/app/activity'
     | '/app/ask'
-    | '/app/family'
     | '/app/me'
     | '/app/plan'
+    | '/join/$token'
+    | '/split/$token'
     | '/app/'
+    | '/app/family/$userId'
+    | '/app/family/split'
+    | '/app/family/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -182,10 +222,14 @@ export interface FileRouteTypes {
     | '/signup'
     | '/app/activity'
     | '/app/ask'
-    | '/app/family'
     | '/app/me'
     | '/app/plan'
+    | '/join/$token'
+    | '/split/$token'
     | '/app'
+    | '/app/family/$userId'
+    | '/app/family/split'
+    | '/app/family'
   id:
     | '__root__'
     | '/'
@@ -199,10 +243,14 @@ export interface FileRouteTypes {
     | '/signup'
     | '/app/activity'
     | '/app/ask'
-    | '/app/family'
     | '/app/me'
     | '/app/plan'
+    | '/join/$token'
+    | '/split/$token'
     | '/app/'
+    | '/app/family/$userId'
+    | '/app/family/split'
+    | '/app/family/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -215,6 +263,8 @@ export interface RootRouteChildren {
   ResetRoute: typeof ResetRoute
   SigninRoute: typeof SigninRoute
   SignupRoute: typeof SignupRoute
+  JoinTokenRoute: typeof JoinTokenRoute
+  SplitTokenRoute: typeof SplitTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -303,13 +353,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAskRouteImport
       parentRoute: typeof AppRouteRoute
     }
-    '/app/family': {
-      id: '/app/family'
-      path: '/family'
-      fullPath: '/app/family'
-      preLoaderRoute: typeof AppFamilyRouteImport
-      parentRoute: typeof AppRouteRoute
-    }
     '/app/me': {
       id: '/app/me'
       path: '/me'
@@ -324,25 +367,64 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPlanRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/join/$token': {
+      id: '/join/$token'
+      path: '/join/$token'
+      fullPath: '/join/$token'
+      preLoaderRoute: typeof JoinTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/split/$token': {
+      id: '/split/$token'
+      path: '/split/$token'
+      fullPath: '/split/$token'
+      preLoaderRoute: typeof SplitTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/family/': {
+      id: '/app/family/'
+      path: '/family'
+      fullPath: '/app/family/'
+      preLoaderRoute: typeof AppFamilyIndexRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/app/family/$userId': {
+      id: '/app/family/$userId'
+      path: '/family/$userId'
+      fullPath: '/app/family/$userId'
+      preLoaderRoute: typeof AppFamilyUserIdRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
+    '/app/family/split': {
+      id: '/app/family/split'
+      path: '/family/split'
+      fullPath: '/app/family/split'
+      preLoaderRoute: typeof AppFamilySplitRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
   }
 }
 
 interface AppRouteRouteChildren {
   AppActivityRoute: typeof AppActivityRoute
   AppAskRoute: typeof AppAskRoute
-  AppFamilyRoute: typeof AppFamilyRoute
   AppMeRoute: typeof AppMeRoute
   AppPlanRoute: typeof AppPlanRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppFamilyUserIdRoute: typeof AppFamilyUserIdRoute
+  AppFamilySplitRoute: typeof AppFamilySplitRoute
+  AppFamilyIndexRoute: typeof AppFamilyIndexRoute
 }
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppActivityRoute: AppActivityRoute,
   AppAskRoute: AppAskRoute,
-  AppFamilyRoute: AppFamilyRoute,
   AppMeRoute: AppMeRoute,
   AppPlanRoute: AppPlanRoute,
   AppIndexRoute: AppIndexRoute,
+  AppFamilyUserIdRoute: AppFamilyUserIdRoute,
+  AppFamilySplitRoute: AppFamilySplitRoute,
+  AppFamilyIndexRoute: AppFamilyIndexRoute,
 }
 
 const AppRouteRouteWithChildren = AppRouteRoute._addFileChildren(
@@ -359,6 +441,8 @@ const rootRouteChildren: RootRouteChildren = {
   ResetRoute: ResetRoute,
   SigninRoute: SigninRoute,
   SignupRoute: SignupRoute,
+  JoinTokenRoute: JoinTokenRoute,
+  SplitTokenRoute: SplitTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

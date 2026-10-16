@@ -1,4 +1,4 @@
-import { budget, type Db, goal } from "@spendid/db";
+import { budget, type Db, goal, goalDeposit } from "@spendid/db";
 import {
 	type BudgetInput,
 	type Goal,
@@ -111,13 +111,21 @@ export function createPlanRepository(db: Db) {
 			id: string,
 			amountMinor: number,
 		): Promise<Goal> {
-			const [row] = await db
-				.update(goal)
-				.set({
-					savedMinor: sql`greatest(0, ${goal.savedMinor} + ${amountMinor})`,
-				})
-				.where(ownedGoal(userId, id))
-				.returning();
+			const row = await db.transaction(async (tx) => {
+				const [updated] = await tx
+					.update(goal)
+					.set({
+						savedMinor: sql`greatest(0, ${goal.savedMinor} + ${amountMinor})`,
+					})
+					.where(ownedGoal(userId, id))
+					.returning();
+				// Shared jars show who put in what.
+				if (updated)
+					await tx
+						.insert(goalDeposit)
+						.values({ goalId: id, userId, amountMinor });
+				return updated;
+			});
 			if (!row) throw notFound("Goal");
 			return goalDto(row);
 		},

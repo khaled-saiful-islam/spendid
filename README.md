@@ -34,6 +34,18 @@ Postgres is on `localhost:8602`, Redis on `localhost:8603`.
 
 New sign-ups get a confirmation email — open Mailpit at http://localhost:8604 to click it.
 
+### Try Family Circle
+
+maya and adam are already in each other's circle (spouses) and save into maya's "Bali trip" jar together.
+
+1. Sign in as `maya` in one browser and `adam` in another (or a private window). Open **Family**.
+2. As maya, open adam → **You share** → change the level or pause. adam's screen updates live; adam gets an email.
+3. As maya, add an expense. It appears in adam's **Family pulse** within a second; adam can react 👏.
+4. **Invite someone** makes a one-time link + QR (and an email if you add one). Open the link signed out:
+   it asks you to sign up or sign in, then brings you back to join.
+5. **Split a bill**: snap a bill or pick a recent receipt, drag each line onto a person (or tap it),
+   then **Create split link**. The link opens without signing in.
+
 ## Commands
 
 | Command | Does |
@@ -65,3 +77,4 @@ docker/         Dev image
 - Money is stored as integer minor units + currency. Use `toMinor` / `formatMinor` from `@spendid/shared`.
 - Admins manage accounts and AI limits. They can never read anyone's spending.
 - Sharing between people always needs both sides to agree, and can be paused at any time.
+  The "what they see" preview uses the same code as the other person's screen, so they can't differ.

@@ -14,7 +14,7 @@ Dev: `make up` → web http://localhost:8600 · API http://localhost:8601 · Mai
 | M4 | Receipt camera + line items + price memory + warranty vault | ✅ |
 | M5 | AI layer: agent, ask-your-money, token guard | ✅ |
 | M6 | Admin console + AI cockpit | ✅ |
-| M7 | Family Circle: connections, sharing, pulse, goal jars, bill split | ⏳ |
+| M7 | Family Circle: connections, sharing, pulse, goal jars, bill split | ✅ |
 | M8 | Insights + all notification emails + Money Wrapped | ☐ |
 | M9 | Delight: Pip, streaks, nightly check-in, impulse pause | ☐ |
 | M10 | Trust + polish: export / delete, hide balances, BM, PWA, E2E, phone audit, docs | ☐ |
@@ -88,6 +88,12 @@ Dev: `make up` → web http://localhost:8600 · API http://localhost:8601 · Mai
 - Invite by link / QR / email; relation; two-way accept; share levels; pause / stop; "what they see" panel.
 - Family pulse feed with reactions (SSE); shared goal jars; photo bill splitter + split link.
 - **Test**: two browsers — invite, accept, share categories, see live updates, pause sharing.
+- Done: single-use invite links (SHA-256 stored, 7 days) with QR and optional email (also to people without an account; the link survives sign-up + onboarding). The inviter picks the relation and what they share; the invitee picks what they share back. Up to 12 people per circle, 10 open invites, 20 invites a day.
+- Share levels totals → categories → expenses → expenses + receipts, per direction; pause / resume; stop (ends the connection, both grants and jar memberships). Changes notify live (SSE) and by email (at most one email per pair per 10 minutes).
+- "What they see": the owner's preview and the viewer's screen are built by the same function (`shared-view.ts`); notes are never shared.
+- Family pulse, built on read (pausing or deleting hides an item at once): shared expenses, jar deposits, new connections; one reaction per person per item.
+- Shared goal jars: the owner adds people from their circle; members add money, only the owner takes out; who-put-in-what.
+- Bill splitter: snap a bill (same camera as receipts) or pick a recent receipt, drag lines onto people or tap to choose; tax/service shared in proportion with exact-cent rounding; read-only split link + QR; mark paid; circle members see "split with you".
 
 ## M8 — Insights and emails
 - Smart category learning, merchant clean-up (pgvector), subscription detector, heatmap.

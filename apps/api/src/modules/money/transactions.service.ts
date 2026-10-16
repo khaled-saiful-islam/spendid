@@ -17,6 +17,8 @@ interface Deps {
 	transactions: TransactionRepository;
 	categories: CategoryRepository;
 	fx: FxRepository;
+	/** Called after someone's spending changes (live family pulse). Never awaited. */
+	onChange?: (userId: string) => Promise<unknown>;
 }
 
 /** Adds, edits and removes spending, always converting into the person's home currency. */
@@ -25,7 +27,13 @@ export function createTransactionService({
 	transactions,
 	categories,
 	fx,
+	onChange,
 }: Deps) {
+	const changed = <T>(userId: string, value: T): T => {
+		onChange?.(userId).catch(() => undefined);
+		return value;
+	};
+
 	async function homeCurrencyOf(userId: string): Promise<string> {
 		const [row] = await db
 			.select({ home: profile.homeCurrency })
@@ -53,7 +61,7 @@ export function createTransactionService({
 				input.currency,
 				homeCurrency,
 			);
-			return transactions.insert({
+			const created = await transactions.insert({
 				userId,
 				amountMinor: input.amountMinor,
 				currency: input.currency,
@@ -66,6 +74,7 @@ export function createTransactionService({
 				source: input.source,
 				occurredAt: input.occurredAt ? new Date(input.occurredAt) : new Date(),
 			});
+			return changed(userId, created);
 		},
 
 		async update(
@@ -100,19 +109,19 @@ export function createTransactionService({
 				...(patch.note !== undefined && { note: patch.note || null }),
 				...(patch.occurredAt && { occurredAt: new Date(patch.occurredAt) }),
 			});
-			return updated ?? toDto(existing);
+			return changed(userId, updated ?? toDto(existing));
 		},
 
 		async remove(userId: string, id: string): Promise<Transaction> {
 			const row = await transactions.setDeleted(userId, id, true);
 			if (!row) throw notFound("Expense");
-			return row;
+			return changed(userId, row);
 		},
 
 		async restore(userId: string, id: string): Promise<Transaction> {
 			const row = await transactions.setDeleted(userId, id, false);
 			if (!row) throw notFound("Expense");
-			return row;
+			return changed(userId, row);
 		},
 	};
 }

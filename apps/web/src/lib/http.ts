@@ -18,7 +18,11 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
 		res = await fetch(path, {
 			...init,
 			credentials: "same-origin",
-			headers: { "Content-Type": "application/json", ...init.headers },
+			// Only say "JSON" when there is a body: the API rejects an empty JSON body.
+			headers: {
+				...(init.body != null && { "Content-Type": "application/json" }),
+				...init.headers,
+			},
 		});
 	} catch {
 		throw new ApiError(

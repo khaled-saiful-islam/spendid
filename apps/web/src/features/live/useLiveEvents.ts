@@ -1,11 +1,17 @@
-import { ReceiptEventSchema } from "@spendid/shared";
+import {
+	FAMILY_EVENT,
+	FamilyEventSchema,
+	ReceiptEventSchema,
+} from "@spendid/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { toast } from "@/components/ui/Toast";
 import { capture, getCaptureState } from "../capture/capture-store";
+import { splitReceipts } from "../family/split/waiting";
 
 /**
- * One server-sent-events stream per open app. Today: receipts finished reading.
+ * One server-sent-events stream per open app: receipts finished reading, and family
+ * changes (someone joined, changed what they share, cheered, added to a jar).
  * EventSource reconnects by itself; queries also poll while waiting, so nothing is lost.
  */
 export function useLiveEvents(): void {
@@ -22,6 +28,7 @@ export function useLiveEvents(): void {
 			void queryClient.invalidateQueries({ queryKey: ["receipts"] });
 			void queryClient.invalidateQueries({ queryKey: ["receipt", id] });
 
+			if (splitReceipts.has(id)) return;
 			const state = getCaptureState();
 			const lookingAtIt = state.view === "receipt" && state.receiptId === id;
 			if (lookingAtIt) return;
@@ -35,6 +42,16 @@ export function useLiveEvents(): void {
 					label: "Open",
 					run: () => capture.openReceipt(id),
 				});
+		});
+		source.addEventListener(FAMILY_EVENT, (e) => {
+			const parsed = FamilyEventSchema.safeParse(
+				JSON.parse((e as MessageEvent<string>).data),
+			);
+			if (!parsed.success) return;
+			void queryClient.invalidateQueries({ queryKey: ["family"] });
+			if (parsed.data.what === "jar")
+				void queryClient.invalidateQueries({ queryKey: ["goals"] });
+			if (parsed.data.message) toast(parsed.data.message);
 		});
 		return () => source.close();
 	}, [queryClient]);

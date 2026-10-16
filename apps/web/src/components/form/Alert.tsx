@@ -1,16 +1,17 @@
-import { CircleAlert, CircleCheck } from "lucide-react";
+import { CircleAlert, CircleCheck, Info } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 interface AlertProps {
-	tone: "error" | "success";
+	tone: "error" | "success" | "info";
 	children: ReactNode;
 }
 
 /** Inline message that slides in; announced to screen readers. */
 export function Alert({ tone, children }: AlertProps) {
-	const Icon = tone === "error" ? CircleAlert : CircleCheck;
+	const Icon =
+		tone === "error" ? CircleAlert : tone === "info" ? Info : CircleCheck;
 	return (
 		<motion.div
 			role={tone === "error" ? "alert" : "status"}
@@ -19,7 +20,11 @@ export function Alert({ tone, children }: AlertProps) {
 			exit={{ opacity: 0, height: 0 }}
 			className={cn(
 				"flex gap-3 overflow-hidden rounded-tile px-4 py-3 text-[0.95rem]",
-				tone === "error" ? "bg-coral/12 text-over" : "bg-jade/12 text-safe",
+				tone === "error"
+					? "bg-coral/12 text-over"
+					: tone === "info"
+						? "bg-plum-500/10 text-plum-700 dark:text-plum-200"
+						: "bg-jade/12 text-safe",
 			)}
 		>
 			<Icon className="mt-0.5 size-5 shrink-0" aria-hidden="true" />

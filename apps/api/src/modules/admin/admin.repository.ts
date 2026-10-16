@@ -52,7 +52,8 @@ export function createAdminRepository(db: Db) {
 			const [active] = await db
 				.select({ week: sql<number>`count(distinct ${session.userId})::int` })
 				.from(session)
-				.where(gte(session.updatedAt, daysAgo(7)));
+				.innerJoin(user, eq(user.id, session.userId))
+				.where(and(gte(session.updatedAt, daysAgo(7)), eq(user.role, "user")));
 			const [tokens] = await db
 				.select({
 					month: sql<string>`coalesce(sum(${aiUsage.billedTokens}), 0)`,

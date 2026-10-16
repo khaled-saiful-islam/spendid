@@ -12,6 +12,7 @@ import {
 	type CaptureDeps,
 	captureRoutes,
 } from "./modules/capture/capture.routes";
+import { type FamilyDeps, familyRoutes } from "./modules/family/family.routes";
 import {
 	type HealthChecks,
 	healthRoutes,
@@ -37,6 +38,7 @@ export interface AppDeps {
 	receipts?: ReceiptDeps;
 	ask?: AskDeps;
 	admin?: AdminDeps;
+	family?: FamilyDeps;
 }
 
 /** Builds the Fastify app without listening, so tests can `inject` requests. */
@@ -63,6 +65,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 			if (deps.receipts) await api.register(receiptRoutes, deps.receipts);
 			if (deps.ask) await api.register(askRoutes, deps.ask);
 			if (deps.admin) await api.register(adminRoutes, deps.admin);
+			if (deps.family) await api.register(familyRoutes, deps.family);
 		},
 		{ prefix: "/api" },
 	);

@@ -9,7 +9,7 @@ import {
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { toDto } from "./transactions.repository";
 
-interface MonthBounds {
+export interface MonthBounds {
 	today: string;
 	monthStart: string;
 	nextMonth: string;
@@ -17,7 +17,10 @@ interface MonthBounds {
 }
 
 /** Today and this month, in the person's own time zone. */
-async function monthBounds(db: Db, timeZone: string): Promise<MonthBounds> {
+export async function monthBounds(
+	db: Db,
+	timeZone: string,
+): Promise<MonthBounds> {
 	const result = await db.execute<{
 		today: string;
 		month_start: string;

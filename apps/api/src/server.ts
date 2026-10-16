@@ -5,6 +5,7 @@ import {
 	createEventHub,
 	createExpenseExtractor,
 	createFileStore,
+	createPublisher,
 	createTranscriber,
 } from "@spendid/server";
 import { Queue } from "bullmq";
@@ -17,6 +18,14 @@ import { createAdminRepository } from "./modules/admin/admin.repository";
 import { createAdminService } from "./modules/admin/admin.service";
 import { createAskAgent } from "./modules/ask/ask.agent";
 import { createVoiceService } from "./modules/capture/voice.service";
+import { createFamilyRepository } from "./modules/family/family.repository";
+import {
+	createFamilyService,
+	EMAIL_QUIET_MS,
+} from "./modules/family/family.service";
+import { createJarsService } from "./modules/family/jars.service";
+import { createPulseService } from "./modules/family/pulse.service";
+import { createSplitService } from "./modules/family/split.service";
 import { createMeRepository } from "./modules/me/me.repository";
 import { createCategoryRepository } from "./modules/money/categories.repository";
 import { createFxRepository } from "./modules/money/fx.repository";
@@ -51,16 +60,34 @@ const transactions = createTransactionRepository(database.db);
 const fx = createFxRepository(database.db);
 const summary = createSummaryService(database.db);
 const plan = createPlanRepository(database.db);
+const publish = createPublisher(cache.redis);
+const familyRepo = createFamilyRepository(database.db);
 const transactionService = createTransactionService({
 	db: database.db,
 	transactions,
 	categories,
 	fx,
+	onChange: async (ownerId) => {
+		const viewers = await familyRepo.expenseViewers(ownerId);
+		await Promise.all(
+			viewers.map((id) => publish(id, { type: "family", what: "pulse" })),
+		);
+	},
 });
 const events = createEventHub(env.REDIS_URL);
 const receiptQueue = new Queue<{ receiptId: string }>(RECEIPT_QUEUE, {
 	connection: cache.redis,
 });
+const receiptService = createReceiptService({
+	db: database.db,
+	queue: receiptQueue,
+	transactions: transactionService,
+	store: createFileStore({
+		root: env.RECEIPTS_DIR,
+		keyBase64: env.RECEIPT_ENCRYPTION_KEY,
+	}),
+});
+const familyDeps = { db: database.db, repo: familyRepo, publish };
 const ilmu = { baseUrl: env.ILMU_BASE_URL, apiKey: env.ILMU_API_KEY };
 const settings = createAppSettings({
 	db: database.db,
@@ -94,15 +121,7 @@ const app = await buildApp({
 	receipts: {
 		session,
 		events,
-		receipts: createReceiptService({
-			db: database.db,
-			queue: receiptQueue,
-			transactions: transactionService,
-			store: createFileStore({
-				root: env.RECEIPTS_DIR,
-				keyBase64: env.RECEIPT_ENCRYPTION_KEY,
-			}),
-		}),
+		receipts: receiptService,
 	},
 	admin: {
 		session,
@@ -114,6 +133,26 @@ const app = await buildApp({
 			sendEmail: outbox.send,
 			appUrl: env.APP_URL,
 		}),
+	},
+	family: {
+		session,
+		family: createFamilyService({
+			...familyDeps,
+			sendEmail: outbox.send,
+			appUrl: env.APP_URL,
+			receiptImage: (ownerId, id) => receiptService.image(ownerId, id),
+			allowEmail: async (key) =>
+				(await cache.redis.set(
+					`email-quiet:${key}`,
+					"1",
+					"PX",
+					EMAIL_QUIET_MS,
+					"NX",
+				)) === "OK",
+		}),
+		pulse: createPulseService(familyDeps),
+		jars: createJarsService(familyDeps),
+		splits: createSplitService({ ...familyDeps, appUrl: env.APP_URL }),
 	},
 	ask: {
 		session,

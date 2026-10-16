@@ -19,8 +19,17 @@ import { useScanner } from "./useScanner";
 
 const RING = 2 * Math.PI * 34;
 
+interface ScanCameraProps {
+	/** Where the read receipt goes. Default: the review sheet. The bill splitter uses its own. */
+	onUploaded?: (receiptId: string) => void;
+	onClose?: () => void;
+}
+
 /** Full-screen camera: find the receipt, hold still, it captures itself. */
-export function ScanCamera() {
+export function ScanCamera({
+	onUploaded = capture.openReceipt,
+	onClose = capture.close,
+}: ScanCameraProps = {}) {
 	const queryClient = useQueryClient();
 	const reduce = useReducedMotion();
 	const scanner = useScanner();
@@ -51,7 +60,7 @@ export function ScanCamera() {
 		try {
 			const receipt = await receiptsApi.upload(photo.blob);
 			void queryClient.invalidateQueries({ queryKey: ["receipts"] });
-			capture.openReceipt(receipt.id);
+			onUploaded(receipt.id);
 		} catch (err) {
 			setUploading(false);
 			setError(
@@ -166,7 +175,7 @@ export function ScanCamera() {
 				<div className="absolute inset-x-0 top-0 flex items-center justify-between p-4 pt-[max(env(safe-area-inset-top),1rem)]">
 					<button
 						type="button"
-						onClick={capture.close}
+						onClick={onClose}
 						aria-label="Close camera"
 						className="grid size-12 place-items-center rounded-full bg-black/40 backdrop-blur"
 					>
