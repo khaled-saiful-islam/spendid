@@ -21,6 +21,7 @@ import {
 	emptyDraft,
 	localDate,
 } from "./draft";
+import { ShopSuggestions } from "./ShopSuggestions";
 
 interface ExpenseFormProps {
 	homeCurrency: string;
@@ -193,6 +194,17 @@ export function ExpenseForm({
 					Converted to {homeCurrency} at today's rate when you save.
 				</p>
 			)}
+			<ShopSuggestions
+				typed={draft.merchant}
+				categories={categories}
+				onPick={(shop) =>
+					patch({
+						merchant: shop.name,
+						...(!pickedByHand &&
+							shop.categoryId && { categoryId: shop.categoryId }),
+					})
+				}
+			/>
 
 			<fieldset>
 				<legend className="mb-2 font-semibold">When</legend>

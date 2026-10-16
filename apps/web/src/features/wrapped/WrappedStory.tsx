@@ -164,18 +164,23 @@ export function WrappedStory({ month }: { month: string }) {
 				</motion.div>
 			</AnimatePresence>
 
-			<div className="relative mx-auto flex h-full max-w-lg flex-col pt-safe">
+			<div
+				className={cn(
+					"relative mx-auto flex h-full max-w-lg flex-col pt-safe transition-colors",
+					slide?.ink === "dark" ? "text-plum-950" : "text-white",
+				)}
+			>
 				<div className="flex gap-1.5 px-4 pt-4" aria-hidden="true">
 					{Array.from({ length: total }, (_, i) => (
 						<span
 							// biome-ignore lint/suspicious/noArrayIndexKey: one progress bar per slide position
 							key={i}
-							className="h-1 flex-1 overflow-hidden rounded-full bg-white/30"
+							className="h-1 flex-1 overflow-hidden rounded-full bg-current/30"
 						>
 							<motion.span
 								// biome-ignore lint/suspicious/noArrayIndexKey: remount restarts the bar when the slide changes
 								key={`${i}-${index}`}
-								className="block h-full bg-white"
+								className="block h-full bg-current"
 								initial={{ width: i < index ? "100%" : "0%" }}
 								animate={{
 									width:
@@ -203,7 +208,7 @@ export function WrappedStory({ month }: { month: string }) {
 						type="button"
 						onClick={close}
 						aria-label="Close"
-						className="grid size-11 place-items-center rounded-full text-white hover:bg-white/15"
+						className="grid size-11 place-items-center rounded-full hover:bg-current/15"
 					>
 						<X className="size-6" aria-hidden="true" />
 					</button>

@@ -1,4 +1,5 @@
 import type { AppSettings, AppSettingsStore } from "@spendid/server";
+import { z } from "zod";
 import type { Auth } from "../../auth/auth";
 import type { SendEmail } from "../../email/outbox";
 import { AppError, notFound } from "../../http/app-error";
@@ -10,7 +11,18 @@ interface Deps {
 	settings: AppSettingsStore;
 	sendEmail: SendEmail;
 	appUrl: string;
+	/** Sends product news to everyone who wants it; returns how many emails were queued. */
+	broadcast?: (
+		announcementId: string,
+		subject: string,
+		body: string,
+	) => Promise<number>;
 }
+
+export const AnnouncementSchema = z.object({
+	subject: z.string().trim().min(3, "Add a subject").max(120),
+	body: z.string().trim().min(10, "Write a few words").max(2000),
+});
 
 /**
  * Admin actions. Account changes go through Better Auth's admin API (so its permission
@@ -23,6 +35,7 @@ export function createAdminService({
 	settings,
 	sendEmail,
 	appUrl,
+	broadcast,
 }: Deps) {
 	async function target(actorId: string, userId: string) {
 		const person = await repo.findUser(userId);
@@ -127,6 +140,29 @@ export function createAdminService({
 				targetLabel: person.email,
 				detail: input,
 			});
+		},
+
+		/** Product news by email. Only people who kept "Spendid news" on get it. */
+		async announce(
+			actorId: string,
+			raw: unknown,
+		): Promise<{ recipients: number }> {
+			const input = AnnouncementSchema.parse(raw);
+			if (!broadcast)
+				throw new AppError(503, "Email isn't set up for announcements.");
+			const id = await repo.createAnnouncement({
+				...input,
+				createdBy: actorId,
+			});
+			const recipients = await broadcast(id, input.subject, input.body);
+			await repo.setRecipients(id, recipients);
+			await repo.audit({
+				actorId,
+				action: "announcement.sent",
+				targetLabel: input.subject,
+				detail: { recipients },
+			});
+			return { recipients };
 		},
 
 		async updateSettings(actorId: string, patch: Partial<AppSettings>) {

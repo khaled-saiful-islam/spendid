@@ -18,6 +18,7 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as ResetRouteImport } from './routes/reset'
 import { Route as SigninRouteImport } from './routes/signin'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as AppActivityRouteImport } from './routes/app/activity'
 import { Route as AppAskRouteImport } from './routes/app/ask'
@@ -73,6 +74,11 @@ const SigninRoute = SigninRouteImport.update({
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UnsubscribeRoute = UnsubscribeRouteImport.update({
+  id: '/unsubscribe',
+  path: '/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
@@ -141,6 +147,7 @@ export interface FileRoutesByFullPath {
   '/reset': typeof ResetRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/app/activity': typeof AppActivityRoute
   '/app/ask': typeof AppAskRoute
   '/app/me': typeof AppMeRoute
@@ -162,6 +169,7 @@ export interface FileRoutesByTo {
   '/reset': typeof ResetRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/app/activity': typeof AppActivityRoute
   '/app/ask': typeof AppAskRoute
   '/app/me': typeof AppMeRoute
@@ -185,6 +193,7 @@ export interface FileRoutesById {
   '/reset': typeof ResetRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/app/activity': typeof AppActivityRoute
   '/app/ask': typeof AppAskRoute
   '/app/me': typeof AppMeRoute
@@ -209,6 +218,7 @@ export interface FileRouteTypes {
     | '/reset'
     | '/signin'
     | '/signup'
+    | '/unsubscribe'
     | '/app/activity'
     | '/app/ask'
     | '/app/me'
@@ -230,6 +240,7 @@ export interface FileRouteTypes {
     | '/reset'
     | '/signin'
     | '/signup'
+    | '/unsubscribe'
     | '/app/activity'
     | '/app/ask'
     | '/app/me'
@@ -252,6 +263,7 @@ export interface FileRouteTypes {
     | '/reset'
     | '/signin'
     | '/signup'
+    | '/unsubscribe'
     | '/app/activity'
     | '/app/ask'
     | '/app/me'
@@ -275,6 +287,7 @@ export interface RootRouteChildren {
   ResetRoute: typeof ResetRoute
   SigninRoute: typeof SigninRoute
   SignupRoute: typeof SignupRoute
+  UnsubscribeRoute: typeof UnsubscribeRoute
   JoinTokenRoute: typeof JoinTokenRoute
   SplitTokenRoute: typeof SplitTokenRoute
 }
@@ -342,6 +355,13 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/unsubscribe': {
+      id: '/unsubscribe'
+      path: '/unsubscribe'
+      fullPath: '/unsubscribe'
+      preLoaderRoute: typeof UnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/': {
@@ -462,6 +482,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetRoute: ResetRoute,
   SigninRoute: SigninRoute,
   SignupRoute: SignupRoute,
+  UnsubscribeRoute: UnsubscribeRoute,
   JoinTokenRoute: JoinTokenRoute,
   SplitTokenRoute: SplitTokenRoute,
 }

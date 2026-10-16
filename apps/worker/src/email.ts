@@ -27,7 +27,22 @@ export function createEmailProcessor(db: Db, mail: MailConfig) {
 		const data = EmailJobSchema.parse(job.data.job);
 		try {
 			const email = await renderEmail(data);
-			await transport.sendMail({ from: mail.from, to: data.to, ...email });
+			// Optional emails get one-click unsubscribe (RFC 8058) for mail apps' own button.
+			const oneClick = data.unsubscribeUrl?.replace(
+				"/unsubscribe?",
+				"/api/email/unsubscribe?",
+			);
+			await transport.sendMail({
+				from: mail.from,
+				to: data.to,
+				...email,
+				...(oneClick && {
+					headers: {
+						"List-Unsubscribe": `<${oneClick}>`,
+						"List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+					},
+				}),
+			});
 			await db
 				.update(emailLog)
 				.set({ status: "sent", sentAt: new Date(), error: null })

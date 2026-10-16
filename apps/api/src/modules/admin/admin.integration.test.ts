@@ -88,6 +88,8 @@ describe.skipIf(!url || !redisUrl)("admin API (real database)", () => {
 					auth: {} as Auth,
 					sendEmail: async () => {},
 					appUrl: "http://localhost:8600",
+					broadcast: async (_id, subject) =>
+						subject.includes("Nobody") ? 0 : 3,
 				}),
 			},
 		});
@@ -163,6 +165,42 @@ describe.skipIf(!url || !redisUrl)("admin API (real database)", () => {
 			"/admin/audit",
 		);
 		expect(audit.body.data.map((a) => a.action)).toContain("ai.limit-set");
+	});
+
+	it("sends news to everyone who wants it and logs it", async () => {
+		const empty = await call(admin, "POST", "/admin/announcements", {
+			subject: "Hi",
+			body: "short",
+		});
+		expect(empty.status).toBe(400);
+		const res = await call<{ recipients: number }>(
+			admin,
+			"POST",
+			"/admin/announcements",
+			{
+				subject: "Spendid now speaks Malay",
+				body: "Switch language in Settings any time.",
+			},
+		);
+		expect(res.status).toBe(201);
+		expect(res.body.data.recipients).toBe(3);
+		const list = await call<{ subject: string; recipients: number }[]>(
+			admin,
+			"GET",
+			"/admin/announcements",
+		);
+		expect(list.body.data[0]).toMatchObject({
+			subject: "Spendid now speaks Malay",
+			recipients: 3,
+		});
+		expect(
+			(
+				await call(maya, "POST", "/admin/announcements", {
+					subject: "x",
+					body: "y",
+				})
+			).status,
+		).toBe(403);
 	});
 
 	it("won't let an admin change another admin", async () => {

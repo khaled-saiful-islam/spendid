@@ -30,6 +30,17 @@ export async function adminRoutes(
 ): Promise<void> {
 	app.addHook("preHandler", requireAdmin(deps.session));
 
+	app.get("/admin/announcements", async () => ({
+		success: true,
+		data: await deps.repo.announcements(),
+	}));
+	app.post("/admin/announcements", async (req, reply) =>
+		reply.code(201).send({
+			success: true,
+			data: await deps.service.announce(actor(req), req.body),
+		}),
+	);
+
 	app.get("/admin/overview", async () => ({
 		success: true,
 		data: await deps.service.overview(),

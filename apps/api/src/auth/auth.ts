@@ -2,6 +2,7 @@ import { passkey } from "@better-auth/passkey";
 import { type Db, profile, schema } from "@spendid/db";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { createAuthMiddleware } from "better-auth/api";
 import { admin, username } from "better-auth/plugins";
 import type { Redis } from "ioredis";
 import type { Env } from "../config/env";
@@ -10,14 +11,26 @@ import { ac, adminRole, userRole } from "./access";
 import type { SessionLookup } from "./guards";
 import { redisStorage } from "./redis-storage";
 
+/** Security moments other modules react to (emails). Errors never block signing in. */
+export interface AuthEvents {
+	sessionCreated?: (s: {
+		userId: string;
+		userAgent?: string | null;
+	}) => Promise<void>;
+	passkeyAdded?: (userId: string) => Promise<void>;
+}
+
 interface AuthDeps {
 	env: Env;
 	db: Db;
 	redis: Redis;
 	sendEmail: SendEmail;
+	events?: AuthEvents;
 }
 
-export function createAuth({ env, db, redis, sendEmail }: AuthDeps) {
+export function createAuth({ env, db, redis, sendEmail, events }: AuthDeps) {
+	const safely = (p: Promise<void> | undefined) =>
+		void p?.catch(() => undefined);
 	return betterAuth({
 		appName: "Spendid",
 		baseURL: env.APP_URL,
@@ -74,7 +87,28 @@ export function createAuth({ env, db, redis, sendEmail }: AuthDeps) {
 				"/send-verification-email": { window: 300, max: 3 },
 			},
 		},
+		hooks: {
+			after: createAuthMiddleware(async (ctx) => {
+				if (ctx.path !== "/passkey/verify-registration") return;
+				const userId = ctx.context.session?.user.id;
+				const ok =
+					ctx.context.returned && !(ctx.context.returned instanceof Error);
+				if (userId && ok) safely(events?.passkeyAdded?.(userId));
+			}),
+		},
 		databaseHooks: {
+			session: {
+				create: {
+					after: async (session) => {
+						safely(
+							events?.sessionCreated?.({
+								userId: session.userId,
+								userAgent: session.userAgent,
+							}),
+						);
+					},
+				},
+			},
 			user: {
 				create: {
 					// Every new person gets a profile row; onboarding fills it in.

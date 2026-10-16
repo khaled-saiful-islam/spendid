@@ -24,6 +24,8 @@ interface Deps {
 	merchants?: MerchantMemory;
 	/** A shop seen for the first time: match it to known ones in the background. */
 	onNewMerchant?: (merchantId: string) => Promise<unknown>;
+	/** After a new expense: budget, unusual and double-charge alerts. Never awaited. */
+	onCreated?: (userId: string, transactionId: string) => Promise<unknown>;
 }
 
 /** Adds, edits and removes spending, always converting into the person's home currency. */
@@ -35,6 +37,7 @@ export function createTransactionService({
 	onChange,
 	merchants,
 	onNewMerchant,
+	onCreated,
 }: Deps) {
 	const changed = <T>(userId: string, value: T): T => {
 		onChange?.(userId).catch(() => undefined);
@@ -99,6 +102,7 @@ export function createTransactionService({
 				occurredAt: input.occurredAt ? new Date(input.occurredAt) : new Date(),
 			});
 			await learn(userId, merchant, input.categoryId, 1);
+			onCreated?.(userId, created.id).catch(() => undefined);
 			return changed(userId, created);
 		},
 

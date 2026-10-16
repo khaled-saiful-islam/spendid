@@ -6,6 +6,7 @@ export * from "./health";
 export * from "./insights";
 export * from "./merchants";
 export * from "./money";
+export * from "./notifications";
 export * from "./number-words";
 export * from "./profile";
 export * from "./quick-entry";

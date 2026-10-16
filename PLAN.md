@@ -15,8 +15,8 @@ Dev: `make up` → web http://localhost:8600 · API http://localhost:8601 · Mai
 | M5 | AI layer: agent, ask-your-money, token guard | ✅ |
 | M6 | Admin console + AI cockpit | ✅ |
 | M7 | Family Circle: connections, sharing, pulse, goal jars, bill split | ✅ |
-| M8 | Insights + all notification emails + Money Wrapped | ☐ |
-| M9 | Delight: Pip, streaks, nightly check-in, impulse pause | ☐ |
+| M8 | Insights + all notification emails + Money Wrapped | ✅ |
+| M9 | Delight: Pip, streaks, nightly check-in, impulse pause | ⏳ |
 | M10 | Trust + polish: export / delete, hide balances, BM, PWA, E2E, phone audit, docs | ☐ |
 
 ---
@@ -99,6 +99,9 @@ Dev: `make up` → web http://localhost:8600 · API http://localhost:8601 · Mai
 - Smart category learning, merchant clean-up (pgvector), subscription detector, heatmap.
 - Money Wrapped story + shareable card.
 - All notification emails + preferences + quiet hours + unsubscribe + hide amounts.
+- Done: smart categories (every save teaches a shop's category; voice, receipts and the Type-it form use it), merchant clean-up (rules + bge-m3 embeddings in pgvector, merge below 0.17 cosine distance on lower-case keys), subscription/bill detection with price rises, bills still due kept aside in safe-to-spend, Insights tab (validated heatmap with list view, subscriptions), Money Wrapped story + shareable PNG (amounts can be hidden), Ask Spendid redesign + bills tool.
+- Emails: one notifier for every optional email (preferences per group, sent at most once per key, quiet hours delay, hidden amounts, signed unsubscribe link + RFC 8058 one-click). Alerts: budget 80%/100%, unusual (3× usual), same charge twice, goal reached. Scheduled hourly in the API: Monday 8am weekly summary; 9am bills due (3 days), price rises, warranties (30 and 7 days); the 1st at 9am Money Wrapped. Security (always, never delayed): new kind of device, passkey added. AI allowance used up (from API or worker). Admin announcements to people who kept "Spendid news" on.
+- Not in v1: trial-ending detection (no reliable signal without card data).
 
 ## M9 — Delight
 - Pip the pangolin (moods, reactions), streaks, nightly check-in, impulse pause wishlist.

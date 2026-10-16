@@ -28,12 +28,19 @@ export function SpendidCoin({
 		: state === "thinking"
 			? {
 					animate: { rotateY: [0, 360], y: 0 },
-					transition: { repeat: Number.POSITIVE_INFINITY, duration: 1.1, ease: "easeInOut" as const },
+					transition: {
+						repeat: Number.POSITIVE_INFINITY,
+						duration: 1.1,
+						ease: "easeInOut" as const,
+					},
 				}
 			: state === "answering"
 				? {
 						animate: { rotateY: 0, y: [0, -3, 0] },
-						transition: { rotateY: { duration: 0.3 }, y: { repeat: Number.POSITIVE_INFINITY, duration: 0.8 } },
+						transition: {
+							rotateY: { duration: 0.3 },
+							y: { repeat: Number.POSITIVE_INFINITY, duration: 0.8 },
+						},
 					}
 				: { animate: { rotateY: 0, y: 0 }, transition: { duration: 0.4 } };
 	return (

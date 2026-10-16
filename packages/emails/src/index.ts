@@ -13,6 +13,20 @@ export interface RenderedEmail {
 
 function content(job: EmailJob): { subject: string; props: ActionEmailProps } {
 	switch (job.type) {
+		case "notice":
+			return {
+				subject: job.subject,
+				props: {
+					preview: job.preview,
+					heading: job.heading,
+					body: `Hi ${job.name},\n${job.body}`,
+					rows: job.rows,
+					action: job.action,
+					url: job.url,
+					footnote: job.footnote,
+					unsubscribeUrl: job.unsubscribeUrl,
+				},
+			};
 		case "verify-email":
 			return {
 				subject: "Confirm your email for Spendid",
@@ -103,6 +117,7 @@ function content(job: EmailJob): { subject: string; props: ActionEmailProps } {
 /** Renders any email job to subject + HTML + plain text. */
 export async function renderEmail(job: EmailJob): Promise<RenderedEmail> {
 	const { subject, props } = content(job);
+	if (job.unsubscribeUrl && !props.unsubscribeUrl) props.unsubscribeUrl = job.unsubscribeUrl;
 	const element = createElement(ActionEmail, props);
 	const [html, text] = await Promise.all([
 		render(element),

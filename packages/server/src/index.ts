@@ -7,5 +7,6 @@ export * from "./ai/speech";
 export * from "./errors";
 export * from "./events/hub";
 export * from "./merchants";
+export * from "./queues";
 export * from "./settings";
 export * from "./storage/file-store";

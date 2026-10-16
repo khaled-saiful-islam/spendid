@@ -40,6 +40,7 @@ import {
 	createReceiptService,
 	RECEIPT_QUEUE,
 } from "./modules/receipts/receipts.service";
+import { createNotifications } from "./notify";
 
 const env = loadEnv();
 if (!env.RECEIPT_ENCRYPTION_KEY) {
@@ -50,18 +51,32 @@ if (!env.RECEIPT_ENCRYPTION_KEY) {
 const database = createDb(env.DATABASE_URL);
 const cache = createRedis(env.REDIS_URL);
 const outbox = createOutbox(database.db, cache.redis);
+const summary = createSummaryService(database.db);
+const insights = createInsightsService(database.db);
+const notifications = createNotifications({
+	db: database.db,
+	redisUrl: env.REDIS_URL,
+	sendEmail: outbox.send,
+	secret: env.BETTER_AUTH_SECRET,
+	appUrl: env.APP_URL,
+	summary,
+	insights,
+});
 const auth = createAuth({
 	env,
 	db: database.db,
 	redis: cache.redis,
 	sendEmail: outbox.send,
+	events: {
+		sessionCreated: notifications.security.sessionCreated,
+		passkeyAdded: notifications.security.passkeyAdded,
+	},
 });
 const session = sessionLookup(auth);
 const adminRepo = createAdminRepository(database.db);
 const categories = createCategoryRepository(database.db);
 const transactions = createTransactionRepository(database.db);
 const fx = createFxRepository(database.db);
-const summary = createSummaryService(database.db);
 const plan = createPlanRepository(database.db);
 const publish = createPublisher(cache.redis);
 const merchants = createMerchantMemory(database.db);
@@ -75,6 +90,7 @@ const transactionService = createTransactionService({
 	categories,
 	fx,
 	merchants,
+	onCreated: notifications.alerts.afterExpense,
 	onNewMerchant: (merchantId) =>
 		merchantQueue.add(
 			"match",
@@ -117,12 +133,14 @@ const guard = createAiGuard({
 	redis: cache.redis,
 	defaultMonthlyTokens: env.AI_MONTHLY_TOKENS_DEFAULT,
 	configured: env.ILMU_API_KEY.length > 0,
+	onLimitReached: notifications.aiLimit,
 });
 
 const app = await buildApp({
 	checks: { database: database.ping, redis: cache.ping },
 	version: process.env.npm_package_version ?? "0.0.0",
 	auth,
+	account: { auth, db: database.db },
 	me: { session, repo: createMeRepository(database.db) },
 	money: {
 		session,
@@ -132,6 +150,7 @@ const app = await buildApp({
 		summary,
 		plan,
 		merchants,
+		onDeposit: notifications.alerts.afterDeposit,
 	},
 	receipts: {
 		session,
@@ -149,7 +168,12 @@ const app = await buildApp({
 			appUrl: env.APP_URL,
 		}),
 	},
-	insights: { session, insights: createInsightsService(database.db) },
+	insights: { session, insights },
+	notify: {
+		session,
+		notifier: notifications.notifier,
+		links: notifications.links,
+	},
 	family: {
 		session,
 		family: createFamilyService({
@@ -157,6 +181,11 @@ const app = await buildApp({
 			sendEmail: outbox.send,
 			appUrl: env.APP_URL,
 			receiptImage: (ownerId, id) => receiptService.image(ownerId, id),
+			familyEmail: {
+				wanted: async (userId) =>
+					(await notifications.notifier.prefs(userId)).family,
+				unsubscribeUrl: (userId) => notifications.links.url(userId, "family"),
+			},
 			allowEmail: async (key) =>
 				(await cache.redis.set(
 					`email-quiet:${key}`,
@@ -167,7 +196,10 @@ const app = await buildApp({
 				)) === "OK",
 		}),
 		pulse: createPulseService(familyDeps),
-		jars: createJarsService(familyDeps),
+		jars: createJarsService({
+			...familyDeps,
+			onDeposit: notifications.alerts.afterDeposit,
+		}),
 		splits: createSplitService({ ...familyDeps, appUrl: env.APP_URL }),
 	},
 	ask: {
@@ -208,6 +240,7 @@ async function shutdown(signal: string): Promise<void> {
 		receiptQueue.close(),
 		merchantQueue.close(),
 		events.close(),
+		notifications.close(),
 		database.close(),
 		cache.close(),
 	]);
@@ -217,4 +250,5 @@ async function shutdown(signal: string): Promise<void> {
 process.once("SIGTERM", () => void shutdown("SIGTERM"));
 process.once("SIGINT", () => void shutdown("SIGINT"));
 
+await notifications.start();
 await app.listen({ host: "0.0.0.0", port: env.API_PORT });

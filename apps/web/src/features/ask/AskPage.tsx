@@ -309,7 +309,9 @@ export function AskPage({ initialQuestion }: { initialQuestion?: string }) {
 					<div className="flex min-w-0 items-center gap-3">
 						<SpendidCoin size="md" state={coinState} />
 						<div className="min-w-0">
-							<h1 className="text-[1.25rem] leading-tight font-extrabold">Ask Spendid</h1>
+							<h1 className="text-[1.25rem] leading-tight font-extrabold">
+								Ask Spendid
+							</h1>
 							<AllowanceRing />
 						</div>
 					</div>

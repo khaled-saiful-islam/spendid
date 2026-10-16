@@ -42,6 +42,11 @@ interface Deps {
 		ownerId: string,
 		receiptId: string,
 	) => Promise<{ bytes: Buffer; mime: string }>;
+	/** Email preferences: family emails only go to people who want them, with a way out. */
+	familyEmail?: {
+		wanted: (userId: string) => Promise<boolean>;
+		unsubscribeUrl: (userId: string) => string;
+	};
 	/** True at most once per key per EMAIL_QUIET_MS (Redis SET NX PX in the app). */
 	allowEmail: (key: string) => Promise<boolean>;
 }
@@ -77,6 +82,7 @@ export function createFamilyService(deps: Deps) {
 	async function emailChange(userId: string, change: string): Promise<void> {
 		const to = await repo.contact(userId);
 		if (!to) return;
+		if (deps.familyEmail && !(await deps.familyEmail.wanted(to.id))) return;
 		await deps.sendEmail({
 			type: "family-share-changed",
 			to: to.email,
@@ -84,6 +90,7 @@ export function createFamilyService(deps: Deps) {
 			userId: to.id,
 			change,
 			url: familyUrl,
+			unsubscribeUrl: deps.familyEmail?.unsubscribeUrl(to.id),
 		});
 	}
 
@@ -247,14 +254,16 @@ export function createFamilyService(deps: Deps) {
 			]);
 			if (me && inviter) {
 				await tell(inviterId, "circle", `${me.name} joined your circle.`);
-				await deps.sendEmail({
-					type: "family-joined",
-					to: inviter.email,
-					name: inviter.name,
-					userId: inviter.id,
-					joinerName: me.name,
-					url: familyUrl,
-				});
+				if (!deps.familyEmail || (await deps.familyEmail.wanted(inviter.id)))
+					await deps.sendEmail({
+						type: "family-joined",
+						to: inviter.email,
+						name: inviter.name,
+						userId: inviter.id,
+						joinerName: me.name,
+						url: familyUrl,
+						unsubscribeUrl: deps.familyEmail?.unsubscribeUrl(inviter.id),
+					});
 			}
 		},
 

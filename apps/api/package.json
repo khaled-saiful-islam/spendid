@@ -8,7 +8,8 @@
 		"typecheck": "tsc -p .",
 		"test": "vitest run",
 		"seed": "tsx src/scripts/setup.ts",
-		"demo": "tsx src/scripts/demo.ts"
+		"demo": "tsx src/scripts/demo.ts",
+		"digests": "tsx src/scripts/send-digests.ts"
 	},
 	"dependencies": {
 		"@better-auth/passkey": "1.7.10",

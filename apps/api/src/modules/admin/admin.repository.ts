@@ -1,6 +1,7 @@
 import {
 	aiLimit,
 	aiUsage,
+	announcement,
 	auditLog,
 	type Db,
 	emailLog,
@@ -244,6 +245,39 @@ export function createAdminRepository(db: Db) {
 				.from(auditLog)
 				.leftJoin(actor, eq(actor.id, auditLog.actorId))
 				.orderBy(desc(auditLog.createdAt))
+				.limit(limit);
+		},
+
+		async createAnnouncement(input: {
+			subject: string;
+			body: string;
+			createdBy: string;
+		}): Promise<string> {
+			const [row] = await db
+				.insert(announcement)
+				.values(input)
+				.returning({ id: announcement.id });
+			if (!row) throw new Error("announcement insert returned nothing");
+			return row.id;
+		},
+
+		async setRecipients(id: string, recipients: number): Promise<void> {
+			await db
+				.update(announcement)
+				.set({ recipients })
+				.where(eq(announcement.id, id));
+		},
+
+		async announcements(limit = 20) {
+			return db
+				.select({
+					id: announcement.id,
+					subject: announcement.subject,
+					recipients: announcement.recipients,
+					createdAt: announcement.createdAt,
+				})
+				.from(announcement)
+				.orderBy(desc(announcement.createdAt))
 				.limit(limit);
 		},
 	};

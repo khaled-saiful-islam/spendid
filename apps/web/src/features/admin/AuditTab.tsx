@@ -8,6 +8,7 @@ const LABELS: Record<string, string> = {
 	"account.reset-sent": "Sent a password reset",
 	"ai.limit-set": "Changed AI settings",
 	"settings.updated": "Changed app settings",
+	"announcement.sent": "Sent news",
 };
 
 /** Every admin action, newest first — for accountability. */

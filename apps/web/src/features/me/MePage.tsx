@@ -5,6 +5,7 @@ import { LogOut } from "lucide-react";
 import { buttonClass } from "@/components/ui/Button";
 import { authClient } from "@/lib/auth-client";
 import { METHODS } from "../onboarding/options";
+import { EmailSettings } from "./EmailSettings";
 import { PasskeyPanel } from "./PasskeyPanel";
 
 function initials(name: string): string {
@@ -88,6 +89,8 @@ export function MePage({ me }: { me: Me }) {
 					))}
 				</dl>
 			</section>
+
+			<EmailSettings />
 
 			<PasskeyPanel />
 

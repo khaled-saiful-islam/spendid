@@ -8,7 +8,10 @@ export interface EmailQueueData {
 	job: EmailJob;
 }
 
-export type SendEmail = (job: EmailJob) => Promise<void>;
+export type SendEmail = (
+	job: EmailJob,
+	opts?: { delayMs?: number },
+) => Promise<void>;
 
 /**
  * Records the email as queued (type + status only) and hands it to the worker.
@@ -17,17 +20,20 @@ export type SendEmail = (job: EmailJob) => Promise<void>;
 export function createOutbox(db: Db, redis: Redis) {
 	const queue = new Queue<EmailQueueData>(EMAIL_QUEUE, { connection: redis });
 
-	const send: SendEmail = async (input) => {
+	const send: SendEmail = async (input, opts = {}) => {
 		const job = EmailJobSchema.parse(input);
+		// Notices log their kind ("budget-alert"), so delivery stats stay meaningful.
+		const type = job.type === "notice" ? job.kind : job.type;
 		const [row] = await db
 			.insert(emailLog)
-			.values({ type: job.type, userId: job.userId ?? null })
+			.values({ type, userId: job.userId ?? null })
 			.returning({ id: emailLog.id });
 		if (!row) throw new Error("could not record email");
 		await queue.add(
 			job.type,
 			{ logId: row.id, job },
 			{
+				delay: Math.max(0, opts.delayMs ?? 0),
 				attempts: 5,
 				backoff: { type: "exponential", delay: 5_000 },
 				removeOnComplete: 1_000,

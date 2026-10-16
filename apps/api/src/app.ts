@@ -2,6 +2,7 @@ import Fastify, {
 	type FastifyInstance,
 	type FastifyServerOptions,
 } from "fastify";
+import { type AccountDeps, accountRoutes } from "./auth/account.routes";
 import type { Auth } from "./auth/auth";
 import type { SessionLookup } from "./auth/guards";
 import { authRoutes } from "./auth/routes";
@@ -28,6 +29,7 @@ import {
 	type ReceiptDeps,
 	receiptRoutes,
 } from "./modules/receipts/receipts.routes";
+import { type NotifyDeps, notifyRoutes } from "./notify/notify.routes";
 
 export interface AppDeps {
 	checks: HealthChecks;
@@ -36,6 +38,8 @@ export interface AppDeps {
 	version?: string;
 	/** Full Better Auth instance — mounts /api/auth/*. Omitted in unit tests. */
 	auth?: Auth;
+	/** Account help that sits beside Better Auth (resend confirmation by username). */
+	account?: AccountDeps;
 	me?: { session: SessionLookup; repo: MeRepository };
 	money?: MoneyDeps;
 	capture?: CaptureDeps;
@@ -44,6 +48,7 @@ export interface AppDeps {
 	admin?: AdminDeps;
 	family?: FamilyDeps;
 	insights?: InsightsDeps;
+	notify?: NotifyDeps;
 }
 
 /** Builds the Fastify app without listening, so tests can `inject` requests. */
@@ -64,6 +69,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 				version: deps.version ?? "0.0.0",
 			});
 			if (deps.auth) await api.register(authRoutes, { auth: deps.auth });
+			if (deps.account) await api.register(accountRoutes, deps.account);
 			if (deps.me) await api.register(meRoutes, deps.me);
 			if (deps.money) await api.register(moneyRoutes, deps.money);
 			if (deps.capture) await api.register(captureRoutes, deps.capture);
@@ -72,6 +78,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 			if (deps.admin) await api.register(adminRoutes, deps.admin);
 			if (deps.family) await api.register(familyRoutes, deps.family);
 			if (deps.insights) await api.register(insightsRoutes, deps.insights);
+			if (deps.notify) await api.register(notifyRoutes, deps.notify);
 		},
 		{ prefix: "/api" },
 	);

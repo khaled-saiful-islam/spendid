@@ -10,6 +10,8 @@ import {
 	createPublisher,
 	createReceiptReader,
 	MERCHANT_QUEUE,
+	NOTIFY_QUEUE,
+	type NotifyJob,
 } from "@spendid/server";
 import { Queue, Worker } from "bullmq";
 import { Redis } from "ioredis";
@@ -43,6 +45,8 @@ const connection = new Redis(env.REDIS_URL, { maxRetriesPerRequest: null });
 const database = createDb(env.DATABASE_URL, 4);
 // A separate plain connection for publishing (blocking worker connections can't PUBLISH reliably).
 const publisher = new Redis(env.REDIS_URL);
+// The API owns emails about people; the worker only hands it events.
+const notifyQueue = new Queue<NotifyJob>(NOTIFY_QUEUE, { connection });
 const guard = createAiGuard({
 	settings: createAppSettings({
 		db: database.db,
@@ -56,6 +60,12 @@ const guard = createAiGuard({
 	redis: publisher,
 	defaultMonthlyTokens: env.AI_MONTHLY_TOKENS_DEFAULT,
 	configured: env.ILMU_API_KEY.length > 0,
+	onLimitReached: (userId) =>
+		notifyQueue.add(
+			"ai-limit",
+			{ kind: "ai-limit", userId },
+			{ removeOnComplete: 200, attempts: 3 },
+		),
 });
 
 const merchants = createMerchantMemory(database.db);
@@ -151,6 +161,7 @@ async function shutdown(): Promise<void> {
 		...workers.map((w) => w.close()),
 		fxQueue.close(),
 		merchantQueue.close(),
+		notifyQueue.close(),
 	]);
 	await Promise.allSettled([
 		connection.quit(),

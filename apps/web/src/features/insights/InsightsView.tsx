@@ -33,16 +33,16 @@ function WrappedTeaser({ month }: { month: string }) {
 			/>
 			<motion.span
 				aria-hidden="true"
-				className="absolute -top-2 -right-1 text-[5rem] leading-none"
+				className="absolute top-4 right-4 grid size-16 place-items-center rounded-full bg-white/20 text-[2.2rem] ring-1 ring-white/40"
 				animate={reduce ? undefined : { rotate: [0, 8, -6, 0], y: [0, -4, 0] }}
 				transition={{ repeat: Number.POSITIVE_INFINITY, duration: 5 }}
 			>
 				{data.personality.emoji}
 			</motion.span>
-			<p className="relative flex items-center gap-1.5 font-semibold text-white/85">
+			<p className="relative flex items-center gap-1.5 pr-20 font-semibold text-white/85">
 				<Sparkles className="size-4" aria-hidden="true" /> Money Wrapped
 			</p>
-			<p className="relative mt-1 max-w-[16ch] text-[1.7rem] leading-tight font-bold">
+			<p className="relative mt-1 max-w-[16ch] pr-16 text-[1.7rem] leading-tight font-bold">
 				{data.inProgress ? `${name} so far` : `Your ${name}`}
 			</p>
 			<p className="relative mt-2 text-white/90">

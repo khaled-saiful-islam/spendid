@@ -95,4 +95,5 @@ export const FEATURE_NAMES: Record<string, string> = {
 	"voice-listen": "Voice: listening",
 	"voice-understand": "Voice: understanding",
 	"receipt-read": "Receipt reading",
+	"merchant-match": "Shop name matching",
 };

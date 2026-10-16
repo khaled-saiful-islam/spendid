@@ -24,6 +24,8 @@ export interface MoneyDeps {
 	summary: SummaryService;
 	plan: PlanRepository;
 	merchants?: MerchantMemory;
+	/** After money goes into a goal (goal-reached email). Never awaited. */
+	onDeposit?: (userId: string, goalId: string) => Promise<unknown>;
 }
 
 const IdParams = z.object({ id: z.uuid("Unknown item") });
@@ -146,10 +148,9 @@ export async function moneyRoutes(
 	app.post("/goals/:id/deposit", async (req) => {
 		const { id } = IdParams.parse(req.params);
 		const { amountMinor } = GoalDepositSchema.parse(req.body);
-		return {
-			success: true,
-			data: await deps.plan.deposit(uid(req), id, amountMinor),
-		};
+		const saved = await deps.plan.deposit(uid(req), id, amountMinor);
+		deps.onDeposit?.(uid(req), id).catch(() => undefined);
+		return { success: true, data: saved };
 	});
 
 	app.delete("/goals/:id", async (req) => {

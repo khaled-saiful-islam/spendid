@@ -110,7 +110,7 @@ export function moneyPersonality(input: {
 	if (needShare >= 0.65)
 		return {
 			title: "The Steady Planner",
-			emoji: "🧱",
+			emoji: "🗂️",
 			line: "Mostly essentials. Future you says thanks.",
 		};
 	if (wantShare >= 0.45)

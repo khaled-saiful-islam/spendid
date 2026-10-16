@@ -7,6 +7,7 @@ import { Field, PasswordField } from "@/components/form/Field";
 import { SubmitButton } from "@/components/form/SubmitButton";
 import { buttonClass } from "@/components/ui/Button";
 import { authClient, authErrorMessage } from "@/lib/auth-client";
+import { api } from "@/lib/http";
 import { homeFor, meQuery } from "@/lib/me";
 import { AuthLayout } from "./AuthLayout";
 
@@ -60,16 +61,16 @@ export function SignInPage({ notice }: SignInPageProps) {
 		await goHome();
 	}
 
+	/** Works with a username too: the server finds the email and sends the link. */
 	async function resendVerification() {
-		await authClient.sendVerificationEmail({
-			email: identifier.trim(),
-			callbackURL: "/onboarding",
-		});
+		await api("/api/account/resend-verification", {
+			method: "POST",
+			body: JSON.stringify({ identifier: identifier.trim() }),
+		}).catch(() => undefined);
 		setResent(true);
 	}
 
-	const canResend =
-		error?.code === "EMAIL_NOT_VERIFIED" && identifier.includes("@") && !resent;
+	const canResend = error?.code === "EMAIL_NOT_VERIFIED" && !resent;
 
 	return (
 		<AuthLayout

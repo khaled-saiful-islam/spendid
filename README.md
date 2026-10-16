@@ -54,6 +54,7 @@ maya and adam are already in each other's circle (spouses) and save into maya's 
 | `make logs s=api` | Follow logs for one service (`api`, `web`, `worker`, `db`) |
 | `make install` | Reinstall after editing a `package.json` |
 | `make demo` | Create the demo people above |
+| `make digests u=maya` | Send someone's weekly summary, bill, warranty and Wrapped emails now (normally scheduled) |
 | `make db-generate` | New migration after editing `packages/db/src/schema` |
 | `make test` | Unit + API tests |
 | `make typecheck` | TypeScript 7 across all packages |
@@ -71,6 +72,13 @@ packages/db     Drizzle schema, migrations (applied by the `migrate` service on 
 packages/emails React Email templates + the email job contract
 docker/         Dev image
 ```
+
+### Try insights and emails
+
+- **Activity → Insights**: the month as a heatmap, subscriptions found from spending (maya has a Netflix price rise), and Money Wrapped (tap *Play the story*).
+- **Ask Spendid**: tap one of your own numbers to ask about it.
+- **Emails**: `make digests u=maya`, then open Mailpit. Every optional email has *Turn them off*; choose emails, hide amounts and quiet hours under **Me → Emails**. Emails that would land in quiet hours (default 10pm–8am) wait until they end.
+- Add an expense bigger than 3× your usual for its category, or the same shop and amount twice in a day, to see the alerts.
 
 ## Rules worth knowing
 

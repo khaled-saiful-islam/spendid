@@ -2,7 +2,7 @@
 COMPOSE := docker compose
 NODE_RUN := $(COMPOSE) run --rm --no-deps deps
 
-.PHONY: help env up down restart logs ps sh-api install check fix typecheck test demo db-generate reset
+.PHONY: help env up down restart logs ps sh-api install check fix typecheck test demo digests db-generate reset
 
 help: ## Show commands
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-10s %s\n", $$1, $$2}'
@@ -51,6 +51,9 @@ test: ## Run unit + API tests
 
 demo: ## Create demo people: maya (set up) and adam (new) — password demo1234
 	$(COMPOSE) exec api pnpm --filter @spendid/api run demo
+
+digests: ## Send someone's digest emails now (make digests u=maya)
+	$(COMPOSE) exec api pnpm --filter @spendid/api run digests $(u)
 
 db-generate: ## Create a migration after editing packages/db/src/schema
 	$(NODE_RUN) pnpm --filter @spendid/db generate

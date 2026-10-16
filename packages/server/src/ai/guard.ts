@@ -39,6 +39,8 @@ export function createAiGuard(deps: {
 	configured: boolean;
 	/** Admin-controlled switches; without it the env defaults apply. */
 	settings?: AppSettingsStore;
+	/** Called once when a call takes someone past their monthly allowance. Never awaited. */
+	onLimitReached?: (userId: string) => Promise<unknown>;
 }) {
 	const { db, redis } = deps;
 	const usedKey = (userId: string) => `ai:used:${userId}:${monthKey()}`;
@@ -120,7 +122,12 @@ export function createAiGuard(deps: {
 				audioSeconds,
 				billedTokens,
 			});
-			await redis.incrby(usedKey(userId), billedTokens);
+			const after = await redis.incrby(usedKey(userId), billedTokens);
+			if (deps.onLimitReached && billedTokens > 0) {
+				const { limitTokens } = await status(userId);
+				if (after >= limitTokens && after - billedTokens < limitTokens)
+					deps.onLimitReached(userId).catch(() => undefined);
+			}
 		},
 	};
 }

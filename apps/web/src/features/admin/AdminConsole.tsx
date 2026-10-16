@@ -10,6 +10,7 @@ import { buttonClass } from "@/components/ui/Button";
 import { Toaster } from "@/components/ui/Toast";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/cn";
+import { AnnounceTab } from "./AnnounceTab";
 import { AuditTab } from "./AuditTab";
 import { OverviewTab } from "./OverviewTab";
 import { PeopleTab } from "./PeopleTab";
@@ -17,6 +18,7 @@ import { PeopleTab } from "./PeopleTab";
 const TABS = [
 	{ id: "overview", label: "Overview" },
 	{ id: "people", label: "People" },
+	{ id: "news", label: "Announcements" },
 	{ id: "audit", label: "Activity log" },
 ] as const;
 type Tab = (typeof TABS)[number]["id"];
@@ -98,6 +100,7 @@ export function AdminConsole({ me }: { me: Me }) {
 			<div role="tabpanel" className="py-6">
 				{tab === "overview" && <OverviewTab />}
 				{tab === "people" && <PeopleTab />}
+				{tab === "news" && <AnnounceTab />}
 				{tab === "audit" && <AuditTab />}
 			</div>
 			<Toaster />

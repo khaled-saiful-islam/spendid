@@ -30,6 +30,8 @@ export function createJarsService(deps: {
 	db: Db;
 	repo: FamilyRepository;
 	publish: Publish;
+	/** After a deposit (goal-reached email to the owner). Never awaited. */
+	onDeposit?: (userId: string, goalId: string) => Promise<unknown>;
 }) {
 	const { db, repo } = deps;
 
@@ -231,6 +233,7 @@ export function createJarsService(deps: {
 				(id) => id !== userId,
 			);
 			await tell(others, message);
+			deps.onDeposit?.(userId, goalId).catch(() => undefined);
 		},
 	};
 }
