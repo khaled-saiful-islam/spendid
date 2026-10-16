@@ -1,0 +1,127 @@
+@import "tailwindcss";
+@import "@fontsource-variable/bricolage-grotesque";
+@import "@fontsource-variable/figtree";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/*
+ * Spendid tokens. Plum is the brand ink, marigold is the coin (primary action),
+ * jade means "safe", coral means "over". Surfaces flip with data-theme.
+ */
+@theme {
+  --font-display: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Figtree Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --color-plum-50: #f6f3fc;
+  --color-plum-100: #ece5f8;
+  --color-plum-200: #d9ccf1;
+  --color-plum-300: #b9a3e3;
+  --color-plum-500: #7a4fc4;
+  --color-plum-700: #4b2a7b;
+  --color-plum-800: #331a5a;
+  --color-plum-900: #2a1446;
+  --color-plum-950: #170b26;
+
+  --color-marigold: #ffb224;
+  --color-marigold-deep: #f59300;
+  --color-jade: #12b886;
+  --color-coral: #ff5c7a;
+  --color-sky: #38bdf8;
+
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-line: var(--line);
+  --color-safe: var(--safe);
+  --color-over: var(--over);
+
+  --radius-coin: 9999px;
+  --radius-panel: 1.75rem;
+  --radius-tile: 1.125rem;
+
+  --shadow-lift: 0 1px 0 rgb(255 255 255 / 0.6) inset, 0 18px 40px -18px rgb(42 20 70 / 0.35);
+  --shadow-coin: 0 10px 30px -6px rgb(245 147 0 / 0.55), 0 0 0 6px rgb(255 178 36 / 0.18);
+
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+:root {
+  --bg: #f6f3fc;
+  --surface: #ffffff;
+  --surface-2: #ece5f8;
+  --ink: #20123a;
+  --ink-soft: #5b4d72;
+  --line: #ddd3ee;
+  --safe: #087f5b;
+  --over: #d6334f;
+  --scale-stroke: rgb(75 42 123 / 0.07);
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --bg: #170b26;
+  --surface: #221236;
+  --surface-2: #2e1a48;
+  --ink: #f4effc;
+  --ink-soft: #bfb0d8;
+  --line: #3d2760;
+  --safe: #3ddba8;
+  --over: #ff7d95;
+  --scale-stroke: rgb(185 163 227 / 0.07);
+  --shadow-lift: 0 1px 0 rgb(255 255 255 / 0.05) inset, 0 18px 40px -18px rgb(0 0 0 / 0.6);
+  color-scheme: dark;
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.55;
+    min-height: 100dvh;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-marigold);
+    outline-offset: 3px;
+    border-radius: 0.5rem;
+  }
+}
+
+@layer utilities {
+  /* Overlapping pangolin scales — Spendid's background texture. */
+  .bg-scales {
+    background-image: radial-gradient(
+      circle at 50% 0,
+      transparent 0 13px,
+      var(--scale-stroke) 13px 15px,
+      transparent 15px
+    );
+    background-size: 30px 15px;
+  }
+  .num {
+    font-family: var(--font-display);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+  .pb-safe {
+    padding-bottom: max(env(safe-area-inset-bottom), 0.75rem);
+  }
+}

@@ -1,0 +1,101 @@
+name: spendid
+
+# Shared settings for the Node services (deps installer, api, worker, web).
+x-node: &node
+  build:
+    context: .
+    dockerfile: docker/dev.Dockerfile
+  image: spendid-dev:latest
+  working_dir: /app
+  env_file: .env
+  volumes:
+    - .:/app
+    - nm_root:/app/node_modules
+    - nm_api:/app/apps/api/node_modules
+    - nm_web:/app/apps/web/node_modules
+    - nm_worker:/app/apps/worker/node_modules
+    - nm_shared:/app/packages/shared/node_modules
+    - pnpm_store:/pnpm-store
+
+services:
+  deps:
+    <<: *node
+    container_name: spendid-deps
+    command: pnpm install --child-concurrency=2 --network-concurrency=6
+    restart: "no"
+
+  db:
+    image: pgvector/pgvector:pg18
+    container_name: spendid-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "8602:5432"
+    volumes:
+      - db_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:8-alpine
+    container_name: spendid-redis
+    command: redis-server --appendonly yes
+    ports:
+      - "8603:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  mail:
+    image: axllent/mailpit:latest
+    container_name: spendid-mail
+    ports:
+      - "8604:8025"
+
+  api:
+    <<: *node
+    container_name: spendid-api
+    command: pnpm --filter @spendid/api dev
+    ports:
+      - "8601:8601"
+    depends_on:
+      deps: { condition: service_completed_successfully }
+      db: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  worker:
+    <<: *node
+    container_name: spendid-worker
+    command: pnpm --filter @spendid/worker dev
+    depends_on:
+      deps: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+
+  web:
+    <<: *node
+    container_name: spendid-web
+    command: pnpm --filter @spendid/web dev
+    ports:
+      - "8600:8600"
+    depends_on:
+      deps: { condition: service_completed_successfully }
+      api: { condition: service_started }
+
+volumes:
+  db_data:
+  redis_data:
+  pnpm_store:
+  nm_root:
+  nm_api:
+  nm_web:
+  nm_worker:
+  nm_shared:
