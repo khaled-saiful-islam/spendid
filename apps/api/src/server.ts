@@ -5,6 +5,12 @@ import { loadEnv } from "./config/env";
 import { createOutbox } from "./email/outbox";
 import { createRedis } from "./infra/redis";
 import { createMeRepository } from "./modules/me/me.repository";
+import { createCategoryRepository } from "./modules/money/categories.repository";
+import { createFxRepository } from "./modules/money/fx.repository";
+import { createPlanRepository } from "./modules/money/plan.repository";
+import { createSummaryService } from "./modules/money/summary.service";
+import { createTransactionRepository } from "./modules/money/transactions.repository";
+import { createTransactionService } from "./modules/money/transactions.service";
 
 const env = loadEnv();
 const database = createDb(env.DATABASE_URL);
@@ -16,12 +22,29 @@ const auth = createAuth({
 	redis: cache.redis,
 	sendEmail: outbox.send,
 });
+const session = sessionLookup(auth);
+const categories = createCategoryRepository(database.db);
+const transactions = createTransactionRepository(database.db);
+const fx = createFxRepository(database.db);
 
 const app = await buildApp({
 	checks: { database: database.ping, redis: cache.ping },
 	version: process.env.npm_package_version ?? "0.0.0",
 	auth,
-	me: { session: sessionLookup(auth), repo: createMeRepository(database.db) },
+	me: { session, repo: createMeRepository(database.db) },
+	money: {
+		session,
+		categories,
+		transactions,
+		transactionService: createTransactionService({
+			db: database.db,
+			transactions,
+			categories,
+			fx,
+		}),
+		summary: createSummaryService(database.db),
+		plan: createPlanRepository(database.db),
+	},
 	logger:
 		env.NODE_ENV === "development"
 			? { level: env.LOG_LEVEL, transport: { target: "pino-pretty" } }

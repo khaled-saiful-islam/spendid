@@ -1,11 +1,14 @@
+import { useQuery } from "@tanstack/react-query";
 import { Link, Outlet } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { motion } from "motion/react";
-import { useState } from "react";
 import { Logo } from "@/components/brand/Logo";
 import { ThemeToggle } from "@/components/system/ThemeToggle";
+import { Toaster } from "@/components/ui/Toast";
 import { cn } from "@/lib/cn";
-import { AddSheet } from "./AddSheet";
+import { meQuery } from "@/lib/me";
+import { CaptureHost } from "../capture/CaptureHost";
+import { capture } from "../capture/capture-store";
 import { NAV_ITEMS, type NavItem } from "./nav";
 
 function NavLink({ item, compact }: { item: NavItem; compact?: boolean }) {
@@ -13,7 +16,7 @@ function NavLink({ item, compact }: { item: NavItem; compact?: boolean }) {
 	return (
 		<Link
 			to={item.to}
-			activeOptions={{ exact: true }}
+			activeOptions={{ exact: item.to === "/app" }}
 			className={cn(
 				"group flex items-center rounded-full font-medium text-ink-soft transition-colors",
 				compact
@@ -33,11 +36,11 @@ function NavLink({ item, compact }: { item: NavItem; compact?: boolean }) {
 	);
 }
 
-function AddButton({ onClick, wide }: { onClick: () => void; wide?: boolean }) {
+function AddButton({ wide }: { wide?: boolean }) {
 	return (
 		<motion.button
 			type="button"
-			onClick={onClick}
+			onClick={capture.openMenu}
 			whileTap={{ scale: 0.9 }}
 			whileHover={{ scale: 1.04 }}
 			aria-label="Add spending"
@@ -58,34 +61,63 @@ function AddButton({ onClick, wide }: { onClick: () => void; wide?: boolean }) {
 	);
 }
 
+/** Initials avatar that opens the Me page. */
+function MeLink({ withName }: { withName?: boolean }) {
+	const { data: me } = useQuery(meQuery);
+	const name = me?.user.name ?? "";
+	const initials = name
+		.split(/\s+/)
+		.filter(Boolean)
+		.slice(0, 2)
+		.map((w) => w[0]?.toUpperCase())
+		.join("");
+	return (
+		<Link
+			to="/app/me"
+			aria-label="Your profile and settings"
+			className="flex min-w-0 items-center gap-3 rounded-full p-1 pr-3 hover:bg-surface-2 data-[status=active]:bg-surface-2"
+		>
+			<span className="grid size-10 shrink-0 place-items-center rounded-full bg-plum-900 font-display font-bold text-marigold dark:bg-plum-50 dark:text-plum-900">
+				{initials || "?"}
+			</span>
+			{withName && (
+				<span className="min-w-0 font-semibold break-words">{name}</span>
+			)}
+		</Link>
+	);
+}
+
 /** Phone: bottom bar with a centre + button. Desktop: sidebar. */
 export function AppShell() {
-	const [adding, setAdding] = useState(false);
 	const [first, second, ...rest] = NAV_ITEMS;
 
 	return (
 		<div className="min-h-dvh md:grid md:grid-cols-[16rem_1fr]">
 			<aside className="sticky top-0 hidden h-dvh flex-col gap-6 border-r border-line p-5 md:flex">
-				<Link to="/" aria-label="Spendid home">
+				<Link to="/app" aria-label="Spendid home">
 					<Logo />
 				</Link>
-				<AddButton wide onClick={() => setAdding(true)} />
+				<AddButton wide />
 				<nav className="flex flex-col gap-1" aria-label="Main">
 					{NAV_ITEMS.map((item) => (
 						<NavLink key={item.to} item={item} />
 					))}
 				</nav>
-				<div className="mt-auto">
+				<div className="mt-auto flex items-center justify-between gap-2">
+					<MeLink withName />
 					<ThemeToggle />
 				</div>
 			</aside>
 
 			<div className="min-w-0 pb-28 md:pb-0">
 				<header className="flex items-center justify-between px-4 pt-4 md:hidden">
-					<Link to="/" aria-label="Spendid home">
+					<Link to="/app" aria-label="Spendid home">
 						<Logo />
 					</Link>
-					<ThemeToggle />
+					<div className="flex items-center gap-1">
+						<ThemeToggle />
+						<MeLink />
+					</div>
 				</header>
 				<main className="mx-auto max-w-3xl px-4 py-6 sm:px-6 md:py-10">
 					<Outlet />
@@ -100,7 +132,7 @@ export function AppShell() {
 					{first && <NavLink item={first} compact />}
 					{second && <NavLink item={second} compact />}
 					<div className="flex flex-1 justify-center">
-						<AddButton onClick={() => setAdding(true)} />
+						<AddButton />
 					</div>
 					{rest.map((item) => (
 						<NavLink key={item.to} item={item} compact />
@@ -108,7 +140,8 @@ export function AppShell() {
 				</div>
 			</nav>
 
-			<AddSheet open={adding} onClose={() => setAdding(false)} />
+			<CaptureHost />
+			<Toaster />
 		</div>
 	);
 }

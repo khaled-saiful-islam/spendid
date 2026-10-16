@@ -1,17 +1,16 @@
 import { formatMinor } from "@spendid/shared";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
-import { CountUp } from "@/components/money/CountUp";
-import { SafeDial } from "@/components/money/SafeDial";
+import { AnimatePresence } from "motion/react";
+import { buttonClass } from "@/components/ui/Button";
 import { meQuery } from "@/lib/me";
-
-// Preview numbers until real data arrives in M2.
-const PREVIEW = {
-	currency: "MYR",
-	allowance: 6000,
-	remaining: 4820,
-	goal: "Bali trip",
-};
+import { goalsQuery, summaryQuery } from "@/lib/money-api";
+import { capture } from "../capture/capture-store";
+import { TransactionRow, useCategoryMap } from "../money/TransactionRow";
+import { GoalJar } from "../plan/GoalJar";
+import { MonthCard } from "./MonthCard";
+import { SafeCard } from "./SafeCard";
 
 function greeting(date: Date): string {
 	const h = date.getHours();
@@ -22,60 +21,120 @@ function greeting(date: Date): string {
 
 export function HomePage() {
 	const { data: me } = useSuspenseQuery(meQuery);
-	const firstName = me?.user.name.split(" ")[0] ?? "";
+	const { data: summary } = useQuery(summaryQuery);
+	const { data: goals = [] } = useQuery(goalsQuery);
+	const categories = useCategoryMap();
 	const now = new Date();
-	const day = now.toLocaleDateString(undefined, {
-		weekday: "long",
-		day: "numeric",
-		month: "long",
-	});
+	const firstName = me?.user.name.split(" ")[0] ?? "";
+	const todayTotal =
+		summary?.today.reduce((s, t) => s + t.homeAmountMinor, 0) ?? 0;
 
 	return (
 		<div className="space-y-6">
 			<div>
-				<p className="text-ink-soft">{day}</p>
+				<p className="text-ink-soft">
+					{now.toLocaleDateString(undefined, {
+						weekday: "long",
+						day: "numeric",
+						month: "long",
+					})}
+				</p>
 				<h1 className="mt-1 text-[clamp(2rem,7vw,2.8rem)] font-bold">
 					{greeting(now)}, {firstName}
 				</h1>
 			</div>
 
-			<section className="relative overflow-hidden rounded-panel bg-plum-900 p-6 text-plum-50 sm:p-8 dark:bg-plum-800">
-				<span className="absolute top-4 right-4 rounded-full bg-white/10 px-2.5 py-1 text-[0.78rem]">
-					Preview
-				</span>
-				<div className="grid items-center gap-6 sm:grid-cols-[1fr_auto]">
-					<div>
-						<p className="text-plum-200">Safe to spend today</p>
-						<CountUp
-							minor={PREVIEW.remaining}
-							currency={PREVIEW.currency}
-							className="num mt-1 block text-[clamp(3rem,13vw,4.5rem)] leading-none font-extrabold text-marigold"
-						/>
-						<p className="mt-3 max-w-[34ch] text-plum-200">
-							That keeps you on track for {PREVIEW.goal}, with{" "}
-							{formatMinor(PREVIEW.allowance, PREVIEW.currency)} set aside for
-							each day.
-						</p>
-					</div>
-					<SafeDial
-						remainingMinor={PREVIEW.remaining}
-						allowanceMinor={PREVIEW.allowance}
-						className="mx-auto w-44"
-					/>
+			{summary ? (
+				<SafeCard summary={summary} />
+			) : (
+				<div className="h-56 animate-pulse rounded-panel bg-surface-2" />
+			)}
+
+			<section
+				aria-labelledby="today-title"
+				className="rounded-panel border border-line bg-surface p-3 sm:p-4"
+			>
+				<div className="flex items-center justify-between gap-3 px-2 pt-2">
+					<h2 id="today-title" className="text-[1.4rem] font-bold">
+						Today
+					</h2>
+					{summary && todayTotal > 0 && (
+						<span className="num font-semibold text-ink-soft">
+							{formatMinor(todayTotal, summary.homeCurrency)}
+						</span>
+					)}
 				</div>
+				{summary && summary.today.length === 0 ? (
+					<div className="px-2 py-8 text-center">
+						<p className="font-display text-[1.2rem] font-bold">
+							Nothing logged yet today
+						</p>
+						<p className="mx-auto mt-1 max-w-[34ch] text-ink-soft">
+							Say it, snap it or type it. It takes a few seconds.
+						</p>
+						<button
+							type="button"
+							onClick={capture.openType}
+							className={buttonClass("coin", "md", "mt-4")}
+						>
+							<Plus className="size-5" aria-hidden="true" /> Add an expense
+						</button>
+					</div>
+				) : (
+					<ul className="mt-2">
+						<AnimatePresence initial={false}>
+							{summary?.today.map((t) => (
+								<TransactionRow
+									key={t.id}
+									t={t}
+									category={categories.get(t.categoryId)}
+								/>
+							))}
+						</AnimatePresence>
+					</ul>
+				)}
 			</section>
 
-			<section className="rounded-panel border border-dashed border-line p-6 text-center">
-				<h2 className="text-[1.4rem] font-bold">Nothing logged today</h2>
-				<p className="mx-auto mt-2 max-w-[36ch] text-ink-soft">
-					Tap{" "}
-					<Plus
-						className="inline size-4 align-[-2px]"
-						aria-label="the plus button"
-					/>{" "}
-					and say, snap or type your first expense.
-				</p>
-			</section>
+			{summary && summary.monthSpentMinor > 0 && (
+				<MonthCard summary={summary} />
+			)}
+
+			{goals.length > 0 && summary && (
+				<section aria-labelledby="goals-title">
+					<div className="flex items-center justify-between">
+						<h2 id="goals-title" className="text-[1.4rem] font-bold">
+							Saving for
+						</h2>
+						<Link
+							to="/app/plan"
+							className="font-medium text-ink-soft hover:text-ink"
+						>
+							All goals
+						</Link>
+					</div>
+					<ul className="mt-3 grid grid-cols-2 gap-3">
+						{goals.slice(0, 2).map((g) => (
+							<li
+								key={g.id}
+								className="rounded-panel border border-line bg-surface p-4"
+							>
+								<GoalJar
+									ratio={g.savedMinor / g.targetMinor}
+									emoji={g.emoji}
+									className="mx-auto h-24"
+								/>
+								<p className="mt-2 text-center font-semibold break-words">
+									{g.name}
+								</p>
+								<p className="num text-center text-[0.9rem] text-ink-soft">
+									{Math.round((g.savedMinor / g.targetMinor) * 100)}% of{" "}
+									{formatMinor(g.targetMinor, summary.homeCurrency)}
+								</p>
+							</li>
+						))}
+					</ul>
+				</section>
+			)}
 		</div>
 	);
 }

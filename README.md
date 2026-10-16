@@ -29,7 +29,7 @@ Postgres is on `localhost:8602`, Redis on `localhost:8603`.
 | Sign in with | Password | Who |
 |---|---|---|
 | `admin` | `admin` | Admin — manages accounts and the app, never sees spending (dev only; production refuses this password) |
-| `maya` | `demo1234` | Normal person, already set up |
+| `maya` | `demo1234` | Normal person, set up, with this month's spending and two goals |
 | `adam` | `demo1234` | Normal person, goes through onboarding on first sign-in |
 
 New sign-ups get a confirmation email — open Mailpit at http://localhost:8604 to click it.

@@ -28,7 +28,7 @@ export function SafeDial({
 	const percent = Math.round(Math.min(ratio, 1) * 100);
 
 	return (
-		<div className={cn("relative aspect-square", className)}>
+		<div className={cn("@container relative aspect-square", className)}>
 			<svg
 				viewBox="0 0 200 200"
 				className="size-full -rotate-90"
@@ -73,10 +73,12 @@ export function SafeDial({
 				/>
 			</svg>
 			<div className="absolute inset-0 grid place-content-center text-center text-plum-900">
-				<span className="num text-[clamp(2.2rem,9vw,3.1rem)] font-extrabold leading-none">
+				<span className="num text-[17cqw] font-extrabold leading-none">
 					{percent}%
 				</span>
-				<span className="mt-1 text-[0.8rem] font-semibold">of today left</span>
+				<span className="mt-1 text-[max(0.7rem,6.5cqw)] leading-tight font-semibold">
+					of today left
+				</span>
 			</div>
 			<span className="sr-only">
 				{percent} percent of today's safe-to-spend amount is left.

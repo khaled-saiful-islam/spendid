@@ -8,6 +8,13 @@
       "when": 1792131225225,
       "tag": "0000_outgoing_arclight",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792132594686,
+      "tag": "0001_dazzling_jackal",
+      "breakpoints": true
     }
   ]
 }

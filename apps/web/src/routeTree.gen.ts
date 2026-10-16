@@ -22,6 +22,7 @@ import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as AppActivityRouteImport } from './routes/app/activity'
 import { Route as AppFamilyRouteImport } from './routes/app/family'
 import { Route as AppMeRouteImport } from './routes/app/me'
+import { Route as AppPlanRouteImport } from './routes/app/plan'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -88,6 +89,11 @@ const AppMeRoute = AppMeRouteImport.update({
   path: '/me',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const AppPlanRoute = AppPlanRouteImport.update({
+  id: '/plan',
+  path: '/plan',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -102,6 +108,7 @@ export interface FileRoutesByFullPath {
   '/app/activity': typeof AppActivityRoute
   '/app/family': typeof AppFamilyRoute
   '/app/me': typeof AppMeRoute
+  '/app/plan': typeof AppPlanRoute
   '/app/': typeof AppIndexRoute
 }
 export interface FileRoutesByTo {
@@ -116,6 +123,7 @@ export interface FileRoutesByTo {
   '/app/activity': typeof AppActivityRoute
   '/app/family': typeof AppFamilyRoute
   '/app/me': typeof AppMeRoute
+  '/app/plan': typeof AppPlanRoute
   '/app': typeof AppIndexRoute
 }
 export interface FileRoutesById {
@@ -132,6 +140,7 @@ export interface FileRoutesById {
   '/app/activity': typeof AppActivityRoute
   '/app/family': typeof AppFamilyRoute
   '/app/me': typeof AppMeRoute
+  '/app/plan': typeof AppPlanRoute
   '/app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
@@ -149,6 +158,7 @@ export interface FileRouteTypes {
     | '/app/activity'
     | '/app/family'
     | '/app/me'
+    | '/app/plan'
     | '/app/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -163,6 +173,7 @@ export interface FileRouteTypes {
     | '/app/activity'
     | '/app/family'
     | '/app/me'
+    | '/app/plan'
     | '/app'
   id:
     | '__root__'
@@ -178,6 +189,7 @@ export interface FileRouteTypes {
     | '/app/activity'
     | '/app/family'
     | '/app/me'
+    | '/app/plan'
     | '/app/'
   fileRoutesById: FileRoutesById
 }
@@ -286,6 +298,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMeRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/app/plan': {
+      id: '/app/plan'
+      path: '/plan'
+      fullPath: '/app/plan'
+      preLoaderRoute: typeof AppPlanRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
   }
 }
 
@@ -293,6 +312,7 @@ interface AppRouteRouteChildren {
   AppActivityRoute: typeof AppActivityRoute
   AppFamilyRoute: typeof AppFamilyRoute
   AppMeRoute: typeof AppMeRoute
+  AppPlanRoute: typeof AppPlanRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
@@ -300,6 +320,7 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppActivityRoute: AppActivityRoute,
   AppFamilyRoute: AppFamilyRoute,
   AppMeRoute: AppMeRoute,
+  AppPlanRoute: AppPlanRoute,
   AppIndexRoute: AppIndexRoute,
 }
 

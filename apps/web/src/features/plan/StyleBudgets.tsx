@@ -1,0 +1,232 @@
+import {
+	type BudgetLine,
+	type Category,
+	formatMinor,
+	minorDigits,
+	type Summary,
+	toMinor,
+} from "@spendid/shared";
+import { useQueryClient } from "@tanstack/react-query";
+import { motion } from "motion/react";
+import { useState } from "react";
+import { CategoryIcon } from "@/components/money/CategoryIcon";
+import { cn } from "@/lib/cn";
+import { moneyApi, refreshMoney } from "@/lib/money-api";
+
+function Bar({
+	spent,
+	target,
+	tone,
+}: {
+	spent: number;
+	target: number;
+	tone: string;
+}) {
+	const ratio = target > 0 ? spent / target : 0;
+	return (
+		<div className="mt-2 h-3 overflow-hidden rounded-full bg-surface-2">
+			<motion.div
+				className={cn("h-full rounded-full", ratio > 1 ? "bg-coral" : tone)}
+				initial={{ width: 0 }}
+				animate={{ width: `${Math.min(ratio, 1) * 100}%` }}
+				transition={{ type: "spring", stiffness: 80, damping: 18 }}
+			/>
+		</div>
+	);
+}
+
+/** Needs / wants / savings against 50 / 30 / 20 of income. */
+export function FiftyThirtyTwenty({
+	summary,
+	categories,
+}: {
+	summary: Summary;
+	categories: Map<string, Category>;
+}) {
+	const income = summary.incomeMinor ?? 0;
+	const spentBy = (kind: Category["kind"]) =>
+		summary.byCategory
+			.filter((c) => categories.get(c.categoryId)?.kind === kind)
+			.reduce((s, c) => s + c.spentMinor, 0);
+	const money = (m: number) => formatMinor(m, summary.homeCurrency);
+	const rows = [
+		{
+			label: "Needs",
+			hint: "Bills, groceries, transport, health",
+			spent: spentBy("need"),
+			target: income * 0.5,
+			tone: "bg-jade",
+		},
+		{
+			label: "Wants",
+			hint: "Eating out, shopping, fun, travel",
+			spent: spentBy("want"),
+			target: income * 0.3,
+			tone: "bg-sky",
+		},
+	];
+
+	return (
+		<div className="space-y-5">
+			{rows.map((r) => (
+				<div key={r.label}>
+					<div className="flex flex-wrap items-baseline justify-between gap-x-3">
+						<span className="font-display text-[1.2rem] font-bold">
+							{r.label}
+						</span>
+						<span className="num text-ink-soft">
+							<strong className="text-ink">{money(r.spent)}</strong> of{" "}
+							{money(r.target)}
+						</span>
+					</div>
+					<p className="text-[0.88rem] text-ink-soft">{r.hint}</p>
+					<Bar spent={r.spent} target={r.target} tone={r.tone} />
+				</div>
+			))}
+			<div className="rounded-tile bg-marigold/15 p-4">
+				<span className="font-display text-[1.2rem] font-bold">Savings</span>
+				<p className="mt-1 text-ink-soft">
+					<strong className="num text-ink">
+						{money(summary.reservedMinor)}
+					</strong>{" "}
+					is kept aside first this month, before your daily number is worked
+					out.
+				</p>
+			</div>
+		</div>
+	);
+}
+
+interface CategoryBudgetsProps {
+	summary: Summary;
+	categories: Category[];
+	budgets: BudgetLine[];
+	zeroBased: boolean;
+}
+
+/** Envelope and zero-based styles: a limit per category, set inline. */
+export function CategoryBudgets({
+	summary,
+	categories,
+	budgets,
+	zeroBased,
+}: CategoryBudgetsProps) {
+	const queryClient = useQueryClient();
+	const [editing, setEditing] = useState<string | null>(null);
+	const [value, setValue] = useState("");
+	const cur = summary.homeCurrency;
+	const limitOf = new Map(
+		budgets.map((b) => [b.categoryId, b.monthlyLimitMinor]),
+	);
+	const spentOf = new Map(
+		summary.byCategory.map((c) => [c.categoryId, c.spentMinor]),
+	);
+	const assigned =
+		budgets.reduce((s, b) => s + b.monthlyLimitMinor, 0) +
+		summary.reservedMinor;
+	const unassigned = (summary.incomeMinor ?? 0) - assigned;
+
+	async function save(categoryId: string) {
+		const n = Number(value.replace(",", "."));
+		const monthlyLimitMinor =
+			value.trim() === "" || n === 0 ? null : toMinor(n, cur);
+		if (monthlyLimitMinor !== null && !(n > 0)) return;
+		await moneyApi.setBudget({ categoryId, monthlyLimitMinor });
+		await refreshMoney(queryClient);
+		setEditing(null);
+	}
+
+	return (
+		<div className="space-y-4">
+			{zeroBased && summary.incomeMinor !== null && (
+				<p
+					className={cn(
+						"rounded-tile p-4 font-medium",
+						unassigned === 0 ? "bg-jade/12 text-safe" : "bg-marigold/15",
+					)}
+				>
+					{unassigned === 0
+						? "Every bit of income has a job. Nicely done."
+						: unassigned > 0
+							? `${formatMinor(unassigned, cur)} still needs a job.`
+							: `You've planned ${formatMinor(-unassigned, cur)} more than you earn.`}
+				</p>
+			)}
+			<ul className="divide-y divide-line">
+				{categories.map((c) => {
+					const limit = limitOf.get(c.id);
+					const spent = spentOf.get(c.id) ?? 0;
+					const open = editing === c.id;
+					return (
+						<li key={c.id} className="py-3">
+							<div className="flex items-center gap-3">
+								<CategoryIcon
+									icon={c.icon}
+									tint={c.tint}
+									size="sm"
+									className="size-9"
+								/>
+								<span className="min-w-0 flex-1 font-medium break-words">
+									{c.name}
+								</span>
+								<button
+									type="button"
+									onClick={() => {
+										setEditing(open ? null : c.id);
+										setValue(
+											limit ? (limit / 10 ** minorDigits(cur)).toString() : "",
+										);
+									}}
+									className="num shrink-0 rounded-full px-3 py-1.5 text-right text-[0.92rem] hover:bg-surface-2"
+								>
+									{limit ? (
+										<>
+											<strong>{formatMinor(spent, cur)}</strong>{" "}
+											<span className="text-ink-soft">
+												of {formatMinor(limit, cur)}
+											</span>
+										</>
+									) : (
+										<span className="font-semibold text-plum-500">
+											Set limit
+										</span>
+									)}
+								</button>
+							</div>
+							{limit ? (
+								<Bar spent={spent} target={limit} tone="bg-plum-500" />
+							) : null}
+							{open && (
+								<form
+									className="mt-3 flex gap-2"
+									onSubmit={(e) => {
+										e.preventDefault();
+										void save(c.id);
+									}}
+								>
+									<input
+										ref={(el) => el?.focus()}
+										inputMode="decimal"
+										aria-label={`Monthly limit for ${c.name}`}
+										placeholder="Monthly limit"
+										value={value}
+										onChange={(e) =>
+											setValue(e.target.value.replace(/[^\d.,]/g, ""))
+										}
+										className="num h-11 min-w-0 flex-1 rounded-full border-2 border-line bg-bg px-4 outline-none focus:border-plum-500"
+									/>
+									<button
+										type="submit"
+										className="h-11 shrink-0 rounded-full bg-plum-900 px-5 font-semibold text-plum-50 dark:bg-plum-50 dark:text-plum-900"
+									>
+										Save
+									</button>
+								</form>
+							)}
+						</li>
+					);
+				})}
+			</ul>
+		</div>
+	);
+}

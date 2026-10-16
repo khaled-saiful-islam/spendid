@@ -1,9 +1,10 @@
 import { createDb } from "@spendid/db";
 import { EMAIL_QUEUE } from "@spendid/emails";
-import { Worker } from "bullmq";
+import { Queue, Worker } from "bullmq";
 import { Redis } from "ioredis";
 import { z } from "zod";
 import { createEmailProcessor, type EmailQueueData } from "./email";
+import { FX_QUEUE, refreshRates } from "./fx";
 
 const env = z
 	.object({
@@ -29,14 +30,33 @@ const workers = [
 		}),
 		{ connection, concurrency: 5 },
 	),
+	new Worker(
+		FX_QUEUE,
+		async () => ({ stored: await refreshRates(database.db) }),
+		{
+			connection,
+			concurrency: 1,
+		},
+	),
 ];
+
+// Exchange rates: once at startup, then every 6 hours (ECB publishes once per working day).
+const fxQueue = new Queue(FX_QUEUE, { connection });
+await fxQueue.upsertJobScheduler(
+	"fx-refresh",
+	{ every: 6 * 60 * 60 * 1000, immediately: true },
+	{
+		name: "refresh",
+		opts: { attempts: 5, backoff: { type: "exponential", delay: 30_000 } },
+	},
+);
 
 for (const w of workers) {
 	w.on("ready", () =>
 		process.stdout.write(`[worker] listening on "${w.name}"\n`),
 	);
 	w.on("completed", (job) =>
-		process.stdout.write(`[worker] ${w.name}: ${job.name} sent\n`),
+		process.stdout.write(`[worker] ${w.name}: ${job.name} done\n`),
 	);
 	w.on("failed", (job, err) =>
 		process.stderr.write(
@@ -46,7 +66,7 @@ for (const w of workers) {
 }
 
 async function shutdown(): Promise<void> {
-	await Promise.allSettled(workers.map((w) => w.close()));
+	await Promise.allSettled([...workers.map((w) => w.close()), fxQueue.close()]);
 	await Promise.allSettled([connection.quit(), database.close()]);
 	process.exit(0);
 }

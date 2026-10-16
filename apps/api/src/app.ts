@@ -12,6 +12,7 @@ import {
 } from "./modules/health/health.routes";
 import type { MeRepository } from "./modules/me/me.repository";
 import { meRoutes } from "./modules/me/me.routes";
+import { type MoneyDeps, moneyRoutes } from "./modules/money/money.routes";
 
 export interface AppDeps {
 	checks: HealthChecks;
@@ -21,6 +22,7 @@ export interface AppDeps {
 	/** Full Better Auth instance — mounts /api/auth/*. Omitted in unit tests. */
 	auth?: Auth;
 	me?: { session: SessionLookup; repo: MeRepository };
+	money?: MoneyDeps;
 }
 
 /** Builds the Fastify app without listening, so tests can `inject` requests. */
@@ -42,6 +44,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 			});
 			if (deps.auth) await api.register(authRoutes, { auth: deps.auth });
 			if (deps.me) await api.register(meRoutes, deps.me);
+			if (deps.money) await api.register(moneyRoutes, deps.money);
 		},
 		{ prefix: "/api" },
 	);

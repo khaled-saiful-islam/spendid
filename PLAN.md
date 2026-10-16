@@ -9,8 +9,8 @@ Dev: `make up` → web http://localhost:8600 · API http://localhost:8601 · Mai
 |---|---|---|
 | M0 | Scaffold + design system + app shell + animated welcome | ✅ |
 | M1 | Auth, roles, emails (verify / reset), onboarding, passkey lock | ✅ |
-| M2 | Money core + Safe-to-spend orb + budgets + goals | ⏳ |
-| M3 | Voice capture + one-breath logging | ☐ |
+| M2 | Money core + Safe-to-spend orb + budgets + goals | ✅ |
+| M3 | Voice capture + one-breath logging | ⏳ |
 | M4 | Receipt camera + line items + price memory + warranty vault | ☐ |
 | M5 | AI layer: agent, ask-your-money, token guard | ☐ |
 | M6 | Admin console + AI cockpit | ☐ |
@@ -47,6 +47,8 @@ Dev: `make up` → web http://localhost:8600 · API http://localhost:8601 · Mai
 - FX rates daily job; travel currency entry.
 - **Safe-to-spend orb** on home; budgets (envelope / zero-based / 50-30-20); savings goals.
 - **Test**: add expenses in two currencies, watch the orb change, set a budget, create a goal.
+- Formula (`packages/shared/src/safe-to-spend.ts`): (income − savings kept aside − spent before today) ÷ days left, minus today's spending. 50/30/20 keeps max(20% of income, what goals need) aside.
+- Exchange rates: ECB via Frankfurter, refreshed by the worker every 6 hours (29 currencies; others must be logged in the home currency).
 
 ## M3 — Voice
 - Port Mentora `useRecorder` + `wav` (16 kHz) + speech provider to TS; add Silero VAD.
