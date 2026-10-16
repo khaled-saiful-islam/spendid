@@ -2,6 +2,7 @@ import { createDb } from "@spendid/db";
 import { EMAIL_QUEUE } from "@spendid/emails";
 import {
 	createAiGuard,
+	createAppSettings,
 	createFileStore,
 	createPublisher,
 	createReceiptReader,
@@ -37,6 +38,14 @@ const database = createDb(env.DATABASE_URL, 4);
 // A separate plain connection for publishing (blocking worker connections can't PUBLISH reliably).
 const publisher = new Redis(env.REDIS_URL);
 const guard = createAiGuard({
+	settings: createAppSettings({
+		db: database.db,
+		redis: publisher,
+		defaults: {
+			aiEnabled: true,
+			defaultMonthlyTokens: env.AI_MONTHLY_TOKENS_DEFAULT,
+		},
+	}),
 	db: database.db,
 	redis: publisher,
 	defaultMonthlyTokens: env.AI_MONTHLY_TOKENS_DEFAULT,

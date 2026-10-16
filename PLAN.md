@@ -13,8 +13,8 @@ Dev: `make up` → web http://localhost:8600 · API http://localhost:8601 · Mai
 | M3 | Voice capture + one-breath logging | ✅ |
 | M4 | Receipt camera + line items + price memory + warranty vault | ✅ |
 | M5 | AI layer: agent, ask-your-money, token guard | ✅ |
-| M6 | Admin console + AI cockpit | ⏳ |
-| M7 | Family Circle: connections, sharing, pulse, goal jars, bill split | ☐ |
+| M6 | Admin console + AI cockpit | ✅ |
+| M7 | Family Circle: connections, sharing, pulse, goal jars, bill split | ⏳ |
 | M8 | Insights + all notification emails + Money Wrapped | ☐ |
 | M9 | Delight: Pip, streaks, nightly check-in, impulse pause | ☐ |
 | M10 | Trust + polish: export / delete, hide balances, BM, PWA, E2E, phone audit, docs | ☐ |
@@ -80,6 +80,9 @@ Dev: `make up` → web http://localhost:8600 · API http://localhost:8601 · Mai
 - Users list / search, ban / unban / delete, AI limits + kill switch, AI cockpit, email delivery stats,
   app settings, audit log. No route reaches money tables (test enforces this).
 - **Test**: as admin, lower a user's limit and turn AI off; confirm no spending data is visible anywhere.
+- Done: Overview (people, AI cockpit: tokens today/month, by feature, 30-day line, global AI switch, default allowance; email delivery), People (search, AI usage bar, AI limit + on/off, send reset link, pause/restore with email, delete with typed confirmation), Activity log.
+- Account actions go through Better Auth's admin API (our role has no impersonate/set-password/set-email). Admins can't act on themselves or other admins. `admin.boundary.test.ts` fails if the admin module ever imports a money table.
+- Settings live in `app_setting` (cached 30 s in Redis); the AI guard in API and worker reads them.
 
 ## M7 — Family Circle
 - Invite by link / QR / email; relation; two-way accept; share levels; pause / stop; "what they see" panel.

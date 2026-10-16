@@ -2,6 +2,7 @@ import { aiLimit, aiUsage, type Db } from "@spendid/db";
 import { and, eq, gte, sql } from "drizzle-orm";
 import type { Redis } from "ioredis";
 import { ServiceError as AppError } from "../errors";
+import type { AppSettingsStore } from "../settings";
 
 /** Spoken seconds are billed as tokens so one allowance covers every AI feature. */
 export const AUDIO_TOKENS_PER_SECOND = 25;
@@ -18,6 +19,7 @@ export interface UsageRecord {
 
 export interface AiStatus {
 	enabled: boolean;
+	pausedForEveryone: boolean;
 	usedTokens: number;
 	limitTokens: number;
 }
@@ -35,6 +37,8 @@ export function createAiGuard(deps: {
 	redis: Redis;
 	defaultMonthlyTokens: number;
 	configured: boolean;
+	/** Admin-controlled switches; without it the env defaults apply. */
+	settings?: AppSettingsStore;
 }) {
 	const { db, redis } = deps;
 	const usedKey = (userId: string) => `ai:used:${userId}:${monthKey()}`;
@@ -61,10 +65,12 @@ export function createAiGuard(deps: {
 			.from(aiLimit)
 			.where(eq(aiLimit.userId, userId))
 			.limit(1);
+		const app = deps.settings ? await deps.settings.get() : { aiEnabled: true, defaultMonthlyTokens: deps.defaultMonthlyTokens };
 		return {
-			enabled: deps.configured && (limit?.enabled ?? true),
+			enabled: deps.configured && app.aiEnabled && (limit?.enabled ?? true),
+			pausedForEveryone: !app.aiEnabled,
 			usedTokens: await usedThisMonth(userId),
-			limitTokens: limit?.monthlyTokens ?? deps.defaultMonthlyTokens,
+			limitTokens: limit?.monthlyTokens ?? app.defaultMonthlyTokens,
 		};
 	}
 
@@ -74,6 +80,8 @@ export function createAiGuard(deps: {
 		/** Throws a plain-language AppError when AI can't be used right now. */
 		async assertAllowed(userId: string): Promise<void> {
 			const s = await status(userId);
+			if (s.pausedForEveryone)
+				throw new AppError(403, "AI features are paused for a moment. You can still type expenses.");
 			if (!s.enabled)
 				throw new AppError(
 					403,

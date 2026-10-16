@@ -1,6 +1,7 @@
 import { createDb } from "@spendid/db";
 import {
 	createAiGuard,
+	createAppSettings,
 	createEventHub,
 	createExpenseExtractor,
 	createFileStore,
@@ -12,6 +13,8 @@ import { createAuth, sessionLookup } from "./auth/auth";
 import { loadEnv } from "./config/env";
 import { createOutbox } from "./email/outbox";
 import { createRedis } from "./infra/redis";
+import { createAdminRepository } from "./modules/admin/admin.repository";
+import { createAdminService } from "./modules/admin/admin.service";
 import { createAskAgent } from "./modules/ask/ask.agent";
 import { createVoiceService } from "./modules/capture/voice.service";
 import { createMeRepository } from "./modules/me/me.repository";
@@ -42,6 +45,7 @@ const auth = createAuth({
 	sendEmail: outbox.send,
 });
 const session = sessionLookup(auth);
+const adminRepo = createAdminRepository(database.db);
 const categories = createCategoryRepository(database.db);
 const transactions = createTransactionRepository(database.db);
 const fx = createFxRepository(database.db);
@@ -58,7 +62,16 @@ const receiptQueue = new Queue<{ receiptId: string }>(RECEIPT_QUEUE, {
 	connection: cache.redis,
 });
 const ilmu = { baseUrl: env.ILMU_BASE_URL, apiKey: env.ILMU_API_KEY };
+const settings = createAppSettings({
+	db: database.db,
+	redis: cache.redis,
+	defaults: {
+		aiEnabled: true,
+		defaultMonthlyTokens: env.AI_MONTHLY_TOKENS_DEFAULT,
+	},
+});
 const guard = createAiGuard({
+	settings,
 	db: database.db,
 	redis: cache.redis,
 	defaultMonthlyTokens: env.AI_MONTHLY_TOKENS_DEFAULT,
@@ -89,6 +102,17 @@ const app = await buildApp({
 				root: env.RECEIPTS_DIR,
 				keyBase64: env.RECEIPT_ENCRYPTION_KEY,
 			}),
+		}),
+	},
+	admin: {
+		session,
+		repo: adminRepo,
+		service: createAdminService({
+			repo: adminRepo,
+			auth,
+			settings,
+			sendEmail: outbox.send,
+			appUrl: env.APP_URL,
 		}),
 	},
 	ask: {

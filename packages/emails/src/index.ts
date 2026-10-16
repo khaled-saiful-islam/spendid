@@ -25,6 +25,30 @@ function content(job: EmailJob): { subject: string; props: ActionEmailProps } {
 					footnote: "This link works for 24 hours.",
 				},
 			};
+		case "account-paused":
+			return {
+				subject: "Your Spendid account is paused",
+				props: {
+					preview: "Your account has been paused.",
+					heading: "Your account is paused",
+					body: `Hi ${job.name}, the Spendid team has paused your account${job.reason ? ` because: ${job.reason}` : ""}. Your data is safe and nothing has been deleted. Reply to this email if you think this is a mistake.`,
+					action: "Contact support",
+					url: "mailto:support@spendid.app",
+					footnote: "Paused accounts can't sign in until they're restored.",
+				},
+			};
+		case "account-restored":
+			return {
+				subject: "Your Spendid account is back",
+				props: {
+					preview: "You can sign in again.",
+					heading: "Welcome back",
+					body: `Hi ${job.name}, your account is active again. Everything is just as you left it.`,
+					action: "Open Spendid",
+					url: job.url,
+					footnote: "Thanks for your patience.",
+				},
+			};
 		case "reset-password":
 			return {
 				subject: "Reset your Spendid password",

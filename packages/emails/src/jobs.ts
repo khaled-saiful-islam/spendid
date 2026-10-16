@@ -9,6 +9,8 @@ const base = { to: z.email(), name: z.string().min(1), userId: z.string().option
 export const EmailJobSchema = z.discriminatedUnion("type", [
 	z.object({ type: z.literal("verify-email"), ...base, url: z.url() }),
 	z.object({ type: z.literal("reset-password"), ...base, url: z.url() }),
+	z.object({ type: z.literal("account-paused"), ...base, reason: z.string().max(300).nullable() }),
+	z.object({ type: z.literal("account-restored"), ...base, url: z.url() }),
 ]);
 
 export type EmailJob = z.infer<typeof EmailJobSchema>;

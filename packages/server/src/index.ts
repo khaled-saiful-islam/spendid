@@ -5,4 +5,5 @@ export * from "./ai/read-receipt";
 export * from "./ai/speech";
 export * from "./errors";
 export * from "./events/hub";
+export * from "./settings";
 export * from "./storage/file-store";

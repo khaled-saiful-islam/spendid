@@ -4,8 +4,11 @@ import { motion, useReducedMotion } from "motion/react";
 import { type PointerEvent, useId, useState } from "react";
 import { cn } from "@/lib/cn";
 
+/** Turns a value into display text (money by default). */
+type Format = (value: number) => string;
+
 /** Ranked horizontal bars: magnitude in one hue; labels and values in text colours. */
-function Bars({ chart }: { chart: ChartSpec }) {
+function Bars({ chart, fmt }: { chart: ChartSpec; fmt: Format }) {
 	const reduce = useReducedMotion();
 	const max = Math.max(...chart.points.map((p) => Math.abs(p.value)), 1);
 	return (
@@ -31,9 +34,7 @@ function Bars({ chart }: { chart: ChartSpec }) {
 							}}
 						/>
 					</span>
-					<span className="num font-semibold text-ink">
-						{formatMinor(p.value, chart.currency)}
-					</span>
+					<span className="num font-semibold text-ink">{fmt(p.value)}</span>
 				</li>
 			))}
 		</ul>
@@ -45,7 +46,7 @@ const H = 140;
 const PAD = { l: 8, r: 8, t: 12, b: 22 };
 
 /** One 2px line with a soft area and a crosshair tooltip that follows the pointer. */
-function Line({ chart }: { chart: ChartSpec }) {
+function Line({ chart, fmt }: { chart: ChartSpec; fmt: Format }) {
 	const gradient = useId();
 	const [active, setActive] = useState<number | null>(null);
 	const values = chart.points.map((p) => p.value);
@@ -150,9 +151,7 @@ function Line({ chart }: { chart: ChartSpec }) {
 			{point && (
 				<div className="pointer-events-none absolute top-0 right-0 rounded-tile bg-plum-900 px-3 py-1.5 text-[0.85rem] text-plum-50 shadow-lift dark:bg-plum-50 dark:text-plum-900">
 					<span className="block text-[0.75rem] opacity-80">{point.label}</span>
-					<span className="num font-bold">
-						{formatMinor(point.value, chart.currency)}
-					</span>
+					<span className="num font-bold">{fmt(point.value)}</span>
 				</div>
 			)}
 		</div>
@@ -160,7 +159,14 @@ function Line({ chart }: { chart: ChartSpec }) {
 }
 
 /** A chart from the assistant, with a "show numbers" table for accessibility. */
-export function ChartView({ chart }: { chart: ChartSpec }) {
+export function ChartView({
+	chart,
+	format,
+}: {
+	chart: ChartSpec;
+	format?: Format;
+}) {
+	const fmt: Format = format ?? ((v) => formatMinor(v, chart.currency));
 	const [table, setTable] = useState(false);
 	return (
 		<figure className="rounded-panel border border-line bg-surface p-4">
@@ -193,16 +199,16 @@ export function ChartView({ chart }: { chart: ChartSpec }) {
 									{p.label}
 								</th>
 								<td className="num py-1.5 text-right font-semibold">
-									{formatMinor(p.value, chart.currency)}
+									{fmt(p.value)}
 								</td>
 							</tr>
 						))}
 					</tbody>
 				</table>
 			) : chart.kind === "bar" ? (
-				<Bars chart={chart} />
+				<Bars chart={chart} fmt={fmt} />
 			) : (
-				<Line chart={chart} />
+				<Line chart={chart} fmt={fmt} />
 			)}
 		</figure>
 	);
