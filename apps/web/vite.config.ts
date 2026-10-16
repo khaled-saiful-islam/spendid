@@ -4,7 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
-import { vadAssets } from "./vite-plugins/vad-assets";
+import { localAssets } from "./vite-plugins/local-assets";
 
 export default defineConfig({
 	plugins: [
@@ -13,8 +13,8 @@ export default defineConfig({
 		react(),
 		babel({ presets: [reactCompilerPreset()] }),
 		tailwindcss(),
-		// Voice: the Silero VAD model and ONNX runtime are served from our own origin, never a CDN.
-		vadAssets(),
+		// Voice (Silero VAD + ONNX) and camera (OpenCV) files come from our own origin, never a CDN.
+		localAssets(),
 	],
 	// Bundle the VAD with its ONNX runtime so the browser never sees a bare `require`.
 	optimizeDeps: { include: ["@ricky0123/vad-web", "onnxruntime-web/wasm"] },

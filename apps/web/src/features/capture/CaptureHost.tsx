@@ -3,6 +3,8 @@ import { ChevronRight, Keyboard, Mic, ScanLine } from "lucide-react";
 import { Sheet } from "@/components/ui/Sheet";
 import { cn } from "@/lib/cn";
 import { meQuery } from "@/lib/me";
+import { ReceiptSheetBody } from "../scan/ReceiptSheetBody";
+import { ScanCamera } from "../scan/ScanCamera";
 import { VoiceCapture } from "../voice/VoiceCapture";
 import { capture, useCapture } from "./capture-store";
 import { ExpenseForm } from "./ExpenseForm";
@@ -20,7 +22,7 @@ const MODES = [
 		icon: ScanLine,
 		title: "Scan a receipt",
 		hint: "Point your camera, it captures by itself",
-		ready: "M4",
+		ready: null,
 	},
 	{
 		id: "type",
@@ -80,7 +82,11 @@ export function CaptureHost() {
 										type="button"
 										data-autofocus
 										onClick={
-											id === "voice" ? capture.openVoice : capture.openType
+											id === "voice"
+												? capture.openVoice
+												: id === "scan"
+													? capture.openScan
+													: capture.openType
 										}
 										className={cn(rowClass, "hover:bg-surface-2")}
 									>
@@ -91,6 +97,22 @@ export function CaptureHost() {
 						);
 					})}
 				</ul>
+			</Sheet>
+
+			{state.view === "scan" && <ScanCamera />}
+
+			<Sheet
+				open={state.view === "receipt"}
+				onClose={capture.close}
+				title="Check your receipt"
+			>
+				{state.view === "receipt" && (
+					<ReceiptSheetBody
+						key={state.receiptId}
+						id={state.receiptId}
+						homeCurrency={homeCurrency}
+					/>
+				)}
 			</Sheet>
 
 			<Sheet

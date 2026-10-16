@@ -1,7 +1,12 @@
 import { createDb } from "@spendid/db";
-import { createExpenseExtractor } from "./ai/extract-expenses";
-import { createAiGuard } from "./ai/guard";
-import { createTranscriber } from "./ai/speech";
+import {
+	createAiGuard,
+	createEventHub,
+	createExpenseExtractor,
+	createFileStore,
+	createTranscriber,
+} from "@spendid/server";
+import { Queue } from "bullmq";
 import { buildApp } from "./app";
 import { createAuth, sessionLookup } from "./auth/auth";
 import { loadEnv } from "./config/env";
@@ -15,8 +20,17 @@ import { createPlanRepository } from "./modules/money/plan.repository";
 import { createSummaryService } from "./modules/money/summary.service";
 import { createTransactionRepository } from "./modules/money/transactions.repository";
 import { createTransactionService } from "./modules/money/transactions.service";
+import {
+	createReceiptService,
+	RECEIPT_QUEUE,
+} from "./modules/receipts/receipts.service";
 
 const env = loadEnv();
+if (!env.RECEIPT_ENCRYPTION_KEY) {
+	throw new Error(
+		"RECEIPT_ENCRYPTION_KEY is missing. Run `make env` or set it in .env (openssl rand -base64 32).",
+	);
+}
 const database = createDb(env.DATABASE_URL);
 const cache = createRedis(env.REDIS_URL);
 const outbox = createOutbox(database.db, cache.redis);
@@ -30,6 +44,16 @@ const session = sessionLookup(auth);
 const categories = createCategoryRepository(database.db);
 const transactions = createTransactionRepository(database.db);
 const fx = createFxRepository(database.db);
+const transactionService = createTransactionService({
+	db: database.db,
+	transactions,
+	categories,
+	fx,
+});
+const events = createEventHub(env.REDIS_URL);
+const receiptQueue = new Queue<{ receiptId: string }>(RECEIPT_QUEUE, {
+	connection: cache.redis,
+});
 const ilmu = { baseUrl: env.ILMU_BASE_URL, apiKey: env.ILMU_API_KEY };
 const guard = createAiGuard({
 	db: database.db,
@@ -47,14 +71,22 @@ const app = await buildApp({
 		session,
 		categories,
 		transactions,
-		transactionService: createTransactionService({
-			db: database.db,
-			transactions,
-			categories,
-			fx,
-		}),
+		transactionService,
 		summary: createSummaryService(database.db),
 		plan: createPlanRepository(database.db),
+	},
+	receipts: {
+		session,
+		events,
+		receipts: createReceiptService({
+			db: database.db,
+			queue: receiptQueue,
+			transactions: transactionService,
+			store: createFileStore({
+				root: env.RECEIPTS_DIR,
+				keyBase64: env.RECEIPT_ENCRYPTION_KEY,
+			}),
+		}),
 	},
 	capture: {
 		session,
@@ -77,7 +109,13 @@ const app = await buildApp({
 async function shutdown(signal: string): Promise<void> {
 	app.log.info({ signal }, "shutting down");
 	await app.close();
-	await Promise.allSettled([outbox.close(), database.close(), cache.close()]);
+	await Promise.allSettled([
+		outbox.close(),
+		receiptQueue.close(),
+		events.close(),
+		database.close(),
+		cache.close(),
+	]);
 	process.exit(0);
 }
 

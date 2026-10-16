@@ -17,6 +17,7 @@
 		"@spendid/shared": "workspace:*",
 		"@tanstack/react-query": "5.104.3",
 		"@tanstack/react-router": "1.170.44",
+		"@techstark/opencv-js": "5.0.0-release.1",
 		"better-auth": "1.7.10",
 		"canvas-confetti": "1.9.4",
 		"clsx": "2.1.1",

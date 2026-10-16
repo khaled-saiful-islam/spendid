@@ -34,8 +34,9 @@ Seeded admin: `admin` / `admin` (dev only; prod refuses insecure defaults).
 ### Capture
 - **SP-02 Voice** — tap and talk; Silero VAD in the browser (served from our origin) starts/stops on speech and keeps short pauses in one note; ILMU ASR → number words to digits → one structured ILMU call (hedged against slow replies) → draft cards → review → save all. Offline splitter if AI is off. No live captions: browser speech APIs send audio to third parties.
   **One-breath logging**: "Grab 15, coffee 6, and 40 for Sam's dinner split half" → 3 cards.
-- **SP-01 Receipt camera** — live edge detection, steady auto-capture, crop + deskew, multi-receipt, gallery/PDF
-  upload → ILMU vision → merchant, line items, tax, category.
+- **SP-01 Receipt camera** — live edge detection (OpenCV.js in a worker), steady auto-capture, perspective flatten,
+  torch, gallery images; background read by ILMU vision → merchant, date, line items, tax, category; live update
+  when ready; scan several in a row ("receipts to check" tray). PDF upload later.
 - **Chat entry** and **manual entry** (fast form with smart defaults).
 
 ### Understand

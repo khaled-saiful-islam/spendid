@@ -22,6 +22,13 @@
       "when": 1792135545260,
       "tag": "0002_lumpy_queen_noir",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792137453650,
+      "tag": "0003_bored_aqueduct",
+      "breakpoints": true
     }
   ]
 }

@@ -6,6 +6,8 @@ export type CaptureState =
 	| { view: "menu" }
 	| { view: "type" }
 	| { view: "voice" }
+	| { view: "scan" }
+	| { view: "receipt"; receiptId: string }
 	| { view: "edit"; transaction: Transaction };
 
 let state: CaptureState = { view: "closed" };
@@ -21,9 +23,14 @@ export const capture = {
 	openMenu: () => set({ view: "menu" }),
 	openType: () => set({ view: "type" }),
 	openVoice: () => set({ view: "voice" }),
+	openScan: () => set({ view: "scan" }),
+	openReceipt: (receiptId: string) => set({ view: "receipt", receiptId }),
 	edit: (transaction: Transaction) => set({ view: "edit", transaction }),
 	close: () => set({ view: "closed" }),
 };
+
+/** Current state without subscribing (for event handlers). */
+export const getCaptureState = (): CaptureState => state;
 
 export function useCapture(): CaptureState {
 	return useSyncExternalStore(

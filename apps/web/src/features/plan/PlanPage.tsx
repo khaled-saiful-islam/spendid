@@ -10,6 +10,7 @@ import { useCategoryMap } from "../money/TransactionRow";
 import { METHODS } from "../onboarding/options";
 import { GoalsSection } from "./GoalsSection";
 import { CategoryBudgets, FiftyThirtyTwenty } from "./StyleBudgets";
+import { WarrantyVault } from "./WarrantyVault";
 
 export function PlanPage() {
 	const { data: summary } = useQuery(summaryQuery);
@@ -64,6 +65,7 @@ export function PlanPage() {
 			</section>
 
 			<GoalsSection goals={goals} cur={summary.homeCurrency} />
+			<WarrantyVault />
 		</div>
 	);
 }

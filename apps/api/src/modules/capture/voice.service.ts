@@ -1,4 +1,10 @@
 import { type Db, profile } from "@spendid/db";
+import type {
+	AiGuard,
+	ExpenseExtractor,
+	SpokenExpense,
+	Transcriber,
+} from "@spendid/server";
 import {
 	type Category,
 	formatMinor,
@@ -11,12 +17,6 @@ import {
 } from "@spendid/shared";
 import { eq } from "drizzle-orm";
 import type { FastifyBaseLogger } from "fastify";
-import type {
-	ExpenseExtractor,
-	SpokenExpense,
-} from "../../ai/extract-expenses";
-import type { AiGuard } from "../../ai/guard";
-import type { Transcriber } from "../../ai/speech";
 import { AppError } from "../../http/app-error";
 import type { CategoryRepository } from "../money/categories.repository";
 

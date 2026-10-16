@@ -11,8 +11,8 @@ Dev: `make up` → web http://localhost:8600 · API http://localhost:8601 · Mai
 | M1 | Auth, roles, emails (verify / reset), onboarding, passkey lock | ✅ |
 | M2 | Money core + Safe-to-spend orb + budgets + goals | ✅ |
 | M3 | Voice capture + one-breath logging | ✅ |
-| M4 | Receipt camera + line items + price memory + warranty vault | ⏳ |
-| M5 | AI layer: agent, ask-your-money, token guard | ☐ |
+| M4 | Receipt camera + line items + price memory + warranty vault | ✅ |
+| M5 | AI layer: agent, ask-your-money, token guard | ⏳ |
 | M6 | Admin console + AI cockpit | ☐ |
 | M7 | Family Circle: connections, sharing, pulse, goal jars, bill split | ☐ |
 | M8 | Insights + all notification emails + Money Wrapped | ☐ |
@@ -63,6 +63,10 @@ Dev: `make up` → web http://localhost:8600 · API http://localhost:8601 · Mai
 - Upload → BullMQ → ILMU vision (Zod schema) → draft with line items; SSE live status.
 - Encrypted receipt storage; `transaction_item`; **price memory**; **warranty vault**.
 - **Test**: scan a receipt → watch it read → save → see items and any warranty.
+- Done: OpenCV.js 5 in a classic worker (`apps/web/workers/scanner.worker.js`, served at `/cv/*` with the VAD files by `vite-plugins/local-assets.ts`), auto-capture after ~1 s steady, perspective flatten to ≤1800 px JPEG.
+- Photos: AES-256-GCM on the `receipts_data` volume (`RECEIPT_ENCRYPTION_KEY`), type sniffed from bytes. Worker reads with ilmu-vision-v1.3 (~2–6 s), pushes `receipt` events over SSE (`/api/events`), UI also polls while reading.
+- Price memory: `itemKey()` (sorted lower-case words) + last unit price in the same currency. Warranty offered for items with a stated warranty or ≥ 50 in the receipt currency.
+- No PDF upload yet (vision takes images); gallery images work.
 
 ## M5 — AI layer
 - LangChain v1 agent on ILMU; tools scoped server-side; chat entry.

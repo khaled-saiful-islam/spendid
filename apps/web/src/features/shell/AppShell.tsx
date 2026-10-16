@@ -9,6 +9,7 @@ import { cn } from "@/lib/cn";
 import { meQuery } from "@/lib/me";
 import { CaptureHost } from "../capture/CaptureHost";
 import { capture } from "../capture/capture-store";
+import { useLiveEvents } from "../live/useLiveEvents";
 import { NAV_ITEMS, type NavItem } from "./nav";
 
 function NavLink({ item, compact }: { item: NavItem; compact?: boolean }) {
@@ -89,6 +90,7 @@ function MeLink({ withName }: { withName?: boolean }) {
 
 /** Phone: bottom bar with a centre + button. Desktop: sidebar. */
 export function AppShell() {
+	useLiveEvents();
 	const [first, second, ...rest] = NAV_ITEMS;
 
 	return (

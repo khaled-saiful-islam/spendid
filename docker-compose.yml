@@ -17,6 +17,8 @@ x-node: &node
     - nm_shared:/app/packages/shared/node_modules
     - nm_db:/app/packages/db/node_modules
     - nm_emails:/app/packages/emails/node_modules
+    - nm_server:/app/packages/server/node_modules
+    - receipts_data:/data/receipts
     - pnpm_store:/pnpm-store
 
 services:
@@ -119,3 +121,5 @@ volumes:
   nm_shared:
   nm_db:
   nm_emails:
+  nm_server:
+  receipts_data:

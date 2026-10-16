@@ -24,6 +24,9 @@ const EnvSchema = z
 		ILMU_TEXT_MODEL: z.string().min(1).default("ilmu-v3.1"),
 		ILMU_VISION_MODEL: z.string().min(1).default("ilmu-vision-v1.3"),
 		ILMU_ASR_MODEL: z.string().min(1).default("ilmu-asr-v4.2"),
+		RECEIPTS_DIR: z.string().min(1).default("/data/receipts"),
+		// 32 random bytes, base64. Empty turns receipt scanning off.
+		RECEIPT_ENCRYPTION_KEY: z.string().default(""),
 		AI_MONTHLY_TOKENS_DEFAULT: z.coerce.number().int().min(0).default(200_000),
 	})
 	.superRefine((env, ctx) => {

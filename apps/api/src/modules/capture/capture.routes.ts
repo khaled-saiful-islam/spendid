@@ -1,5 +1,5 @@
+import type { AiGuard } from "@spendid/server";
 import type { FastifyInstance } from "fastify";
-import type { AiGuard } from "../../ai/guard";
 import { requireMember, type SessionLookup } from "../../auth/guards";
 import { badRequest } from "../../http/app-error";
 import type { VoiceService } from "./voice.service";

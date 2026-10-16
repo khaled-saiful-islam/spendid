@@ -9,6 +9,7 @@ import { goalsQuery, summaryQuery } from "@/lib/money-api";
 import { capture } from "../capture/capture-store";
 import { TransactionRow, useCategoryMap } from "../money/TransactionRow";
 import { GoalJar } from "../plan/GoalJar";
+import { PendingReceipts } from "../scan/PendingReceipts";
 import { MonthCard } from "./MonthCard";
 import { SafeCard } from "./SafeCard";
 
@@ -43,6 +44,8 @@ export function HomePage() {
 					{greeting(now)}, {firstName}
 				</h1>
 			</div>
+
+			<PendingReceipts />
 
 			{summary ? (
 				<SafeCard summary={summary} />

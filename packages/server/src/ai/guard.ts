@@ -1,7 +1,7 @@
 import { aiLimit, aiUsage, type Db } from "@spendid/db";
 import { and, eq, gte, sql } from "drizzle-orm";
 import type { Redis } from "ioredis";
-import { AppError } from "../http/app-error";
+import { ServiceError as AppError } from "../errors";
 
 /** Spoken seconds are billed as tokens so one allowance covers every AI feature. */
 export const AUDIO_TOKENS_PER_SECOND = 25;

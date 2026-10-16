@@ -16,6 +16,7 @@
 		"@langchain/openai": "1.6.2",
 		"@spendid/db": "workspace:*",
 		"@spendid/emails": "workspace:*",
+		"@spendid/server": "workspace:*",
 		"@spendid/shared": "workspace:*",
 		"better-auth": "1.7.10",
 		"bullmq": "6.3.15",

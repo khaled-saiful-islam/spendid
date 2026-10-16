@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { AppError } from "../http/app-error";
+import { ServiceError as AppError } from "../errors";
 
 export interface Transcript {
 	text: string;
