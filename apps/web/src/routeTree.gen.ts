@@ -20,6 +20,7 @@ import { Route as SigninRouteImport } from './routes/signin'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as AppActivityRouteImport } from './routes/app/activity'
+import { Route as AppAskRouteImport } from './routes/app/ask'
 import { Route as AppFamilyRouteImport } from './routes/app/family'
 import { Route as AppMeRouteImport } from './routes/app/me'
 import { Route as AppPlanRouteImport } from './routes/app/plan'
@@ -79,6 +80,11 @@ const AppActivityRoute = AppActivityRouteImport.update({
   path: '/activity',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const AppAskRoute = AppAskRouteImport.update({
+  id: '/ask',
+  path: '/ask',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppFamilyRoute = AppFamilyRouteImport.update({
   id: '/family',
   path: '/family',
@@ -106,6 +112,7 @@ export interface FileRoutesByFullPath {
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/app/activity': typeof AppActivityRoute
+  '/app/ask': typeof AppAskRoute
   '/app/family': typeof AppFamilyRoute
   '/app/me': typeof AppMeRoute
   '/app/plan': typeof AppPlanRoute
@@ -121,6 +128,7 @@ export interface FileRoutesByTo {
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/app/activity': typeof AppActivityRoute
+  '/app/ask': typeof AppAskRoute
   '/app/family': typeof AppFamilyRoute
   '/app/me': typeof AppMeRoute
   '/app/plan': typeof AppPlanRoute
@@ -138,6 +146,7 @@ export interface FileRoutesById {
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/app/activity': typeof AppActivityRoute
+  '/app/ask': typeof AppAskRoute
   '/app/family': typeof AppFamilyRoute
   '/app/me': typeof AppMeRoute
   '/app/plan': typeof AppPlanRoute
@@ -156,6 +165,7 @@ export interface FileRouteTypes {
     | '/signin'
     | '/signup'
     | '/app/activity'
+    | '/app/ask'
     | '/app/family'
     | '/app/me'
     | '/app/plan'
@@ -171,6 +181,7 @@ export interface FileRouteTypes {
     | '/signin'
     | '/signup'
     | '/app/activity'
+    | '/app/ask'
     | '/app/family'
     | '/app/me'
     | '/app/plan'
@@ -187,6 +198,7 @@ export interface FileRouteTypes {
     | '/signin'
     | '/signup'
     | '/app/activity'
+    | '/app/ask'
     | '/app/family'
     | '/app/me'
     | '/app/plan'
@@ -284,6 +296,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppActivityRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/app/ask': {
+      id: '/app/ask'
+      path: '/ask'
+      fullPath: '/app/ask'
+      preLoaderRoute: typeof AppAskRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/app/family': {
       id: '/app/family'
       path: '/family'
@@ -310,6 +329,7 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteRouteChildren {
   AppActivityRoute: typeof AppActivityRoute
+  AppAskRoute: typeof AppAskRoute
   AppFamilyRoute: typeof AppFamilyRoute
   AppMeRoute: typeof AppMeRoute
   AppPlanRoute: typeof AppPlanRoute
@@ -318,6 +338,7 @@ interface AppRouteRouteChildren {
 
 const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppActivityRoute: AppActivityRoute,
+  AppAskRoute: AppAskRoute,
   AppFamilyRoute: AppFamilyRoute,
   AppMeRoute: AppMeRoute,
   AppPlanRoute: AppPlanRoute,

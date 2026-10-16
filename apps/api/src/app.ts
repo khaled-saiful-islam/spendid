@@ -6,6 +6,7 @@ import type { Auth } from "./auth/auth";
 import type { SessionLookup } from "./auth/guards";
 import { authRoutes } from "./auth/routes";
 import { registerErrorHandler } from "./http/errors";
+import { type AskDeps, askRoutes } from "./modules/ask/ask.routes";
 import {
 	type CaptureDeps,
 	captureRoutes,
@@ -33,6 +34,7 @@ export interface AppDeps {
 	money?: MoneyDeps;
 	capture?: CaptureDeps;
 	receipts?: ReceiptDeps;
+	ask?: AskDeps;
 }
 
 /** Builds the Fastify app without listening, so tests can `inject` requests. */
@@ -57,6 +59,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 			if (deps.money) await api.register(moneyRoutes, deps.money);
 			if (deps.capture) await api.register(captureRoutes, deps.capture);
 			if (deps.receipts) await api.register(receiptRoutes, deps.receipts);
+			if (deps.ask) await api.register(askRoutes, deps.ask);
 		},
 		{ prefix: "/api" },
 	);

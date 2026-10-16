@@ -12,8 +12,8 @@ Dev: `make up` → web http://localhost:8600 · API http://localhost:8601 · Mai
 | M2 | Money core + Safe-to-spend orb + budgets + goals | ✅ |
 | M3 | Voice capture + one-breath logging | ✅ |
 | M4 | Receipt camera + line items + price memory + warranty vault | ✅ |
-| M5 | AI layer: agent, ask-your-money, token guard | ⏳ |
-| M6 | Admin console + AI cockpit | ☐ |
+| M5 | AI layer: agent, ask-your-money, token guard | ✅ |
+| M6 | Admin console + AI cockpit | ⏳ |
 | M7 | Family Circle: connections, sharing, pulse, goal jars, bill split | ☐ |
 | M8 | Insights + all notification emails + Money Wrapped | ☐ |
 | M9 | Delight: Pip, streaks, nightly check-in, impulse pause | ☐ |
@@ -73,6 +73,8 @@ Dev: `make up` → web http://localhost:8600 · API http://localhost:8601 · Mai
 - **Ask your money** with charts; streaming answers.
 - Token guard middleware + `ai_usage` ledger + per-user limits in Redis.
 - **Test**: ask "How much on food this month?" → answer + chart; hit a low limit → friendly block.
+- Done: LangChain v1 `createAgent` on ilmu-v3.1 with 6 read-only/"show" tools built per request (user id from the session), `TokenGuard` middleware (`wrapModelCall`: check allowance → call → record counts) + `modelCallLimitMiddleware(6)`. Answers stream over POST SSE (`/api/ask`): steps, words, charts, drafts. Chat history stays in the browser (localStorage), never on the server.
+- Charts: single-hue bars (ranked) and a line with crosshair; `--chart-1` validated (#7a4fc4 light, #9d7bf5 dark); every chart has "Show numbers".
 
 ## M6 — Admin console
 - Users list / search, ban / unban / delete, AI limits + kill switch, AI cockpit, email delivery stats,

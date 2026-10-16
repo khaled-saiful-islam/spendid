@@ -10,6 +10,7 @@ import { capture } from "../capture/capture-store";
 import { TransactionRow, useCategoryMap } from "../money/TransactionRow";
 import { GoalJar } from "../plan/GoalJar";
 import { PendingReceipts } from "../scan/PendingReceipts";
+import { AskCard } from "./AskCard";
 import { MonthCard } from "./MonthCard";
 import { SafeCard } from "./SafeCard";
 
@@ -97,6 +98,8 @@ export function HomePage() {
 					</ul>
 				)}
 			</section>
+
+			<AskCard />
 
 			{summary && summary.monthSpentMinor > 0 && (
 				<MonthCard summary={summary} />

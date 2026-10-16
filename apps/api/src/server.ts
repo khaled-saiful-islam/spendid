@@ -12,6 +12,7 @@ import { createAuth, sessionLookup } from "./auth/auth";
 import { loadEnv } from "./config/env";
 import { createOutbox } from "./email/outbox";
 import { createRedis } from "./infra/redis";
+import { createAskAgent } from "./modules/ask/ask.agent";
 import { createVoiceService } from "./modules/capture/voice.service";
 import { createMeRepository } from "./modules/me/me.repository";
 import { createCategoryRepository } from "./modules/money/categories.repository";
@@ -44,6 +45,8 @@ const session = sessionLookup(auth);
 const categories = createCategoryRepository(database.db);
 const transactions = createTransactionRepository(database.db);
 const fx = createFxRepository(database.db);
+const summary = createSummaryService(database.db);
+const plan = createPlanRepository(database.db);
 const transactionService = createTransactionService({
 	db: database.db,
 	transactions,
@@ -72,8 +75,8 @@ const app = await buildApp({
 		categories,
 		transactions,
 		transactionService,
-		summary: createSummaryService(database.db),
-		plan: createPlanRepository(database.db),
+		summary,
+		plan,
 	},
 	receipts: {
 		session,
@@ -86,6 +89,17 @@ const app = await buildApp({
 				root: env.RECEIPTS_DIR,
 				keyBase64: env.RECEIPT_ENCRYPTION_KEY,
 			}),
+		}),
+	},
+	ask: {
+		session,
+		ask: createAskAgent({
+			db: database.db,
+			guard,
+			categories,
+			summary,
+			plan,
+			ilmu: { ...ilmu, model: env.ILMU_TEXT_MODEL },
 		}),
 	},
 	capture: {

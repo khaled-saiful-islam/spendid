@@ -1,16 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, Outlet } from "@tanstack/react-router";
-import { Plus } from "lucide-react";
-import { motion } from "motion/react";
+import { Sparkles } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { ThemeToggle } from "@/components/system/ThemeToggle";
 import { Toaster } from "@/components/ui/Toast";
 import { cn } from "@/lib/cn";
 import { meQuery } from "@/lib/me";
 import { CaptureHost } from "../capture/CaptureHost";
-import { capture } from "../capture/capture-store";
 import { useLiveEvents } from "../live/useLiveEvents";
-import { NAV_ITEMS, type NavItem } from "./nav";
+import { AddButton } from "./AddButton";
+import { ASK_ITEM, NAV_ITEMS, type NavItem } from "./nav";
 
 function NavLink({ item, compact }: { item: NavItem; compact?: boolean }) {
 	const Icon = item.icon;
@@ -34,31 +33,6 @@ function NavLink({ item, compact }: { item: NavItem; compact?: boolean }) {
 			/>
 			{item.label}
 		</Link>
-	);
-}
-
-function AddButton({ wide }: { wide?: boolean }) {
-	return (
-		<motion.button
-			type="button"
-			onClick={capture.openMenu}
-			whileTap={{ scale: 0.9 }}
-			whileHover={{ scale: 1.04 }}
-			aria-label="Add spending"
-			className={cn(
-				"grid place-items-center rounded-full bg-marigold text-plum-900 shadow-coin",
-				wide
-					? "h-12 w-full grid-flow-col gap-2 font-semibold"
-					: "size-16 -translate-y-4",
-			)}
-		>
-			<Plus
-				className={wide ? "size-5" : "size-8"}
-				strokeWidth={2.5}
-				aria-hidden="true"
-			/>
-			{wide && "Add spending"}
-		</motion.button>
 	);
 }
 
@@ -104,6 +78,7 @@ export function AppShell() {
 					{NAV_ITEMS.map((item) => (
 						<NavLink key={item.to} item={item} />
 					))}
+					<NavLink item={ASK_ITEM} />
 				</nav>
 				<div className="mt-auto flex items-center justify-between gap-2">
 					<MeLink withName />
@@ -117,6 +92,13 @@ export function AppShell() {
 						<Logo />
 					</Link>
 					<div className="flex items-center gap-1">
+						<Link
+							to="/app/ask"
+							aria-label="Ask Spendid"
+							className="grid size-11 place-items-center rounded-full text-plum-500 hover:bg-surface-2 data-[status=active]:bg-surface-2"
+						>
+							<Sparkles className="size-5" />
+						</Link>
 						<ThemeToggle />
 						<MeLink />
 					</div>

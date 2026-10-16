@@ -33,12 +33,20 @@ const dayLabel = (n: number) =>
 
 interface VoiceReviewProps {
 	result: VoiceResult;
-	onAgain: () => void;
+	/** "Say it again" — omitted when the drafts came from chat. */
+	onAgain?: () => void;
 	onDone: () => void;
+	/** Chat already shows what was asked. */
+	hideTranscript?: boolean;
 }
 
 /** What we heard, as cards you can fix before saving them all at once. */
-export function VoiceReview({ result, onAgain, onDone }: VoiceReviewProps) {
+export function VoiceReview({
+	result,
+	onAgain,
+	onDone,
+	hideTranscript,
+}: VoiceReviewProps) {
 	const queryClient = useQueryClient();
 	const { data: categories = [] } = useQuery(categoriesQuery);
 	const [rows, setRows] = useState<Row[]>(() =>
@@ -103,15 +111,17 @@ export function VoiceReview({ result, onAgain, onDone }: VoiceReviewProps) {
 
 	return (
 		<div className="space-y-4">
-			<figure className="flex gap-3 rounded-panel bg-plum-900 p-4 text-plum-50 dark:bg-plum-800">
-				<Quote
-					className="mt-1 size-5 shrink-0 text-marigold"
-					aria-hidden="true"
-				/>
-				<blockquote className="font-display text-[1.1rem] leading-snug">
-					{result.transcript}
-				</blockquote>
-			</figure>
+			{!hideTranscript && (
+				<figure className="flex gap-3 rounded-panel bg-plum-900 p-4 text-plum-50 dark:bg-plum-800">
+					<Quote
+						className="mt-1 size-5 shrink-0 text-marigold"
+						aria-hidden="true"
+					/>
+					<blockquote className="font-display text-[1.1rem] leading-snug">
+						{result.transcript}
+					</blockquote>
+				</figure>
+			)}
 			{result.readBy === "quick" && (
 				<p className="rounded-tile bg-marigold/15 px-4 py-3 text-[0.92rem]">
 					Read without AI this time. Check the amounts and categories.
@@ -226,13 +236,15 @@ export function VoiceReview({ result, onAgain, onDone }: VoiceReviewProps) {
 					</SubmitButton>
 				</form>
 			)}
-			<button
-				type="button"
-				onClick={onAgain}
-				className="inline-flex h-11 w-full items-center justify-center gap-2 font-medium text-ink-soft hover:text-ink"
-			>
-				<Mic className="size-4" aria-hidden="true" /> Say it again
-			</button>
+			{onAgain && (
+				<button
+					type="button"
+					onClick={onAgain}
+					className="inline-flex h-11 w-full items-center justify-center gap-2 font-medium text-ink-soft hover:text-ink"
+				>
+					<Mic className="size-4" aria-hidden="true" /> Say it again
+				</button>
+			)}
 		</div>
 	);
 }

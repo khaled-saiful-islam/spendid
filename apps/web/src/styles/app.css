@@ -57,6 +57,8 @@
   --safe: #087f5b;
   --over: #d6334f;
   --scale-stroke: rgb(75 42 123 / 0.07);
+  /* Chart mark colour, validated for contrast and chroma on each surface. */
+  --chart-1: #7a4fc4;
   color-scheme: light;
 }
 
@@ -70,6 +72,7 @@
   --safe: #3ddba8;
   --over: #ff7d95;
   --scale-stroke: rgb(185 163 227 / 0.07);
+  --chart-1: #9d7bf5;
   --shadow-lift: 0 1px 0 rgb(255 255 255 / 0.05) inset, 0 18px 40px -18px rgb(0 0 0 / 0.6);
   color-scheme: dark;
 }
