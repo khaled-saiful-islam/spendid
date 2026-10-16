@@ -2,11 +2,14 @@ import { formatMinor, type Me } from "@spendid/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { LogOut } from "lucide-react";
+import { LanguageSwitch } from "@/components/system/LanguageSwitch";
 import { buttonClass } from "@/components/ui/Button";
+import { dateLocale, t } from "@/i18n";
 import { authClient } from "@/lib/auth-client";
 import { METHODS } from "../onboarding/options";
 import { EmailSettings } from "./EmailSettings";
 import { PasskeyPanel } from "./PasskeyPanel";
+import { YourData } from "./YourData";
 
 function initials(name: string): string {
 	return name
@@ -32,19 +35,18 @@ export function MePage({ me }: { me: Me }) {
 
 	const rows: [string, string][] = [
 		[
-			"Home currency",
-			new Intl.DisplayNames(undefined, { type: "currency" }).of(
+			t("Home currency"),
+			new Intl.DisplayNames(dateLocale(), { type: "currency" }).of(
 				profile.homeCurrency,
 			) ?? profile.homeCurrency,
 		],
 		[
-			"Monthly income",
+			t("Monthly income"),
 			profile.monthlyIncomeMinor === null
-				? "Not set"
+				? t("Not set")
 				: formatMinor(profile.monthlyIncomeMinor, profile.homeCurrency),
 		],
-		["Budget style", method],
-		["Language", profile.locale === "ms" ? "Bahasa Melayu" : "English"],
+		[t("Budget style"), method],
 	];
 
 	return (
@@ -67,14 +69,14 @@ export function MePage({ me }: { me: Me }) {
 			>
 				<div className="flex items-center justify-between gap-3">
 					<h2 id="money-heading" className="text-[1.4rem] font-bold">
-						Money settings
+						{t("Money settings")}
 					</h2>
 					<Link
 						to="/onboarding"
 						search={{ edit: true }}
 						className={buttonClass("ghost", "md", "border-2 border-line")}
 					>
-						Change
+						{t("Change")}
 					</Link>
 				</div>
 				<dl className="mt-4 divide-y divide-line">
@@ -90,16 +92,28 @@ export function MePage({ me }: { me: Me }) {
 				</dl>
 			</section>
 
+			<section
+				aria-labelledby="language-heading"
+				className="flex flex-wrap items-center justify-between gap-3 rounded-panel border border-line bg-surface p-5 sm:p-6"
+			>
+				<h2 id="language-heading" className="text-[1.4rem] font-bold">
+					{t("Language")}
+				</h2>
+				<LanguageSwitch signedIn />
+			</section>
+
 			<EmailSettings />
 
 			<PasskeyPanel />
+
+			<YourData />
 
 			<button
 				type="button"
 				onClick={signOut}
 				className={buttonClass("ghost", "lg", "w-full border-2 border-line")}
 			>
-				<LogOut className="size-5" aria-hidden="true" /> Sign out
+				<LogOut className="size-5" aria-hidden="true" /> {t("Sign out")}
 			</button>
 		</div>
 	);

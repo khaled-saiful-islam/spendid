@@ -1,14 +1,15 @@
 import { formatMinor, type RecurringOverview } from "@spendid/shared";
 import { CalendarClock, Repeat, TrendingUp } from "lucide-react";
 import { CategoryIcon } from "@/components/money/CategoryIcon";
+import { dateLocale, t } from "@/i18n";
 
 const CADENCE = {
-	weekly: "Every week",
-	monthly: "Every month",
-	yearly: "Every year",
+	weekly: t("Every week"),
+	monthly: t("Every month"),
+	yearly: t("Every year"),
 } as const;
 const shortDay = (day: string) =>
-	new Date(`${day}T12:00`).toLocaleDateString(undefined, {
+	new Date(`${day}T12:00`).toLocaleDateString(dateLocale(), {
 		day: "numeric",
 		month: "short",
 	});
@@ -24,12 +25,16 @@ export function Subscriptions({ data }: { data: RecurringOverview }) {
 					className="flex items-center gap-2 text-[1.5rem] font-bold"
 				>
 					<Repeat className="size-6 text-plum-500" aria-hidden="true" />{" "}
-					Subscriptions and bills
+					{t("Subscriptions and bills")}
 				</h2>
 				<p className="text-ink-soft">
 					{data.items.length === 0
-						? "Once the same shop charges you on a steady rhythm, it shows up here."
-						: `About ${money(data.monthlyMinor)} a month, found from your spending.`}
+						? t(
+								"Once the same shop charges you on a steady rhythm, it shows up here.",
+							)
+						: t("About {amount} a month, found from your spending.", {
+								amount: money(data.monthlyMinor),
+							})}
 				</p>
 			</div>
 			{data.billsDue.minor > 0 && (
@@ -40,13 +45,20 @@ export function Subscriptions({ data }: { data: RecurringOverview }) {
 					/>
 					<div className="min-w-0">
 						<p className="font-semibold">
-							Still due this month: {money(data.billsDue.minor)}
+							{t("Still due this month: {amount}", {
+								amount: money(data.billsDue.minor),
+							})}
 						</p>
 						<p className="text-[0.92rem] text-ink-soft">
 							{data.billsDue.items
-								.map((b) => `${b.merchant} on ${shortDay(b.day)}`)
+								.map((b) =>
+									t("{shop} on {date}", {
+										shop: b.merchant,
+										date: shortDay(b.day),
+									}),
+								)
 								.join(", ")}
-							. Already kept aside in your safe-to-spend.
+							. {t("Already kept aside in your safe-to-spend.")}
 						</p>
 					</div>
 				</div>
@@ -66,12 +78,15 @@ export function Subscriptions({ data }: { data: RecurringOverview }) {
 										{r.merchant}
 									</span>
 									<span className="block text-[0.85rem] text-ink-soft">
-										{CADENCE[r.cadence]}, next around {shortDay(r.nextDay)}
+										{t("{cadence}, next around {date}", {
+											cadence: CADENCE[r.cadence],
+											date: shortDay(r.nextDay),
+										})}
 									</span>
 									{rise > 0 && (
 										<span className="mt-1 inline-flex items-center gap-1 rounded-full bg-coral/12 px-2.5 py-0.5 text-[0.82rem] font-semibold text-over">
 											<TrendingUp className="size-3.5" aria-hidden="true" />{" "}
-											Went up {money(rise)}
+											{t("Went up {amount}", { amount: money(rise) })}
 										</span>
 									)}
 								</span>

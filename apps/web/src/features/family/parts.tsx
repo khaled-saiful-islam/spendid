@@ -7,6 +7,7 @@ import {
 	type ShareState,
 } from "@spendid/shared";
 import { Eye, EyeOff } from "lucide-react";
+import { dateLocale, t } from "@/i18n";
 import { cn } from "@/lib/cn";
 
 const GRADIENTS = [
@@ -65,7 +66,7 @@ export function Avatar({
 	);
 }
 
-export const relationLabel = (r: Relation) => RELATION_LABELS[r];
+export const relationLabel = (r: Relation) => t(RELATION_LABELS[r]);
 
 /** "Sees your categories", "Paused" — one short chip per direction. */
 export function ShareChip({
@@ -91,7 +92,7 @@ export function ShareChip({
 					? "nothing"
 					: state.paused
 						? "paused"
-						: LEVEL_INFO[state.level].label.toLowerCase()}
+						: t(LEVEL_INFO[state.level].label).toLowerCase()}
 			</span>
 		</span>
 	);
@@ -134,10 +135,10 @@ export function LevelPicker({
 						/>
 						<span className="min-w-0 flex-1">
 							<span className="block font-semibold">
-								{LEVEL_INFO[level].label}
+								{t(LEVEL_INFO[level].label)}
 							</span>
 							<span className="block text-[0.9rem] text-ink-soft">
-								{LEVEL_INFO[level].sees}
+								{t(LEVEL_INFO[level].sees)}
 							</span>
 						</span>
 						<span
@@ -163,7 +164,7 @@ export function LevelPicker({
 }
 
 export const sinceLabel = (iso: string) =>
-	new Date(iso).toLocaleDateString(undefined, {
+	new Date(iso).toLocaleDateString(dateLocale(), {
 		month: "short",
 		year: "numeric",
 	});
@@ -171,10 +172,10 @@ export const sinceLabel = (iso: string) =>
 export const ago = (iso: string): string => {
 	const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60_000);
 	if (mins < 1) return "just now";
-	if (mins < 60) return `${mins} min ago`;
+	if (mins < 60) return t("{n} min ago", { n: mins });
 	const hours = Math.round(mins / 60);
 	if (hours < 24) return `${hours} h ago`;
-	return new Date(iso).toLocaleDateString(undefined, {
+	return new Date(iso).toLocaleDateString(dateLocale(), {
 		day: "numeric",
 		month: "short",
 	});

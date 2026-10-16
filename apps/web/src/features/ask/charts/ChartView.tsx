@@ -2,6 +2,7 @@ import { type ChartSpec, formatMinor } from "@spendid/shared";
 import { Table2 } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { type PointerEvent, useId, useState } from "react";
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 
 /** Turns a value into display text (money by default). */
@@ -184,7 +185,7 @@ export function ChartView({
 					)}
 				>
 					<Table2 className="size-4" aria-hidden="true" />{" "}
-					{table ? "Show chart" : "Show numbers"}
+					{table ? t("Show chart") : t("Show numbers")}
 				</button>
 			</div>
 			{table ? (

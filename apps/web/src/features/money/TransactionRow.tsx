@@ -2,6 +2,7 @@ import { type Category, formatMinor, type Transaction } from "@spendid/shared";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "motion/react";
 import { CategoryIcon } from "@/components/money/CategoryIcon";
+import { dateLocale, t as tr } from "@/i18n";
 import { categoriesQuery } from "@/lib/money-api";
 import { capture } from "../capture/capture-store";
 
@@ -12,7 +13,7 @@ export function useCategoryMap(): Map<string, Category> {
 }
 
 const time = (iso: string) =>
-	new Date(iso).toLocaleTimeString(undefined, {
+	new Date(iso).toLocaleTimeString(dateLocale(), {
 		hour: "numeric",
 		minute: "2-digit",
 	});
@@ -41,10 +42,10 @@ export function TransactionRow({
 				<CategoryIcon icon={category?.icon} tint={category?.tint} />
 				<span className="min-w-0 flex-1">
 					<span className="block font-semibold break-words">
-						{t.merchant ?? category?.name ?? "Expense"}
+						{t.merchant ?? category?.name ?? tr("Expense")}
 					</span>
 					<span className="block text-[0.85rem] text-ink-soft">
-						{category?.name ?? "Uncategorised"}, {time(t.occurredAt)}
+						{category?.name ?? tr("Uncategorised")}, {time(t.occurredAt)}
 					</span>
 				</span>
 				<span className="shrink-0 text-right">

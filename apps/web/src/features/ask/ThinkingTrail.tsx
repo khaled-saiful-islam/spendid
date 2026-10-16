@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 import type { ReactNode } from "react";
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 
 const ICONS: [RegExp, ReactNode][] = [
@@ -68,7 +69,7 @@ export function ThinkingTrail({
 						<span
 							className={current ? "font-semibold text-ink" : "text-ink-soft"}
 						>
-							{s.replace(/…$/, current ? "…" : "")}
+							{t(s).replace(/…$/, current ? "…" : "")}
 						</span>
 					</motion.li>
 				);

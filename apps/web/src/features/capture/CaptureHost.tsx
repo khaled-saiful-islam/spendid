@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, Keyboard, Mic, ScanLine } from "lucide-react";
 import { Sheet } from "@/components/ui/Sheet";
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { meQuery } from "@/lib/me";
 import { ReceiptSheetBody } from "../scan/ReceiptSheetBody";
@@ -13,22 +14,22 @@ const MODES = [
 	{
 		id: "voice",
 		icon: Mic,
-		title: "Say it",
-		hint: "Talk naturally, even several things at once",
+		title: t("Say it"),
+		hint: t("Talk naturally, even several things at once"),
 		ready: null,
 	},
 	{
 		id: "scan",
 		icon: ScanLine,
-		title: "Scan a receipt",
-		hint: "Point your camera, it captures by itself",
+		title: t("Scan a receipt"),
+		hint: t("Point your camera, it captures by itself"),
 		ready: null,
 	},
 	{
 		id: "type",
 		icon: Keyboard,
-		title: "Type it",
-		hint: "Shorthand like “coffee 6.50” is fine",
+		title: t("Type it"),
+		hint: t("Shorthand like “coffee 6.50” is fine"),
 		ready: null,
 	},
 ] as const;
@@ -44,7 +45,7 @@ export function CaptureHost() {
 			<Sheet
 				open={state.view === "menu"}
 				onClose={capture.close}
-				title="Add spending"
+				title={t("Add spending")}
 			>
 				<ul className="space-y-2">
 					{MODES.map(({ id, icon: Icon, title, hint, ready }) => {
@@ -61,7 +62,7 @@ export function CaptureHost() {
 								</span>
 								{ready ? (
 									<span className="shrink-0 rounded-full bg-surface-2 px-2.5 py-1 text-[0.78rem] font-medium text-ink-soft">
-										Arrives in {ready}
+										{t("Arrives in {when}", { when: ready })}
 									</span>
 								) : (
 									<ChevronRight
@@ -104,7 +105,7 @@ export function CaptureHost() {
 			<Sheet
 				open={state.view === "receipt"}
 				onClose={capture.close}
-				title="Check your receipt"
+				title={t("Check your receipt")}
 			>
 				{state.view === "receipt" && (
 					<ReceiptSheetBody
@@ -118,7 +119,7 @@ export function CaptureHost() {
 			<Sheet
 				open={state.view === "voice"}
 				onClose={capture.close}
-				title="Say it"
+				title={t("Say it")}
 			>
 				<VoiceCapture />
 			</Sheet>
@@ -126,7 +127,7 @@ export function CaptureHost() {
 			<Sheet
 				open={state.view === "type"}
 				onClose={capture.close}
-				title="Add an expense"
+				title={t("Add an expense")}
 			>
 				<ExpenseForm
 					homeCurrency={homeCurrency}
@@ -138,7 +139,7 @@ export function CaptureHost() {
 			<Sheet
 				open={state.view === "edit"}
 				onClose={capture.close}
-				title="Edit expense"
+				title={t("Edit expense")}
 			>
 				{state.view === "edit" && (
 					<ExpenseForm

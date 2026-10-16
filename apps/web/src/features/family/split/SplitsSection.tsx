@@ -6,6 +6,7 @@ import { useState } from "react";
 import { buttonClass } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
 import { toast } from "@/components/ui/Toast";
+import { dateLocale, t } from "@/i18n";
 import {
 	familyApi,
 	refreshFamily,
@@ -17,7 +18,7 @@ import { SplitDone } from "./SplitDone";
 import { SplitSummary } from "./SplitSummary";
 
 const dayOf = (iso: string) =>
-	new Date(iso).toLocaleDateString(undefined, {
+	new Date(iso).toLocaleDateString(dateLocale(), {
 		day: "numeric",
 		month: "short",
 	});
@@ -70,19 +71,20 @@ export function SplitsSection() {
 		<section aria-labelledby="splits-heading" className="space-y-3">
 			<div className="flex flex-wrap items-center justify-between gap-3">
 				<h2 id="splits-heading" className="text-[1.6rem] font-bold">
-					Split bills
+					{t("Split bills")}
 				</h2>
 				<Link
 					to="/app/family/split"
 					className={buttonClass("ghost", "md", "border-2 border-line")}
 				>
-					New split
+					{t("New split")}
 				</Link>
 			</div>
 			{mine.length === 0 && withMe.length === 0 ? (
 				<p className="rounded-panel border-2 border-dashed border-line p-5 text-ink-soft">
-					Snap a bill, drag each line onto who had it, and send everyone a link
-					with their share.
+					{t(
+						"Snap a bill, drag each line onto who had it, and send everyone a link with their share.",
+					)}
 				</p>
 			) : (
 				<ul className="space-y-2">
@@ -93,7 +95,16 @@ export function SplitsSection() {
 								key={s.id}
 								split={s}
 								onOpen={() => setOpen(s)}
-								line={`${s.ownerName} split this with you, ${dayOf(s.createdAt)}. Your share: ${formatMinor(share?.totalMinor ?? 0, s.currency)}${share && s.paid.includes(share.key) ? ", paid" : ""}`}
+								line={t(
+									share && s.paid.includes(share.key)
+										? "{name} split this with you, {date}. Your share: {amount}, paid"
+										: "{name} split this with you, {date}. Your share: {amount}",
+									{
+										name: s.ownerName,
+										date: dayOf(s.createdAt),
+										amount: formatMinor(share?.totalMinor ?? 0, s.currency),
+									},
+								)}
 							/>
 						);
 					})}
@@ -102,7 +113,11 @@ export function SplitsSection() {
 							key={s.id}
 							split={s}
 							onOpen={() => setOpen(s)}
-							line={`${dayOf(s.createdAt)}, ${s.paid.length} of ${s.people.length} paid`}
+							line={t("{date}, {paid} of {n} paid", {
+								date: dayOf(s.createdAt),
+								paid: s.paid.length,
+								n: s.people.length,
+							})}
 						/>
 					))}
 				</ul>
@@ -110,7 +125,7 @@ export function SplitsSection() {
 			<Sheet
 				open={open !== null}
 				onClose={() => setOpen(null)}
-				title={open?.title ?? "Split"}
+				title={open?.title ?? t("Split")}
 			>
 				{open && (
 					<div className="space-y-5">
@@ -129,13 +144,13 @@ export function SplitsSection() {
 										.then(() => refreshFamily(queryClient))
 										.then(() => {
 											setOpen(null);
-											toast("Split deleted. Its link no longer works.");
+											toast(t("Split deleted. Its link no longer works."));
 										})
-										.catch(() => toast("Couldn't delete. Try again."))
+										.catch(() => toast(t("Couldn't delete. Try again.")))
 								}
 							>
-								<Trash2 className="size-5" aria-hidden="true" /> Delete this
-								split
+								<Trash2 className="size-5" aria-hidden="true" />{" "}
+								{t("Delete this split")}
 							</button>
 						)}
 					</div>

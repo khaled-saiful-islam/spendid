@@ -30,6 +30,10 @@ import type { MeRepository } from "./modules/me/me.repository";
 import { meRoutes } from "./modules/me/me.routes";
 import { type MoneyDeps, moneyRoutes } from "./modules/money/money.routes";
 import {
+	type PrivacyDeps,
+	privacyRoutes,
+} from "./modules/privacy/privacy.routes";
+import {
 	type ReceiptDeps,
 	receiptRoutes,
 } from "./modules/receipts/receipts.routes";
@@ -54,6 +58,7 @@ export interface AppDeps {
 	insights?: InsightsDeps;
 	notify?: NotifyDeps;
 	delight?: DelightDeps;
+	privacy?: PrivacyDeps;
 }
 
 /** Builds the Fastify app without listening, so tests can `inject` requests. */
@@ -85,6 +90,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 			if (deps.insights) await api.register(insightsRoutes, deps.insights);
 			if (deps.notify) await api.register(notifyRoutes, deps.notify);
 			if (deps.delight) await api.register(delightRoutes, deps.delight);
+			if (deps.privacy) await api.register(privacyRoutes, deps.privacy);
 		},
 		{ prefix: "/api" },
 	);

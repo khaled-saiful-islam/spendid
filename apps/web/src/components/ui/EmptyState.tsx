@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import { t } from "@/i18n";
 
 interface EmptyStateProps {
 	icon: LucideIcon;
@@ -26,7 +27,7 @@ export function EmptyState({
 			<Heading className="mt-5 text-[1.8rem] font-bold">{title}</Heading>
 			<p className="mt-2 max-w-[40ch] text-ink-soft">{body}</p>
 			<span className="mt-5 rounded-full bg-surface-2 px-3 py-1 text-[0.82rem] font-medium text-ink-soft">
-				Arrives in {milestone}
+				{t("Arrives in {when}", { when: milestone })}
 			</span>
 		</div>
 	);

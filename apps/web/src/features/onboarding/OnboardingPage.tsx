@@ -14,22 +14,23 @@ import { type FormEvent, useState } from "react";
 import { Logo } from "@/components/brand/Logo";
 import { MaybeAlert } from "@/components/form/Alert";
 import { SubmitButton } from "@/components/form/SubmitButton";
+import { t } from "@/i18n";
 import { ApiError } from "@/lib/http";
 import { meQuery, saveProfile } from "@/lib/me";
 import { IncomeStep, MethodStep, PlaceStep } from "./Steps";
 
 const STEPS = [
 	{
-		title: "Let's set you up",
-		intro: "Three quick questions and your daily number is ready.",
+		title: t("Let's set you up"),
+		intro: t("Three quick questions and your daily number is ready."),
 	},
 	{
-		title: "What comes in each month?",
-		intro: "Your income is the starting point for a safe daily amount.",
+		title: t("What comes in each month?"),
+		intro: t("Your income is the starting point for a safe daily amount."),
 	},
 	{
-		title: "How do you like to budget?",
-		intro: "Pick the style that feels natural. You can switch later.",
+		title: t("How do you like to budget?"),
+		intro: t("Pick the style that feels natural. You can switch later."),
 	},
 ];
 
@@ -68,14 +69,14 @@ export function OnboardingPage({ me }: { me: Me }) {
 	function next(e: FormEvent) {
 		e.preventDefault();
 		if (step === 0 && !name.trim())
-			return setErrors({ name: "Tell us what to call you." });
+			return setErrors({ name: t("Tell us what to call you.") });
 		if (
 			step === 1 &&
 			incomeNumber !== null &&
 			(Number.isNaN(incomeNumber) || incomeNumber < 0)
 		)
 			return setErrors({
-				monthlyIncomeMinor: "Enter an amount like 4500 or 4500.50.",
+				monthlyIncomeMinor: t("Enter an amount like 4500 or 4500.50."),
 			});
 		setErrors({});
 		if (step < STEPS.length - 1) return setStep(step + 1);
@@ -102,7 +103,7 @@ export function OnboardingPage({ me }: { me: Me }) {
 			setErrors(
 				error instanceof ApiError
 					? { ...error.fields, _: error.message }
-					: { _: "Couldn't save. Try again." },
+					: { _: t("Couldn't save. Try again.") },
 			);
 		}
 	}
@@ -114,7 +115,7 @@ export function OnboardingPage({ me }: { me: Me }) {
 				<div className="flex items-center justify-between">
 					<Logo />
 					<span className="text-[0.95rem] font-medium text-ink-soft">
-						Step {step + 1} of {STEPS.length}
+						{t("Step {n} of {total}", { n: step + 1, total: STEPS.length })}
 					</span>
 				</div>
 				<div className="mt-4 grid grid-cols-3 gap-2" aria-hidden="true">
@@ -174,8 +175,10 @@ export function OnboardingPage({ me }: { me: Me }) {
 
 					<div className="mt-auto space-y-3 pt-10">
 						<MaybeAlert tone="error" message={errors._} />
-						<SubmitButton pending={pending} pendingLabel="Saving…">
-							{step < STEPS.length - 1 ? "Continue" : "Show my safe-to-spend"}
+						<SubmitButton pending={pending} pendingLabel={t("Saving…")}>
+							{step < STEPS.length - 1
+								? t("Continue")
+								: t("Show my safe-to-spend")}
 						</SubmitButton>
 						{step === 1 && (
 							<button
@@ -186,7 +189,7 @@ export function OnboardingPage({ me }: { me: Me }) {
 								}}
 								className="h-11 w-full font-medium text-ink-soft hover:text-ink"
 							>
-								Skip for now
+								{t("Skip for now")}
 							</button>
 						)}
 						{step > 0 && (
@@ -195,7 +198,7 @@ export function OnboardingPage({ me }: { me: Me }) {
 								onClick={() => setStep(step - 1)}
 								className="inline-flex h-11 w-full items-center justify-center gap-2 font-medium text-ink-soft hover:text-ink"
 							>
-								<ArrowLeft className="size-4" aria-hidden="true" /> Back
+								<ArrowLeft className="size-4" aria-hidden="true" /> {t("Back")}
 							</button>
 						)}
 					</div>

@@ -14,6 +14,7 @@ import { SubmitButton } from "@/components/form/SubmitButton";
 import { buttonClass } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
 import { toast } from "@/components/ui/Toast";
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { familyApi, jarsQuery, refreshFamily } from "@/lib/family-api";
 import { ApiError } from "@/lib/http";
@@ -22,7 +23,7 @@ import { GoalJar } from "../plan/GoalJar";
 import { Avatar } from "./parts";
 
 const errorText = (err: unknown) =>
-	err instanceof ApiError ? err.message : "That didn't work. Try again.";
+	err instanceof ApiError ? err.message : t("That didn't work. Try again.");
 
 function DepositSheet({
 	jar,
@@ -38,7 +39,8 @@ function DepositSheet({
 	const cur = jar?.currency ?? "MYR";
 
 	async function add(amount: number) {
-		if (!jar || !(amount > 0)) return setError("Enter an amount above zero.");
+		if (!jar || !(amount > 0))
+			return setError(t("Enter an amount above zero."));
 		setPending(true);
 		setError(null);
 		try {
@@ -56,7 +58,12 @@ function DepositSheet({
 					origin: { y: 0.6 },
 					colors: ["#FFB224", "#12B886", "#7A4FC4", "#FF5C7A"],
 				});
-			toast(`Added ${formatMinor(minor, cur)} to ${jar.name}.`);
+			toast(
+				t("Added {amount} to {name}.", {
+					amount: formatMinor(minor, cur),
+					name: jar.name,
+				}),
+			);
 			setValue("");
 			setPending(false);
 			onClose();
@@ -70,7 +77,11 @@ function DepositSheet({
 		<Sheet
 			open={jar !== null}
 			onClose={onClose}
-			title={jar ? `Add to ${jar.emoji} ${jar.name}` : "Add money"}
+			title={
+				jar
+					? t("Add to {name}", { name: `${jar.emoji} ${jar.name}` })
+					: t("Add money")
+			}
 		>
 			<form
 				className="space-y-4"
@@ -92,7 +103,7 @@ function DepositSheet({
 					))}
 				</div>
 				<Field
-					label="Or another amount"
+					label={t("Or another amount")}
 					inputMode="decimal"
 					data-autofocus
 					adornment={currencySymbol(cur)}
@@ -100,7 +111,7 @@ function DepositSheet({
 					onChange={(e) => setValue(e.target.value.replace(/[^\d.,]/g, ""))}
 				/>
 				<MaybeAlert tone="error" message={error} />
-				<SubmitButton pending={pending}>Add money</SubmitButton>
+				<SubmitButton pending={pending}>{t("Add money")}</SubmitButton>
 			</form>
 		</Sheet>
 	);
@@ -131,8 +142,8 @@ function MembersSheet({
 			await refreshFamily(queryClient);
 			toast(
 				picked.length
-					? `${goal.name} is now a shared jar.`
-					: `${goal.name} is just yours again.`,
+					? t("{name} is now a shared jar.", { name: goal.name })
+					: t("{name} is just yours again.", { name: goal.name }),
 			);
 			setPending(false);
 			onClose();
@@ -147,7 +158,9 @@ function MembersSheet({
 			open={goal !== null}
 			onClose={onClose}
 			title={
-				goal ? `Who saves for ${goal.emoji} ${goal.name}?` : "Save together"
+				goal
+					? t("Who saves for {name}?", { name: `${goal.emoji} ${goal.name}` })
+					: t("Save together")
 			}
 		>
 			<form
@@ -158,8 +171,9 @@ function MembersSheet({
 				}}
 			>
 				<p className="text-ink-soft">
-					They can see this jar and add money to it. Only you can take money
-					out.
+					{t(
+						"They can see this jar and add money to it. Only you can take money out.",
+					)}
 				</p>
 				<ul className="space-y-2">
 					{people.map((p) => {
@@ -192,7 +206,7 @@ function MembersSheet({
 					})}
 				</ul>
 				<MaybeAlert tone="error" message={error} />
-				<SubmitButton pending={pending}>Save</SubmitButton>
+				<SubmitButton pending={pending}>{t("Save")}</SubmitButton>
 			</form>
 		</Sheet>
 	);
@@ -225,17 +239,19 @@ function JarCard({
 						{formatMinor(jar.savedMinor, jar.currency)}
 					</p>
 					<p className="text-[0.9rem] text-ink-soft">
-						of {formatMinor(jar.targetMinor, jar.currency)},{" "}
-						{Math.min(100, Math.round(ratio * 100))}%
+						{t("of {amount}, {pct}%", {
+							amount: formatMinor(jar.targetMinor, jar.currency),
+							pct: Math.min(100, Math.round(ratio * 100)),
+						})}
 					</p>
 					{!jar.mine && (
 						<p className="mt-1 text-[0.85rem] text-ink-soft">
-							{jar.ownerName}'s jar
+							{t("{name}'s jar", { name: jar.ownerName })}
 						</p>
 					)}
 				</div>
 			</div>
-			<ul className="space-y-1.5" aria-label="Who put in what">
+			<ul className="space-y-1.5" aria-label={t("Who put in what")}>
 				{jar.members.map((m) => (
 					<li key={m.userId} className="flex items-center gap-2 text-[0.92rem]">
 						<Avatar name={m.name} seed={m.userId} size="sm" />
@@ -252,7 +268,7 @@ function JarCard({
 					onClick={onAdd}
 					className={buttonClass("coin", "md")}
 				>
-					<Plus className="size-5" aria-hidden="true" /> Add money
+					<Plus className="size-5" aria-hidden="true" /> {t("Add money")}
 				</button>
 				{jar.mine ? (
 					<button
@@ -260,7 +276,7 @@ function JarCard({
 						onClick={onMembers}
 						className={buttonClass("ghost", "md", "border-2 border-line")}
 					>
-						<UsersRound className="size-5" aria-hidden="true" /> People
+						<UsersRound className="size-5" aria-hidden="true" /> {t("People")}
 					</button>
 				) : (
 					<button
@@ -270,11 +286,11 @@ function JarCard({
 							void familyApi
 								.leaveJar(jar.id)
 								.then(() => refreshFamily(queryClient))
-								.then(() => toast(`You left ${jar.name}.`))
+								.then(() => toast(t("You left {name}.", { name: jar.name })))
 								.catch((err: unknown) => toast(errorText(err)))
 						}
 					>
-						Leave jar
+						{t("Leave jar")}
 					</button>
 				)}
 			</div>
@@ -305,7 +321,7 @@ export function SharedJars({ people }: { people: FamilyPerson[] }) {
 					className="flex items-center gap-2 text-[1.6rem] font-bold"
 				>
 					<HandCoins className="size-6 text-marigold-deep" aria-hidden="true" />{" "}
-					Saving together
+					{t("Saving together")}
 				</h2>
 				{canShare && (
 					<button
@@ -313,17 +329,21 @@ export function SharedJars({ people }: { people: FamilyPerson[] }) {
 						onClick={() => setChoosing(true)}
 						className={buttonClass("ghost", "md", "border-2 border-line")}
 					>
-						<Plus className="size-5" aria-hidden="true" /> Share a goal
+						<Plus className="size-5" aria-hidden="true" /> {t("Share a goal")}
 					</button>
 				)}
 			</div>
 			{data.jars.length === 0 ? (
 				<p className="rounded-panel border-2 border-dashed border-line p-5 text-ink-soft">
 					{people.length === 0
-						? "Once someone joins your circle, you can save for a goal together and watch the jar fill."
+						? t(
+								"Once someone joins your circle, you can save for a goal together and watch the jar fill.",
+							)
 						: data.myGoals.length === 0
-							? "Make a goal on the Plan page, then share it here to save together."
-							: "Share one of your goals so your circle can add to it."}
+							? t(
+									"Make a goal on the Plan page, then share it here to save together.",
+								)
+							: t("Share one of your goals so your circle can add to it.")}
 				</p>
 			) : (
 				<ul className="grid gap-3 sm:grid-cols-2">
@@ -349,7 +369,7 @@ export function SharedJars({ people }: { people: FamilyPerson[] }) {
 			<Sheet
 				open={choosing}
 				onClose={() => setChoosing(false)}
-				title="Which goal?"
+				title={t("Which goal?")}
 			>
 				<ul className="space-y-2">
 					{data.myGoals.map((g) => (

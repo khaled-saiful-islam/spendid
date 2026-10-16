@@ -5,6 +5,7 @@ import { Flame } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "@/components/ui/Toast";
+import { t } from "@/i18n";
 import { streakQuery } from "@/lib/delight-api";
 import { Pip, type PipMood } from "./Pip";
 
@@ -32,18 +33,29 @@ function pipLine(mood: PipMood, summary: Summary | undefined): string {
 	switch (mood) {
 		case "sleepy":
 			return new Date().getHours() < 6
-				? "It's late. Rest up, I'll keep watch over your money."
-				: "Getting late. Anything to log before bed? Then I'll keep watch.";
+				? t("It's late. Rest up, I'll keep watch over your money.")
+				: t("Getting late. Anything to log before bed? Then I'll keep watch.");
 		case "curled":
-			return `We went ${money(-left)} over today. I'm curled up, but tomorrow starts fresh.`;
+			return t(
+				"We went {amount} over today. I'm curled up, but tomorrow starts fresh.",
+				{ amount: money(-left) },
+			);
 		case "worried":
-			return `Only ${money(left)} left for today. Let's take it easy.`;
+			return t("Only {amount} left for today. Let's take it easy.", {
+				amount: money(left),
+			});
 		case "shining":
-			return `${money(left)} left for today. You're doing great!`;
+			return t("{amount} left for today. You're doing great!", {
+				amount: money(left),
+			});
 		default:
 			return summary?.safe.status === "no-income"
-				? "Add your monthly income in settings and I'll work out what's safe each day."
-				: `${money(left)} left for today. Right on track.`;
+				? t(
+						"Add your monthly income in settings and I'll work out what's safe each day.",
+					)
+				: t("{amount} left for today. Right on track.", {
+						amount: money(left),
+					});
 	}
 }
 
@@ -89,7 +101,7 @@ export function PipCorner({ summary }: { summary: Summary | undefined }) {
 				origin: { y: 0.3 },
 				colors: ["#FFB224", "#FF5C7A", "#7A4FC4", "#12B886"],
 			});
-		toast(`${streak.current}-day streak! Pip is proud of you.`);
+		toast(t("{n}-day streak! Pip is proud of you.", { n: streak.current }));
 		setBounce((b) => b + 1);
 	}, [streak]);
 
@@ -102,6 +114,7 @@ export function PipCorner({ summary }: { summary: Summary | undefined }) {
 						initial={{ opacity: 0, y: 6, scale: 0.97 }}
 						animate={{ opacity: 1, y: 0, scale: 1 }}
 						exit={{ opacity: 0 }}
+						data-money
 						className="relative rounded-[1.2rem] rounded-br-sm border border-line bg-surface px-4 py-3 text-[0.98rem] font-medium shadow-sm"
 					>
 						{pipLine(mood, summary)}
@@ -110,7 +123,7 @@ export function PipCorner({ summary }: { summary: Summary | undefined }) {
 				{streak && (
 					<p
 						className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-marigold/20 px-3 py-1 text-[0.88rem] font-semibold"
-						title={`Best: ${streak.best} days`}
+						title={t("Best: {n} days", { n: streak.best })}
 					>
 						<Flame
 							className={
@@ -119,8 +132,13 @@ export function PipCorner({ summary }: { summary: Summary | undefined }) {
 							aria-hidden="true"
 						/>
 						{streak.current === 0
-							? "Log something to start a streak"
-							: `${streak.current}-day streak${streak.doneToday ? "" : ", log today to keep it"}`}
+							? t("Log something to start a streak")
+							: t(
+									streak.doneToday
+										? "{n}-day streak"
+										: "{n}-day streak, log today to keep it",
+									{ n: streak.current },
+								)}
 					</p>
 				)}
 			</div>

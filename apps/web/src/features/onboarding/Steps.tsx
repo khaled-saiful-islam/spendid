@@ -1,6 +1,7 @@
 import type { BudgetMethod, Locale } from "@spendid/shared";
 import { Check } from "lucide-react";
 import { Field } from "@/components/form/Field";
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { currencyOptions, currencySymbol, METHODS } from "./options";
 
@@ -34,7 +35,7 @@ export function PlaceStep({
 	return (
 		<div className="space-y-5">
 			<Field
-				label="What should we call you?"
+				label={t("What should we call you?")}
 				value={name}
 				error={nameError}
 				autoComplete="given-name"
@@ -42,7 +43,7 @@ export function PlaceStep({
 			/>
 			<div className="space-y-1.5">
 				<label htmlFor="currency" className="block font-semibold">
-					Your home currency
+					{t("Your home currency")}
 				</label>
 				<select
 					id="currency"
@@ -51,14 +52,14 @@ export function PlaceStep({
 					value={currency}
 					onChange={(e) => onChange({ homeCurrency: e.target.value })}
 				>
-					<optgroup label="Popular">
+					<optgroup label={t("Popular")}>
 						{popular.map((c) => (
 							<option key={c.code} value={c.code}>
 								{c.label}
 							</option>
 						))}
 					</optgroup>
-					<optgroup label="All currencies">
+					<optgroup label={t("All currencies")}>
 						{rest.map((c) => (
 							<option key={c.code} value={c.code}>
 								{c.label}
@@ -67,11 +68,11 @@ export function PlaceStep({
 					</optgroup>
 				</select>
 				<p className="text-[0.9rem] text-ink-soft">
-					Spending abroad is converted to this automatically.
+					{t("Spending abroad is converted to this automatically.")}
 				</p>
 			</div>
 			<fieldset className="space-y-2">
-				<legend className="mb-1.5 font-semibold">Language</legend>
+				<legend className="mb-1.5 font-semibold">{t("Language")}</legend>
 				<div className="grid grid-cols-2 gap-2">
 					{(
 						[
@@ -101,7 +102,7 @@ export function PlaceStep({
 					))}
 				</div>
 				<p className="text-[0.9rem] text-ink-soft">
-					Bahasa Melayu arrives fully in a later update.
+					{t("You can switch any time in Settings.")}
 				</p>
 			</fieldset>
 		</div>
@@ -124,20 +125,22 @@ export function IncomeStep({
 	return (
 		<div className="space-y-4">
 			<Field
-				label="Take-home pay each month"
+				label={t("Take-home pay each month")}
 				inputMode="decimal"
 				placeholder="0.00"
 				adornment={currencySymbol(currency)}
 				value={value}
 				error={error}
-				hint="After tax. A rough number is fine — you can change it any time."
+				hint={t(
+					"After tax. A rough number is fine — you can change it any time.",
+				)}
 				onChange={(e) => onChange(e.target.value.replace(/[^\d.,]/g, ""))}
 				className="[&_input]:num [&_input]:text-[1.4rem] [&_input]:font-bold"
 			/>
 			<p className="rounded-tile bg-surface-2 px-4 py-3 text-[0.95rem] text-ink-soft">
-				Spendid uses this to work out your{" "}
-				<strong className="text-ink">safe to spend today</strong> number. It
-				stays private to you.
+				{t("Spendid uses this to work out your")}{" "}
+				<strong className="text-ink">{t("safe to spend today")}</strong>{" "}
+				{t("number. It stays private to you.")}
 			</p>
 		</div>
 	);
@@ -151,7 +154,7 @@ interface MethodStepProps {
 export function MethodStep({ value, onChange }: MethodStepProps) {
 	return (
 		<fieldset className="space-y-3">
-			<legend className="sr-only">Budget style</legend>
+			<legend className="sr-only">{t("Budget style")}</legend>
 			{METHODS.map((m) => {
 				const selected = m.id === value;
 				return (

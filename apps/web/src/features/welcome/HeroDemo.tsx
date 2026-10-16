@@ -3,6 +3,7 @@ import { RotateCcw } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { SafeDial } from "@/components/money/SafeDial";
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 
 export const DEMO_CURRENCY = "MYR";
@@ -19,7 +20,7 @@ export interface DemoSpend {
 
 const BREAKFAST: DemoSpend = {
 	id: "breakfast",
-	label: "Nasi lemak",
+	label: t("Nasi lemak"),
 	minor: 1180,
 	emoji: "🍳",
 	tint: "from-orange-300 to-pink-400",
@@ -28,21 +29,21 @@ const BREAKFAST: DemoSpend = {
 const CHOICES: DemoSpend[] = [
 	{
 		id: "lunch",
-		label: "Lunch",
+		label: t("Lunch"),
 		minor: 1200,
 		emoji: "🍜",
 		tint: "from-orange-300 to-rose-400",
 	},
 	{
 		id: "grab",
-		label: "Grab ride",
+		label: t("Grab ride"),
 		minor: 950,
 		emoji: "🚗",
 		tint: "from-sky-300 to-indigo-400",
 	},
 	{
 		id: "teh",
-		label: "Teh tarik",
+		label: t("Teh tarik"),
 		minor: 380,
 		emoji: "🧋",
 		tint: "from-amber-200 to-orange-400",
@@ -80,8 +81,8 @@ export function HeroDemo({ demo }: HeroDemoProps) {
 
 			<p className="mt-5 text-center text-[0.95rem] text-ink-soft">
 				{remainingChoices.length > 0
-					? "Tap something you bought today"
-					: "Nicely done. Still safe."}
+					? t("Tap something you bought today")
+					: t("Nicely done. Still safe.")}
 			</p>
 			<div className="mt-3 flex min-h-12 flex-wrap justify-center gap-2">
 				<AnimatePresence mode="popLayout">
@@ -108,13 +109,14 @@ export function HeroDemo({ demo }: HeroDemoProps) {
 							onClick={demo.reset}
 							className="inline-flex h-11 items-center gap-2 rounded-full px-4 font-medium text-ink-soft hover:text-ink"
 						>
-							<RotateCcw className="size-4" aria-hidden="true" /> Start over
+							<RotateCcw className="size-4" aria-hidden="true" />{" "}
+							{t("Start over")}
 						</motion.button>
 					)}
 				</AnimatePresence>
 			</div>
 
-			<ul className="mt-5 space-y-2" aria-label="Logged today">
+			<ul className="mt-5 space-y-2" aria-label={t("Logged today")}>
 				<AnimatePresence initial={false}>
 					{demo.logged.map((s) => (
 						<motion.li

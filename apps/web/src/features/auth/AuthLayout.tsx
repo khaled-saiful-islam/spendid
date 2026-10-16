@@ -3,7 +3,9 @@ import { motion } from "motion/react";
 import type { ReactNode } from "react";
 import { Logo } from "@/components/brand/Logo";
 import { SafeDial } from "@/components/money/SafeDial";
+import { LanguageSwitch } from "@/components/system/LanguageSwitch";
 import { ThemeToggle } from "@/components/system/ThemeToggle";
+import { t } from "@/i18n";
 
 interface AuthLayoutProps {
 	title: string;
@@ -13,9 +15,9 @@ interface AuthLayoutProps {
 }
 
 const PROMISES = [
-	"One number each morning: what you can safely spend.",
-	"Log by voice, photo or a few words.",
-	"Share with family only when both of you agree.",
+	t("One number each morning: what you can safely spend."),
+	t("Log by voice, photo or a few words."),
+	t("Share with family only when both of you agree."),
 ];
 
 /** Brand panel beside the form on desktop; a slim plum band above it on phones. */
@@ -28,7 +30,7 @@ export function AuthLayout({
 	return (
 		<div className="min-h-dvh lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
 			<aside className="bg-scales relative hidden overflow-hidden bg-plum-900 p-10 text-plum-50 lg:flex lg:flex-col dark:bg-plum-950">
-				<Link to="/" aria-label="Spendid home" className="text-plum-50">
+				<Link to="/" aria-label={t("Spendid home")} className="text-plum-50">
 					<Logo />
 				</Link>
 				<div className="my-auto">
@@ -59,7 +61,7 @@ export function AuthLayout({
 
 			<div className="flex min-h-dvh flex-col">
 				<header className="flex items-center justify-between bg-plum-900 px-4 py-3 text-plum-50 lg:bg-transparent lg:px-8 lg:pt-6 lg:text-ink dark:bg-plum-950 lg:dark:bg-transparent">
-					<Link to="/" aria-label="Spendid home" className="lg:invisible">
+					<Link to="/" aria-label={t("Spendid home")} className="lg:invisible">
 						<Logo />
 					</Link>
 					<ThemeToggle className="text-current" />
@@ -80,6 +82,9 @@ export function AuthLayout({
 						{footer && (
 							<div className="mt-8 text-center text-ink-soft">{footer}</div>
 						)}
+						<div className="mt-6 flex justify-center">
+							<LanguageSwitch signedIn={false} />
+						</div>
 					</motion.div>
 				</main>
 			</div>

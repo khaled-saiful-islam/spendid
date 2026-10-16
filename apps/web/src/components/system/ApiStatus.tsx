@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { t } from "@/i18n";
 import { fetchHealth } from "@/lib/api";
 import { cn } from "@/lib/cn";
 
@@ -12,15 +13,15 @@ export function ApiStatus({ className }: { className?: string }) {
 
 	const ok = data?.status === "ok";
 	const label = isPending
-		? "Checking the server…"
+		? t("Checking the server…")
 		: ok
-			? "All systems running"
+			? t("All systems running")
 			: data
 				? `Running with problems: ${Object.entries(data.services)
 						.filter(([, s]) => s === "down")
 						.map(([name]) => name)
 						.join(", ")} down`
-				: "Server offline";
+				: t("Server offline");
 
 	return (
 		<span

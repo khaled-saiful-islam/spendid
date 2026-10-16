@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import { useState } from "react";
 import { MaybeAlert } from "@/components/form/Alert";
 import { buttonClass } from "@/components/ui/Button";
+import { t } from "@/i18n";
 import { authClient } from "@/lib/auth-client";
 import { AuthLayout } from "./AuthLayout";
 
@@ -21,12 +22,12 @@ export function CheckEmailPage({ email }: { email?: string }) {
 
 	return (
 		<AuthLayout
-			title="Check your inbox"
+			title={t("Check your inbox")}
 			intro={
 				<>
-					We sent a confirmation link to{" "}
-					<strong className="text-ink">{email ?? "your email"}</strong>. Open it
-					on this device to finish setting up.
+					{t("We sent a confirmation link to")}{" "}
+					<strong className="text-ink">{email ?? t("your email")}</strong>.{" "}
+					{t("Open it on this device to finish setting up.")}
 				</>
 			}
 			footer={
@@ -34,7 +35,7 @@ export function CheckEmailPage({ email }: { email?: string }) {
 					to="/signin"
 					className="font-semibold text-ink underline decoration-marigold decoration-2 underline-offset-4"
 				>
-					Back to sign in
+					{t("Back to sign in")}
 				</Link>
 			}
 		>
@@ -49,7 +50,9 @@ export function CheckEmailPage({ email }: { email?: string }) {
 			<div className="mt-8 space-y-4">
 				<MaybeAlert
 					tone="success"
-					message={sent ? "Sent again. It can take a minute to arrive." : null}
+					message={
+						sent ? t("Sent again. It can take a minute to arrive.") : null
+					}
 				/>
 				{email && !sent && (
 					<button
@@ -61,7 +64,7 @@ export function CheckEmailPage({ email }: { email?: string }) {
 							"w-full border-2 border-line",
 						)}
 					>
-						Send the link again
+						{t("Send the link again")}
 					</button>
 				)}
 				{import.meta.env.DEV && (
@@ -71,7 +74,7 @@ export function CheckEmailPage({ email }: { email?: string }) {
 						rel="noreferrer"
 						className={buttonClass("ink", "lg", "w-full")}
 					>
-						Open the dev inbox (Mailpit)
+						{t("Open the dev inbox (Mailpit)")}
 					</a>
 				)}
 			</div>

@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { AnimatePresence } from "motion/react";
 import { buttonClass } from "@/components/ui/Button";
+import { dateLocale, t } from "@/i18n";
 import { meQuery } from "@/lib/me";
 import { goalsQuery, summaryQuery } from "@/lib/money-api";
 import { capture } from "../capture/capture-store";
@@ -18,10 +19,10 @@ import { SafeCard } from "./SafeCard";
 
 function greeting(date: Date): string {
 	const h = date.getHours();
-	if (h < 5) return "Up late";
-	if (h < 12) return "Good morning";
-	if (h < 18) return "Good afternoon";
-	return "Good evening";
+	if (h < 5) return t("Up late");
+	if (h < 12) return t("Good morning");
+	if (h < 18) return t("Good afternoon");
+	return t("Good evening");
 }
 
 export function HomePage() {
@@ -38,7 +39,7 @@ export function HomePage() {
 		<div className="space-y-6">
 			<div>
 				<p className="text-ink-soft">
-					{now.toLocaleDateString(undefined, {
+					{now.toLocaleDateString(dateLocale(), {
 						weekday: "long",
 						day: "numeric",
 						month: "long",
@@ -67,7 +68,7 @@ export function HomePage() {
 			>
 				<div className="flex items-center justify-between gap-3 px-2 pt-2">
 					<h2 id="today-title" className="text-[1.4rem] font-bold">
-						Today
+						{t("Today")}
 					</h2>
 					{summary && todayTotal > 0 && (
 						<span className="num font-semibold text-ink-soft">
@@ -78,17 +79,18 @@ export function HomePage() {
 				{summary && summary.today.length === 0 ? (
 					<div className="px-2 py-8 text-center">
 						<p className="font-display text-[1.2rem] font-bold">
-							Nothing logged yet today
+							{t("Nothing logged yet today")}
 						</p>
 						<p className="mx-auto mt-1 max-w-[34ch] text-ink-soft">
-							Say it, snap it or type it. It takes a few seconds.
+							{t("Say it, snap it or type it. It takes a few seconds.")}
 						</p>
 						<button
 							type="button"
 							onClick={capture.openType}
 							className={buttonClass("coin", "md", "mt-4")}
 						>
-							<Plus className="size-5" aria-hidden="true" /> Add an expense
+							<Plus className="size-5" aria-hidden="true" />{" "}
+							{t("Add an expense")}
 						</button>
 					</div>
 				) : (
@@ -116,13 +118,13 @@ export function HomePage() {
 				<section aria-labelledby="goals-title">
 					<div className="flex items-center justify-between">
 						<h2 id="goals-title" className="text-[1.4rem] font-bold">
-							Saving for
+							{t("Saving for")}
 						</h2>
 						<Link
 							to="/app/plan"
 							className="font-medium text-ink-soft hover:text-ink"
 						>
-							All goals
+							{t("All goals")}
 						</Link>
 					</div>
 					<ul className="mt-3 grid grid-cols-2 gap-3">
@@ -140,8 +142,10 @@ export function HomePage() {
 									{g.name}
 								</p>
 								<p className="num text-center text-[0.9rem] text-ink-soft">
-									{Math.round((g.savedMinor / g.targetMinor) * 100)}% of{" "}
-									{formatMinor(g.targetMinor, summary.homeCurrency)}
+									{t("{pct}% of {amount}", {
+										pct: Math.round((g.savedMinor / g.targetMinor) * 100),
+										amount: formatMinor(g.targetMinor, summary.homeCurrency),
+									})}
 								</p>
 							</li>
 						))}

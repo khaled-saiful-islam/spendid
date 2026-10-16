@@ -4,6 +4,7 @@ import { Logo } from "@/components/brand/Logo";
 import { CountUp } from "@/components/money/CountUp";
 import { ThemeToggle } from "@/components/system/ThemeToggle";
 import { buttonClass } from "@/components/ui/Button";
+import { t } from "@/i18n";
 import { CaptureModes } from "./CaptureModes";
 import { FamilyShare } from "./FamilyShare";
 import {
@@ -27,10 +28,10 @@ export function WelcomePage() {
 						to="/signin"
 						className={buttonClass("ghost", "md", "hidden sm:inline-flex")}
 					>
-						Sign in
+						{t("Sign in")}
 					</Link>
 					<Link to="/signup" className={buttonClass("ink", "md")}>
-						Create account
+						{t("Create account")}
 					</Link>
 				</nav>
 			</header>
@@ -46,7 +47,7 @@ export function WelcomePage() {
 							transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
 						>
 							<h1 className="text-[clamp(2.6rem,8.5vw,5.2rem)] font-extrabold">
-								Today you can spend{" "}
+								{t("Today you can spend")}{" "}
 								<span className="inline-block rounded-[0.4em] bg-marigold px-[0.25em] text-plum-900 shadow-coin">
 									<CountUp
 										minor={demo.remaining}
@@ -55,18 +56,19 @@ export function WelcomePage() {
 										className="num"
 									/>
 								</span>{" "}
-								and still hit your goals.
+								{t("and still hit your goals.")}
 							</h1>
 							<p className="mt-6 max-w-[46ch] text-[1.15rem] text-ink-soft">
-								Say it, snap it or type it. Spendid logs your spending in
-								seconds and keeps that one number honest, every day.
+								{t(
+									"Say it, snap it or type it. Spendid logs your spending in seconds and keeps that one number honest, every day.",
+								)}
 							</p>
 							<div className="mt-8 flex flex-wrap gap-3">
 								<Link to="/signup" className={buttonClass("coin", "lg")}>
-									Create a free account
+									{t("Create a free account")}
 								</Link>
 								<Link to="/signin" className={buttonClass("ghost", "lg")}>
-									I have an account
+									{t("I have an account")}
 								</Link>
 							</div>
 						</motion.div>

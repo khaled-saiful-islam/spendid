@@ -32,3 +32,10 @@ createRoot(root).render(
 		</QueryClientProvider>
 	</StrictMode>,
 );
+
+// Installable app with an offline shell. Dev keeps the plain server (no stale caches).
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+	window.addEventListener("load", () => {
+		void navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+	});
+}

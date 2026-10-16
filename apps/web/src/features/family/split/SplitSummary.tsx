@@ -1,6 +1,7 @@
 import { formatMinor, type SplitDto } from "@spendid/shared";
 import { Check } from "lucide-react";
 import { motion } from "motion/react";
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { Avatar } from "../parts";
 
@@ -40,7 +41,7 @@ export function SplitSummary({
 									<span className="whitespace-nowrap">
 										{formatMinor(s.itemsMinor, split.currency)}
 									</span>{" "}
-									items
+									{t("items")}
 									{s.adjustMinor !== 0 && (
 										<>
 											,{" "}
@@ -48,7 +49,7 @@ export function SplitSummary({
 												{s.adjustMinor > 0 ? "+" : "−"}
 												{formatMinor(Math.abs(s.adjustMinor), split.currency)}
 											</span>{" "}
-											{s.adjustMinor > 0 ? "tax & service" : "discount"}
+											{s.adjustMinor > 0 ? t("tax & service") : t("discount")}
 										</>
 									)}
 								</span>
@@ -70,12 +71,13 @@ export function SplitSummary({
 										)}
 									>
 										{paid && <Check className="size-4" aria-hidden="true" />}
-										{paid ? "Paid" : "Mark paid"}
+										{paid ? t("Paid") : t("Mark paid")}
 									</button>
 								) : (
 									paid && (
 										<span className="mt-1 inline-flex items-center gap-1 rounded-full bg-jade px-3 py-1 text-[0.85rem] font-semibold text-white">
-											<Check className="size-4" aria-hidden="true" /> Paid
+											<Check className="size-4" aria-hidden="true" />{" "}
+											{t("Paid")}
 										</span>
 									)
 								)}
@@ -86,8 +88,15 @@ export function SplitSummary({
 			</ul>
 			<details className="rounded-panel border border-line bg-surface p-4">
 				<summary className="cursor-pointer font-semibold">
-					{split.items.length === 1 ? "1 item" : `${split.items.length} items`},
-					total {formatMinor(split.result.totalMinor, split.currency)}
+					{t(
+						split.items.length === 1
+							? "1 item, total {amount}"
+							: "{n} items, total {amount}",
+						{
+							n: split.items.length,
+							amount: formatMinor(split.result.totalMinor, split.currency),
+						},
+					)}
 				</summary>
 				<ul className="mt-3 divide-y divide-line">
 					{split.items.map((item) => (
@@ -109,7 +118,9 @@ export function SplitSummary({
 					{split.adjustMinor !== 0 && (
 						<li className="flex justify-between gap-4 py-2 text-ink-soft">
 							<span>
-								{split.adjustMinor > 0 ? "Tax, service and tip" : "Discount"}
+								{split.adjustMinor > 0
+									? t("Tax, service and tip")
+									: t("Discount")}
 							</span>
 							<span className="num font-semibold">
 								{formatMinor(split.adjustMinor, split.currency)}

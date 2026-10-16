@@ -1,5 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useId, useState } from "react";
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 
 export type PipMood = "shining" | "calm" | "worried" | "curled" | "sleepy";
@@ -149,7 +150,9 @@ export function Pip({
 			viewBox="0 0 140 110"
 			className={cn("overflow-visible", className)}
 			role="img"
-			aria-label={`Pip the pangolin, ${mood === "curled" ? "curled up" : mood}`}
+			aria-label={t("Pip the pangolin, {mood}", {
+				mood: t(mood === "curled" ? "curled up" : mood),
+			})}
 			key={bounce}
 			initial={reduce || bounce === 0 ? false : { y: 0 }}
 			animate={reduce || bounce === 0 ? undefined : { y: [0, -14, 0, -5, 0] }}

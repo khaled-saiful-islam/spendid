@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 import { motion } from "motion/react";
 import { TINTS } from "@/components/money/CategoryIcon";
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { useCategoryMap } from "../money/TransactionRow";
 
@@ -22,24 +23,27 @@ export function MonthCard({ summary }: { summary: Summary }) {
 		>
 			<div className="flex items-center justify-between gap-3">
 				<h2 id="month-title" className="text-[1.4rem] font-bold">
-					This month
+					{t("This month")}
 				</h2>
 				<Link
 					to="/app/plan"
 					className="inline-flex items-center gap-1 font-medium text-ink-soft hover:text-ink"
 				>
-					Your plan <ChevronRight className="size-4" aria-hidden="true" />
+					{t("Your plan")}{" "}
+					<ChevronRight className="size-4" aria-hidden="true" />
 				</Link>
 			</div>
 			<p className="mt-1 text-ink-soft">
 				<span className="num font-bold text-ink">
 					{formatMinor(total, summary.homeCurrency)}
 				</span>{" "}
-				spent
+				{t("spent")}
 				{summary.incomeMinor !== null && (
 					<>
 						{" "}
-						of {formatMinor(summary.incomeMinor, summary.homeCurrency)} income
+						{t("of {amount} income", {
+							amount: formatMinor(summary.incomeMinor, summary.homeCurrency),
+						})}
 					</>
 				)}
 			</p>
@@ -81,7 +85,7 @@ export function MonthCard({ summary }: { summary: Summary }) {
 									)}
 									aria-hidden="true"
 								/>
-								<span className="break-words">{cat?.name ?? "Other"}</span>
+								<span className="break-words">{cat?.name ?? t("Other")}</span>
 							</span>
 							<span className="num shrink-0 font-semibold">
 								{formatMinor(c.spentMinor, summary.homeCurrency)}

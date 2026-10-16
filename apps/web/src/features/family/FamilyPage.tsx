@@ -5,6 +5,7 @@ import { ChevronRight, Link2, ReceiptText, UserPlus, X } from "lucide-react";
 import { useState } from "react";
 import { buttonClass } from "@/components/ui/Button";
 import { toast } from "@/components/ui/Toast";
+import { t } from "@/i18n";
 import { familyApi, familyQuery, refreshFamily } from "@/lib/family-api";
 import { meQuery } from "@/lib/me";
 import { CircleOrbit } from "./CircleOrbit";
@@ -27,23 +28,32 @@ function InviteRow({ invite }: { invite: PendingInvite }) {
 			</span>
 			<span className="min-w-0 flex-1">
 				<span className="block font-semibold break-words">
-					Invite for your {relationLabel(invite.relation).toLowerCase()}
+					{t("Invite for your {relation}", {
+						relation: relationLabel(invite.relation).toLowerCase(),
+					})}
 					{invite.email ? `, ${invite.email}` : ""}
 				</span>
 				<span className="block text-[0.85rem] text-ink-soft">
-					You'll share {LEVEL_INFO[invite.level].label.toLowerCase()}. Ends in{" "}
-					{days} {days === 1 ? "day" : "days"}.
+					{t(
+						days === 1
+							? "You'll share {level}. Ends in 1 day."
+							: "You'll share {level}. Ends in {n} days.",
+						{
+							level: t(LEVEL_INFO[invite.level].label).toLowerCase(),
+							n: days,
+						},
+					)}
 				</span>
 			</span>
 			<button
 				type="button"
-				aria-label="Cancel this invite"
+				aria-label={t("Cancel this invite")}
 				onClick={() =>
 					void familyApi
 						.cancelInvite(invite.id)
 						.then(() => refreshFamily(queryClient))
-						.then(() => toast("Invite cancelled. The link no longer works."))
-						.catch(() => toast("Couldn't cancel. Try again."))
+						.then(() => toast(t("Invite cancelled. The link no longer works.")))
+						.catch(() => toast(t("Couldn't cancel. Try again.")))
 				}
 				className="grid size-10 shrink-0 place-items-center rounded-full text-ink-soft hover:bg-surface-2 hover:text-ink"
 			>
@@ -74,13 +84,20 @@ export function FamilyPage() {
 					<div className="space-y-4">
 						<h1 className="text-[clamp(2rem,7vw,2.8rem)] leading-tight font-bold">
 							{people.length === 0
-								? "Bring your people in"
-								: "Your family circle"}
+								? t("Bring your people in")
+								: t("Your family circle")}
 						</h1>
 						<p className="max-w-[46ch] text-[1.05rem] text-ink-soft">
 							{people.length === 0
-								? "Invite your partner, parents or kids. You each choose what to share, from just a monthly total to every receipt."
-								: `${people.length === 1 ? "1 person" : `${people.length} people`} in your circle. Both sides always see what's shared.`}
+								? t(
+										"Invite your partner, parents or kids. You each choose what to share, from just a monthly total to every receipt.",
+									)
+								: t(
+										people.length === 1
+											? "1 person in your circle. Both sides always see what's shared."
+											: "{n} people in your circle. Both sides always see what's shared.",
+										{ n: people.length },
+									)}
 						</p>
 						<div className="flex flex-wrap gap-2">
 							<button
@@ -88,15 +105,15 @@ export function FamilyPage() {
 								onClick={() => setInviting(true)}
 								className={buttonClass("coin", "lg")}
 							>
-								<UserPlus className="size-5" aria-hidden="true" /> Invite
-								someone
+								<UserPlus className="size-5" aria-hidden="true" />{" "}
+								{t("Invite someone")}
 							</button>
 							<Link
 								to="/app/family/split"
 								className={buttonClass("ghost", "lg", "border-2 border-line")}
 							>
-								<ReceiptText className="size-5" aria-hidden="true" /> Split a
-								bill
+								<ReceiptText className="size-5" aria-hidden="true" />{" "}
+								{t("Split a bill")}
 							</Link>
 						</div>
 					</div>
@@ -113,7 +130,7 @@ export function FamilyPage() {
 			{(people.length > 0 || invites.length > 0) && (
 				<section aria-labelledby="people-heading" className="space-y-3">
 					<h2 id="people-heading" className="text-[1.6rem] font-bold">
-						People
+						{t("People")}
 					</h2>
 					<ul className="grid gap-3 sm:grid-cols-2">
 						{people.map((p) => (
@@ -130,12 +147,15 @@ export function FamilyPage() {
 												{p.name}
 											</span>{" "}
 											<span className="text-ink-soft">
-												{relationLabel(p.relation)}, since {sinceLabel(p.since)}
+												{t("{relation}, since {date}", {
+													relation: relationLabel(p.relation),
+													date: sinceLabel(p.since),
+												})}
 											</span>
 										</span>
 										<span className="flex flex-wrap gap-1.5">
-											<ShareChip label="You see" state={p.theyShare} />
-											<ShareChip label="They see" state={p.iShare} />
+											<ShareChip label={t("You see")} state={p.theyShare} />
+											<ShareChip label={t("They see")} state={p.iShare} />
 										</span>
 									</span>
 									<ChevronRight

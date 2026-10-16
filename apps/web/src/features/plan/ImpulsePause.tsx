@@ -15,6 +15,7 @@ import { SubmitButton } from "@/components/form/SubmitButton";
 import { buttonClass } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
 import { toast } from "@/components/ui/Toast";
+import { t } from "@/i18n";
 import { delightApi, wishesQuery } from "@/lib/delight-api";
 import { ApiError } from "@/lib/http";
 import { capture } from "../capture/capture-store";
@@ -69,7 +70,7 @@ function CooldownRing({ wish, now }: { wish: Wish; now: number }) {
 			</svg>
 			<span className="num text-center text-[0.8rem] leading-tight font-bold">
 				{left === 0
-					? "Ready"
+					? t("Ready")
 					: `${Math.min(WISH_COOLDOWN_HOURS, Math.ceil(left / 3_600_000))} h`}
 			</span>
 		</div>
@@ -95,8 +96,8 @@ function AddWish({
 	async function onSubmit(e: FormEvent) {
 		e.preventDefault();
 		const amount = Number(price.replace(",", "."));
-		if (!name.trim()) return setError("What do you want to buy?");
-		if (!(amount > 0)) return setError("Add the price.");
+		if (!name.trim()) return setError(t("What do you want to buy?"));
+		if (!(amount > 0)) return setError(t("Add the price."));
 		setPending(true);
 		setError(null);
 		try {
@@ -108,7 +109,10 @@ function AddWish({
 			});
 			await queryClient.invalidateQueries({ queryKey: wishesQuery.queryKey });
 			toast(
-				`${name.trim()} is waiting. Decide in ${WISH_COOLDOWN_HOURS} hours.`,
+				t("{name} is waiting. Decide in {n} hours.", {
+					name: name.trim(),
+					n: WISH_COOLDOWN_HOURS,
+				}),
 			);
 			setName("");
 			setPrice("");
@@ -116,44 +120,46 @@ function AddWish({
 			onClose();
 		} catch (err) {
 			setError(
-				err instanceof ApiError ? err.message : "Couldn't save. Try again.",
+				err instanceof ApiError ? err.message : t("Couldn't save. Try again."),
 			);
 		}
 		setPending(false);
 	}
 
 	return (
-		<Sheet open={open} onClose={onClose} title="Want something?">
+		<Sheet open={open} onClose={onClose} title={t("Want something?")}>
 			<form onSubmit={onSubmit} className="space-y-4" noValidate>
 				<p className="text-ink-soft">
-					Park it here for {WISH_COOLDOWN_HOURS} hours. If you still want it
-					then, buy it with a clear head.
+					{t(
+						"Park it here for {n} hours. If you still want it then, buy it with a clear head.",
+						{ n: WISH_COOLDOWN_HOURS },
+					)}
 				</p>
 				<Field
-					label="What is it?"
+					label={t("What is it?")}
 					data-autofocus
 					value={name}
 					maxLength={80}
-					placeholder="Noise-cancelling headphones"
+					placeholder={t("Noise-cancelling headphones")}
 					onChange={(e) => setName(e.target.value)}
 				/>
 				<Field
-					label="Price"
+					label={t("Price")}
 					inputMode="decimal"
 					adornment={currencySymbol(currency)}
 					value={price}
 					onChange={(e) => setPrice(e.target.value.replace(/[^\d.,]/g, ""))}
 				/>
 				<Field
-					label="Link (optional)"
+					label={t("Link (optional)")}
 					type="url"
 					value={link}
-					placeholder="https://"
+					placeholder={t("https://")}
 					onChange={(e) => setLink(e.target.value)}
 				/>
 				<MaybeAlert tone="error" message={error} />
 				<SubmitButton pending={pending}>
-					Start the {WISH_COOLDOWN_HOURS}-hour wait
+					{t("Start the {n}-hour wait", { n: WISH_COOLDOWN_HOURS })}
 				</SubmitButton>
 			</form>
 		</Sheet>
@@ -182,7 +188,11 @@ export function ImpulsePause() {
 						origin: { y: 0.7 },
 						colors: ["#12B886", "#FFB224"],
 					});
-				toast(`Skipped. ${money(w.priceMinor, w.currency)} stays with you.`);
+				toast(
+					t("Skipped. {amount} stays with you.", {
+						amount: money(w.priceMinor, w.currency),
+					}),
+				);
 			} else {
 				capture.openTypeWith({
 					merchant: w.name,
@@ -191,7 +201,7 @@ export function ImpulsePause() {
 				});
 			}
 		} catch {
-			toast("Couldn't save. Try again.");
+			toast(t("Couldn't save. Try again."));
 		}
 	}
 
@@ -202,27 +212,31 @@ export function ImpulsePause() {
 					id="pause-heading"
 					className="flex items-center gap-2 text-[1.6rem] font-bold"
 				>
-					<Hourglass className="size-6 text-plum-500" aria-hidden="true" /> Wait
-					before you buy
+					<Hourglass className="size-6 text-plum-500" aria-hidden="true" />{" "}
+					{t("Wait before you buy")}
 				</h2>
 				<button
 					type="button"
 					onClick={() => setAdding(true)}
 					className={buttonClass("ghost", "md", "border-2 border-line")}
 				>
-					<Plus className="size-5" aria-hidden="true" /> Add a want
+					<Plus className="size-5" aria-hidden="true" /> {t("Add a want")}
 				</button>
 			</div>
 			{data.savedMinor > 0 && (
 				<p className="inline-flex items-center gap-2 rounded-full bg-jade/15 px-4 py-2 font-semibold text-safe">
 					<Sparkles className="size-4" aria-hidden="true" />{" "}
-					{money(data.savedMinor)} not spent thanks to waiting
+					{t("{amount} not spent thanks to waiting", {
+						amount: money(data.savedMinor),
+					})}
 				</p>
 			)}
 			{data.waiting.length === 0 ? (
 				<p className="rounded-panel border-2 border-dashed border-line p-5 text-ink-soft">
-					Tempted by something? Add it here and wait {WISH_COOLDOWN_HOURS}{" "}
-					hours. You'll see what it costs in hours of work, and most urges pass.
+					{t(
+						"Tempted by something? Add it here and wait {n} hours. You'll see what it costs in hours of work, and most urges pass.",
+						{ n: WISH_COOLDOWN_HOURS },
+					)}
 				</p>
 			) : (
 				<ul className="space-y-3">
@@ -248,7 +262,9 @@ export function ImpulsePause() {
 													target="_blank"
 													rel="noopener noreferrer"
 													className="text-plum-500"
-													aria-label={`Open the link for ${w.name}`}
+													aria-label={t("Open the link for {name}", {
+														name: w.name,
+													})}
 												>
 													<ExternalLink className="size-4" aria-hidden="true" />
 												</a>
@@ -259,8 +275,8 @@ export function ImpulsePause() {
 										</p>
 										{w.hoursOfWork !== null && (
 											<p className="inline-flex items-center gap-1.5 text-[0.88rem] text-ink-soft">
-												<Clock className="size-3.5" aria-hidden="true" /> About{" "}
-												{w.hoursOfWork} hours of work
+												<Clock className="size-3.5" aria-hidden="true" />{" "}
+												{t("About {n} hours of work", { n: w.hoursOfWork })}
 											</p>
 										)}
 									</div>
@@ -272,7 +288,7 @@ export function ImpulsePause() {
 													onClick={() => void decide(w, "skipped")}
 													className={buttonClass("coin", "md")}
 												>
-													Skip it
+													{t("Skip it")}
 												</button>
 												<button
 													type="button"
@@ -283,7 +299,7 @@ export function ImpulsePause() {
 														"border-2 border-line",
 													)}
 												>
-													Still want it
+													{t("Still want it")}
 												</button>
 											</>
 										) : (
@@ -296,7 +312,7 @@ export function ImpulsePause() {
 													"border-2 border-line",
 												)}
 											>
-												Skip now
+												{t("Skip now")}
 											</button>
 										)}
 									</div>
@@ -309,7 +325,7 @@ export function ImpulsePause() {
 			{data.decided.length > 0 && (
 				<details className="rounded-panel border border-line bg-surface p-4">
 					<summary className="cursor-pointer font-semibold">
-						Earlier decisions
+						{t("Earlier decisions")}
 					</summary>
 					<ul className="mt-2 divide-y divide-line">
 						{data.decided.map((w) => (
@@ -327,7 +343,7 @@ export function ImpulsePause() {
 								>
 									{w.decision === "skipped"
 										? `Skipped, ${money(w.priceMinor, w.currency)} kept`
-										: "Bought"}
+										: t("Bought")}
 								</span>
 							</li>
 						))}

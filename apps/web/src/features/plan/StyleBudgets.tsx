@@ -10,6 +10,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "motion/react";
 import { useState } from "react";
 import { CategoryIcon } from "@/components/money/CategoryIcon";
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { moneyApi, refreshMoney } from "@/lib/money-api";
 
@@ -51,15 +52,15 @@ export function FiftyThirtyTwenty({
 	const money = (m: number) => formatMinor(m, summary.homeCurrency);
 	const rows = [
 		{
-			label: "Needs",
-			hint: "Bills, groceries, transport, health",
+			label: t("Needs"),
+			hint: t("Bills, groceries, transport, health"),
 			spent: spentBy("need"),
 			target: income * 0.5,
 			tone: "bg-jade",
 		},
 		{
-			label: "Wants",
-			hint: "Eating out, shopping, fun, travel",
+			label: t("Wants"),
+			hint: t("Eating out, shopping, fun, travel"),
 			spent: spentBy("want"),
 			target: income * 0.3,
 			tone: "bg-sky",
@@ -75,8 +76,8 @@ export function FiftyThirtyTwenty({
 							{r.label}
 						</span>
 						<span className="num text-ink-soft">
-							<strong className="text-ink">{money(r.spent)}</strong> of{" "}
-							{money(r.target)}
+							<strong className="text-ink">{money(r.spent)}</strong>{" "}
+							{t("of {amount}", { amount: money(r.target) })}
 						</span>
 					</div>
 					<p className="text-[0.88rem] text-ink-soft">{r.hint}</p>
@@ -84,13 +85,16 @@ export function FiftyThirtyTwenty({
 				</div>
 			))}
 			<div className="rounded-tile bg-marigold/15 p-4">
-				<span className="font-display text-[1.2rem] font-bold">Savings</span>
+				<span className="font-display text-[1.2rem] font-bold">
+					{t("Savings")}
+				</span>
 				<p className="mt-1 text-ink-soft">
 					<strong className="num text-ink">
 						{money(summary.reservedMinor)}
 					</strong>{" "}
-					is kept aside first this month, before your daily number is worked
-					out.
+					{t(
+						"is kept aside first this month, before your daily number is worked out.",
+					)}
 				</p>
 			</div>
 		</div>
@@ -146,10 +150,14 @@ export function CategoryBudgets({
 					)}
 				>
 					{unassigned === 0
-						? "Every bit of income has a job. Nicely done."
+						? t("Every bit of income has a job. Nicely done.")
 						: unassigned > 0
-							? `${formatMinor(unassigned, cur)} still needs a job.`
-							: `You've planned ${formatMinor(-unassigned, cur)} more than you earn.`}
+							? t("{amount} still needs a job.", {
+									amount: formatMinor(unassigned, cur),
+								})
+							: t("You've planned {amount} more than you earn.", {
+									amount: formatMinor(-unassigned, cur),
+								})}
 				</p>
 			)}
 			<ul className="divide-y divide-line">
@@ -183,12 +191,12 @@ export function CategoryBudgets({
 										<>
 											<strong>{formatMinor(spent, cur)}</strong>{" "}
 											<span className="text-ink-soft">
-												of {formatMinor(limit, cur)}
+												{t("of {amount}", { amount: formatMinor(limit, cur) })}
 											</span>
 										</>
 									) : (
 										<span className="font-semibold text-plum-500">
-											Set limit
+											{t("Set limit")}
 										</span>
 									)}
 								</button>
@@ -207,8 +215,10 @@ export function CategoryBudgets({
 									<input
 										ref={(el) => el?.focus()}
 										inputMode="decimal"
-										aria-label={`Monthly limit for ${c.name}`}
-										placeholder="Monthly limit"
+										aria-label={t("Monthly limit for {category}", {
+											category: t(c.name),
+										})}
+										placeholder={t("Monthly limit")}
 										value={value}
 										onChange={(e) =>
 											setValue(e.target.value.replace(/[^\d.,]/g, ""))
@@ -219,7 +229,7 @@ export function CategoryBudgets({
 										type="submit"
 										className="h-11 shrink-0 rounded-full bg-plum-900 px-5 font-semibold text-plum-50 dark:bg-plum-50 dark:text-plum-900"
 									>
-										Save
+										{t("Save")}
 									</button>
 								</form>
 							)}

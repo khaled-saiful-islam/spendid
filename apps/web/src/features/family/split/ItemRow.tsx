@@ -2,6 +2,7 @@ import { formatMinor, type SplitItem, type SplitPerson } from "@spendid/shared";
 import { GripVertical, Trash2, UsersRound } from "lucide-react";
 import { motion, useDragControls } from "motion/react";
 import { useState } from "react";
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { Avatar } from "../parts";
 
@@ -72,7 +73,7 @@ export function ItemRow({
 			<div className="flex items-center gap-1 pr-2">
 				<button
 					type="button"
-					aria-label={`Drag ${item.name} onto a person`}
+					aria-label={t("Drag {name} onto a person", { name: item.name })}
 					onPointerDown={(e) => controls.start(e)}
 					className="grid size-12 shrink-0 cursor-grab touch-none place-items-center text-ink-soft active:cursor-grabbing"
 				>
@@ -88,9 +89,9 @@ export function ItemRow({
 						<span className="block font-semibold break-words">{item.name}</span>
 						<span className="block text-[0.85rem] text-ink-soft">
 							{owners.length === 0
-								? "Nobody yet. Drag it onto someone."
+								? t("Nobody yet. Drag it onto someone.")
 								: owners.length === people.length && people.length > 1
-									? "Everyone"
+									? t("Everyone")
 									: owners.map((p) => p.name).join(", ")}
 						</span>
 					</span>
@@ -140,12 +141,12 @@ export function ItemRow({
 						onClick={onEveryone}
 						className="inline-flex min-h-10 items-center gap-1.5 rounded-full bg-surface-2 px-3 text-[0.9rem] font-semibold"
 					>
-						<UsersRound className="size-4" aria-hidden="true" /> Everyone
+						<UsersRound className="size-4" aria-hidden="true" /> {t("Everyone")}
 					</button>
 					<button
 						type="button"
 						onClick={onRemove}
-						aria-label={`Remove ${item.name}`}
+						aria-label={t("Remove {name}", { name: item.name })}
 						className="ml-auto grid size-10 place-items-center rounded-full text-ink-soft hover:bg-surface-2 hover:text-over"
 					>
 						<Trash2 className="size-5" aria-hidden="true" />

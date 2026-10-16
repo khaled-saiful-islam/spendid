@@ -49,6 +49,7 @@ export function AdminConsole({ me }: { me: Me }) {
 					<button
 						type="button"
 						onClick={signOut}
+						aria-label="Sign out"
 						className={buttonClass("ghost", "md")}
 					>
 						<LogOut className="size-5" aria-hidden="true" />{" "}
@@ -72,7 +73,7 @@ export function AdminConsole({ me }: { me: Me }) {
 			<div
 				role="tablist"
 				aria-label="Admin sections"
-				className="mt-6 flex gap-1 overflow-x-auto border-b border-line"
+				className="mt-6 flex flex-wrap gap-x-1 border-b border-line"
 			>
 				{TABS.map((t) => (
 					<button
@@ -82,7 +83,7 @@ export function AdminConsole({ me }: { me: Me }) {
 						aria-selected={tab === t.id}
 						onClick={() => setTab(t.id)}
 						className={cn(
-							"relative h-12 shrink-0 px-4 font-semibold",
+							"relative h-12 shrink-0 px-3 font-semibold sm:px-4",
 							tab === t.id ? "text-ink" : "text-ink-soft hover:text-ink",
 						)}
 					>

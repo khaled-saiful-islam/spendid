@@ -1,4 +1,5 @@
 import type { AskEvent, AskRequest } from "@spendid/shared";
+import { t } from "@/i18n";
 
 /**
  * Sends a question and calls `onEvent` for each streamed event (steps, answer words,
@@ -20,7 +21,7 @@ export async function streamAsk(
 	} catch (error) {
 		if (signal.aborted) return;
 		throw new Error(
-			"Couldn't reach Spendid. Check your connection and try again.",
+			t("Couldn't reach Spendid. Check your connection and try again."),
 			{ cause: error },
 		);
 	}
@@ -28,7 +29,9 @@ export async function streamAsk(
 		const body = (await res.json().catch(() => null)) as {
 			error?: string;
 		} | null;
-		throw new Error(body?.error ?? "The assistant isn't available right now.");
+		throw new Error(
+			body?.error ?? t("The assistant isn't available right now."),
+		);
 	}
 
 	const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();

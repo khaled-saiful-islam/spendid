@@ -3,6 +3,7 @@ import { Fingerprint, KeyRound, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { MaybeAlert } from "@/components/form/Alert";
 import { buttonClass } from "@/components/ui/Button";
+import { dateLocale, t } from "@/i18n";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/cn";
 import { lockStorage } from "../lock/policy";
@@ -11,18 +12,18 @@ const passkeysQuery = {
 	queryKey: ["passkeys"],
 	queryFn: async () => {
 		const { data, error } = await authClient.passkey.listUserPasskeys();
-		if (error) throw new Error("Couldn't load your passkeys.");
+		if (error) throw new Error(t("Couldn't load your passkeys."));
 		return data ?? [];
 	},
 };
 
 function deviceName(): string {
 	const ua = navigator.userAgent;
-	if (/iPhone|iPad/.test(ua)) return "iPhone or iPad";
-	if (/Android/.test(ua)) return "Android phone";
+	if (/iPhone|iPad/.test(ua)) return t("iPhone or iPad");
+	if (/Android/.test(ua)) return t("Android phone");
 	if (/Mac/.test(ua)) return "Mac";
-	if (/Windows/.test(ua)) return "Windows PC";
-	return "This device";
+	if (/Windows/.test(ua)) return t("Windows PC");
+	return t("This device");
 }
 
 /** Passkeys for quick sign-in, plus the per-device app lock switch. */
@@ -41,12 +42,14 @@ export function PasskeyPanel() {
 		if (result?.error)
 			return setMessage({
 				tone: "error",
-				text: "Passkey wasn't added. Your device may have cancelled it — try again.",
+				text: t(
+					"Passkey wasn't added. Your device may have cancelled it — try again.",
+				),
 			});
 		await queryClient.invalidateQueries({ queryKey: passkeysQuery.queryKey });
 		setMessage({
 			tone: "success",
-			text: "Passkey added. You can now unlock and sign in with it.",
+			text: t("Passkey added. You can now unlock and sign in with it."),
 		});
 	}
 
@@ -76,11 +79,12 @@ export function PasskeyPanel() {
 				</span>
 				<div className="min-w-0 flex-1">
 					<h2 id="lock-heading" className="text-[1.4rem] font-bold">
-						App lock
+						{t("App lock")}
 					</h2>
 					<p className="mt-1 text-ink-soft">
-						Open Spendid with your fingerprint, face or device PIN, so nobody
-						can glance at your money.
+						{t(
+							"Open Spendid with your fingerprint, face or device PIN, so nobody can glance at your money.",
+						)}
 					</p>
 				</div>
 			</div>
@@ -100,11 +104,11 @@ export function PasskeyPanel() {
 								/>
 								<span className="min-w-0 flex-1">
 									<span className="block font-medium">
-										{p.name ?? "Passkey"}
+										{p.name ?? t("Passkey")}
 									</span>
 									<span className="block text-[0.85rem] text-ink-soft">
-										Added{" "}
-										{new Date(p.createdAt).toLocaleDateString(undefined, {
+										{t("Added")}{" "}
+										{new Date(p.createdAt).toLocaleDateString(dateLocale(), {
 											day: "numeric",
 											month: "short",
 											year: "numeric",
@@ -114,7 +118,9 @@ export function PasskeyPanel() {
 								<button
 									type="button"
 									onClick={() => void remove(p.id)}
-									aria-label={`Remove passkey ${p.name ?? ""}`}
+									aria-label={t("Remove passkey {name}", {
+										name: p.name ?? "",
+									})}
 									className="grid size-11 place-items-center rounded-full text-ink-soft hover:bg-coral/12 hover:text-over"
 								>
 									<Trash2 className="size-5" />
@@ -129,7 +135,9 @@ export function PasskeyPanel() {
 					className={buttonClass("ghost", "md", "w-full border-2 border-line")}
 				>
 					<Fingerprint className="size-5" aria-hidden="true" />
-					{passkeys.length > 0 ? "Add another passkey" : "Set up a passkey"}
+					{passkeys.length > 0
+						? t("Add another passkey")
+						: t("Set up a passkey")}
 				</button>
 
 				<label
@@ -140,12 +148,12 @@ export function PasskeyPanel() {
 				>
 					<span>
 						<span className="block font-medium">
-							Lock Spendid when I come back
+							{t("Lock Spendid when I come back")}
 						</span>
 						<span className="block text-[0.85rem] text-ink-soft">
 							{passkeys.length === 0
-								? "Set up a passkey first."
-								: "On this device, after 5 minutes away."}
+								? t("Set up a passkey first.")
+								: t("On this device, after 5 minutes away.")}
 						</span>
 					</span>
 					<input

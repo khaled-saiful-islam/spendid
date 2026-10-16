@@ -1,4 +1,5 @@
 import type { ApiResponse } from "@spendid/shared";
+import { t } from "@/i18n";
 
 /** Error carrying the API's plain-language message and per-field problems. */
 export class ApiError extends Error {
@@ -26,14 +27,14 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
 		});
 	} catch {
 		throw new ApiError(
-			"Can't reach Spendid. Check your connection and try again.",
+			t("Can't reach Spendid. Check your connection and try again."),
 			0,
 		);
 	}
 	const body = (await res.json().catch(() => null)) as ApiResponse<T> | null;
 	if (!body)
 		throw new ApiError(
-			"Spendid sent an unexpected reply. Try again.",
+			t("Spendid sent an unexpected reply. Try again."),
 			res.status,
 		);
 	if (!body.success) throw new ApiError(body.error, res.status, body.fields);

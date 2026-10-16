@@ -1,0 +1,16 @@
+{
+	"name": "spendid-e2e",
+	"private": true,
+	"type": "module",
+	"description": "Browser tests against a running Spendid (make up). Runs on the host, outside the Docker workspace.",
+	"scripts": {
+		"test": "playwright test",
+		"typecheck": "tsc -p ."
+	},
+	"devDependencies": {
+		"@axe-core/playwright": "4.14.0",
+		"@playwright/test": "1.64.1",
+		"@types/node": "24.10.1",
+		"typescript": "5.9.3"
+	}
+}

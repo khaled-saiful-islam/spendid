@@ -5,6 +5,7 @@ import {
 } from "@spendid/shared";
 import type { MotionValue } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { t } from "@/i18n";
 import { joinSegments } from "./segments";
 import { downmix, level, toWav, WAV_RATE } from "./wav";
 
@@ -35,13 +36,13 @@ async function upload(wav: Blob): Promise<VoiceResult> {
 		});
 	} catch {
 		throw new Error(
-			"Couldn't reach Spendid. Check your connection and try again.",
+			t("Couldn't reach Spendid. Check your connection and try again."),
 		);
 	}
 	const body = (await res
 		.json()
 		.catch(() => null)) as ApiResponse<VoiceResult> | null;
-	if (!body) throw new Error("Spendid sent an unexpected reply. Try again.");
+	if (!body) throw new Error(t("Spendid sent an unexpected reply. Try again."));
 	if (!body.success) throw new Error(body.error);
 	return VoiceResultSchema.parse(body.data);
 }
@@ -49,10 +50,12 @@ async function upload(wav: Blob): Promise<VoiceResult> {
 function micMessage(error: unknown): string {
 	const name = error instanceof DOMException ? error.name : "";
 	if (name === "NotAllowedError")
-		return "Spendid needs your microphone. Allow it in your browser's site settings, then try again.";
+		return t(
+			"Spendid needs your microphone. Allow it in your browser's site settings, then try again.",
+		);
 	if (name === "NotFoundError")
-		return "No microphone found. Plug one in, or type it instead.";
-	return "Voice isn't available in this browser. Type it instead.";
+		return t("No microphone found. Plug one in, or type it instead.");
+	return t("Voice isn't available in this browser. Type it instead.");
 }
 
 /**
@@ -87,7 +90,7 @@ export function useVoiceCapture(loudness: MotionValue<number>) {
 			if (samples.length < rate * 0.3) {
 				setPhase({
 					kind: "error",
-					message: "We didn't hear anything. Tap the mic and try again.",
+					message: t("We didn't hear anything. Tap the mic and try again."),
 				});
 				return;
 			}
@@ -103,7 +106,7 @@ export function useVoiceCapture(loudness: MotionValue<number>) {
 					message:
 						error instanceof Error
 							? error.message
-							: "Couldn't read that. Try again.",
+							: t("Couldn't read that. Try again."),
 				});
 			}
 		},
@@ -199,7 +202,7 @@ export function useVoiceCapture(loudness: MotionValue<number>) {
 						cleanup();
 						setPhase({
 							kind: "error",
-							message: "We didn't hear anything. Tap the mic and try again.",
+							message: t("We didn't hear anything. Tap the mic and try again."),
 						});
 					}
 				},

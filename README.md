@@ -5,6 +5,7 @@ family — only with consent.
 
 - Product + tech spec: [SPEC.md](SPEC.md)
 - Build plan and status: [PLAN.md](PLAN.md)
+- Feature docs (privacy, language, install, deploy, testing): [docs/](docs/README.md)
 
 ## Run it
 
@@ -57,6 +58,7 @@ maya and adam are already in each other's circle (spouses) and save into maya's 
 | `make digests u=maya` | Send someone's weekly summary, bill, warranty and Wrapped emails now (normally scheduled) |
 | `make db-generate` | New migration after editing `packages/db/src/schema` |
 | `make test` | Unit + API tests |
+| `make e2e` | Browser + accessibility tests at phone and desktop sizes (on your machine; needs `make up` + `make demo`) |
 | `make typecheck` | TypeScript 7 across all packages |
 | `make check` / `make fix` | Biome lint + format |
 | `make reset` | Delete all local data (asks first) |
@@ -70,7 +72,9 @@ apps/worker     BullMQ jobs (receipts, email, recap, reminders)
 packages/shared Zod schemas, money math, shared types
 packages/db     Drizzle schema, migrations (applied by the `migrate` service on every `make up`)
 packages/emails React Email templates + the email job contract
-docker/         Dev image
+e2e/            Playwright + axe browser tests (runs on the host)
+docker/         Dev image, production image + Caddyfile
+docs/           Feature docs
 ```
 
 ### Try insights and emails
@@ -79,6 +83,15 @@ docker/         Dev image
 - **Ask Spendid**: tap one of your own numbers to ask about it.
 - **Emails**: `make digests u=maya`, then open Mailpit. Every optional email has *Turn them off*; choose emails, hide amounts and quiet hours under **Me → Emails**. Emails that would land in quiet hours (default 10pm–8am) wait until they end.
 - Add an expense bigger than 3× your usual for its category, or the same shop and amount twice in a day, to see the alerts.
+
+### Try trust and polish
+
+- **Hide amounts**: the eye button in the header blurs every number on screen.
+- **Bahasa Melayu**: **Me → Language**. Saved to the profile, so it follows you; Ask Spendid answers in Malay too.
+- **Your data**: **Me → Your data** → *Download my data* (zip with a spreadsheet, receipts and everything else;
+  an email says when it's ready) or *Delete my account* (password + type DELETE).
+- **Install**: in the production build Spendid installs to the home screen and opens offline. See [docs/pwa.md](docs/pwa.md).
+- **Production**: [docs/deploy.md](docs/deploy.md) — one command with HTTPS by Caddy.
 
 ## Rules worth knowing
 

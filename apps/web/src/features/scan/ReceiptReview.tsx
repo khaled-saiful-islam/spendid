@@ -11,6 +11,7 @@ import { type FormEvent, useState } from "react";
 import { MaybeAlert } from "@/components/form/Alert";
 import { SubmitButton } from "@/components/form/SubmitButton";
 import { toast } from "@/components/ui/Toast";
+import { dateLocale, t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { ApiError } from "@/lib/http";
 import { categoriesQuery, refreshMoney } from "@/lib/money-api";
@@ -33,7 +34,7 @@ const toText = (minor: number, cur: string) =>
 	(minor / 10 ** minorDigits(cur)).toFixed(minorDigits(cur));
 const toNum = (text: string) => Number(text.replace(",", "."));
 const monthYear = (iso: string) =>
-	new Date(iso).toLocaleDateString(undefined, {
+	new Date(iso).toLocaleDateString(dateLocale(), {
 		day: "numeric",
 		month: "short",
 	});
@@ -91,9 +92,10 @@ export function ReceiptReview({
 
 	async function onSave(e: FormEvent) {
 		e.preventDefault();
-		if (!merchant.trim()) return setError("Add the shop name.");
-		if (!(totalMinor > 0)) return setError("Enter the total from the receipt.");
-		if (!chosenCategory) return setError("Pick a category.");
+		if (!merchant.trim()) return setError(t("Add the shop name."));
+		if (!(totalMinor > 0))
+			return setError(t("Enter the total from the receipt."));
+		if (!chosenCategory) return setError(t("Pick a category."));
 		setPending(true);
 		setError(null);
 		try {
@@ -122,15 +124,21 @@ export function ReceiptReview({
 			await refreshMoney(queryClient);
 			void queryClient.invalidateQueries({ queryKey: ["receipts"] });
 			void queryClient.invalidateQueries({ queryKey: ["warranties"] });
-			toast(`Added ${merchant.trim()}, ${formatMinor(totalMinor, cur)}.`, {
-				label: "Scan another",
-				run: capture.openScan,
-			});
+			toast(
+				t("Added {shop}, {amount}.", {
+					shop: merchant.trim(),
+					amount: formatMinor(totalMinor, cur),
+				}),
+				{
+					label: t("Scan another"),
+					run: capture.openScan,
+				},
+			);
 			capture.close();
 		} catch (err) {
 			setPending(false);
 			setError(
-				err instanceof ApiError ? err.message : "Couldn't save. Try again.",
+				err instanceof ApiError ? err.message : t("Couldn't save. Try again."),
 			);
 		}
 	}
@@ -138,7 +146,7 @@ export function ReceiptReview({
 	async function onDiscard() {
 		await receiptsApi.discard(receipt.id);
 		await queryClient.invalidateQueries({ queryKey: ["receipts"] });
-		toast("Receipt discarded.");
+		toast(t("Receipt discarded."));
 		capture.close();
 	}
 
@@ -152,7 +160,7 @@ export function ReceiptReview({
 					tone="error"
 					message={
 						receipt.error ??
-						"We couldn't read this receipt. Fill in the details below."
+						t("We couldn't read this receipt. Fill in the details below.")
 					}
 				/>
 			)}
@@ -162,7 +170,7 @@ export function ReceiptReview({
 					target="_blank"
 					rel="noreferrer"
 					className="shrink-0"
-					aria-label="Open the receipt photo"
+					aria-label={t("Open the receipt photo")}
 				>
 					<img
 						src={receiptImageUrl(receipt.id)}
@@ -172,8 +180,8 @@ export function ReceiptReview({
 				</a>
 				<div className="min-w-0 flex-1 space-y-2">
 					<input
-						aria-label="Shop"
-						placeholder="Shop name"
+						aria-label={t("Shop")}
+						placeholder={t("Shop name")}
 						value={merchant}
 						onChange={(e) => setMerchant(e.target.value)}
 						className={cn(field, "font-display text-[1.1rem] font-bold")}
@@ -181,7 +189,7 @@ export function ReceiptReview({
 					<div className="flex gap-2">
 						<input
 							type="date"
-							aria-label="Date"
+							aria-label={t("Date")}
 							value={day}
 							max={localDate(new Date())}
 							onChange={(e) => setDay(e.target.value)}
@@ -189,12 +197,12 @@ export function ReceiptReview({
 						/>
 					</div>
 					<select
-						aria-label="Category"
+						aria-label={t("Category")}
 						value={chosenCategory}
 						onChange={(e) => setCategoryId(e.target.value)}
 						className={field}
 					>
-						<option value="">Pick a category</option>
+						<option value="">{t("Pick a category")}</option>
 						{categories.map((c) => (
 							<option key={c.id} value={c.id}>
 								{c.name}
@@ -205,12 +213,12 @@ export function ReceiptReview({
 			</div>
 
 			<label className="flex items-center justify-between gap-4 rounded-panel bg-plum-900 px-5 py-4 text-plum-50 dark:bg-plum-800">
-				<span className="font-semibold">Total paid</span>
+				<span className="font-semibold">{t("Total paid")}</span>
 				<span className="flex items-baseline gap-2">
 					<span className="text-plum-200">{cur}</span>
 					<input
 						inputMode="decimal"
-						aria-label="Total paid"
+						aria-label={t("Total paid")}
 						value={totalText}
 						onChange={(e) =>
 							setTotalText(e.target.value.replace(/[^\d.,]/g, ""))
@@ -221,8 +229,10 @@ export function ReceiptReview({
 			</label>
 
 			{lines.length > 0 && (
-				<section aria-label="Items on the receipt">
-					<h3 className="mb-2 font-display text-[1.15rem] font-bold">Items</h3>
+				<section aria-label={t("Items on the receipt")}>
+					<h3 className="mb-2 font-display text-[1.15rem] font-bold">
+						{t("Items")}
+					</h3>
 					<ul className="divide-y divide-line rounded-panel border border-line">
 						{lines.map((l, i) => {
 							const mem = memory.get(l.name);
@@ -237,7 +247,7 @@ export function ReceiptReview({
 								>
 									<div className="flex items-center gap-2">
 										<input
-											aria-label={`Item ${i + 1}`}
+											aria-label={t("Item {n}", { n: i + 1 })}
 											value={l.name}
 											onChange={(e) => update(l.key, { name: e.target.value })}
 											className="min-w-0 flex-1 bg-transparent font-medium outline-none"
@@ -249,7 +259,7 @@ export function ReceiptReview({
 										)}
 										<input
 											inputMode="decimal"
-											aria-label={`Price of ${l.name}`}
+											aria-label={t("Price of {name}", { name: l.name })}
 											value={l.totalText}
 											onChange={(e) =>
 												update(l.key, {
@@ -263,7 +273,7 @@ export function ReceiptReview({
 											onClick={() =>
 												setLines((ls) => ls.filter((x) => x.key !== l.key))
 											}
-											aria-label={`Remove ${l.name}`}
+											aria-label={t("Remove {name}", { name: l.name })}
 											className="grid size-9 shrink-0 place-items-center rounded-full text-ink-soft hover:text-over"
 										>
 											<X className="size-4" />
@@ -287,9 +297,11 @@ export function ReceiptReview({
 														aria-hidden="true"
 													/>
 												)}
-												{mem.changePct > 0 ? "Up" : "Down"}{" "}
-												{Math.abs(mem.changePct)}% since{" "}
-												{monthYear(mem.previousAt)}
+												{mem.changePct > 0 ? t("Up") : t("Down")}{" "}
+												{t("{pct}% since {date}", {
+													pct: Math.abs(mem.changePct),
+													date: monthYear(mem.previousAt),
+												})}
 											</span>
 										)}
 										{l.durable && (
@@ -313,8 +325,8 @@ export function ReceiptReview({
 												/>
 												<ShieldCheck className="size-3.5" aria-hidden="true" />
 												{l.warranty
-													? `Warranty kept, ${l.warranty} months`
-													: "Keep warranty"}
+													? t("Warranty kept, {n} months", { n: l.warranty })
+													: t("Keep warranty")}
 											</label>
 										)}
 									</div>
@@ -324,9 +336,18 @@ export function ReceiptReview({
 					</ul>
 					{Math.abs(gap) > 1 && totalMinor > 0 && (
 						<p className="mt-2 text-[0.85rem] text-ink-soft">
-							Items add up to {formatMinor(itemsSum, cur)}
-							{d?.taxMinor ? ` plus ${formatMinor(d.taxMinor, cur)} tax` : ""}.
-							The total paid is what counts.
+							{d?.taxMinor
+								? t(
+										"Items add up to {amount} plus {tax} tax. The total paid is what counts.",
+										{
+											amount: formatMinor(itemsSum, cur),
+											tax: formatMinor(d.taxMinor, cur),
+										},
+									)
+								: t(
+										"Items add up to {amount}. The total paid is what counts.",
+										{ amount: formatMinor(itemsSum, cur) },
+									)}
 						</p>
 					)}
 				</section>
@@ -334,17 +355,17 @@ export function ReceiptReview({
 
 			<div className="space-y-2">
 				<MaybeAlert tone="error" message={error} />
-				<SubmitButton pending={pending} pendingLabel="Saving…">
+				<SubmitButton pending={pending} pendingLabel={t("Saving…")}>
 					{totalMinor > 0
-						? `Add ${formatMinor(totalMinor, cur)}`
-						: "Add expense"}
+						? t("Add {amount}", { amount: formatMinor(totalMinor, cur) })
+						: t("Add expense")}
 				</SubmitButton>
 				<button
 					type="button"
 					onClick={() => void onDiscard()}
 					className="h-11 w-full font-medium text-ink-soft hover:text-over"
 				>
-					Discard this receipt
+					{t("Discard this receipt")}
 				</button>
 			</div>
 		</form>

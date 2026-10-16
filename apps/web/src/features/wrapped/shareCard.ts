@@ -1,4 +1,5 @@
 import { formatMinor, type Wrapped } from "@spendid/shared";
+import { t } from "@/i18n";
 import { monthName } from "@/lib/insights-api";
 
 const W = 1080;
@@ -49,7 +50,7 @@ export async function drawShareCard(
 	canvas.width = W;
 	canvas.height = H;
 	const ctx = canvas.getContext("2d");
-	if (!ctx) throw new Error("Canvas isn't available.");
+	if (!ctx) throw new Error(t("Canvas isn't available."));
 
 	const bg = ctx.createLinearGradient(0, 0, W, H);
 	bg.addColorStop(0, "#4b2a7b");
@@ -126,7 +127,7 @@ export async function drawShareCard(
 	y += 80;
 	ctx.fillStyle = "#ffffff";
 	ctx.font = `700 40px ${display}`;
-	ctx.fillText("Where it went", 100, y);
+	ctx.fillText(t("Where it went"), 100, y);
 	y += 30;
 	for (const c of data.categories.slice(0, 3)) {
 		y += 66;
@@ -151,12 +152,12 @@ export async function drawShareCard(
 
 	ctx.font = `500 34px ${body}`;
 	ctx.fillStyle = "rgba(255,255,255,0.8)";
-	ctx.fillText("Know what you can safely spend today.", 80, H - 80);
+	ctx.fillText(t("Know what you can safely spend today."), 80, H - 80);
 
 	return new Promise((resolve, reject) =>
 		canvas.toBlob(
 			(blob) =>
-				blob ? resolve(blob) : reject(new Error("Couldn't draw the card.")),
+				blob ? resolve(blob) : reject(new Error(t("Couldn't draw the card."))),
 			"image/png",
 		),
 	);

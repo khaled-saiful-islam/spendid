@@ -37,6 +37,7 @@ function fakeRepo(): MeRepository & { saved: ProfileInput[] } {
 			saved.push(input);
 			return me(true);
 		},
+		setLocale: async () => me(true),
 	};
 }
 

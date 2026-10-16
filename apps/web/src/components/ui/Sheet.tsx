@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { type ReactNode, useEffect, useId, useRef } from "react";
+import { t } from "@/i18n";
 
 interface SheetProps {
 	open: boolean;
@@ -39,7 +40,7 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
 				<div className="fixed inset-0 z-50 grid items-end sm:place-items-center sm:p-6">
 					<motion.button
 						type="button"
-						aria-label="Close"
+						aria-label={t("Close")}
 						tabIndex={-1}
 						className="absolute inset-0 bg-plum-950/50 backdrop-blur-sm"
 						initial={{ opacity: 0 }}
@@ -67,7 +68,7 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
 							<button
 								type="button"
 								onClick={onClose}
-								aria-label="Close"
+								aria-label={t("Close")}
 								className="grid size-11 shrink-0 place-items-center rounded-full hover:bg-surface-2"
 							>
 								<X className="size-5" />

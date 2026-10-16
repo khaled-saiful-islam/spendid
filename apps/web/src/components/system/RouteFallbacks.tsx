@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import type { ReactNode } from "react";
 import { Logo } from "@/components/brand/Logo";
 import { buttonClass } from "@/components/ui/Button";
+import { t } from "@/i18n";
 
 function Frame({
 	icon,
@@ -43,15 +44,15 @@ export function RouteError() {
 	return (
 		<Frame
 			icon={<CloudOff className="size-9" aria-hidden="true" />}
-			title="Can't reach Spendid"
-			body="Your data is safe. Check your connection, then try again."
+			title={t("Can't reach Spendid")}
+			body={t("Your data is safe. Check your connection, then try again.")}
 		>
 			<button
 				type="button"
 				onClick={() => void router.invalidate()}
 				className={buttonClass("coin", "lg")}
 			>
-				<RotateCcw className="size-5" aria-hidden="true" /> Try again
+				<RotateCcw className="size-5" aria-hidden="true" /> {t("Try again")}
 			</button>
 		</Frame>
 	);
@@ -61,11 +62,11 @@ export function RouteNotFound() {
 	return (
 		<Frame
 			icon={<MapPinOff className="size-9" aria-hidden="true" />}
-			title="Nothing here"
-			body="That page doesn't exist, or it moved."
+			title={t("Nothing here")}
+			body={t("That page doesn't exist, or it moved.")}
 		>
 			<Link to="/app" className={buttonClass("coin", "lg")}>
-				Go home
+				{t("Go home")}
 			</Link>
 		</Frame>
 	);

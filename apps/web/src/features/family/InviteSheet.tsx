@@ -13,6 +13,7 @@ import { Field } from "@/components/form/Field";
 import { SubmitButton } from "@/components/form/SubmitButton";
 import { buttonClass } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { familyApi, refreshFamily } from "@/lib/family-api";
 import { ApiError } from "@/lib/http";
@@ -38,7 +39,7 @@ function InviteForm({ onCreated }: { onCreated: (r: InviteCreated) => void }) {
 
 	async function onSubmit(e: FormEvent) {
 		e.preventDefault();
-		if (!relation) return setError("Pick who you're inviting.");
+		if (!relation) return setError(t("Pick who you're inviting."));
 		setPending(true);
 		setError(null);
 		try {
@@ -54,7 +55,7 @@ function InviteForm({ onCreated }: { onCreated: (r: InviteCreated) => void }) {
 			setError(
 				err instanceof ApiError
 					? err.message
-					: "Couldn't make the invite. Try again.",
+					: t("Couldn't make the invite. Try again."),
 			);
 		}
 	}
@@ -62,7 +63,7 @@ function InviteForm({ onCreated }: { onCreated: (r: InviteCreated) => void }) {
 	return (
 		<form onSubmit={onSubmit} className="space-y-5" noValidate>
 			<fieldset>
-				<legend className="mb-2 font-semibold">They're my…</legend>
+				<legend className="mb-2 font-semibold">{t("They're my…")}</legend>
 				<div className="grid grid-cols-3 gap-2">
 					{RELATIONS.map((r) => (
 						<button
@@ -80,32 +81,33 @@ function InviteForm({ onCreated }: { onCreated: (r: InviteCreated) => void }) {
 							<span className="text-[1.6rem]" aria-hidden="true">
 								{RELATION_EMOJI[r]}
 							</span>
-							<span className="text-[0.92rem]">{RELATION_LABELS[r]}</span>
+							<span className="text-[0.92rem]">{t(RELATION_LABELS[r])}</span>
 						</button>
 					))}
 				</div>
 			</fieldset>
 			<LevelPicker
-				legend="What you'll share with them"
+				legend={t("What you'll share with them")}
 				name="invite-level"
 				value={level}
 				onChange={setLevel}
 			/>
 			<p className="rounded-tile bg-surface-2 px-4 py-3 text-[0.92rem] text-ink-soft">
-				They choose what they share back when they join. Either of you can
-				change, pause or stop it any time, and the other person always sees it.
+				{t(
+					"They choose what they share back when they join. Either of you can change, pause or stop it any time, and the other person always sees it.",
+				)}
 			</p>
 			<Field
-				label="Their email (optional)"
+				label={t("Their email (optional)")}
 				type="email"
 				autoComplete="off"
 				value={email}
-				placeholder="We'll email them the link"
+				placeholder={t("We'll email them the link")}
 				onChange={(e) => setEmail(e.target.value)}
 			/>
 			<MaybeAlert tone="error" message={error} />
-			<SubmitButton pending={pending} pendingLabel="Making the link…">
-				Create invite link
+			<SubmitButton pending={pending} pendingLabel={t("Making the link…")}>
+				{t("Create invite link")}
 			</SubmitButton>
 		</form>
 	);
@@ -134,15 +136,19 @@ function InviteReady({
 	return (
 		<div className="space-y-5 text-center">
 			<p className="text-ink-soft">
-				Let them scan this, or send the link. It works once and ends in 7 days.
+				{t(
+					"Let them scan this, or send the link. It works once and ends in 7 days.",
+				)}
 			</p>
 			<div className="flex justify-center">
-				<QrCode text={created.url} label="QR code for the invite link" />
+				<QrCode text={created.url} label={t("QR code for the invite link")} />
 			</div>
 			{created.invite.email && (
 				<p className="inline-flex items-center gap-2 rounded-full bg-jade/12 px-4 py-2 font-semibold text-safe">
 					<Mail className="size-4 shrink-0" aria-hidden="true" />
-					<span className="break-all">Emailed to {created.invite.email}</span>
+					<span className="break-all">
+						{t("Emailed to {email}", { email: created.invite.email ?? "" })}
+					</span>
 				</p>
 			)}
 			<p className="rounded-tile border-2 border-dashed border-line px-4 py-3 text-left text-[0.9rem] break-all">
@@ -159,7 +165,7 @@ function InviteReady({
 					) : (
 						<Copy className="size-5" aria-hidden="true" />
 					)}
-					{copied ? "Copied" : "Copy link"}
+					{copied ? t("Copied") : t("Copy link")}
 				</button>
 				{canShare && (
 					<button
@@ -167,14 +173,14 @@ function InviteReady({
 						onClick={() =>
 							void navigator
 								.share({
-									title: "Join my Spendid family circle",
+									title: t("Join my Spendid family circle"),
 									url: created.url,
 								})
 								.catch(() => undefined)
 						}
 						className={buttonClass("ghost", "md", "border-2 border-line")}
 					>
-						<Share2 className="size-5" aria-hidden="true" /> Share
+						<Share2 className="size-5" aria-hidden="true" /> {t("Share")}
 					</button>
 				)}
 			</div>
@@ -183,7 +189,7 @@ function InviteReady({
 				onClick={onDone}
 				className={buttonClass("coin", "lg", "w-full")}
 			>
-				Done
+				{t("Done")}
 			</button>
 		</div>
 	);
@@ -206,7 +212,7 @@ export function InviteSheet({
 		<Sheet
 			open={open}
 			onClose={close}
-			title={created ? "Your invite is ready" : "Invite to your circle"}
+			title={created ? t("Your invite is ready") : t("Invite to your circle")}
 		>
 			{created ? (
 				<InviteReady created={created} onDone={close} />

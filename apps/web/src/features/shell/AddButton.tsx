@@ -1,15 +1,16 @@
 import { Keyboard, Mic, Plus, ScanLine } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useState } from "react";
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { capture } from "../capture/capture-store";
 
 /** The three ways to add, shown in turn so the button says what it does. */
 const MODES = [
-	{ icon: Plus, label: "Add spending" },
-	{ icon: Mic, label: "Say it" },
-	{ icon: ScanLine, label: "Snap it" },
-	{ icon: Keyboard, label: "Type it" },
+	{ icon: Plus, label: t("Add spending") },
+	{ icon: Mic, label: t("Say it") },
+	{ icon: ScanLine, label: t("Snap it") },
+	{ icon: Keyboard, label: t("Type it") },
 ] as const;
 
 const CYCLE_MS = 2600;
@@ -94,7 +95,7 @@ export function AddButton({ wide }: { wide?: boolean }) {
 				onClick={capture.openMenu}
 				whileHover={{ scale: 1.03, y: -1 }}
 				whileTap={{ scale: 0.94, rotate: -2 }}
-				aria-label="Add spending"
+				aria-label={t("Add spending")}
 				className="relative flex h-13 w-full items-center gap-3 overflow-hidden rounded-full bg-[radial-gradient(circle_at_30%_25%,#FFD27A,#FFB224_55%,#F59300)] pr-5 pl-1.5 font-semibold text-plum-900 shadow-coin"
 			>
 				<span
@@ -137,7 +138,7 @@ export function AddButton({ wide }: { wide?: boolean }) {
 			whileTap={{ scale: 0.86, rotateY: 180 }}
 			whileHover={{ scale: 1.06 }}
 			transition={{ type: "spring", stiffness: 420, damping: 18 }}
-			aria-label="Add spending: say it, snap it or type it"
+			aria-label={t("Add spending: say it, snap it or type it")}
 			className="relative grid size-16 -translate-y-4 place-items-center overflow-hidden rounded-full bg-[radial-gradient(circle_at_32%_28%,#FFD27A,#FFB224_58%,#F59300)] text-plum-900 shadow-coin"
 			style={{ perspective: 400 }}
 		>

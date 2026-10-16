@@ -5,6 +5,7 @@ import {
 	useId,
 	useState,
 } from "react";
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 
 interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -85,7 +86,7 @@ export function PasswordField(props: Omit<FieldProps, "type" | "adornment">) {
 			<button
 				type="button"
 				onClick={() => setVisible((v) => !v)}
-				aria-label={visible ? "Hide password" : "Show password"}
+				aria-label={visible ? t("Hide password") : t("Show password")}
 				aria-controls={props.id ?? id}
 				className="absolute top-[2.1rem] right-1.5 grid size-11 place-items-center rounded-full text-ink-soft hover:text-ink"
 			>

@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion, useReducedMotion } from "motion/react";
 import { buttonClass } from "@/components/ui/Button";
+import { t } from "@/i18n";
 import { receiptImageUrl, receiptQuery } from "@/lib/receipts-api";
 import { capture } from "../capture/capture-store";
 import { ReceiptReview } from "./ReceiptReview";
@@ -19,13 +20,15 @@ export function ReceiptSheetBody({
 	if (isError) {
 		return (
 			<div className="space-y-4 text-center">
-				<p className="text-ink-soft">This receipt isn't available any more.</p>
+				<p className="text-ink-soft">
+					{t("This receipt isn't available any more.")}
+				</p>
 				<button
 					type="button"
 					onClick={capture.close}
 					className={buttonClass("ink", "md")}
 				>
-					Close
+					{t("Close")}
 				</button>
 			</div>
 		);
@@ -55,7 +58,7 @@ export function ReceiptSheetBody({
 				</div>
 				<div>
 					<p className="font-display text-[1.4rem] font-bold">
-						Reading your receipt…
+						{t("Reading your receipt…")}
 					</p>
 					<p className="mx-auto mt-1 max-w-[34ch] text-ink-soft">
 						Shop, items, tax and total. You can close this; we'll let you know
@@ -67,7 +70,7 @@ export function ReceiptSheetBody({
 					onClick={capture.openScan}
 					className={buttonClass("ghost", "md", "border-2 border-line")}
 				>
-					Scan another meanwhile
+					{t("Scan another meanwhile")}
 				</button>
 			</div>
 		);
@@ -76,7 +79,7 @@ export function ReceiptSheetBody({
 	if (receipt.status === "saved") {
 		return (
 			<p className="py-6 text-center text-ink-soft">
-				This receipt is already saved as an expense.
+				{t("This receipt is already saved as an expense.")}
 			</p>
 		);
 	}

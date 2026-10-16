@@ -9,6 +9,7 @@ import { SubmitButton } from "@/components/form/SubmitButton";
 import { buttonClass } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
 import { toast } from "@/components/ui/Toast";
+import { dateLocale, t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { ApiError } from "@/lib/http";
 import { moneyApi, refreshMoney } from "@/lib/money-api";
@@ -28,13 +29,16 @@ function cheer() {
 }
 
 function untilLabel(goal: Goal, cur: string): string {
-	if (goal.savedMinor >= goal.targetMinor) return "Done! Time to enjoy it.";
-	if (!goal.targetDate) return "No deadline. Add whenever you like.";
+	if (goal.savedMinor >= goal.targetMinor) return t("Done! Time to enjoy it.");
+	if (!goal.targetDate) return t("No deadline. Add whenever you like.");
 	const when = new Date(`${goal.targetDate}T12:00`).toLocaleDateString(
-		undefined,
+		dateLocale(),
 		{ month: "short", year: "numeric" },
 	);
-	return `${formatMinor(goal.monthlyNeededMinor, cur)} a month to make it by ${when}.`;
+	return t("{amount} a month to make it by {date}.", {
+		amount: formatMinor(goal.monthlyNeededMinor, cur),
+		date: when,
+	});
 }
 
 function DepositForm({
@@ -61,7 +65,12 @@ function DepositForm({
 			goal.savedMinor < goal.targetMinor
 		)
 			cheer();
-		toast(`Added ${formatMinor(toMinor(amount, cur), cur)} to ${goal.name}.`);
+		toast(
+			t("Added {amount} to {name}.", {
+				amount: formatMinor(toMinor(amount, cur), cur),
+				name: goal.name,
+			}),
+		);
 		onDone();
 	}
 
@@ -86,14 +95,16 @@ function DepositForm({
 				))}
 			</div>
 			<Field
-				label="Or another amount"
+				label={t("Or another amount")}
 				inputMode="decimal"
 				data-autofocus
 				adornment={currencySymbol(cur)}
 				value={value}
 				onChange={(e) => setValue(e.target.value.replace(/[^\d.,]/g, ""))}
 			/>
-			<SubmitButton pending={pending}>Add to {goal.name}</SubmitButton>
+			<SubmitButton pending={pending}>
+				{t("Add to {name}", { name: goal.name })}
+			</SubmitButton>
 		</form>
 	);
 }
@@ -110,8 +121,8 @@ function NewGoalForm({ cur, onDone }: { cur: string; onDone: () => void }) {
 	async function onSubmit(e: FormEvent) {
 		e.preventDefault();
 		const n = Number(target.replace(",", "."));
-		if (!name.trim()) return setError("Name your goal.");
-		if (!(n > 0)) return setError("Set a target above zero.");
+		if (!name.trim()) return setError(t("Name your goal."));
+		if (!(n > 0)) return setError(t("Set a target above zero."));
 		setPending(true);
 		try {
 			await moneyApi.createGoal({
@@ -121,12 +132,12 @@ function NewGoalForm({ cur, onDone }: { cur: string; onDone: () => void }) {
 				targetDate: date || null,
 			});
 			await refreshMoney(queryClient);
-			toast(`New goal: ${name.trim()}.`);
+			toast(t("New goal: {name}.", { name: name.trim() }));
 			onDone();
 		} catch (err) {
 			setPending(false);
 			setError(
-				err instanceof ApiError ? err.message : "Couldn't save. Try again.",
+				err instanceof ApiError ? err.message : t("Couldn't save. Try again."),
 			);
 		}
 	}
@@ -135,14 +146,14 @@ function NewGoalForm({ cur, onDone }: { cur: string; onDone: () => void }) {
 		<form onSubmit={onSubmit} className="space-y-4" noValidate>
 			<MaybeAlert tone="error" message={error} />
 			<Field
-				label="What are you saving for?"
+				label={t("What are you saving for?")}
 				data-autofocus
 				value={name}
-				placeholder="Holiday, new laptop…"
+				placeholder={t("Holiday, new laptop…")}
 				onChange={(e) => setName(e.target.value)}
 			/>
 			<fieldset>
-				<legend className="mb-2 font-semibold">Pick an icon</legend>
+				<legend className="mb-2 font-semibold">{t("Pick an icon")}</legend>
 				<div className="flex flex-wrap gap-2">
 					{EMOJIS.map((e) => (
 						<button
@@ -161,20 +172,20 @@ function NewGoalForm({ cur, onDone }: { cur: string; onDone: () => void }) {
 				</div>
 			</fieldset>
 			<Field
-				label="Target"
+				label={t("Target")}
 				inputMode="decimal"
 				adornment={currencySymbol(cur)}
 				value={target}
 				onChange={(e) => setTarget(e.target.value.replace(/[^\d.,]/g, ""))}
 			/>
 			<Field
-				label="By when? (optional)"
+				label={t("By when? (optional)")}
 				type="date"
 				value={date}
-				hint="With a date, Spendid sets aside enough each month."
+				hint={t("With a date, Spendid sets aside enough each month.")}
 				onChange={(e) => setDate(e.target.value)}
 			/>
-			<SubmitButton pending={pending}>Create goal</SubmitButton>
+			<SubmitButton pending={pending}>{t("Create goal")}</SubmitButton>
 		</form>
 	);
 }
@@ -188,19 +199,19 @@ export function GoalsSection({ goals, cur }: { goals: Goal[]; cur: string }) {
 		<section aria-labelledby="goals-heading" className="space-y-4">
 			<div className="flex items-center justify-between gap-3">
 				<h2 id="goals-heading" className="text-[1.6rem] font-bold">
-					Goals
+					{t("Goals")}
 				</h2>
 				<button
 					type="button"
 					onClick={() => setCreating(true)}
 					className={buttonClass("ghost", "md", "border-2 border-line")}
 				>
-					<Plus className="size-5" aria-hidden="true" /> New goal
+					<Plus className="size-5" aria-hidden="true" /> {t("New goal")}
 				</button>
 			</div>
 			{goals.length === 0 ? (
 				<p className="rounded-panel border border-dashed border-line p-6 text-center text-ink-soft">
-					Saving for something? Make a jar and watch it fill.
+					{t("Saving for something? Make a jar and watch it fill.")}
 				</p>
 			) : (
 				<ul className="grid gap-4 sm:grid-cols-2">
@@ -221,7 +232,9 @@ export function GoalsSection({ goals, cur }: { goals: Goal[]; cur: string }) {
 								<p className="num mt-1">
 									<strong>{formatMinor(g.savedMinor, cur)}</strong>{" "}
 									<span className="text-ink-soft">
-										of {formatMinor(g.targetMinor, cur)}
+										{t("of {amount}", {
+											amount: formatMinor(g.targetMinor, cur),
+										})}
 									</span>
 								</p>
 								<p className="mt-1 text-[0.88rem] text-ink-soft">
@@ -232,7 +245,7 @@ export function GoalsSection({ goals, cur }: { goals: Goal[]; cur: string }) {
 									onClick={() => setDepositFor(g)}
 									className={buttonClass("coin", "md", "mt-3 h-10 px-4")}
 								>
-									Add money
+									{t("Add money")}
 								</button>
 							</div>
 						</li>
@@ -243,7 +256,7 @@ export function GoalsSection({ goals, cur }: { goals: Goal[]; cur: string }) {
 			<Sheet
 				open={depositFor !== null}
 				onClose={() => setDepositFor(null)}
-				title={`Add to ${depositFor?.name ?? "goal"}`}
+				title={t("Add to {name}", { name: depositFor?.name ?? t("goal") })}
 			>
 				{depositFor && (
 					<DepositForm
@@ -256,7 +269,7 @@ export function GoalsSection({ goals, cur }: { goals: Goal[]; cur: string }) {
 			<Sheet
 				open={creating}
 				onClose={() => setCreating(false)}
-				title="New goal"
+				title={t("New goal")}
 			>
 				<NewGoalForm cur={cur} onDone={() => setCreating(false)} />
 			</Sheet>

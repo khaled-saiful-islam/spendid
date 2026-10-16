@@ -5,6 +5,7 @@ import { ArrowLeft, Sparkles } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { MaybeAlert } from "@/components/form/Alert";
+import { t } from "@/i18n";
 import {
 	familyApi,
 	familyQuery,
@@ -82,8 +83,8 @@ function Reading({
 			>
 				<Sparkles className="size-8" aria-hidden="true" />
 			</motion.span>
-			<p className="text-[1.2rem] font-bold">Reading every line…</p>
-			<p className="text-ink-soft">This usually takes a few seconds.</p>
+			<p className="text-[1.2rem] font-bold">{t("Reading every line…")}</p>
+			<p className="text-ink-soft">{t("This usually takes a few seconds.")}</p>
 		</div>
 	);
 }
@@ -124,7 +125,7 @@ export function SplitPage() {
 			}).resolvedOptions().maximumFractionDigits ?? 2;
 		try {
 			const split = await familyApi.createSplit({
-				title: draft.title.trim() || "Shared bill",
+				title: draft.title.trim() || t("Shared bill"),
 				currency: draft.currency,
 				people: draft.people,
 				items: draft.items,
@@ -136,7 +137,7 @@ export function SplitPage() {
 			setError(
 				err instanceof ApiError
 					? err.message
-					: "Couldn't make the split. Try again.",
+					: t("Couldn't make the split. Try again."),
 			);
 		}
 		setPending(false);
@@ -148,10 +149,10 @@ export function SplitPage() {
 				to="/app/family"
 				className="inline-flex items-center gap-2 font-semibold text-ink-soft hover:text-ink"
 			>
-				<ArrowLeft className="size-5" aria-hidden="true" /> Family
+				<ArrowLeft className="size-5" aria-hidden="true" /> {t("Family")}
 			</Link>
 			<h1 className="text-[clamp(2rem,7vw,2.8rem)] leading-tight font-bold">
-				{stage.kind === "done" ? stage.split.title : "Split a bill"}
+				{stage.kind === "done" ? stage.split.title : t("Split a bill")}
 			</h1>
 			<MaybeAlert tone="info" message={notice} />
 			{stage.kind === "source" && (
@@ -176,7 +177,7 @@ export function SplitPage() {
 					onRead={(r) => r.draft && startWith(fromReceipt(base, r.draft))}
 					onFailed={() => {
 						setNotice(
-							"We couldn't read that bill. Add the lines yourself below.",
+							t("We couldn't read that bill. Add the lines yourself below."),
 						);
 						startWith(base);
 					}}

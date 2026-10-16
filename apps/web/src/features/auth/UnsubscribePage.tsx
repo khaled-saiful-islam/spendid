@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { useState } from "react";
 import { MaybeAlert } from "@/components/form/Alert";
 import { buttonClass } from "@/components/ui/Button";
+import { t as tr } from "@/i18n";
 import { ApiError, api } from "@/lib/http";
 import { AuthLayout } from "./AuthLayout";
 
@@ -19,7 +20,12 @@ export function UnsubscribePage({
 	t?: string;
 }) {
 	const info =
-		g && g in EMAIL_GROUP_INFO ? EMAIL_GROUP_INFO[g as EmailGroup] : null;
+		g && g in EMAIL_GROUP_INFO
+			? {
+					label: tr(EMAIL_GROUP_INFO[g as EmailGroup].label),
+					about: tr(EMAIL_GROUP_INFO[g as EmailGroup].about),
+				}
+			: null;
 	const [state, setState] = useState<"ask" | "busy" | "done">("ask");
 	const [error, setError] = useState<string | null>(null);
 
@@ -35,7 +41,9 @@ export function UnsubscribePage({
 		} catch (err) {
 			setState("ask");
 			setError(
-				err instanceof ApiError ? err.message : "That didn't work. Try again.",
+				err instanceof ApiError
+					? err.message
+					: tr("That didn't work. Try again."),
 			);
 		}
 	}
@@ -43,11 +51,11 @@ export function UnsubscribePage({
 	if (!u || !t || !info)
 		return (
 			<AuthLayout
-				title="This link isn't complete"
-				intro="Choose which emails you get in Spendid's settings instead."
+				title={tr("This link isn't complete")}
+				intro={tr("Choose which emails you get in Spendid's settings instead.")}
 			>
 				<Link to="/app/me" className={buttonClass("ink", "lg", "w-full")}>
-					Open settings
+					{tr("Open settings")}
 				</Link>
 			</AuthLayout>
 		);
@@ -56,12 +64,14 @@ export function UnsubscribePage({
 		<AuthLayout
 			title={
 				state === "done"
-					? "You're unsubscribed"
+					? tr("You're unsubscribed")
 					: `Stop "${info.label}" emails?`
 			}
 			intro={
 				state === "done"
-					? `We won't send ${info.label.toLowerCase()} emails any more.`
+					? tr("We won't send {label} emails any more.", {
+							label: tr(info.label).toLowerCase(),
+						})
 					: info.about
 			}
 		>
@@ -82,7 +92,7 @@ export function UnsubscribePage({
 							to="/app/me"
 							className="font-semibold text-ink underline decoration-marigold decoration-2 underline-offset-4"
 						>
-							settings
+							{tr("settings")}
 						</Link>
 						.
 					</p>
@@ -93,7 +103,9 @@ export function UnsubscribePage({
 						onClick={() => void turnOff()}
 						className={buttonClass("coin", "lg", "w-full")}
 					>
-						{state === "busy" ? "Turning off…" : "Turn these emails off"}
+						{state === "busy"
+							? tr("Turning off…")
+							: tr("Turn these emails off")}
 					</button>
 				)}
 			</div>

@@ -11,6 +11,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { MaybeAlert } from "@/components/form/Alert";
 import { buttonClass } from "@/components/ui/Button";
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { receiptsApi } from "@/lib/receipts-api";
 import { capture } from "../capture/capture-store";
@@ -66,7 +67,7 @@ export function ScanCamera({
 			setError(
 				err instanceof Error
 					? err.message
-					: "Couldn't send the photo. Try again.",
+					: t("Couldn't send the photo. Try again."),
 			);
 		}
 	}
@@ -75,21 +76,21 @@ export function ScanCamera({
 	const points = quad?.map((p) => map(p).join(",")).join(" ");
 	const hint =
 		status === "starting"
-			? "Opening the camera…"
+			? t("Opening the camera…")
 			: status === "processing"
-				? "Straightening your receipt…"
+				? t("Straightening your receipt…")
 				: !quad
-					? "Fit the whole receipt in the frame"
+					? t("Fit the whole receipt in the frame")
 					: steady > 0.2
-						? "Hold still…"
-						: "Got it, hold steady";
+						? t("Hold still…")
+						: t("Got it, hold steady");
 
 	return (
 		<div
 			className="fixed inset-0 z-[70] flex flex-col bg-plum-950 text-white"
 			role="dialog"
 			aria-modal="true"
-			aria-label="Scan a receipt"
+			aria-label={t("Scan a receipt")}
 		>
 			<div ref={boxRef} className="relative flex-1 overflow-hidden">
 				{!photo && (
@@ -130,7 +131,7 @@ export function ScanCamera({
 						<div className="relative max-h-full overflow-hidden rounded-tile shadow-lift">
 							<img
 								src={photo.url}
-								alt="Your receipt, straightened"
+								alt={t("Your receipt, straightened")}
 								className="max-h-[70dvh] w-auto object-contain"
 							/>
 							{uploading && !reduce && (
@@ -153,20 +154,23 @@ export function ScanCamera({
 						<div className="max-w-xs space-y-4">
 							<p className="font-display text-[1.4rem] font-bold">
 								{status === "denied"
-									? "Spendid needs your camera"
-									: "No camera found"}
+									? t("Spendid needs your camera")
+									: t("No camera found")}
 							</p>
 							<p className="text-plum-200">
 								{status === "denied"
-									? "Allow the camera in your browser's site settings, or pick a photo instead."
-									: "Pick a photo of your receipt instead."}
+									? t(
+											"Allow the camera in your browser's site settings, or pick a photo instead.",
+										)
+									: t("Pick a photo of your receipt instead.")}
 							</p>
 							<button
 								type="button"
 								onClick={() => fileRef.current?.click()}
 								className={buttonClass("coin", "md")}
 							>
-								<ImageUp className="size-5" aria-hidden="true" /> Choose a photo
+								<ImageUp className="size-5" aria-hidden="true" />{" "}
+								{t("Choose a photo")}
 							</button>
 						</div>
 					</div>
@@ -176,7 +180,7 @@ export function ScanCamera({
 					<button
 						type="button"
 						onClick={onClose}
-						aria-label="Close camera"
+						aria-label={t("Close camera")}
 						className="grid size-12 place-items-center rounded-full bg-black/40 backdrop-blur"
 					>
 						<X className="size-6" />
@@ -193,7 +197,9 @@ export function ScanCamera({
 						<button
 							type="button"
 							onClick={() => void scanner.toggleTorch()}
-							aria-label={scanner.torch.on ? "Turn light off" : "Turn light on"}
+							aria-label={
+								scanner.torch.on ? t("Turn light off") : t("Turn light on")
+							}
 							className="grid size-12 place-items-center rounded-full bg-black/40 backdrop-blur"
 						>
 							{scanner.torch.on ? (
@@ -218,7 +224,7 @@ export function ScanCamera({
 							disabled={uploading}
 							className={buttonClass("coin", "lg", "w-full")}
 						>
-							{uploading ? "Sending…" : "Use this photo"}
+							{uploading ? t("Sending…") : t("Use this photo")}
 						</button>
 						<button
 							type="button"
@@ -226,7 +232,7 @@ export function ScanCamera({
 							disabled={uploading}
 							className="inline-flex h-11 w-full items-center justify-center gap-2 font-medium text-plum-200"
 						>
-							<RotateCcw className="size-4" aria-hidden="true" /> Retake
+							<RotateCcw className="size-4" aria-hidden="true" /> {t("Retake")}
 						</button>
 					</div>
 				) : (
@@ -234,7 +240,7 @@ export function ScanCamera({
 						<button
 							type="button"
 							onClick={() => fileRef.current?.click()}
-							aria-label="Choose a photo"
+							aria-label={t("Choose a photo")}
 							className="grid size-14 place-items-center rounded-full bg-white/10"
 						>
 							<ImageUp className="size-6" />
@@ -243,7 +249,7 @@ export function ScanCamera({
 							type="button"
 							onClick={() => void scanner.capture()}
 							disabled={status !== "live"}
-							aria-label="Take photo"
+							aria-label={t("Take photo")}
 							className="relative grid size-22 place-items-center rounded-full disabled:opacity-60"
 						>
 							<svg
@@ -286,7 +292,7 @@ export function ScanCamera({
 							)}
 						>
 							<Sparkles className="size-5" aria-hidden="true" />
-							Auto
+							{t("Auto")}
 						</button>
 					</div>
 				)}

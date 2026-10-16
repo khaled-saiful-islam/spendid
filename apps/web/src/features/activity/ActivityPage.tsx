@@ -5,6 +5,7 @@ import { LoaderCircle, Search } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useDeferredValue, useEffect, useRef, useState } from "react";
 import { buttonClass } from "@/components/ui/Button";
+import { dateLocale, t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { categoriesQuery, transactionsQuery } from "@/lib/money-api";
 import { capture } from "../capture/capture-store";
@@ -45,7 +46,7 @@ function dayLabel(day: string): string {
 	);
 	if (day === localDate(today)) return "Today";
 	if (day === localDate(yesterday)) return "Yesterday";
-	return new Date(`${day}T12:00`).toLocaleDateString(undefined, {
+	return new Date(`${day}T12:00`).toLocaleDateString(dateLocale(), {
 		weekday: "long",
 		day: "numeric",
 		month: "long",
@@ -53,17 +54,19 @@ function dayLabel(day: string): string {
 }
 
 const TABS = [
-	{ id: "expenses", label: "Expenses" },
-	{ id: "insights", label: "Insights" },
+	{ id: "expenses", label: t("Expenses") },
+	{ id: "insights", label: t("Insights") },
 ] as const;
 
 /** Expenses list or Insights, switched by `?view=` so other screens can link straight to either. */
 export function ActivityPage({ view }: { view: "expenses" | "insights" }) {
 	return (
 		<div className="space-y-5">
-			<h1 className="text-[clamp(2rem,7vw,2.8rem)] font-bold">Activity</h1>
+			<h1 className="text-[clamp(2rem,7vw,2.8rem)] font-bold">
+				{t("Activity")}
+			</h1>
 			<nav
-				aria-label="Activity views"
+				aria-label={t("Activity views")}
 				className="grid grid-cols-2 rounded-full bg-surface-2 p-1"
 			>
 				{TABS.map((t) => (
@@ -129,26 +132,26 @@ function ExpensesView() {
 		<div className="space-y-5">
 			<div className="grid gap-3 sm:grid-cols-[1fr_14rem]">
 				<label className="relative block">
-					<span className="sr-only">Search shops and notes</span>
+					<span className="sr-only">{t("Search shops and notes")}</span>
 					<Search
 						className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-ink-soft"
 						aria-hidden="true"
 					/>
 					<input
 						type="search"
-						placeholder="Search shops and notes"
+						placeholder={t("Search shops and notes")}
 						value={search}
 						onChange={(e) => setSearch(e.target.value)}
 						className="h-12 w-full rounded-full border-2 border-line bg-surface pr-4 pl-12 outline-none focus:border-plum-500"
 					/>
 				</label>
 				<select
-					aria-label="Filter by category"
+					aria-label={t("Filter by category")}
 					value={categoryId}
 					onChange={(e) => setCategoryId(e.target.value)}
 					className="h-12 rounded-full border-2 border-line bg-surface px-4 outline-none focus:border-plum-500"
 				>
-					<option value="">All categories</option>
+					<option value="">{t("All categories")}</option>
 					{categories.map((c) => (
 						<option key={c.id} value={c.id}>
 							{c.name}
@@ -169,12 +172,12 @@ function ExpensesView() {
 			) : items.length === 0 ? (
 				<div className="bg-scales rounded-panel border border-line px-6 py-14 text-center">
 					<p className="font-display text-[1.4rem] font-bold">
-						{filtering ? "Nothing matches that" : "No spending yet"}
+						{filtering ? t("Nothing matches that") : t("No spending yet")}
 					</p>
 					<p className="mx-auto mt-1 max-w-[36ch] text-ink-soft">
 						{filtering
-							? "Try another word or category."
-							: "Everything you log shows up here, newest first."}
+							? t("Try another word or category.")
+							: t("Everything you log shows up here, newest first.")}
 					</p>
 					{!filtering && (
 						<button
@@ -182,7 +185,7 @@ function ExpensesView() {
 							onClick={capture.openType}
 							className={buttonClass("coin", "md", "mt-5")}
 						>
-							Add an expense
+							{t("Add an expense")}
 						</button>
 					)}
 				</div>
@@ -215,12 +218,12 @@ function ExpensesView() {
 						{isFetchingNextPage && (
 							<LoaderCircle
 								className="size-6 animate-spin text-ink-soft"
-								aria-label="Loading more"
+								aria-label={t("Loading more")}
 							/>
 						)}
 						{!hasNextPage && (
 							<span className="text-[0.9rem] text-ink-soft">
-								That's everything.
+								{t("That's everything.")}
 							</span>
 						)}
 					</div>

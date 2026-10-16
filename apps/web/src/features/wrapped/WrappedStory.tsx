@@ -4,6 +4,7 @@ import { Download, EyeOff, Share2, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "@/components/ui/Toast";
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { monthName, wrappedQuery } from "@/lib/insights-api";
 import { drawShareCard } from "./shareCard";
@@ -36,7 +37,10 @@ function ShareSlide({ month, onDone }: { month: string; onDone: () => void }) {
 		const file = new File([blob], fileName, { type: "image/png" });
 		if (navigator.canShare?.({ files: [file] })) {
 			await navigator
-				.share({ files: [file], title: `My ${monthName(month)} on Spendid` })
+				.share({
+					files: [file],
+					title: t("My {month} on Spendid", { month: monthName(month) }),
+				})
 				.catch(() => undefined);
 			return;
 		}
@@ -44,17 +48,17 @@ function ShareSlide({ month, onDone }: { month: string; onDone: () => void }) {
 		a.href = url ?? "";
 		a.download = fileName;
 		a.click();
-		toast("Saved the image.");
+		toast(t("Saved the image."));
 	}
 
 	return (
 		<div className="flex h-full flex-col items-center justify-center gap-5 px-6 text-white">
-			<p className="text-[1.6rem] font-bold">Share your month</p>
+			<p className="text-[1.6rem] font-bold">{t("Share your month")}</p>
 			<div className="aspect-[4/5] w-full max-w-[18rem] overflow-hidden rounded-panel bg-white/10 shadow-lift">
 				{url ? (
 					<img
 						src={url}
-						alt={`Your ${monthName(month)} summary card`}
+						alt={t("Your {month} summary card", { month: monthName(month) })}
 						className="size-full object-cover"
 					/>
 				) : null}
@@ -66,7 +70,7 @@ function ShareSlide({ month, onDone }: { month: string; onDone: () => void }) {
 					onChange={(e) => setHide(e.target.checked)}
 					className="size-5 accent-[var(--color-marigold)]"
 				/>
-				<EyeOff className="size-5" aria-hidden="true" /> Hide amounts
+				<EyeOff className="size-5" aria-hidden="true" /> {t("Hide amounts")}
 			</label>
 			<div className="flex flex-wrap justify-center gap-2">
 				<button
@@ -80,14 +84,14 @@ function ShareSlide({ month, onDone }: { month: string; onDone: () => void }) {
 					) : (
 						<Download className="size-5" aria-hidden="true" />
 					)}
-					{"share" in navigator ? "Share" : "Save image"}
+					{"share" in navigator ? t("Share") : t("Save image")}
 				</button>
 				<button
 					type="button"
 					onClick={onDone}
 					className="h-12 rounded-full border-2 border-white/40 px-6 font-semibold"
 				>
-					Done
+					{t("Done")}
 				</button>
 			</div>
 		</div>
@@ -143,7 +147,7 @@ export function WrappedStory({ month }: { month: string }) {
 			className="fixed inset-0 z-[70] bg-plum-950"
 			role="dialog"
 			aria-modal="true"
-			aria-label={`Money Wrapped for ${monthName(month)}`}
+			aria-label={t("Money Wrapped for {month}", { month: monthName(month) })}
 		>
 			<AnimatePresence mode="popLayout">
 				<motion.div
@@ -207,7 +211,7 @@ export function WrappedStory({ month }: { month: string }) {
 					<button
 						type="button"
 						onClick={close}
-						aria-label="Close"
+						aria-label={t("Close")}
 						className="grid size-11 place-items-center rounded-full hover:bg-current/15"
 					>
 						<X className="size-6" aria-hidden="true" />
@@ -217,11 +221,11 @@ export function WrappedStory({ month }: { month: string }) {
 				<div className="relative min-h-0 flex-1">
 					{isPending ? (
 						<div className="grid h-full place-items-center text-white/80">
-							Wrapping your month…
+							{t("Wrapping your month…")}
 						</div>
 					) : error || !data ? (
 						<div className="grid h-full place-items-center px-6 text-center text-white">
-							Couldn't load this month. Try again in a moment.
+							{t("Couldn't load this month. Try again in a moment.")}
 						</div>
 					) : onShare ? (
 						<ShareSlide month={month} onDone={close} />
@@ -245,7 +249,7 @@ export function WrappedStory({ month }: { month: string }) {
 							{/* Tap zones: left third back, the rest forward; hold to pause. */}
 							<button
 								type="button"
-								aria-label="Previous"
+								aria-label={t("Previous")}
 								className="absolute inset-y-0 left-0 w-1/3"
 								onClick={() => go(-1)}
 								onPointerDown={() => setPaused(true)}
@@ -254,7 +258,7 @@ export function WrappedStory({ month }: { month: string }) {
 							/>
 							<button
 								type="button"
-								aria-label="Next"
+								aria-label={t("Next")}
 								className="absolute inset-y-0 right-0 w-2/3"
 								onClick={() => go(1)}
 								onPointerDown={() => setPaused(true)}

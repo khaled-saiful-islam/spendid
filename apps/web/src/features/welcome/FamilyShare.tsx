@@ -1,25 +1,26 @@
 import { PauseCircle, ShieldCheck } from "lucide-react";
+import { t } from "@/i18n";
 
 const PEOPLE = [
 	{
 		initials: "AI",
-		name: "Aisha",
-		relation: "Wife",
-		sees: "Sees your categories",
+		name: t("Aisha"),
+		relation: t("Wife"),
+		sees: t("Sees your categories"),
 		color: "bg-pink-400",
 	},
 	{
 		initials: "MA",
-		name: "Mak",
-		relation: "Mother",
-		sees: "Sees totals only",
+		name: t("Mak"),
+		relation: t("Mother"),
+		sees: t("Sees totals only"),
 		color: "bg-sky-400",
 	},
 	{
 		initials: "DA",
-		name: "Danial",
-		relation: "Son",
-		sees: "Shares his allowance with you",
+		name: t("Danial"),
+		relation: t("Son"),
+		sees: t("Shares his allowance with you"),
 		color: "bg-jade",
 	},
 ];
@@ -33,11 +34,12 @@ export function FamilyShare() {
 						id="family-title"
 						className="max-w-[16ch] text-[clamp(2rem,6vw,3.4rem)] font-bold"
 					>
-						Share with family, on your terms.
+						{t("Share with family, on your terms.")}
 					</h2>
 					<p className="mt-4 max-w-[48ch] text-[1.1rem] text-ink-soft">
-						Invite your partner, parents or kids with a link. Each of you
-						chooses what the other sees, from a single total to every receipt.
+						{t(
+							"Invite your partner, parents or kids with a link. Each of you chooses what the other sees, from a single total to every receipt.",
+						)}
 					</p>
 					<ul className="mt-6 space-y-3 text-[1rem]">
 						<li className="flex gap-3">
@@ -45,19 +47,19 @@ export function FamilyShare() {
 								className="mt-0.5 size-5 shrink-0 text-safe"
 								aria-hidden="true"
 							/>
-							Both of you agree before anything is shared.
+							{t("Both of you agree before anything is shared.")}
 						</li>
 						<li className="flex gap-3">
 							<PauseCircle
 								className="mt-0.5 size-5 shrink-0 text-safe"
 								aria-hidden="true"
 							/>
-							Pause or stop sharing at any time, and they are told.
+							{t("Pause or stop sharing at any time, and they are told.")}
 						</li>
 					</ul>
 				</div>
 
-				<ul className="space-y-3" aria-label="Example family circle">
+				<ul className="space-y-3" aria-label={t("Example family circle")}>
 					{PEOPLE.map((p) => (
 						<li
 							key={p.name}

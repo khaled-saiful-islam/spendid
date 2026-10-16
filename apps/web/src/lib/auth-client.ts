@@ -1,6 +1,7 @@
 import { passkeyClient } from "@better-auth/passkey/client";
 import { adminClient, usernameClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
+import { t } from "@/i18n";
 
 /** Same-origin client: Vite (dev) and the web server (prod) proxy /api to the API. */
 export const authClient = createAuthClient({
@@ -35,12 +36,11 @@ const MESSAGES: Record<string, string> = {
 export function authErrorMessage(
 	error: AuthErrorLike | null | undefined,
 ): string {
-	if (!error) return "Something went wrong. Try again.";
+	if (!error) return t("Something went wrong. Try again.");
 	if (error.status === 429)
-		return "Too many tries in a short time. Wait a minute, then try again.";
-	return (
-		(error.code && MESSAGES[error.code]) ||
-		error.message ||
-		"Something went wrong. Try again."
-	);
+		return t("Too many tries in a short time. Wait a minute, then try again.");
+	const known = error.code ? MESSAGES[error.code] : undefined;
+	return known
+		? t(known)
+		: error.message || t("Something went wrong. Try again.");
 }

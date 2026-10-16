@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import { t } from "@/i18n";
 import {
 	budgetsQuery,
 	categoriesQuery,
@@ -26,7 +27,9 @@ export function PlanPage() {
 
 	return (
 		<div className="space-y-8">
-			<h1 className="text-[clamp(2rem,7vw,2.8rem)] font-bold">Your plan</h1>
+			<h1 className="text-[clamp(2rem,7vw,2.8rem)] font-bold">
+				{t("Your plan")}
+			</h1>
 
 			<section
 				aria-labelledby="style-heading"
@@ -35,7 +38,7 @@ export function PlanPage() {
 				<div className="flex flex-wrap items-start justify-between gap-3">
 					<div>
 						<h2 id="style-heading" className="text-[1.6rem] font-bold">
-							{method?.title ?? "Budget"}
+							{method?.title ?? t("Budget")}
 						</h2>
 						<p className="mt-1 max-w-[50ch] text-ink-soft">{method?.body}</p>
 					</div>
@@ -44,13 +47,13 @@ export function PlanPage() {
 						search={{ edit: true }}
 						className="font-medium text-ink-soft underline-offset-4 hover:text-ink hover:underline"
 					>
-						Change style
+						{t("Change style")}
 					</Link>
 				</div>
 				<div className="mt-6">
 					{summary.incomeMinor === null ? (
 						<p className="text-ink-soft">
-							Add your monthly income to plan your budget.
+							{t("Add your monthly income to plan your budget.")}
 						</p>
 					) : summary.method === "fifty_thirty_twenty" ? (
 						<FiftyThirtyTwenty summary={summary} categories={categoryMap} />

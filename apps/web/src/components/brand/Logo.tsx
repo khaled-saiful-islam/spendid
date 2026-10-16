@@ -1,3 +1,4 @@
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 
 interface LogoProps {
@@ -35,7 +36,7 @@ export function Logo({ className, showWord = true }: LogoProps) {
 			</svg>
 			{showWord && (
 				<span className="font-display text-[1.35rem] font-bold tracking-tight">
-					Spendid
+					{t("Spendid")}
 				</span>
 			)}
 		</span>

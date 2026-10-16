@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { useState } from "react";
+import { t } from "@/i18n";
 import {
 	heatmapQuery,
 	monthName,
@@ -40,17 +41,22 @@ function WrappedTeaser({ month }: { month: string }) {
 				{data.personality.emoji}
 			</motion.span>
 			<p className="relative flex items-center gap-1.5 pr-20 font-semibold text-white/85">
-				<Sparkles className="size-4" aria-hidden="true" /> Money Wrapped
+				<Sparkles className="size-4" aria-hidden="true" /> {t("Money Wrapped")}
 			</p>
 			<p className="relative mt-1 max-w-[16ch] pr-16 text-[1.7rem] leading-tight font-bold">
-				{data.inProgress ? `${name} so far` : `Your ${name}`}
+				{data.inProgress
+					? t("{month} so far", { month: name })
+					: t("Your {month}", { month: name })}
 			</p>
 			<p className="relative mt-2 text-white/90">
-				{data.personality.title}, {formatMinor(data.totalMinor, data.currency)}{" "}
-				across {data.count} expenses
+				{t("{title}, {amount} across {n} expenses", {
+					title: t(data.personality.title),
+					amount: formatMinor(data.totalMinor, data.currency),
+					n: data.count,
+				})}
 			</p>
 			<span className="relative mt-4 inline-flex min-h-10 items-center rounded-full bg-white px-4 font-semibold text-plum-900 transition-transform group-hover:translate-x-1">
-				Play the story
+				{t("Play the story")}
 			</span>
 		</Link>
 	);
@@ -69,7 +75,7 @@ export function InsightsView() {
 				<button
 					type="button"
 					onClick={() => setMonth(shiftMonth(month, -1))}
-					aria-label="Previous month"
+					aria-label={t("Previous month")}
 					className="grid size-11 place-items-center rounded-full hover:bg-surface-2"
 				>
 					<ChevronLeft className="size-5" aria-hidden="true" />
@@ -81,7 +87,7 @@ export function InsightsView() {
 					type="button"
 					onClick={() => setMonth(shiftMonth(month, 1))}
 					disabled={month >= current}
-					aria-label="Next month"
+					aria-label={t("Next month")}
 					className="grid size-11 place-items-center rounded-full hover:bg-surface-2 disabled:opacity-30"
 				>
 					<ChevronRight className="size-5" aria-hidden="true" />

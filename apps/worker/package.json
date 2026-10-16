@@ -6,7 +6,8 @@
 	"scripts": {
 		"dev": "tsx watch --clear-screen=false src/index.ts",
 		"typecheck": "tsc -p .",
-		"test": "vitest run --passWithNoTests"
+		"test": "vitest run --passWithNoTests",
+		"start": "tsx src/index.ts"
 	},
 	"dependencies": {
 		"@spendid/db": "workspace:*",

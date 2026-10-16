@@ -1,5 +1,6 @@
 import type { Heatmap, RecurringOverview, Wrapped } from "@spendid/shared";
 import { queryOptions } from "@tanstack/react-query";
+import { dateLocale } from "@/i18n";
 import { api } from "./http";
 
 export const recurringQuery = queryOptions({
@@ -34,4 +35,5 @@ export const shiftMonth = (month: string, by: number): string => {
 export const monthName = (
 	month: string,
 	opts: Intl.DateTimeFormatOptions = { month: "long", year: "numeric" },
-): string => new Date(`${month}-15T12:00`).toLocaleDateString(undefined, opts);
+): string =>
+	new Date(`${month}-15T12:00`).toLocaleDateString(dateLocale(), opts);

@@ -15,6 +15,7 @@ import {
 	type QueryClient,
 	queryOptions,
 } from "@tanstack/react-query";
+import { t } from "@/i18n";
 import { api } from "./http";
 
 const json = (method: string, body?: unknown): RequestInit => ({
@@ -24,7 +25,12 @@ const json = (method: string, body?: unknown): RequestInit => ({
 
 export const categoriesQuery = queryOptions({
 	queryKey: ["categories"],
-	queryFn: () => api<Category[]>("/api/categories"),
+	// Category names show in the app language (names with no translation stay as they are).
+	queryFn: async () =>
+		(await api<Category[]>("/api/categories")).map((c) => ({
+			...c,
+			name: t(c.name),
+		})),
 	staleTime: Number.POSITIVE_INFINITY,
 });
 

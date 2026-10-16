@@ -13,6 +13,7 @@ import { MaybeAlert } from "@/components/form/Alert";
 import { SubmitButton } from "@/components/form/SubmitButton";
 import { CategoryIcon } from "@/components/money/CategoryIcon";
 import { toast } from "@/components/ui/Toast";
+import { t } from "@/i18n";
 import { categoriesQuery, moneyApi, refreshMoney } from "@/lib/money-api";
 
 interface Row extends VoiceDraft {
@@ -29,7 +30,7 @@ function occurredAt(daysAgo: number): string {
 }
 
 const dayLabel = (n: number) =>
-	n === 0 ? "Today" : n === 1 ? "Yesterday" : `${n} days ago`;
+	n === 0 ? t("Today") : n === 1 ? t("Yesterday") : t("{n} days ago", { n });
 
 interface VoiceReviewProps {
 	result: VoiceResult;
@@ -90,10 +91,10 @@ export function VoiceReview({
 			await refreshMoney(queryClient);
 			toast(
 				saved.length === 1
-					? "Added 1 expense."
-					: `Added ${saved.length} expenses.`,
+					? t("Added 1 expense.")
+					: t("Added {n} expenses.", { n: saved.length }),
 				{
-					label: "Undo",
+					label: t("Undo"),
 					run: () =>
 						void Promise.all(
 							saved.map((t) => moneyApi.deleteTransaction(t.id)),
@@ -104,7 +105,7 @@ export function VoiceReview({
 		} catch (err) {
 			setPending(false);
 			setError(
-				err instanceof Error ? err.message : "Couldn't save. Try again.",
+				err instanceof Error ? err.message : t("Couldn't save. Try again."),
 			);
 		}
 	}
@@ -124,7 +125,7 @@ export function VoiceReview({
 			)}
 			{result.readBy === "quick" && (
 				<p className="rounded-tile bg-marigold/15 px-4 py-3 text-[0.92rem]">
-					Read without AI this time. Check the amounts and categories.
+					{t("Read without AI this time. Check the amounts and categories.")}
 				</p>
 			)}
 
@@ -134,7 +135,7 @@ export function VoiceReview({
 					fifty".
 				</p>
 			) : (
-				<ul className="space-y-3" aria-label="Expenses heard">
+				<ul className="space-y-3" aria-label={t("Expenses heard")}>
 					<AnimatePresence initial={true}>
 						{rows.map((r, i) => {
 							const cat = categories.find((c) => c.id === r.categoryId);
@@ -156,7 +157,7 @@ export function VoiceReview({
 									<div className="flex items-center gap-3">
 										<CategoryIcon icon={cat?.icon} tint={cat?.tint} />
 										<input
-											aria-label="What was it?"
+											aria-label={t("What was it?")}
 											value={r.merchant}
 											onChange={(e) =>
 												update(r.key, { merchant: e.target.value })
@@ -168,7 +169,7 @@ export function VoiceReview({
 											onClick={() =>
 												setRows((rs) => rs.filter((x) => x.key !== r.key))
 											}
-											aria-label={`Remove ${r.merchant}`}
+											aria-label={t("Remove {name}", { name: r.merchant })}
 											className="grid size-10 shrink-0 place-items-center rounded-full text-ink-soft hover:bg-coral/12 hover:text-over"
 										>
 											<X className="size-5" />
@@ -180,7 +181,9 @@ export function VoiceReview({
 												{r.currency}
 											</span>
 											<input
-												aria-label={`Amount for ${r.merchant}`}
+												aria-label={t("Amount for {name}", {
+													name: r.merchant,
+												})}
 												inputMode="decimal"
 												value={r.amountText}
 												onChange={(e) =>
@@ -192,7 +195,9 @@ export function VoiceReview({
 											/>
 										</label>
 										<select
-											aria-label={`Category for ${r.merchant}`}
+											aria-label={t("Category for {name}", {
+												name: r.merchant,
+											})}
 											value={r.categoryId ?? ""}
 											onChange={(e) =>
 												update(r.key, { categoryId: e.target.value })
@@ -229,10 +234,10 @@ export function VoiceReview({
 						void saveAll();
 					}}
 				>
-					<SubmitButton pending={pending} pendingLabel="Saving…">
+					<SubmitButton pending={pending} pendingLabel={t("Saving…")}>
 						{valid.length === 1
 							? `Add ${formatMinor(toMinor(Number(valid[0]?.amountText.replace(",", ".") ?? 0), valid[0]?.currency ?? "MYR"), valid[0]?.currency ?? "MYR")}`
-							: `Add all ${valid.length}`}
+							: t("Add all {n}", { n: valid.length })}
 					</SubmitButton>
 				</form>
 			)}
@@ -242,7 +247,7 @@ export function VoiceReview({
 					onClick={onAgain}
 					className="inline-flex h-11 w-full items-center justify-center gap-2 font-medium text-ink-soft hover:text-ink"
 				>
-					<Mic className="size-4" aria-hidden="true" /> Say it again
+					<Mic className="size-4" aria-hidden="true" /> {t("Say it again")}
 				</button>
 			)}
 		</div>

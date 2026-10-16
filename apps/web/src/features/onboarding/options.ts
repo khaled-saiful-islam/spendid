@@ -1,4 +1,5 @@
 import type { BudgetMethod } from "@spendid/shared";
+import { t } from "@/i18n";
 
 const POPULAR = [
 	"MYR",
@@ -61,33 +62,39 @@ export const METHODS: MethodOption[] = [
 	{
 		id: "fifty_thirty_twenty",
 		title: "50 / 30 / 20",
-		body: "Half for needs, some for fun, the rest saved. Simple and a great place to start.",
+		body: t(
+			"Half for needs, some for fun, the rest saved. Simple and a great place to start.",
+		),
 		bars: [
-			{ share: 50, color: "bg-jade", label: "Needs 50%" },
-			{ share: 30, color: "bg-sky", label: "Wants 30%" },
-			{ share: 20, color: "bg-marigold", label: "Savings 20%" },
+			{ share: 50, color: "bg-jade", label: t("Needs 50%") },
+			{ share: 30, color: "bg-sky", label: t("Wants 30%") },
+			{ share: 20, color: "bg-marigold", label: t("Savings 20%") },
 		],
 	},
 	{
 		id: "envelope",
-		title: "Envelopes",
-		body: "Set an amount for each category. When an envelope is empty, that spending waits.",
+		title: t("Envelopes"),
+		body: t(
+			"Set an amount for each category. When an envelope is empty, that spending waits.",
+		),
 		bars: [
-			{ share: 30, color: "bg-orange-400", label: "Food" },
-			{ share: 25, color: "bg-sky", label: "Transport" },
-			{ share: 25, color: "bg-pink-400", label: "Shopping" },
-			{ share: 20, color: "bg-plum-300", label: "Other" },
+			{ share: 30, color: "bg-orange-400", label: t("Food") },
+			{ share: 25, color: "bg-sky", label: t("Transport") },
+			{ share: 25, color: "bg-pink-400", label: t("Shopping") },
+			{ share: 20, color: "bg-plum-300", label: t("Other") },
 		],
 	},
 	{
 		id: "zero_based",
-		title: "Every bit has a job",
-		body: "Plan where all of your income goes before the month starts, down to zero left over.",
+		title: t("Every bit has a job"),
+		body: t(
+			"Plan where all of your income goes before the month starts, down to zero left over.",
+		),
 		bars: [
-			{ share: 35, color: "bg-jade", label: "Bills" },
-			{ share: 20, color: "bg-orange-400", label: "Food" },
-			{ share: 15, color: "bg-sky", label: "Travel" },
-			{ share: 30, color: "bg-marigold", label: "Goals" },
+			{ share: 35, color: "bg-jade", label: t("Bills") },
+			{ share: 20, color: "bg-orange-400", label: t("Food") },
+			{ share: 15, color: "bg-sky", label: t("Travel") },
+			{ share: 30, color: "bg-marigold", label: t("Goals") },
 		],
 	},
 ];

@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Logo } from "@/components/brand/Logo";
 import { buttonClass } from "@/components/ui/Button";
+import { dateLocale, t } from "@/i18n";
 import { publicSplitQuery } from "@/lib/family-api";
 import { SplitSummary } from "./SplitSummary";
 
@@ -12,7 +13,7 @@ export function PublicSplitPage({ token }: { token: string }) {
 	return (
 		<div className="min-h-dvh bg-bg">
 			<header className="mx-auto flex max-w-3xl items-center justify-between px-4 py-5">
-				<Link to="/" aria-label="Spendid home">
+				<Link to="/" aria-label={t("Spendid home")}>
 					<Logo />
 				</Link>
 			</header>
@@ -22,11 +23,12 @@ export function PublicSplitPage({ token }: { token: string }) {
 				) : error || !data ? (
 					<div className="space-y-3 rounded-panel border border-line bg-surface p-6">
 						<h1 className="text-[1.8rem] font-bold">
-							This split link doesn't work
+							{t("This split link doesn't work")}
 						</h1>
 						<p className="text-ink-soft">
-							It may have been deleted. Ask the person who sent it for a new
-							one.
+							{t(
+								"It may have been deleted. Ask the person who sent it for a new one.",
+							)}
 						</p>
 					</div>
 				) : (
@@ -37,11 +39,16 @@ export function PublicSplitPage({ token }: { token: string }) {
 								aria-hidden="true"
 							/>
 							<p className="relative text-white/80">
-								{data.ownerName} split this bill on{" "}
-								{new Date(data.createdAt).toLocaleDateString(undefined, {
-									day: "numeric",
-									month: "long",
-									year: "numeric",
+								{t("{name} split this bill on {date}", {
+									name: data.ownerName,
+									date: new Date(data.createdAt).toLocaleDateString(
+										dateLocale(),
+										{
+											day: "numeric",
+											month: "long",
+											year: "numeric",
+										},
+									),
 								})}
 							</p>
 							<h1 className="relative mt-1 text-[clamp(2rem,7vw,2.8rem)] leading-tight font-bold break-words">
@@ -53,9 +60,11 @@ export function PublicSplitPage({ token }: { token: string }) {
 						</div>
 						<SplitSummary split={data} />
 						<div className="rounded-panel border border-line bg-surface p-5 text-center">
-							<p className="font-semibold">Split your own bills in seconds.</p>
+							<p className="font-semibold">
+								{t("Split your own bills in seconds.")}
+							</p>
 							<Link to="/" className={buttonClass("coin", "lg", "mt-3")}>
-								Try Spendid
+								{t("Try Spendid")}
 							</Link>
 						</div>
 					</>

@@ -6,6 +6,7 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
 import { Logo } from "@/components/brand/Logo";
 import { MaybeAlert } from "@/components/form/Alert";
 import { buttonClass } from "@/components/ui/Button";
+import { t } from "@/i18n";
 import { authClient } from "@/lib/auth-client";
 import { lockStorage, shouldLock } from "./policy";
 
@@ -61,7 +62,7 @@ function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
 		setError(null);
 		const result = await authClient.signIn.passkey();
 		if (result?.error)
-			return setError("That didn't work. Try again, or use your password.");
+			return setError(t("That didn't work. Try again, or use your password."));
 		onUnlocked();
 	}
 
@@ -88,10 +89,10 @@ function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
 					<Lock className="size-10" aria-hidden="true" />
 				</motion.div>
 				<h1 id="lock-title" className="mt-8 text-[2rem] font-extrabold">
-					Spendid is locked
+					{t("Spendid is locked")}
 				</h1>
 				<p className="mt-2 text-plum-200">
-					Use your fingerprint, face or device PIN to open it.
+					{t("Use your fingerprint, face or device PIN to open it.")}
 				</p>
 				<div className="mt-8 space-y-3 text-left">
 					<MaybeAlert tone="error" message={error} />
@@ -100,14 +101,14 @@ function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
 						onClick={unlock}
 						className={buttonClass("coin", "lg", "w-full")}
 					>
-						<Fingerprint className="size-5" aria-hidden="true" /> Unlock
+						<Fingerprint className="size-5" aria-hidden="true" /> {t("Unlock")}
 					</button>
 					<button
 						type="button"
 						onClick={usePassword}
 						className="h-11 w-full font-medium text-plum-200 hover:text-white"
 					>
-						Use my password instead
+						{t("Use my password instead")}
 					</button>
 				</div>
 			</div>

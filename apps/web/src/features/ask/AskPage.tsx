@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { type FormEvent, useEffect, useRef, useState } from "react";
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { api } from "@/lib/http";
 import { meQuery } from "@/lib/me";
@@ -21,9 +22,9 @@ import { ThinkingTrail } from "./ThinkingTrail";
 import { type ChatMessage, useAskChat } from "./useAskChat";
 
 const FOLLOW_UPS = [
-	"Compare with last month",
-	"Break it down by category",
-	"Where could I spend less?",
+	t("Compare with last month"),
+	t("Break it down by category"),
+	t("Where could I spend less?"),
 ];
 
 interface AiStatus {
@@ -51,7 +52,7 @@ function AllowanceRing() {
 	return (
 		<span
 			className="inline-flex items-center gap-1.5 text-[0.82rem] text-ink-soft"
-			title="AI allowance used this month"
+			title={t("AI allowance used this month")}
 		>
 			<svg
 				viewBox="0 0 36 36"
@@ -80,7 +81,7 @@ function AllowanceRing() {
 					transition={{ duration: 1, ease: "easeOut" }}
 				/>
 			</svg>
-			<span>{data.enabled ? `${pct}% AI used` : "AI is off"}</span>
+			<span>{data.enabled ? `${pct}% AI used` : t("AI is off")}</span>
 		</span>
 	);
 }
@@ -97,7 +98,7 @@ function NewChatButton({ onClick }: { onClick: () => void }) {
 			<span className="grid size-9 place-items-center rounded-full bg-linear-to-br from-marigold via-coral to-plum-500 text-white shadow-coin transition-transform duration-500 group-hover:rotate-[360deg]">
 				<MessageSquarePlus className="size-4.5" aria-hidden="true" />
 			</span>
-			New chat
+			{t("New chat")}
 		</motion.button>
 	);
 }
@@ -123,7 +124,7 @@ function CopyButton({ text }: { text: string }) {
 			) : (
 				<Copy className="size-4" aria-hidden="true" />
 			)}
-			{done ? "Copied" : "Copy"}
+			{done ? t("Copied") : t("Copy")}
 		</button>
 	);
 }
@@ -310,7 +311,7 @@ export function AskPage({ initialQuestion }: { initialQuestion?: string }) {
 						<SpendidCoin size="md" state={coinState} />
 						<div className="min-w-0">
 							<h1 className="text-[1.25rem] leading-tight font-extrabold">
-								Ask Spendid
+								{t("Ask Spendid")}
 							</h1>
 							<AllowanceRing />
 						</div>
@@ -352,14 +353,14 @@ export function AskPage({ initialQuestion }: { initialQuestion?: string }) {
 							aria-hidden="true"
 						/>
 						<label htmlFor="ask-input" className="sr-only">
-							Your question
+							{t("Your question")}
 						</label>
 						<textarea
 							id="ask-input"
 							rows={1}
 							value={draft}
 							maxLength={500}
-							placeholder="Ask or log something…"
+							placeholder={t("Ask or log something…")}
 							onChange={(e) => setDraft(e.target.value)}
 							onKeyDown={(e) => {
 								if (e.key === "Enter" && !e.shiftKey) {
@@ -373,7 +374,7 @@ export function AskPage({ initialQuestion }: { initialQuestion?: string }) {
 							<button
 								type="button"
 								onClick={chat.stop}
-								aria-label="Stop"
+								aria-label={t("Stop")}
 								className="relative grid size-11 shrink-0 place-items-center rounded-full bg-plum-900 text-plum-50 dark:bg-plum-50 dark:text-plum-900"
 							>
 								<span className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-marigold motion-reduce:hidden" />
@@ -383,7 +384,7 @@ export function AskPage({ initialQuestion }: { initialQuestion?: string }) {
 							<motion.button
 								type="submit"
 								disabled={!draft.trim()}
-								aria-label="Ask"
+								aria-label={t("Ask")}
 								whileTap={{ scale: 0.9 }}
 								className="grid size-11 shrink-0 place-items-center rounded-full bg-marigold text-plum-900 shadow-coin transition-opacity disabled:opacity-40 disabled:shadow-none"
 							>

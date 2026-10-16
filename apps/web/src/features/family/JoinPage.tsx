@@ -9,6 +9,7 @@ import { MaybeAlert } from "@/components/form/Alert";
 import { SubmitButton } from "@/components/form/SubmitButton";
 import { buttonClass } from "@/components/ui/Button";
 import { toast } from "@/components/ui/Toast";
+import { t } from "@/i18n";
 import { familyApi, inviteQuery, refreshFamily } from "@/lib/family-api";
 import { ApiError } from "@/lib/http";
 import { meQuery } from "@/lib/me";
@@ -17,11 +18,14 @@ import { AuthLayout } from "../auth/AuthLayout";
 import { LevelPicker } from "./parts";
 
 const STATE_TEXT = {
-	expired: "This invite has ended. Ask them for a new link.",
-	used: "This invite was already used or cancelled. Ask them for a new link.",
-	yours:
+	expired: t("This invite has ended. Ask them for a new link."),
+	used: t(
+		"This invite was already used or cancelled. Ask them for a new link.",
+	),
+	yours: t(
 		"This is your own invite. Send the link to the person you're inviting.",
-	connected: "You're already in each other's circle.",
+	),
+	connected: t("You're already in each other's circle."),
 } as const;
 
 /** Opening an invite link: see who's asking and what they share, then say yes. */
@@ -55,44 +59,51 @@ export function JoinPage({ token }: { token: string }) {
 					origin: { y: 0.6 },
 					colors: ["#FFB224", "#12B886", "#7A4FC4", "#FF5C7A"],
 				});
-			toast(`You're in ${invite?.inviterName}'s circle.`);
+			toast(
+				t("You're in {name}'s circle.", { name: invite?.inviterName ?? "" }),
+			);
 			await navigate({ to: "/app/family" });
 		} catch (err) {
 			setPending(false);
 			setFailed(
-				err instanceof ApiError ? err.message : "Couldn't join. Try again.",
+				err instanceof ApiError ? err.message : t("Couldn't join. Try again."),
 			);
 		}
 	}
 
 	if (isPending || meLoading)
 		return (
-			<AuthLayout title="Opening your invite…">
+			<AuthLayout title={t("Opening your invite…")}>
 				<div className="h-40 animate-pulse rounded-panel bg-surface-2" />
 			</AuthLayout>
 		);
 	if (error || !invite)
 		return (
 			<AuthLayout
-				title="This link doesn't work"
-				intro="It may be incomplete. Ask for a new invite link."
+				title={t("This link doesn't work")}
+				intro={t("It may be incomplete. Ask for a new invite link.")}
 			>
 				<Link to="/" className={buttonClass("ink", "lg", "w-full")}>
-					Go to Spendid
+					{t("Go to Spendid")}
 				</Link>
 			</AuthLayout>
 		);
 
-	const relation = RELATION_LABELS[invite.relation].toLowerCase();
+	const relation = t(RELATION_LABELS[invite.relation]).toLowerCase();
 	const intro = (
 		<>
-			<strong className="text-ink">{invite.inviterName}</strong> added you as
-			their {relation} and wants to plan money together.
+			<strong className="text-ink">{invite.inviterName}</strong>{" "}
+			{t("added you as their {relation} and wants to plan money together.", {
+				relation,
+			})}
 		</>
 	);
 
 	return (
-		<AuthLayout title={`Join ${invite.inviterName}'s circle`} intro={intro}>
+		<AuthLayout
+			title={t("Join {name}'s circle", { name: invite.inviterName })}
+			intro={intro}
+		>
 			<motion.div
 				initial={{ scale: 0.6, rotate: -8 }}
 				animate={{ scale: 1, rotate: 0 }}
@@ -109,36 +120,41 @@ export function JoinPage({ token }: { token: string }) {
 							to={member ? "/app/family" : "/"}
 							className={buttonClass("ink", "lg", "w-full")}
 						>
-							{member ? "Open Family" : "Go to Spendid"}
+							{member ? t("Open Family") : t("Go to Spendid")}
 						</Link>
 					</>
 				) : (
 					<>
 						<div className="rounded-tile bg-surface-2 px-4 py-3">
 							<p className="font-semibold">
-								{invite.inviterName} will share:{" "}
-								{LEVEL_INFO[invite.level].label}
+								{t("{name} will share: {level}", {
+									name: invite.inviterName,
+									level: t(LEVEL_INFO[invite.level].label),
+								})}
 							</p>
 							<p className="text-[0.92rem] text-ink-soft">
-								{LEVEL_INFO[invite.level].theirs}
+								{t(LEVEL_INFO[invite.level].theirs)}
 							</p>
 						</div>
 						{me?.user.role === "admin" ? (
 							<MaybeAlert
 								tone="info"
-								message="Admin accounts can't join a family circle. Sign in with a personal account."
+								message={t(
+									"Admin accounts can't join a family circle. Sign in with a personal account.",
+								)}
 							/>
 						) : !me ? (
 							<div className="space-y-3">
 								<p className="text-ink-soft">
-									Create a free account or sign in, and we'll bring you right
-									back here.
+									{t(
+										"Create a free account or sign in, and we'll bring you right back here.",
+									)}
 								</p>
 								<Link
 									to="/signup"
 									className={buttonClass("coin", "lg", "w-full")}
 								>
-									Create an account
+									{t("Create an account")}
 								</Link>
 								<Link
 									to="/signin"
@@ -148,7 +164,7 @@ export function JoinPage({ token }: { token: string }) {
 										"w-full border-2 border-line",
 									)}
 								>
-									I already have one
+									{t("I already have one")}
 								</Link>
 							</div>
 						) : me.needsOnboarding ? (
@@ -156,7 +172,7 @@ export function JoinPage({ token }: { token: string }) {
 								to="/onboarding"
 								className={buttonClass("coin", "lg", "w-full")}
 							>
-								Finish setting up first
+								{t("Finish setting up first")}
 							</Link>
 						) : (
 							<form
@@ -167,18 +183,22 @@ export function JoinPage({ token }: { token: string }) {
 								}}
 							>
 								<LevelPicker
-									legend={`What you'll share with ${invite.inviterName}`}
+									legend={t("What you'll share with {name}", {
+										name: invite.inviterName,
+									})}
 									name="join-level"
 									value={level}
 									onChange={setLevel}
 								/>
 								<p className="text-[0.9rem] text-ink-soft">
-									You can change, pause or stop this any time.{" "}
-									{invite.inviterName} always sees exactly what you share.
+									{t(
+										"You can change, pause or stop this any time. {name} always sees exactly what you share.",
+										{ name: invite.inviterName },
+									)}
 								</p>
 								<MaybeAlert tone="error" message={failed} />
-								<SubmitButton pending={pending} pendingLabel="Joining…">
-									Join {invite.inviterName}'s circle
+								<SubmitButton pending={pending} pendingLabel={t("Joining…")}>
+									{t("Join {name}'s circle", { name: invite.inviterName })}
 								</SubmitButton>
 							</form>
 						)}

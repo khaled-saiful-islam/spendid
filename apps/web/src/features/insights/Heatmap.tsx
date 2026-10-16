@@ -2,11 +2,16 @@ import { formatMinor, type Heatmap as HeatmapData } from "@spendid/shared";
 import { List, Table } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { useState } from "react";
+import { dateLocale, t } from "@/i18n";
 import { cn } from "@/lib/cn";
 
 const LEVELS = 5;
-/** Monday-first weekday initials. */
-const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+/** Monday-first short weekday names in the app language (1 Jan 2024 was a Monday). */
+const WEEKDAYS = Array.from({ length: 7 }, (_, i) =>
+	new Date(2024, 0, 1 + i).toLocaleDateString(dateLocale(), {
+		weekday: "short",
+	}),
+);
 
 function levelOf(minor: number, max: number): number {
 	if (minor <= 0 || max <= 0) return 0;
@@ -22,7 +27,7 @@ const cellStyle = (level: number) =>
 			};
 
 const longDay = (day: string) =>
-	new Date(`${day}T12:00`).toLocaleDateString(undefined, {
+	new Date(`${day}T12:00`).toLocaleDateString(dateLocale(), {
 		weekday: "long",
 		day: "numeric",
 		month: "long",
@@ -43,7 +48,9 @@ export function Heatmap({ data }: { data: HeatmapData }) {
 	return (
 		<figure className="space-y-3">
 			<div className="flex flex-wrap items-center justify-between gap-2">
-				<figcaption className="font-semibold">Spending by day</figcaption>
+				<figcaption className="font-semibold">
+					{t("Spending by day")}
+				</figcaption>
 				<button
 					type="button"
 					onClick={() => setAsList((v) => !v)}
@@ -54,13 +61,15 @@ export function Heatmap({ data }: { data: HeatmapData }) {
 					) : (
 						<List className="size-4" aria-hidden="true" />
 					)}
-					{asList ? "Show calendar" : "Show as list"}
+					{asList ? t("Show calendar") : t("Show as list")}
 				</button>
 			</div>
 			{asList ? (
 				<ul className="divide-y divide-line rounded-tile border border-line">
 					{data.days.length === 0 && (
-						<li className="p-3 text-ink-soft">No spending this month.</li>
+						<li className="p-3 text-ink-soft">
+							{t("No spending this month.")}
+						</li>
 					)}
 					{[...data.days]
 						.sort((a, b) => a.day.localeCompare(b.day))
@@ -104,7 +113,7 @@ export function Heatmap({ data }: { data: HeatmapData }) {
 									disabled={future}
 									onClick={() => setPicked(day === picked ? null : day)}
 									aria-pressed={day === picked}
-									aria-label={`${longDay(day)}: ${entry ? `${money(entry.minor)}, ${entry.count} expenses` : future ? "not yet" : "no spending"}`}
+									aria-label={`${longDay(day)}: ${entry ? t("{amount}, {n} expenses", { amount: money(entry.minor), n: entry.count }) : future ? t("not yet") : t("no spending")}`}
 									initial={reduce ? false : { opacity: 0, scale: 0.6 }}
 									animate={{ opacity: 1, scale: 1 }}
 									transition={{ delay: reduce ? 0 : i * 0.012 }}
@@ -129,11 +138,11 @@ export function Heatmap({ data }: { data: HeatmapData }) {
 					<div className="flex flex-wrap items-center justify-between gap-3 text-[0.85rem] text-ink-soft">
 						<p aria-live="polite" className="font-semibold text-ink">
 							{picked
-								? `${longDay(picked)}: ${chosen ? `${money(chosen.minor)}, ${chosen.count === 1 ? "1 expense" : `${chosen.count} expenses`}` : "no spending"}`
-								: "Tap a day to see its total."}
+								? `${longDay(picked)}: ${chosen ? t(chosen.count === 1 ? "{amount}, 1 expense" : "{amount}, {n} expenses", { amount: money(chosen.minor), n: chosen.count }) : t("no spending")}`
+								: t("Tap a day to see its total.")}
 						</p>
 						<span className="flex items-center gap-1.5" aria-hidden="true">
-							Less
+							{t("Less")}
 							{Array.from({ length: LEVELS }, (_, i) => (
 								<span
 									// biome-ignore lint/suspicious/noArrayIndexKey: the five legend steps never change
@@ -142,7 +151,7 @@ export function Heatmap({ data }: { data: HeatmapData }) {
 									style={{ background: `var(--heat-${i + 1})` }}
 								/>
 							))}
-							More
+							{t("More")}
 						</span>
 					</div>
 				</>

@@ -2,6 +2,7 @@ import { formatMinor } from "@spendid/shared";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, LoaderCircle } from "lucide-react";
 import { motion } from "motion/react";
+import { t } from "@/i18n";
 import { pendingReceiptsQuery, receiptImageUrl } from "@/lib/receipts-api";
 import { capture } from "../capture/capture-store";
 
@@ -23,7 +24,7 @@ export function PendingReceipts() {
 			>
 				{receipts.length === 1
 					? "1 receipt to check"
-					: `${receipts.length} receipts to check`}
+					: t("{n} receipts to check", { n: receipts.length })}
 			</h2>
 			<ul className="mt-2">
 				{receipts.map((r) => (
@@ -41,14 +42,14 @@ export function PendingReceipts() {
 							<span className="min-w-0 flex-1">
 								<span className="block font-semibold break-words">
 									{r.draft?.merchant ??
-										(r.status === "reading" ? "Reading…" : "Receipt")}
+										(r.status === "reading" ? t("Reading…") : t("Receipt"))}
 								</span>
 								<span className="block text-[0.85rem] text-ink-soft">
 									{r.status === "reading"
-										? "Reading the details"
+										? t("Reading the details")
 										: r.status === "failed"
-											? "Couldn't read it, fill it in"
-											: "Ready to check"}
+											? t("Couldn't read it, fill it in")
+											: t("Ready to check")}
 								</span>
 							</span>
 							{r.status === "reading" ? (

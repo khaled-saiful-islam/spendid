@@ -45,6 +45,10 @@ export function createAuth({ env, db, redis, sendEmail, events }: AuthDeps) {
 			updateAge: 60 * 60 * 24,
 			cookieCache: { enabled: true, maxAge: 5 * 60 },
 		},
+		user: {
+			// Members delete their own account from Settings (password required).
+			deleteUser: { enabled: true },
+		},
 		emailAndPassword: {
 			enabled: true,
 			minPasswordLength: 8,

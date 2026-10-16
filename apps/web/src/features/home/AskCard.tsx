@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronRight, Sparkles } from "lucide-react";
+import { t } from "@/i18n";
 
 const QUICK = [
 	"Where did my money go this week?",
@@ -18,11 +19,11 @@ export function AskCard() {
 					<Sparkles className="size-5" aria-hidden="true" />
 				</span>
 				<h2 id="ask-title" className="min-w-0 flex-1 text-[1.3rem] font-bold">
-					Ask about your money
+					{t("Ask about your money")}
 				</h2>
 				<Link
 					to="/app/ask"
-					aria-label="Open Ask Spendid"
+					aria-label={t("Open Ask Spendid")}
 					className="grid size-10 shrink-0 place-items-center rounded-full text-ink-soft hover:bg-surface-2"
 				>
 					<ChevronRight className="size-5" />
@@ -33,10 +34,10 @@ export function AskCard() {
 					<Link
 						key={q}
 						to="/app/ask"
-						search={{ q }}
+						search={{ q: t(q) }}
 						className="rounded-full bg-surface-2 px-3.5 py-2 text-[0.9rem] font-medium hover:bg-plum-500/12"
 					>
-						{q}
+						{t(q)}
 					</Link>
 				))}
 			</div>

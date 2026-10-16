@@ -6,6 +6,7 @@ import { MaybeAlert } from "@/components/form/Alert";
 import { Field, PasswordField } from "@/components/form/Field";
 import { SubmitButton } from "@/components/form/SubmitButton";
 import { buttonClass } from "@/components/ui/Button";
+import { t } from "@/i18n";
 import { authClient, authErrorMessage } from "@/lib/auth-client";
 import { api } from "@/lib/http";
 import { homeFor, meQuery } from "@/lib/me";
@@ -53,8 +54,9 @@ export function SignInPage({ notice }: SignInPageProps) {
 		const result = await authClient.signIn.passkey();
 		if (result?.error) {
 			setError({
-				message:
+				message: t(
 					"Passkey sign-in didn't finish. Try again or use your password.",
+				),
 			});
 			return;
 		}
@@ -74,8 +76,8 @@ export function SignInPage({ notice }: SignInPageProps) {
 
 	return (
 		<AuthLayout
-			title="Welcome back"
-			intro="Sign in to see what's safe to spend today."
+			title={t("Welcome back")}
+			intro={t("Sign in to see what's safe to spend today.")}
 			footer={
 				<>
 					New to Spendid?{" "}
@@ -83,7 +85,7 @@ export function SignInPage({ notice }: SignInPageProps) {
 						to="/signup"
 						className="font-semibold text-ink underline decoration-marigold decoration-2 underline-offset-4"
 					>
-						Create an account
+						{t("Create an account")}
 					</Link>
 				</>
 			}
@@ -97,16 +99,16 @@ export function SignInPage({ notice }: SignInPageProps) {
 							onClick={resendVerification}
 							className="mt-1 block font-semibold underline"
 						>
-							Send the link again
+							{t("Send the link again")}
 						</button>
 					)}
 				</MaybeAlert>
 				<MaybeAlert
 					tone="success"
-					message={resent ? "New link sent. Check your inbox." : null}
+					message={resent ? t("New link sent. Check your inbox.") : null}
 				/>
 				<Field
-					label="Email or username"
+					label={t("Email or username")}
 					name="identifier"
 					autoComplete="username webauthn"
 					required
@@ -115,7 +117,7 @@ export function SignInPage({ notice }: SignInPageProps) {
 				/>
 				<div className="space-y-2">
 					<PasswordField
-						label="Password"
+						label={t("Password")}
 						name="password"
 						autoComplete="current-password"
 						required
@@ -126,11 +128,11 @@ export function SignInPage({ notice }: SignInPageProps) {
 						to="/forgot"
 						className="inline-block py-1 text-[0.95rem] font-medium text-ink-soft hover:text-ink"
 					>
-						Forgot your password?
+						{t("Forgot your password?")}
 					</Link>
 				</div>
-				<SubmitButton pending={pending} pendingLabel="Signing in…">
-					Sign in
+				<SubmitButton pending={pending} pendingLabel={t("Signing in…")}>
+					{t("Sign in")}
 				</SubmitButton>
 			</form>
 
@@ -139,7 +141,7 @@ export function SignInPage({ notice }: SignInPageProps) {
 				aria-hidden="true"
 			>
 				<span className="h-px flex-1 bg-line" />
-				or
+				{t("or")}
 				<span className="h-px flex-1 bg-line" />
 			</div>
 			<button
@@ -148,7 +150,7 @@ export function SignInPage({ notice }: SignInPageProps) {
 				className={buttonClass("ghost", "lg", "w-full border-2 border-line")}
 			>
 				<Fingerprint className="size-5" aria-hidden="true" />
-				Sign in with a passkey
+				{t("Sign in with a passkey")}
 			</button>
 		</AuthLayout>
 	);

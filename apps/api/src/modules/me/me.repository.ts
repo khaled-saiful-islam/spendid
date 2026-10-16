@@ -1,10 +1,12 @@
 import { type Db, profile, user } from "@spendid/db";
-import type { Me, ProfileInput } from "@spendid/shared";
+import type { Locale, Me, ProfileInput } from "@spendid/shared";
 import { eq, sql } from "drizzle-orm";
 
 export interface MeRepository {
 	find(userId: string): Promise<Me | null>;
 	saveProfile(userId: string, input: ProfileInput): Promise<Me>;
+	/** Just the app language, from Settings. */
+	setLocale(userId: string, locale: Locale): Promise<Me>;
 }
 
 /** Reads and writes only the signed-in person's own account + profile. */
@@ -60,5 +62,12 @@ export function createMeRepository(db: Db): MeRepository {
 		return me;
 	}
 
-	return { find, saveProfile };
+	async function setLocale(userId: string, locale: Locale): Promise<Me> {
+		await db.update(profile).set({ locale }).where(eq(profile.userId, userId));
+		const me = await find(userId);
+		if (!me) throw new Error("profile vanished");
+		return me;
+	}
+
+	return { find, saveProfile, setLocale };
 }

@@ -1,6 +1,7 @@
 import type { ChartSpec, VoiceDraft } from "@spendid/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { t } from "@/i18n";
 import { streamAsk } from "@/lib/ask-api";
 
 export interface ChatMessage {
@@ -129,7 +130,7 @@ export function useAskChat(userId: string) {
 					text:
 						error instanceof Error
 							? error.message
-							: "Something went wrong. Try again.",
+							: t("Something went wrong. Try again."),
 				}));
 			} finally {
 				void queryClient.invalidateQueries({ queryKey: ["ai-status"] });

@@ -2,6 +2,7 @@ import { formatMinor } from "@spendid/shared";
 import { useQuery } from "@tanstack/react-query";
 import { Camera, PencilLine, ReceiptText } from "lucide-react";
 import { motion } from "motion/react";
+import { dateLocale, t } from "@/i18n";
 import { type ReceiptChoice, splitReceiptsQuery } from "@/lib/family-api";
 
 /** Where the bill comes from: a new photo, a receipt Spendid already read, or typing it. */
@@ -30,9 +31,11 @@ export function SourcePicker({
 						<Camera className="size-7" aria-hidden="true" />
 					</span>
 					<span>
-						<span className="block text-[1.2rem] font-bold">Snap the bill</span>
+						<span className="block text-[1.2rem] font-bold">
+							{t("Snap the bill")}
+						</span>
 						<span className="block text-white/85">
-							Spendid reads every line for you.
+							{t("Spendid reads every line for you.")}
 						</span>
 					</span>
 				</motion.button>
@@ -41,20 +44,24 @@ export function SourcePicker({
 						<PencilLine className="size-7" aria-hidden="true" />
 					</span>
 					<span>
-						<span className="block text-[1.2rem] font-bold">Type it in</span>
-						<span className="block text-ink-soft">Add the items yourself.</span>
+						<span className="block text-[1.2rem] font-bold">
+							{t("Type it in")}
+						</span>
+						<span className="block text-ink-soft">
+							{t("Add the items yourself.")}
+						</span>
 					</span>
 				</button>
 			</div>
 			<section aria-labelledby="recent-receipts" className="space-y-3">
 				<h2 id="recent-receipts" className="text-[1.3rem] font-bold">
-					Or use a recent receipt
+					{t("Or use a recent receipt")}
 				</h2>
 				{isPending ? (
 					<div className="h-24 animate-pulse rounded-panel bg-surface-2" />
 				) : data.length === 0 ? (
 					<p className="text-ink-soft">
-						Receipts you snap show up here with their items.
+						{t("Receipts you snap show up here with their items.")}
 					</p>
 				) : (
 					<ul className="grid gap-2 sm:grid-cols-2">
@@ -73,9 +80,9 @@ export function SourcePicker({
 											{r.merchant}
 										</span>
 										<span className="block text-[0.88rem] text-ink-soft">
-											{r.items.length} items
+											{t("{n} items", { n: r.items.length })}
 											{r.date
-												? `, ${new Date(`${r.date}T12:00`).toLocaleDateString(undefined, { day: "numeric", month: "short" })}`
+												? `, ${new Date(`${r.date}T12:00`).toLocaleDateString(dateLocale(), { day: "numeric", month: "short" })}`
 												: ""}
 										</span>
 									</span>

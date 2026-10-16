@@ -6,5 +6,6 @@ export * from "./email";
 export * from "./family";
 export * from "./insights";
 export * from "./money";
+export * from "./privacy";
 export * from "./profile";
 export * from "./receipts";

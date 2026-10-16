@@ -1,4 +1,5 @@
 import { Moon, Sun } from "lucide-react";
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { useTheme } from "@/lib/theme";
 
@@ -9,7 +10,9 @@ export function ThemeToggle({ className }: { className?: string }) {
 		<button
 			type="button"
 			onClick={toggle}
-			aria-label={`Switch to ${next} theme`}
+			aria-label={t(
+				next === "dark" ? "Switch to dark theme" : "Switch to light theme",
+			)}
 			className={cn(
 				"grid size-11 place-items-center rounded-full text-ink-soft transition-colors hover:bg-surface-2 hover:text-ink",
 				className,

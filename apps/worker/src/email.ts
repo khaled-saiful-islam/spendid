@@ -13,6 +13,9 @@ interface MailConfig {
 	host: string;
 	port: number;
 	from: string;
+	/** Login for a real mail provider; Mailpit in dev needs none. */
+	user?: string;
+	pass?: string;
 }
 
 /** Renders and sends one email; marks the log row sent, or failed after the last retry. */
@@ -20,7 +23,9 @@ export function createEmailProcessor(db: Db, mail: MailConfig) {
 	const transport = createTransport({
 		host: mail.host,
 		port: mail.port,
+		// 465 is TLS from the start; 587 upgrades with STARTTLS when the server offers it.
 		secure: mail.port === 465,
+		auth: mail.user ? { user: mail.user, pass: mail.pass ?? "" } : undefined,
 	});
 
 	return async (job: Job<EmailQueueData>): Promise<void> => {

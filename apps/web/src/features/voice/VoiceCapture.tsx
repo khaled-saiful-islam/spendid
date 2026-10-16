@@ -2,6 +2,7 @@ import { AnimatePresence, motion, useMotionValue } from "motion/react";
 import { useEffect } from "react";
 import { MaybeAlert } from "@/components/form/Alert";
 import { buttonClass } from "@/components/ui/Button";
+import { t } from "@/i18n";
 import { capture } from "../capture/capture-store";
 import { ListeningOrb } from "./ListeningOrb";
 import { useVoiceCapture } from "./useVoiceCapture";
@@ -38,14 +39,14 @@ export function VoiceCapture() {
 	const hearing = listening && phase.hearing;
 	const title =
 		phase.kind === "starting"
-			? "Getting the mic ready…"
+			? t("Getting the mic ready…")
 			: phase.kind === "reading"
-				? "Reading your note…"
+				? t("Reading your note…")
 				: phase.kind === "error"
-					? "Let's try that again"
+					? t("Let's try that again")
 					: hearing
-						? "Listening…"
-						: "Say what you spent";
+						? t("Listening…")
+						: t("Say what you spent");
 
 	return (
 		<div className="space-y-6 pb-2 text-center">
@@ -54,7 +55,7 @@ export function VoiceCapture() {
 					loudness={loudness}
 					hearing={hearing}
 					busy={phase.kind === "starting" || phase.kind === "reading"}
-					label={listening ? "Done talking" : "Start listening"}
+					label={listening ? t("Done talking") : t("Start listening")}
 					onClick={
 						listening
 							? stop
@@ -75,7 +76,9 @@ export function VoiceCapture() {
 							exit={{ opacity: 0 }}
 							className="mx-auto mt-2 max-w-[32ch] text-ink-soft"
 						>
-							Several things at once is fine. Try {EXAMPLES[0]}
+							{t("Several things at once is fine. Try {example}", {
+								example: t(EXAMPLES[0] ?? ""),
+							})}
 						</motion.p>
 					)}
 					{hearing && (
@@ -86,7 +89,7 @@ export function VoiceCapture() {
 							exit={{ opacity: 0 }}
 							className="mt-2 text-ink-soft"
 						>
-							Pause when you're done, or tap the coin.
+							{t("Pause when you're done, or tap the coin.")}
 						</motion.p>
 					)}
 				</AnimatePresence>
@@ -100,14 +103,14 @@ export function VoiceCapture() {
 							onClick={() => void start()}
 							className={buttonClass("coin", "md")}
 						>
-							Try again
+							{t("Try again")}
 						</button>
 						<button
 							type="button"
 							onClick={capture.openType}
 							className={buttonClass("ghost", "md", "border-2 border-line")}
 						>
-							Type it instead
+							{t("Type it instead")}
 						</button>
 					</div>
 				</div>
@@ -118,11 +121,13 @@ export function VoiceCapture() {
 					onClick={stop}
 					className={buttonClass("ink", "lg", "w-full")}
 				>
-					Done
+					{t("Done")}
 				</button>
 			)}
 			<p className="text-[0.82rem] text-ink-soft">
-				Your voice is turned into text and then deleted. It's never stored.
+				{t(
+					"Your voice is turned into text and then deleted. It's never stored.",
+				)}
 			</p>
 		</div>
 	);

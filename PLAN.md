@@ -17,7 +17,7 @@ Dev: `make up` → web http://localhost:8600 · API http://localhost:8601 · Mai
 | M7 | Family Circle: connections, sharing, pulse, goal jars, bill split | ✅ |
 | M8 | Insights + all notification emails + Money Wrapped | ✅ |
 | M9 | Delight: Pip, streaks, nightly check-in, impulse pause | ✅ |
-| M10 | Trust + polish: export / delete, hide balances, BM, PWA, E2E, phone audit, docs | ⏳ |
+| M10 | Trust + polish: export / delete, hide balances, BM, PWA, E2E, phone audit, docs | ✅ |
 
 ---
 
@@ -110,3 +110,5 @@ Dev: `make up` → web http://localhost:8600 · API http://localhost:8601 · Mai
 ## M10 — Trust and polish
 - Export (JSON / CSV / images) and full delete; hide balances; Bahasa Melayu; PWA install + offline shell.
 - Playwright + axe E2E at 390 / 1280; phone audit; README + docs per feature; production Dockerfiles.
+- Done: export (async encrypted zip with CSV + JSON + receipt photos, 24 h, live update + email) and full delete (password + "DELETE", files removed, goodbye email); hide amounts toggle; Bahasa Melayu for the whole member app (743 strings, placeholders for values, dates in the app language, saved to the profile, Ask answers in Malay); PWA (manifest, icons, service worker that never caches `/api`, offline banner); production image (Node + Caddy with HTTPS and security headers), `docker-compose.prod.yml`, SMTP login for real providers; `make e2e`: 41 Playwright tests at 390 and 1280 px including sign-up → email confirm → onboarding → delete, and axe WCAG 2.2 AA on every main page (fixed: contrast of the green "safe" text, label-in-name on the profile link and Ask cards, unnamed admin sign-out on phones); phone audit at 360/390/768/1280 (admin tabs now wrap); docs/ for privacy, language, PWA, deploy, testing.
+- Not in v1: Malay for the admin console, API error messages and emails; PDF receipts.

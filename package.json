@@ -7,8 +7,8 @@
 		"node": ">=24"
 	},
 	"scripts": {
-		"check": "biome check apps/api/src apps/worker/src packages/shared/src apps/web/src/components apps/web/src/features apps/web/src/lib apps/web/src/routes apps/web/src/main.tsx",
-		"fix": "biome check --write apps/api/src apps/worker/src packages/shared/src apps/web/src/components apps/web/src/features apps/web/src/lib apps/web/src/routes apps/web/src/main.tsx",
+		"check": "biome check apps/api/src apps/worker/src packages/shared/src apps/web/src/components apps/web/src/features apps/web/src/lib apps/web/src/routes apps/web/src/i18n apps/web/src/main.tsx",
+		"fix": "biome check --write apps/api/src apps/worker/src packages/shared/src apps/web/src/components apps/web/src/features apps/web/src/lib apps/web/src/routes apps/web/src/i18n apps/web/src/main.tsx",
 		"typecheck": "pnpm -r typecheck",
 		"test": "pnpm -r --workspace-concurrency=1 test"
 	},

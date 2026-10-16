@@ -7,6 +7,7 @@ import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EyeOff, Mail, Moon } from "lucide-react";
 import type { ReactNode } from "react";
 import { toast } from "@/components/ui/Toast";
+import { dateLocale, t } from "@/i18n";
 import { api } from "@/lib/http";
 
 export const notificationsQuery = queryOptions({
@@ -16,7 +17,7 @@ export const notificationsQuery = queryOptions({
 
 const HOURS = Array.from({ length: 24 }, (_, h) => h);
 const hourLabel = (h: number) =>
-	new Date(2026, 0, 1, h).toLocaleTimeString(undefined, { hour: "numeric" });
+	new Date(2026, 0, 1, h).toLocaleTimeString(dateLocale(), { hour: "numeric" });
 
 function Toggle({
 	label,
@@ -76,7 +77,7 @@ export function EmailSettings() {
 			});
 		} catch {
 			queryClient.setQueryData(notificationsQuery.queryKey, previous);
-			toast("Couldn't save. Try again.");
+			toast(t("Couldn't save. Try again."));
 		}
 	}
 
@@ -89,17 +90,20 @@ export function EmailSettings() {
 				id="email-heading"
 				className="flex items-center gap-2 text-[1.4rem] font-bold"
 			>
-				<Mail className="size-6 text-plum-500" aria-hidden="true" /> Emails
+				<Mail className="size-6 text-plum-500" aria-hidden="true" />{" "}
+				{t("Emails")}
 			</h2>
 			<p className="mt-1 text-ink-soft">
-				Sign-in, security and account emails always come. Choose the rest.
+				{t(
+					"Sign-in, security and account emails always come. Choose the rest.",
+				)}
 			</p>
 			<div className="mt-3 divide-y divide-line">
 				{EMAIL_GROUPS.map((g) => (
 					<Toggle
 						key={g}
-						label={EMAIL_GROUP_INFO[g].label}
-						about={EMAIL_GROUP_INFO[g].about}
+						label={t(EMAIL_GROUP_INFO[g].label)}
+						about={t(EMAIL_GROUP_INFO[g].about)}
 						checked={data[g]}
 						onChange={(on) => void save({ [g]: on })}
 					/>
@@ -108,25 +112,28 @@ export function EmailSettings() {
 			<div className="mt-4 space-y-1 rounded-tile bg-bg px-4">
 				<Toggle
 					icon={<EyeOff className="size-4 text-plum-500" aria-hidden="true" />}
-					label="Hide amounts in emails"
-					about="Shows RM ••• instead of numbers, for shared inboxes and lock screens."
+					label={t("Hide amounts in emails")}
+					about={t(
+						"Shows RM ••• instead of numbers, for shared inboxes and lock screens.",
+					)}
 					checked={data.hideAmounts}
 					onChange={(on) => void save({ hideAmounts: on })}
 				/>
 			</div>
 			<fieldset className="mt-4 rounded-tile bg-bg px-4 py-3">
-				<legend className="sr-only">Quiet hours</legend>
+				<legend className="sr-only">{t("Quiet hours")}</legend>
 				<p className="flex items-center gap-2 font-semibold">
-					<Moon className="size-4 text-plum-500" aria-hidden="true" /> Quiet
-					hours
+					<Moon className="size-4 text-plum-500" aria-hidden="true" />{" "}
+					{t("Quiet hours")}
 				</p>
 				<p className="text-[0.9rem] text-ink-soft">
-					Emails that would arrive now wait until quiet hours end. Security
-					emails never wait.
+					{t(
+						"Emails that would arrive now wait until quiet hours end. Security emails never wait.",
+					)}
 				</p>
 				<div className="mt-3 flex flex-wrap items-center gap-2">
 					<label className="flex items-center gap-2">
-						<span>From</span>
+						<span>{t("From")}</span>
 						<select
 							value={data.quietStart}
 							onChange={(e) =>
@@ -142,7 +149,7 @@ export function EmailSettings() {
 						</select>
 					</label>
 					<label className="flex items-center gap-2">
-						<span>to</span>
+						<span>{t("to")}</span>
 						<select
 							value={data.quietEnd}
 							onChange={(e) => void save({ quietEnd: Number(e.target.value) })}
@@ -156,7 +163,9 @@ export function EmailSettings() {
 						</select>
 					</label>
 					{data.quietStart === data.quietEnd && (
-						<span className="text-[0.9rem] text-ink-soft">No quiet hours.</span>
+						<span className="text-[0.9rem] text-ink-soft">
+							{t("No quiet hours.")}
+						</span>
 					)}
 				</div>
 			</fieldset>

@@ -12,6 +12,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { type ReactNode, useEffect, useState } from "react";
 import { CategoryIcon, TINTS } from "@/components/money/CategoryIcon";
 import { CountUp } from "@/components/money/CountUp";
+import { dateLocale, t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { heatmapQuery, recurringQuery, thisMonth } from "@/lib/insights-api";
 import { categoriesQuery, goalsQuery, summaryQuery } from "@/lib/money-api";
@@ -38,7 +39,7 @@ function RotatingExample() {
 			className="mt-2 min-h-14 text-[1.02rem] text-ink-soft sm:min-h-7"
 			aria-hidden="true"
 		>
-			Try{" "}
+			{t("Try")}{" "}
 			<AnimatePresence mode="wait">
 				<motion.span
 					key={i}
@@ -48,7 +49,7 @@ function RotatingExample() {
 					transition={{ duration: 0.3 }}
 					className="font-semibold text-ink"
 				>
-					“{EXAMPLES[i]}”
+					“{t(EXAMPLES[i] ?? "")}”
 				</motion.span>
 			</AnimatePresence>
 		</p>
@@ -112,7 +113,6 @@ function StatCard({
 			<button
 				type="button"
 				onClick={() => onAsk(question)}
-				aria-label={`Ask: ${question}`}
 				className={cn(
 					"group relative flex h-full w-full flex-col overflow-hidden rounded-panel p-4 text-left shadow-lift transition-transform hover:-translate-y-1",
 					className,
@@ -168,25 +168,25 @@ export function AskWelcome({
 				return heat.days.find((d) => d.day === day)?.minor ?? 0;
 			})
 		: [];
-	const monthLabel = new Date().toLocaleDateString(undefined, {
+	const monthLabel = new Date().toLocaleDateString(dateLocale(), {
 		month: "long",
 	});
 
 	const ideas = [
 		{
 			text: recurring?.billsDue.items.length
-				? "Which bills are still due this month?"
-				: "What subscriptions am I paying for?",
+				? t("Which bills are still due this month?")
+				: t("What subscriptions am I paying for?"),
 			icon: <CalendarClock className="size-4" />,
 		},
 		{
 			text: goal
-				? `Am I on track for ${goal.name}?`
-				: "How much could I save this month?",
+				? t("Am I on track for {goal}?", { goal: goal.name })
+				: t("How much could I save this month?"),
 			icon: <Target className="size-4" />,
 		},
 		{
-			text: "Lunch 12 and grab 9 yesterday",
+			text: t("Lunch 12 and grab 9 yesterday"),
 			icon: <PenLine className="size-4" />,
 		},
 	];
@@ -208,7 +208,7 @@ export function AskWelcome({
 						transition={{ delay: 0.1 }}
 						className="text-[clamp(2rem,8vw,3.2rem)] leading-[1.04] font-extrabold"
 					>
-						Hi {name}, ask me anything about your money.
+						{t("Hi {name}, ask me anything about your money.", { name })}
 					</motion.h1>
 					<RotatingExample />
 				</div>
@@ -221,11 +221,11 @@ export function AskWelcome({
 						onAsk={onAsk}
 						label={
 							<span className="inline-flex items-center gap-1.5">
-								<Wallet className="size-4" aria-hidden="true" /> Safe to spend
-								today
+								<Wallet className="size-4" aria-hidden="true" />{" "}
+								{t("Safe to spend today")}
 							</span>
 						}
-						question="How is today's amount worked out?"
+						question={t("How is today's amount worked out?")}
 						className="bg-linear-to-br from-plum-800 to-plum-500 text-white"
 					>
 						<CountUp
@@ -237,8 +237,10 @@ export function AskWelcome({
 					<StatCard
 						delay={0.23}
 						onAsk={onAsk}
-						label={`Spent in ${monthLabel}`}
-						question={`Where did my ${formatMinor(summary.monthSpentMinor, cur)} go?`}
+						label={t("Spent in {month}", { month: monthLabel })}
+						question={t("Where did my {amount} go?", {
+							amount: formatMinor(summary.monthSpentMinor, cur),
+						})}
 						className="bg-linear-to-br from-coral to-marigold-deep text-white"
 					>
 						<CountUp
@@ -260,20 +262,25 @@ export function AskWelcome({
 										size="sm"
 										className="ring-2 ring-white/60"
 									/>{" "}
-									Biggest category
+									{t("Biggest category")}
 								</span>
 							}
-							question={`Why so much on ${topCat.name.toLowerCase()}?`}
+							question={t("Why so much on {category}?", {
+								category: t(topCat.name).toLowerCase(),
+							})}
 							className={cn(
 								"bg-linear-to-br text-plum-950",
 								TINTS[topCat.tint] ?? TINTS.slate,
 							)}
 						>
 							<span className="mt-1 block text-[1.6rem] leading-tight font-extrabold break-words">
-								{topCat.name}
+								{t(topCat.name)}
 							</span>
 							<span className="num block font-semibold">
-								{formatMinor(top.spentMinor, cur)}, {topShare}% of the month
+								{t("{amount}, {pct}% of the month", {
+									amount: formatMinor(top.spentMinor, cur),
+									pct: topShare,
+								})}
 							</span>
 						</StatCard>
 					)}
@@ -300,8 +307,8 @@ export function AskWelcome({
 			</div>
 
 			<p className="mt-6 inline-flex items-center gap-2 text-[0.9rem] text-ink-soft">
-				<Lock className="size-4 shrink-0" aria-hidden="true" /> Answers use only
-				your own data. This chat stays on this device.
+				<Lock className="size-4 shrink-0" aria-hidden="true" />{" "}
+				{t("Answers use only your own data. This chat stays on this device.")}
 			</p>
 		</div>
 	);

@@ -12,6 +12,7 @@ import { type FormEvent, useState } from "react";
 import { MaybeAlert } from "@/components/form/Alert";
 import { Field } from "@/components/form/Field";
 import { SubmitButton } from "@/components/form/SubmitButton";
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { currencySymbol } from "../../onboarding/options";
 import { Avatar } from "../parts";
@@ -120,17 +121,17 @@ export function SplitBuilder({
 	return (
 		<div className="space-y-6">
 			<Field
-				label="What's the bill?"
+				label={t("What's the bill?")}
 				value={draft.title}
 				maxLength={80}
-				placeholder="Dinner, groceries, trip…"
+				placeholder={t("Dinner, groceries, trip…")}
 				onChange={(e) => set({ title: e.target.value })}
 			/>
 
 			{/* One wrapper around people and lines, so the sticky people bar stays up while scrolling the lines. */}
 			<div className="space-y-3">
 				<h2 id="split-people" className="text-[1.3rem] font-bold">
-					Who's in
+					{t("Who's in")}
 				</h2>
 				{/* Sticky so people stay in reach while dragging lines from further down. */}
 				<ul className="sticky top-2 z-20 -mx-2 flex flex-wrap gap-2 rounded-panel bg-bg/85 p-2 backdrop-blur-md select-none">
@@ -153,7 +154,7 @@ export function SplitBuilder({
 									className="block text-[0.92rem] leading-tight font-semibold break-words"
 									title={p.name}
 								>
-									{p.key === "me" ? "You" : firstName(p.name)}
+									{p.key === "me" ? t("You") : firstName(p.name)}
 								</span>
 								<span className="num block text-[0.85rem] leading-tight text-ink-soft">
 									{formatMinor(shareOf.get(p.key) ?? 0, cur)}
@@ -163,7 +164,7 @@ export function SplitBuilder({
 								<button
 									type="button"
 									onClick={() => removePerson(p.key)}
-									aria-label={`Remove ${p.name}`}
+									aria-label={t("Remove {name}", { name: p.name })}
 									className="grid size-8 place-items-center rounded-full text-ink-soft hover:bg-surface-2"
 								>
 									<X className="size-4" aria-hidden="true" />
@@ -178,7 +179,7 @@ export function SplitBuilder({
 							aria-expanded={adding}
 							className="flex h-full min-h-12 items-center gap-2 rounded-full border-2 border-dashed border-plum-300 px-4 font-semibold text-plum-500 hover:bg-plum-500/8"
 						>
-							<UserPlus className="size-5" aria-hidden="true" /> Add
+							<UserPlus className="size-5" aria-hidden="true" /> {t("Add")}
 						</button>
 					</li>
 				</ul>
@@ -220,17 +221,17 @@ export function SplitBuilder({
 								<form onSubmit={addGuest} className="flex items-end gap-2">
 									<Field
 										className="min-w-0 flex-1"
-										label="Someone else"
+										label={t("Someone else")}
 										value={guest}
 										maxLength={40}
-										placeholder="Their name"
+										placeholder={t("Their name")}
 										onChange={(e) => setGuest(e.target.value)}
 									/>
 									<button
 										type="submit"
 										className="h-13 shrink-0 rounded-tile bg-plum-900 px-4 font-semibold text-plum-50 dark:bg-plum-50 dark:text-plum-900"
 									>
-										Add
+										{t("Add")}
 									</button>
 								</form>
 							</div>
@@ -242,11 +243,12 @@ export function SplitBuilder({
 				<section aria-labelledby="split-items" className="space-y-3">
 					<div>
 						<h2 id="split-items" className="text-[1.3rem] font-bold">
-							Who had what
+							{t("Who had what")}
 						</h2>
 						<p className="text-ink-soft">
-							Drag a line onto someone, or tap it to choose. Shared lines split
-							evenly.
+							{t(
+								"Drag a line onto someone, or tap it to choose. Shared lines split evenly.",
+							)}
 						</p>
 					</div>
 					<ul className="space-y-2">
@@ -280,14 +282,14 @@ export function SplitBuilder({
 						className="grid grid-cols-[1fr_8rem_auto] items-end gap-2"
 					>
 						<Field
-							label="Add a line"
+							label={t("Add a line")}
 							value={itemName}
 							maxLength={120}
-							placeholder="Teh tarik"
+							placeholder={t("Teh tarik")}
 							onChange={(e) => setItemName(e.target.value)}
 						/>
 						<Field
-							label="Price"
+							label={t("Price")}
 							inputMode="decimal"
 							adornment={currencySymbol(cur)}
 							value={itemAmount}
@@ -297,18 +299,20 @@ export function SplitBuilder({
 						/>
 						<button
 							type="submit"
-							aria-label="Add line"
+							aria-label={t("Add line")}
 							className="grid size-13 place-items-center rounded-tile bg-marigold text-plum-900"
 						>
 							<Plus className="size-6" aria-hidden="true" />
 						</button>
 					</form>
 					<Field
-						label="Tax, service and tip"
+						label={t("Tax, service and tip")}
 						inputMode="decimal"
 						adornment={currencySymbol(cur)}
 						value={draft.adjust}
-						hint="Shared in proportion to what each person had. Use a minus for a discount."
+						hint={t(
+							"Shared in proportion to what each person had. Use a minus for a discount.",
+						)}
 						onChange={(e) =>
 							set({ adjust: e.target.value.replace(/[^\d.,-]/g, "") })
 						}
@@ -320,7 +324,9 @@ export function SplitBuilder({
 				<div className="space-y-2">
 					{result.unassignedMinor > 0 && (
 						<p className="text-center text-[0.92rem] font-semibold text-marigold-deep">
-							{formatMinor(result.unassignedMinor, cur)} still needs someone.
+							{t("{amount} still needs someone.", {
+								amount: formatMinor(result.unassignedMinor, cur),
+							})}
 						</p>
 					)}
 					<MaybeAlert tone="error" message={error} />
@@ -330,8 +336,13 @@ export function SplitBuilder({
 							onSubmit();
 						}}
 					>
-						<SubmitButton pending={pending} pendingLabel="Making the link…">
-							Create split link, total {formatMinor(result.totalMinor, cur)}
+						<SubmitButton
+							pending={pending}
+							pendingLabel={t("Making the link…")}
+						>
+							{t("Create split link, total {amount}", {
+								amount: formatMinor(result.totalMinor, cur),
+							})}
 						</SubmitButton>
 					</form>
 				</div>

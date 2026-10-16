@@ -5,6 +5,7 @@ import { Check, Copy, Share2 } from "lucide-react";
 import { useState } from "react";
 import { buttonClass } from "@/components/ui/Button";
 import { toast } from "@/components/ui/Toast";
+import { t } from "@/i18n";
 import { familyApi, refreshFamily } from "@/lib/family-api";
 import { QrCode } from "../QrCode";
 import { SplitSummary } from "./SplitSummary";
@@ -34,19 +35,20 @@ export function SplitDone({
 							setSplit(next);
 							return refreshFamily(queryClient);
 						})
-						.catch(() => toast("Couldn't save. Try again."))
+						.catch(() => toast(t("Couldn't save. Try again.")))
 				}
 			/>
 			{url && (
 				<section className="grid items-center gap-5 rounded-panel border border-line bg-surface p-5 sm:grid-cols-[auto_1fr]">
 					<div className="mx-auto w-44">
-						<QrCode text={url} label="QR code for the split link" />
+						<QrCode text={url} label={t("QR code for the split link")} />
 					</div>
 					<div className="space-y-3">
-						<h2 className="text-[1.3rem] font-bold">Send the split</h2>
+						<h2 className="text-[1.3rem] font-bold">{t("Send the split")}</h2>
 						<p className="text-ink-soft">
-							Anyone with the link sees the names and amounts on this bill,
-							nothing else.
+							{t(
+								"Anyone with the link sees the names and amounts on this bill, nothing else.",
+							)}
 						</p>
 						<p className="rounded-tile border-2 border-dashed border-line px-3 py-2 text-[0.88rem] break-all">
 							{url}
@@ -63,7 +65,7 @@ export function SplitDone({
 											setTimeout(() => setCopied(false), 2000);
 										})
 										.catch(() =>
-											toast("Couldn't copy. Select the link instead."),
+											toast(t("Couldn't copy. Select the link instead.")),
 										)
 								}
 							>
@@ -72,7 +74,7 @@ export function SplitDone({
 								) : (
 									<Copy className="size-5" aria-hidden="true" />
 								)}
-								{copied ? "Copied" : "Copy link"}
+								{copied ? t("Copied") : t("Copy link")}
 							</button>
 							{canShare && (
 								<button
@@ -84,7 +86,7 @@ export function SplitDone({
 											.catch(() => undefined)
 									}
 								>
-									<Share2 className="size-5" aria-hidden="true" /> Share
+									<Share2 className="size-5" aria-hidden="true" /> {t("Share")}
 								</button>
 							)}
 						</div>
@@ -93,7 +95,7 @@ export function SplitDone({
 			)}
 			{showDone && (
 				<Link to="/app/family" className={buttonClass("coin", "lg", "w-full")}>
-					Done
+					{t("Done")}
 				</Link>
 			)}
 		</div>

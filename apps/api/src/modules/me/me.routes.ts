@@ -1,5 +1,6 @@
-import { ProfileInputSchema } from "@spendid/shared";
+import { LOCALES, ProfileInputSchema } from "@spendid/shared";
 import type { FastifyInstance } from "fastify";
+import { z } from "zod";
 import { headersOf, requireUser, type SessionLookup } from "../../auth/guards";
 import type { MeRepository } from "./me.repository";
 
@@ -19,6 +20,14 @@ export async function meRoutes(
 		const user = await opts.session(headersOf(req));
 		if (!user || user.banned) return { success: true, data: null };
 		return { success: true, data: await opts.repo.find(user.id) };
+	});
+
+	app.put("/me/locale", { preHandler: guard }, async (req) => {
+		const { locale } = z.object({ locale: z.enum(LOCALES) }).parse(req.body);
+		return {
+			success: true,
+			data: await opts.repo.setLocale(req.user?.id ?? "", locale),
+		};
 	});
 
 	app.put("/me/profile", { preHandler: guard }, async (req) => {

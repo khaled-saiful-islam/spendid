@@ -5,6 +5,7 @@ import type {
 	Transaction,
 } from "@spendid/shared";
 import { queryOptions } from "@tanstack/react-query";
+import { t } from "@/i18n";
 import { ApiError, api } from "./http";
 
 export interface Warranty {
@@ -50,7 +51,7 @@ export const receiptsApi = {
 			});
 		} catch {
 			throw new ApiError(
-				"Couldn't reach Spendid. Check your connection and try again.",
+				t("Couldn't reach Spendid. Check your connection and try again."),
 				0,
 			);
 		}
@@ -59,7 +60,7 @@ export const receiptsApi = {
 			.catch(() => null)) as ApiResponse<Receipt> | null;
 		if (!body)
 			throw new ApiError(
-				"Spendid sent an unexpected reply. Try again.",
+				t("Spendid sent an unexpected reply. Try again."),
 				res.status,
 			);
 		if (!body.success) throw new ApiError(body.error, res.status, body.fields);

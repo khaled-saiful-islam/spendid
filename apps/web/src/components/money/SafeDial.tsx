@@ -1,4 +1,5 @@
 import { motion } from "motion/react";
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 
 interface SafeDialProps {
@@ -77,11 +78,13 @@ export function SafeDial({
 					{percent}%
 				</span>
 				<span className="mt-1 text-[max(0.7rem,6.5cqw)] leading-tight font-semibold">
-					of today left
+					{t("of today left")}
 				</span>
 			</div>
 			<span className="sr-only">
-				{percent} percent of today's safe-to-spend amount is left.
+				{t("{n} percent of today's safe-to-spend amount is left.", {
+					n: percent,
+				})}
 			</span>
 		</div>
 	);

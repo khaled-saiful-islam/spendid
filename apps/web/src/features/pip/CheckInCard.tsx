@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { useState } from "react";
 import { buttonClass } from "@/components/ui/Button";
 import { toast } from "@/components/ui/Toast";
+import { t } from "@/i18n";
 import { delightApi, streakQuery } from "@/lib/delight-api";
 import { capture } from "../capture/capture-store";
 
@@ -22,9 +23,9 @@ export function CheckInCard({ summary }: { summary: Summary | undefined }) {
 		try {
 			const next = await delightApi.checkIn(kind);
 			queryClient.setQueryData(streakQuery.queryKey, next);
-			toast(`Checked in. ${next.current}-day streak!`);
+			toast(t("Checked in. {n}-day streak!", { n: next.current }));
 		} catch {
-			toast("Couldn't save. Try again.");
+			toast(t("Couldn't save. Try again."));
 		}
 		setBusy(false);
 	}
@@ -44,13 +45,18 @@ export function CheckInCard({ summary }: { summary: Summary | undefined }) {
 				id="checkin-title"
 				className="relative flex items-center gap-2 text-[1.35rem] font-bold"
 			>
-				<Moon className="size-5 text-marigold" aria-hidden="true" /> Anything I
-				missed today?
+				<Moon className="size-5 text-marigold" aria-hidden="true" />{" "}
+				{t("Anything I missed today?")}
 			</h2>
-			<p className="relative mt-1 text-white/85">
+			<p data-money className="relative mt-1 text-white/85">
 				{count === 0
-					? "Nothing logged today. Was it a no-spend day?"
-					: `You logged ${count} ${count === 1 ? "thing" : "things"}, ${formatMinor(total, summary.homeCurrency)} in all.`}
+					? t("Nothing logged today. Was it a no-spend day?")
+					: t(
+							count === 1
+								? "You logged 1 thing, {amount} in all."
+								: "You logged {n} things, {amount} in all.",
+							{ n: count, amount: formatMinor(total, summary.homeCurrency) },
+						)}
 			</p>
 			<div className="relative mt-4 flex flex-wrap gap-2">
 				<button
@@ -60,14 +66,14 @@ export function CheckInCard({ summary }: { summary: Summary | undefined }) {
 					className={buttonClass("coin", "md")}
 				>
 					<Check className="size-5" aria-hidden="true" />
-					{count === 0 ? "No spending today" : "That's everything"}
+					{count === 0 ? t("No spending today") : t("That's everything")}
 				</button>
 				<button
 					type="button"
 					onClick={capture.openMenu}
 					className="inline-flex h-11 items-center gap-2 rounded-full border-2 border-white/40 px-5 font-semibold hover:bg-white/10"
 				>
-					<Plus className="size-5" aria-hidden="true" /> Add something
+					<Plus className="size-5" aria-hidden="true" /> {t("Add something")}
 				</button>
 			</div>
 		</motion.section>

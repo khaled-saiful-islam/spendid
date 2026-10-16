@@ -37,6 +37,7 @@ import { createPlanRepository } from "./modules/money/plan.repository";
 import { createSummaryService } from "./modules/money/summary.service";
 import { createTransactionRepository } from "./modules/money/transactions.repository";
 import { createTransactionService } from "./modules/money/transactions.service";
+import { createPrivacyService } from "./modules/privacy/privacy.service";
 import {
 	createReceiptService,
 	RECEIPT_QUEUE,
@@ -109,14 +110,15 @@ const events = createEventHub(env.REDIS_URL);
 const receiptQueue = new Queue<{ receiptId: string }>(RECEIPT_QUEUE, {
 	connection: cache.redis,
 });
+const fileStore = createFileStore({
+	root: env.RECEIPTS_DIR,
+	keyBase64: env.RECEIPT_ENCRYPTION_KEY,
+});
 const receiptService = createReceiptService({
 	db: database.db,
 	queue: receiptQueue,
 	transactions: transactionService,
-	store: createFileStore({
-		root: env.RECEIPTS_DIR,
-		keyBase64: env.RECEIPT_ENCRYPTION_KEY,
-	}),
+	store: fileStore,
 });
 const familyDeps = { db: database.db, repo: familyRepo, publish };
 const ilmu = { baseUrl: env.ILMU_BASE_URL, apiKey: env.ILMU_API_KEY };
@@ -171,6 +173,18 @@ const app = await buildApp({
 	},
 	insights: { session, insights },
 	delight: { session, delight: createDelightService(database.db) },
+	privacy: {
+		session,
+		privacy: createPrivacyService({
+			db: database.db,
+			store: fileStore,
+			auth,
+			notifier: notifications.notifier,
+			sendEmail: outbox.send,
+			publish,
+			appUrl: env.APP_URL,
+		}),
+	},
 	notify: {
 		session,
 		notifier: notifications.notifier,

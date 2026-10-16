@@ -4,6 +4,7 @@ import { Sparkles } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useDeferredValue } from "react";
 import { CategoryIcon } from "@/components/money/CategoryIcon";
+import { t } from "@/i18n";
 import { api } from "@/lib/http";
 
 export interface KnownShop {
@@ -52,7 +53,7 @@ export function ShopSuggestions({
 							className="size-3.5 text-marigold-deep"
 							aria-hidden="true"
 						/>{" "}
-						Shops you've used
+						{t("Shops you've used")}
 					</p>
 					<div className="flex flex-wrap gap-2">
 						{shown.map((s) => {

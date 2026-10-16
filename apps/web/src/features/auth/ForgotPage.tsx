@@ -3,6 +3,7 @@ import { type FormEvent, useState } from "react";
 import { MaybeAlert } from "@/components/form/Alert";
 import { Field } from "@/components/form/Field";
 import { SubmitButton } from "@/components/form/SubmitButton";
+import { t } from "@/i18n";
 import { authClient, authErrorMessage } from "@/lib/auth-client";
 import { AuthLayout } from "./AuthLayout";
 
@@ -28,27 +29,30 @@ export function ForgotPage() {
 
 	return (
 		<AuthLayout
-			title="Forgot your password?"
-			intro="Enter your email and we'll send a link to choose a new one."
+			title={t("Forgot your password?")}
+			intro={t("Enter your email and we'll send a link to choose a new one.")}
 			footer={
 				<Link
 					to="/signin"
 					className="font-semibold text-ink underline decoration-marigold decoration-2 underline-offset-4"
 				>
-					Back to sign in
+					{t("Back to sign in")}
 				</Link>
 			}
 		>
 			{done ? (
 				<MaybeAlert
 					tone="success"
-					message={`If ${email.trim()} has a Spendid account, a reset link is on its way. It works for 1 hour.`}
+					message={t(
+						"If {email} has a Spendid account, a reset link is on its way. It works for 1 hour.",
+						{ email: email.trim() },
+					)}
 				/>
 			) : (
 				<form onSubmit={onSubmit} className="space-y-5">
 					<MaybeAlert tone="error" message={error} />
 					<Field
-						label="Email"
+						label={t("Email")}
 						type="email"
 						autoComplete="email"
 						inputMode="email"
@@ -56,8 +60,8 @@ export function ForgotPage() {
 						value={email}
 						onChange={(e) => setEmail(e.target.value)}
 					/>
-					<SubmitButton pending={pending} pendingLabel="Sending…">
-						Send reset link
+					<SubmitButton pending={pending} pendingLabel={t("Sending…")}>
+						{t("Send reset link")}
 					</SubmitButton>
 				</form>
 			)}

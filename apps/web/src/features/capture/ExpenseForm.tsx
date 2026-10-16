@@ -7,6 +7,7 @@ import { MaybeAlert } from "@/components/form/Alert";
 import { SubmitButton } from "@/components/form/SubmitButton";
 import { CategoryIcon } from "@/components/money/CategoryIcon";
 import { toast } from "@/components/ui/Toast";
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { ApiError } from "@/lib/http";
 import { categoriesQuery, moneyApi, refreshMoney } from "@/lib/money-api";
@@ -74,8 +75,8 @@ export function ExpenseForm({
 
 	async function onSubmit(e: FormEvent) {
 		e.preventDefault();
-		if (minor === null) return setError("Enter how much it was.");
-		if (!draft.categoryId) return setError("Pick a category.");
+		if (minor === null) return setError(t("Enter how much it was."));
+		if (!draft.categoryId) return setError(t("Pick a category."));
 		setPending(true);
 		setError(null);
 		const body = {
@@ -92,7 +93,7 @@ export function ExpenseForm({
 					editing.id,
 					unchangedDay ? { ...body, occurredAt: undefined } : body,
 				);
-				toast("Saved your changes.");
+				toast(t("Saved your changes."));
 			} else {
 				const created = await moneyApi.addTransaction({
 					...body,
@@ -101,7 +102,7 @@ export function ExpenseForm({
 				toast(
 					`Added ${body.merchant ?? category?.name ?? "expense"}, ${formatMinor(minor, draft.currency)}.`,
 					{
-						label: "Undo",
+						label: t("Undo"),
 						run: () =>
 							void moneyApi
 								.deleteTransaction(created.id)
@@ -114,7 +115,7 @@ export function ExpenseForm({
 		} catch (err) {
 			setPending(false);
 			setError(
-				err instanceof ApiError ? err.message : "Couldn't save. Try again.",
+				err instanceof ApiError ? err.message : t("Couldn't save. Try again."),
 			);
 		}
 	}
@@ -123,8 +124,8 @@ export function ExpenseForm({
 		if (!editing) return;
 		await moneyApi.deleteTransaction(editing.id);
 		await refreshMoney(queryClient);
-		toast("Expense removed.", {
-			label: "Undo",
+		toast(t("Expense removed."), {
+			label: t("Undo"),
 			run: () =>
 				void moneyApi
 					.restoreTransaction(editing.id)
@@ -134,8 +135,8 @@ export function ExpenseForm({
 	}
 
 	const days: { value: Day; label: string }[] = [
-		{ value: "today", label: "Today" },
-		{ value: "yesterday", label: "Yesterday" },
+		{ value: "today", label: t("Today") },
+		{ value: "yesterday", label: t("Yesterday") },
 	];
 	const customDay =
 		draft.day !== "today" && draft.day !== "yesterday" ? draft.day : "";
@@ -145,13 +146,13 @@ export function ExpenseForm({
 			{!editing && (
 				<div className="space-y-1.5">
 					<label htmlFor="shorthand" className="block font-semibold">
-						Type it like you'd say it
+						{t("Type it like you'd say it")}
 					</label>
 					<input
 						id="shorthand"
 						data-autofocus
 						autoComplete="off"
-						placeholder="lunch 12.50, grab rm9 yesterday…"
+						placeholder={t("lunch 12.50, grab rm9 yesterday…")}
 						value={shorthand}
 						onChange={(e) => {
 							setShorthand(e.target.value);
@@ -171,15 +172,15 @@ export function ExpenseForm({
 				<CategoryIcon icon={category?.icon} tint={category?.tint} size="lg" />
 				<div className="min-w-0 flex-1 space-y-1">
 					<input
-						aria-label="What was it?"
-						placeholder="What was it?"
+						aria-label={t("What was it?")}
+						placeholder={t("What was it?")}
 						value={draft.merchant}
 						onChange={(e) => patch({ merchant: e.target.value })}
 						className="w-full bg-transparent font-display text-[1.25rem] font-bold text-plum-50 outline-none placeholder:text-plum-300"
 					/>
 					<div className="flex items-center gap-2">
 						<select
-							aria-label="Currency"
+							aria-label={t("Currency")}
 							value={draft.currency}
 							onChange={(e) => patch({ currency: e.target.value })}
 							className="h-9 rounded-full bg-white/12 px-2.5 text-[0.9rem] font-semibold text-plum-50 outline-none"
@@ -191,7 +192,7 @@ export function ExpenseForm({
 							))}
 						</select>
 						<input
-							aria-label="Amount"
+							aria-label={t("Amount")}
 							inputMode="decimal"
 							placeholder="0.00"
 							value={draft.amountText}
@@ -205,7 +206,9 @@ export function ExpenseForm({
 			</motion.div>
 			{draft.currency !== homeCurrency && (
 				<p className="-mt-2 text-[0.9rem] text-ink-soft">
-					Converted to {homeCurrency} at today's rate when you save.
+					{t("Converted to {currency} at today's rate when you save.", {
+						currency: homeCurrency,
+					})}
 				</p>
 			)}
 			<ShopSuggestions
@@ -221,7 +224,7 @@ export function ExpenseForm({
 			/>
 
 			<fieldset>
-				<legend className="mb-2 font-semibold">When</legend>
+				<legend className="mb-2 font-semibold">{t("When")}</legend>
 				<div className="flex flex-wrap gap-2">
 					{days.map((d) => (
 						<button
@@ -235,7 +238,7 @@ export function ExpenseForm({
 					))}
 					<input
 						type="date"
-						aria-label="Pick another day"
+						aria-label={t("Pick another day")}
 						max={localDate(new Date())}
 						value={customDay}
 						onChange={(e) => e.target.value && patch({ day: e.target.value })}
@@ -245,7 +248,7 @@ export function ExpenseForm({
 			</fieldset>
 
 			<fieldset>
-				<legend className="mb-2 font-semibold">Category</legend>
+				<legend className="mb-2 font-semibold">{t("Category")}</legend>
 				<div className="flex flex-wrap gap-2">
 					{categories.map((c) => (
 						<button
@@ -276,12 +279,14 @@ export function ExpenseForm({
 
 			<div className="space-y-3">
 				<MaybeAlert tone="error" message={error} />
-				<SubmitButton pending={pending} pendingLabel="Saving…">
+				<SubmitButton pending={pending} pendingLabel={t("Saving…")}>
 					{editing
-						? "Save changes"
+						? t("Save changes")
 						: minor
-							? `Add ${formatMinor(minor, draft.currency)}`
-							: "Add expense"}
+							? t("Add {amount}", {
+									amount: formatMinor(minor, draft.currency),
+								})
+							: t("Add expense")}
 				</SubmitButton>
 				{editing && (
 					<button
@@ -289,7 +294,8 @@ export function ExpenseForm({
 						onClick={onDelete}
 						className="inline-flex h-11 w-full items-center justify-center gap-2 font-medium text-over"
 					>
-						<Trash2 className="size-4" aria-hidden="true" /> Remove this expense
+						<Trash2 className="size-4" aria-hidden="true" />{" "}
+						{t("Remove this expense")}
 					</button>
 				)}
 			</div>

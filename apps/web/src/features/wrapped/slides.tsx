@@ -3,6 +3,7 @@ import { motion } from "motion/react";
 import type { ReactNode } from "react";
 import { CategoryIcon } from "@/components/money/CategoryIcon";
 import { CountUp } from "@/components/money/CountUp";
+import { dateLocale, t } from "@/i18n";
 import { monthName, shiftMonth } from "@/lib/insights-api";
 
 export interface Slide {
@@ -54,6 +55,13 @@ const Line = ({ children }: { children: ReactNode }) => (
 	<p className="mt-4 max-w-[30ch] text-[1.15rem] opacity-95">{children}</p>
 );
 
+/** The personality line in the app language (the no-spend one carries a number). */
+export function personalityLine(d: Wrapped): string {
+	return d.personality.title === "The No-Spend Ninja"
+		? t("{n} days without spending a thing. Impressive.", { n: d.noSpendDays })
+		: t(d.personality.line);
+}
+
 /** The story, one idea per slide. Slides with nothing to say are left out. */
 export function buildSlides(d: Wrapped): Slide[] {
 	const money = (minor: number) => formatMinor(minor, d.currency);
@@ -81,11 +89,13 @@ export function buildSlides(d: Wrapped): Slide[] {
 					</Rise>
 					<Rise delay={0.15}>
 						<Big>
-							{d.inProgress ? `${name}, so far` : `Your ${name}, wrapped`}
+							{d.inProgress
+								? t("{month}, so far", { month: name })
+								: t("Your {month}, wrapped", { month: name })}
 						</Big>
 					</Rise>
 					<Rise delay={0.3}>
-						<Line>Let's look back at where your money went.</Line>
+						<Line>{t("Let's look back at where your money went.")}</Line>
 					</Rise>
 				</>
 			),
@@ -96,7 +106,7 @@ export function buildSlides(d: Wrapped): Slide[] {
 			ink: "light",
 			body: (
 				<>
-					<Kicker>You spent</Kicker>
+					<Kicker>{t("You spent")}</Kicker>
 					<CountUp
 						minor={d.totalMinor}
 						currency={d.currency}
@@ -104,12 +114,22 @@ export function buildSlides(d: Wrapped): Slide[] {
 					/>
 					<Rise delay={0.4}>
 						<Line>
-							{d.count} expenses on {d.activeDays}{" "}
-							{d.activeDays === 1 ? "day" : "days"}.{" "}
+							{t(
+								d.activeDays === 1
+									? "{n} expenses on 1 day."
+									: "{n} expenses on {days} days.",
+								{ n: d.count, days: d.activeDays },
+							)}{" "}
 							{d.previousMinor > 0 &&
 								(diff > 0
-									? `${money(diff)} more than ${prevName}.`
-									: `${money(-diff)} less than ${prevName}.`)}
+									? t("{amount} more than {month}.", {
+											amount: money(diff),
+											month: prevName,
+										})
+									: t("{amount} less than {month}.", {
+											amount: money(-diff),
+											month: prevName,
+										}))}
 						</Line>
 					</Rise>
 				</>
@@ -122,9 +142,9 @@ export function buildSlides(d: Wrapped): Slide[] {
 					ink: "dark",
 					body: (
 						<>
-							<Kicker>Most of it went to</Kicker>
+							<Kicker>{t("Most of it went to")}</Kicker>
 							<Big>
-								{top.name}, {Math.round(top.share * 100)}%
+								{t(top.name)}, {Math.round(top.share * 100)}%
 							</Big>
 							<ul className="mt-6 space-y-3">
 								{d.categories.map((c, i) => (
@@ -138,7 +158,7 @@ export function buildSlides(d: Wrapped): Slide[] {
 										<CategoryIcon icon={c.icon} tint={c.tint} size="sm" />
 										<span className="min-w-0 flex-1">
 											<span className="flex justify-between gap-3 font-semibold">
-												<span className="break-words">{c.name}</span>
+												<span className="break-words">{t(c.name)}</span>
 												<span className="num">{money(c.minor)}</span>
 											</span>
 											<span className="mt-1 block h-2 rounded-full bg-plum-950/15">
@@ -164,18 +184,25 @@ export function buildSlides(d: Wrapped): Slide[] {
 					ink: "light",
 					body: (
 						<>
-							<Kicker>Your biggest day</Kicker>
+							<Kicker>{t("Your biggest day")}</Kicker>
 							<Big>
 								{new Date(`${d.biggestDay.day}T12:00`).toLocaleDateString(
-									undefined,
+									dateLocale(),
 									{ weekday: "long", day: "numeric", month: "long" },
 								)}
 							</Big>
 							<Line>
-								{money(d.biggestDay.minor)} across {d.biggestDay.count}{" "}
-								{d.biggestDay.count === 1 ? "expense" : "expenses"}.
+								{t(
+									d.biggestDay.count === 1
+										? "{amount} across 1 expense."
+										: "{amount} across {n} expenses.",
+									{
+										amount: money(d.biggestDay.minor),
+										n: d.biggestDay.count,
+									},
+								)}
 								{d.busiestWeekday &&
-									` ${WEEKDAY[d.busiestWeekday.weekday]} cost you the most overall.`}
+									` ${t("{day} cost you the most overall.", { day: t(WEEKDAY[d.busiestWeekday.weekday] ?? "") })}`}
 							</Line>
 						</>
 					),
@@ -188,12 +215,18 @@ export function buildSlides(d: Wrapped): Slide[] {
 					ink: "light",
 					body: (
 						<>
-							<Kicker>Your favourite place</Kicker>
+							<Kicker>{t("Your favourite place")}</Kicker>
 							<Big>{d.topMerchant.name}</Big>
 							<Line>
-								{d.topMerchant.visits}{" "}
-								{d.topMerchant.visits === 1 ? "visit" : "visits"},{" "}
-								{money(d.topMerchant.minor)} in all.
+								{t(
+									d.topMerchant.visits === 1
+										? "1 visit, {amount} in all."
+										: "{n} visits, {amount} in all.",
+									{
+										n: d.topMerchant.visits,
+										amount: money(d.topMerchant.minor),
+									},
+								)}
 							</Line>
 						</>
 					),
@@ -205,9 +238,11 @@ export function buildSlides(d: Wrapped): Slide[] {
 			ink: "light",
 			body: (
 				<>
-					<Kicker>Your rhythm</Kicker>
+					<Kicker>{t("Your rhythm")}</Kicker>
 					<Big>
-						{d.noSpendDays} no-spend {d.noSpendDays === 1 ? "day" : "days"}
+						{t(d.noSpendDays === 1 ? "1 no-spend day" : "{n} no-spend days", {
+							n: d.noSpendDays,
+						})}
 					</Big>
 					<div
 						className="mt-6 flex h-4 overflow-hidden rounded-full bg-white/20"
@@ -233,12 +268,14 @@ export function buildSlides(d: Wrapped): Slide[] {
 						/>
 					</div>
 					<Line>
-						Needs {Math.round((d.kinds.need / kindTotal) * 100)}%, wants{" "}
-						{Math.round((d.kinds.want / kindTotal) * 100)}%.
+						{t("Needs {needs}%, wants {wants}%.", {
+							needs: Math.round((d.kinds.need / kindTotal) * 100),
+							wants: Math.round((d.kinds.want / kindTotal) * 100),
+						})}
 						{d.subscriptionsMonthlyMinor > 0 &&
-							` Subscriptions and bills run about ${money(d.subscriptionsMonthlyMinor)} a month.`}
+							` ${t("Subscriptions and bills run about {amount} a month.", { amount: money(d.subscriptionsMonthlyMinor) })}`}
 						{d.savedMinor > 0 &&
-							` You put ${money(d.savedMinor)} into your goals.`}
+							` ${t("You put {amount} into your goals.", { amount: money(d.savedMinor) })}`}
 					</Line>
 				</>
 			),
@@ -250,15 +287,15 @@ export function buildSlides(d: Wrapped): Slide[] {
 			body: (
 				<>
 					<Kicker>
-						{d.inProgress ? "So far you're" : "This month you were"}
+						{d.inProgress ? t("So far you're") : t("This month you were")}
 					</Kicker>
 					<Rise delay={0.1}>
 						<span className="mt-3 block text-[5.5rem] leading-none">
 							{d.personality.emoji}
 						</span>
 					</Rise>
-					<Big>{d.personality.title}</Big>
-					<Line>{d.personality.line}</Line>
+					<Big>{t(d.personality.title)}</Big>
+					<Line>{personalityLine(d)}</Line>
 				</>
 			),
 		},

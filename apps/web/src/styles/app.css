@@ -54,7 +54,7 @@
   --ink: #20123a;
   --ink-soft: #5b4d72;
   --line: #ddd3ee;
-  --safe: #087f5b;
+  --safe: #077a57;
   --over: #d6334f;
   --scale-stroke: rgb(75 42 123 / 0.07);
   /* Chart mark colour, validated for contrast and chroma on each surface. */
@@ -157,5 +157,19 @@
   }
   to {
     background-position: 200% 0;
+  }
+}
+
+/* Hide balances: amounts blur in place (layout doesn't jump). Toggle with the eye in the header. */
+[data-hide-money] .num,
+[data-hide-money] [data-money] {
+  filter: blur(0.42em);
+  transition: filter 0.25s ease;
+  user-select: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-hide-money] .num,
+  [data-hide-money] [data-money] {
+    transition: none;
   }
 }

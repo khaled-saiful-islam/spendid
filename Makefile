@@ -2,10 +2,10 @@
 COMPOSE := docker compose
 NODE_RUN := $(COMPOSE) run --rm --no-deps deps
 
-.PHONY: help env up down restart logs ps sh-api install check fix typecheck test demo digests db-generate reset
+.PHONY: help env up down restart logs ps sh-api install check fix typecheck test e2e demo digests db-generate reset
 
 help: ## Show commands
-	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-10s %s\n", $$1, $$2}'
+	@grep -E '^[a-z0-9-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-10s %s\n", $$1, $$2}'
 
 env: ## Create .env from .env.example if missing
 	@test -f .env || (cp .env.example .env && echo "Created .env")
@@ -48,6 +48,9 @@ typecheck: ## Type-check every package
 
 test: ## Run unit + API tests
 	$(NODE_RUN) pnpm test
+
+e2e: ## Browser + accessibility tests at phone and desktop sizes (needs `make up`; runs on the host)
+	cd e2e && pnpm install --ignore-workspace --frozen-lockfile && pnpm exec playwright install chromium && pnpm exec playwright test
 
 demo: ## Create demo people: maya (set up) and adam (new) — password demo1234
 	$(COMPOSE) exec api pnpm --filter @spendid/api run demo

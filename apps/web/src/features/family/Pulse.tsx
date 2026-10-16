@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { CategoryIcon } from "@/components/money/CategoryIcon";
 import { toast } from "@/components/ui/Toast";
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { familyApi, pulseQuery } from "@/lib/family-api";
 import { ApiError } from "@/lib/http";
@@ -13,18 +14,18 @@ import { Avatar, ago } from "./parts";
 const PAGE = 6;
 
 function sentence(item: PulseItem): string {
-	const who = item.mine ? "You" : item.actorName;
+	const who = item.mine ? t("You") : item.actorName;
 	const amount =
 		item.amountMinor !== null && item.currency
 			? formatMinor(Math.abs(item.amountMinor), item.currency)
 			: "";
 	if (item.kind === "joined")
-		return `You and ${item.title} joined each other's circle`;
+		return t("You and {name} joined each other's circle", { name: item.title });
 	if (item.kind === "deposit")
 		return item.amountMinor !== null && item.amountMinor < 0
-			? `${who} took ${amount} out of ${item.title}`
-			: `${who} added ${amount} to ${item.title}`;
-	return `${who} spent ${amount} at ${item.title}`;
+			? t("{who} took {amount} out of {jar}", { who, amount, jar: item.title })
+			: t("{who} added {amount} to {jar}", { who, amount, jar: item.title });
+	return t("{who} spent {amount} at {shop}", { who, amount, shop: item.title });
 }
 
 function Reactions({ item }: { item: PulseItem }) {
@@ -44,7 +45,7 @@ function Reactions({ item }: { item: PulseItem }) {
 			await queryClient.invalidateQueries({ queryKey: pulseQuery.queryKey });
 		} catch (err) {
 			toast(
-				err instanceof ApiError ? err.message : "Couldn't react. Try again.",
+				err instanceof ApiError ? err.message : t("Couldn't react. Try again."),
 			);
 		}
 	}
@@ -61,7 +62,7 @@ function Reactions({ item }: { item: PulseItem }) {
 					disabled={!canReact}
 					onClick={() => void react(r.mine ? null : r.emoji)}
 					title={r.names.join(", ")}
-					aria-label={`${r.emoji} ${r.count}${r.names.length ? ` from ${r.names.join(", ")}` : ""}${r.mine ? ". Tap to take yours back" : ""}`}
+					aria-label={`${r.emoji} ${r.count}${r.names.length ? ` ${t("from {names}", { names: r.names.join(", ") })}` : ""}${r.mine ? `. ${t("Tap to take yours back")}` : ""}`}
 					className={cn(
 						"inline-flex h-8 items-center gap-1 rounded-full border px-2.5 text-[0.9rem] font-semibold",
 						r.mine
@@ -79,7 +80,7 @@ function Reactions({ item }: { item: PulseItem }) {
 						type="button"
 						onClick={() => setPicking((p) => !p)}
 						aria-expanded={picking}
-						aria-label="React"
+						aria-label={t("React")}
 						className="grid size-8 place-items-center rounded-full text-ink-soft hover:bg-surface-2 hover:text-ink"
 					>
 						<SmilePlus className="size-5" aria-hidden="true" />
@@ -103,7 +104,7 @@ function Reactions({ item }: { item: PulseItem }) {
 										onClick={() =>
 											void react(mineEmoji === emoji ? null : emoji)
 										}
-										aria-label={`React ${emoji}`}
+										aria-label={t("React {emoji}", { emoji })}
 										className="grid size-10 place-items-center rounded-full text-[1.4rem]"
 									>
 										{emoji}
@@ -128,8 +129,8 @@ export function Pulse() {
 				id="pulse-heading"
 				className="flex items-center gap-2 text-[1.6rem] font-bold"
 			>
-				<Activity className="size-6 text-coral" aria-hidden="true" /> Family
-				pulse
+				<Activity className="size-6 text-coral" aria-hidden="true" />{" "}
+				{t("Family pulse")}
 				<span className="relative ml-1 flex size-2.5" aria-hidden="true">
 					<span className="absolute inline-flex size-full animate-ping rounded-full bg-coral opacity-60 motion-reduce:hidden" />
 					<span className="relative inline-flex size-2.5 rounded-full bg-coral" />
@@ -139,8 +140,9 @@ export function Pulse() {
 				<div className="h-32 animate-pulse rounded-panel bg-surface-2" />
 			) : data.length === 0 ? (
 				<p className="rounded-panel border-2 border-dashed border-line p-5 text-ink-soft">
-					When people share expenses or add to a shared jar, it shows up here as
-					it happens.
+					{t(
+						"When people share expenses or add to a shared jar, it shows up here as it happens.",
+					)}
 				</p>
 			) : (
 				<ol className="space-y-2">
@@ -175,7 +177,9 @@ export function Pulse() {
 									</span>
 								</div>
 								<div className="min-w-0 flex-1">
-									<p className="font-semibold break-words">{sentence(item)}</p>
+									<p data-money className="font-semibold break-words">
+										{sentence(item)}
+									</p>
 									<p className="text-[0.82rem] text-ink-soft">{ago(item.at)}</p>
 									<Reactions item={item} />
 								</div>

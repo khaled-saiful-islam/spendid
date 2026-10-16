@@ -6,6 +6,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { toast } from "@/components/ui/Toast";
+import { t } from "@/i18n";
 import { capture, getCaptureState } from "../capture/capture-store";
 import { splitReceipts } from "../family/split/waiting";
 
@@ -33,12 +34,12 @@ export function useLiveEvents(): void {
 			const lookingAtIt = state.view === "receipt" && state.receiptId === id;
 			if (lookingAtIt) return;
 			if (status === "ready")
-				toast("Your receipt is ready to check.", {
+				toast(t("Your receipt is ready to check."), {
 					label: "Check",
 					run: () => capture.openReceipt(id),
 				});
 			if (status === "failed")
-				toast("We couldn't read a receipt. You can fill it in yourself.", {
+				toast(t("We couldn't read a receipt. You can fill it in yourself."), {
 					label: "Open",
 					run: () => capture.openReceipt(id),
 				});
@@ -52,6 +53,10 @@ export function useLiveEvents(): void {
 			if (parsed.data.what === "jar")
 				void queryClient.invalidateQueries({ queryKey: ["goals"] });
 			if (parsed.data.message) toast(parsed.data.message);
+		});
+		source.addEventListener("export", () => {
+			void queryClient.invalidateQueries({ queryKey: ["export"] });
+			toast(t("Your data is ready to download in Settings."));
 		});
 		return () => source.close();
 	}, [queryClient]);

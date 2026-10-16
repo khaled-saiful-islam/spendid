@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { ShieldCheck } from "lucide-react";
+import { dateLocale, t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { warrantiesQuery } from "@/lib/receipts-api";
 
@@ -12,15 +13,15 @@ function left(endsOn: string): {
 	const days = Math.ceil(
 		(new Date(`${endsOn}T23:59`).getTime() - Date.now()) / DAY,
 	);
-	if (days < 0) return { label: "Ended", tone: "ended" };
+	if (days < 0) return { label: t("Ended"), tone: "ended" };
 	if (days <= 30)
 		return {
-			label: `${days} ${days === 1 ? "day" : "days"} left`,
+			label: t(days === 1 ? "1 day left" : "{n} days left", { n: days }),
 			tone: "soon",
 		};
 	const months = Math.round(days / 30.4);
 	return {
-		label: `${months} ${months === 1 ? "month" : "months"} left`,
+		label: t(months === 1 ? "1 month left" : "{n} months left", { n: months }),
 		tone: "ok",
 	};
 }
@@ -33,7 +34,7 @@ export function WarrantyVault() {
 	return (
 		<section aria-labelledby="warranty-heading" className="space-y-3">
 			<h2 id="warranty-heading" className="text-[1.6rem] font-bold">
-				Warranty vault
+				{t("Warranty vault")}
 			</h2>
 			<ul className="divide-y divide-line rounded-panel border border-line bg-surface">
 				{warranties.map((w) => {
@@ -48,12 +49,15 @@ export function WarrantyVault() {
 									{w.itemName}
 								</span>
 								<span className="block text-[0.85rem] text-ink-soft">
-									Until{" "}
-									{new Date(`${w.endsOn}T12:00`).toLocaleDateString(undefined, {
-										day: "numeric",
-										month: "short",
-										year: "numeric",
-									})}
+									{t("Until")}{" "}
+									{new Date(`${w.endsOn}T12:00`).toLocaleDateString(
+										dateLocale(),
+										{
+											day: "numeric",
+											month: "short",
+											year: "numeric",
+										},
+									)}
 								</span>
 							</span>
 							<span
