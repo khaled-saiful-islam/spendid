@@ -1,11 +1,12 @@
-import { type Db, profile, receipt } from "@spendid/db";
+import { category, type Db, profile, receipt } from "@spendid/db";
 import {
 	type AiGuard,
 	type FileStore,
+	type MerchantMemory,
 	type ReceiptReader,
 	ServiceError,
 } from "@spendid/server";
-import type { ReceiptEvent } from "@spendid/shared";
+import type { ReceiptDraft, ReceiptEvent } from "@spendid/shared";
 import { type Job, UnrecoverableError } from "bullmq";
 import { eq } from "drizzle-orm";
 
@@ -17,6 +18,7 @@ interface Deps {
 	guard: AiGuard;
 	read: ReceiptReader;
 	publish: (userId: string, event: ReceiptEvent) => Promise<unknown>;
+	merchants: MerchantMemory;
 }
 
 /** Reads one receipt photo with ILMU vision and tells the person's open apps it's ready. */
@@ -26,7 +28,33 @@ export function createReceiptProcessor({
 	guard,
 	read,
 	publish,
+	merchants,
 }: Deps) {
+	/** The person's own name for this shop and the category they use for it. */
+	async function learned(
+		userId: string,
+		draft: ReceiptDraft,
+	): Promise<ReceiptDraft> {
+		const known = await merchants.find(userId, draft.merchant);
+		if (!known)
+			return {
+				...draft,
+				merchant: await merchants.displayName(userId, draft.merchant),
+			};
+		const [cat] = known.categoryId
+			? await db
+					.select({ slug: category.slug })
+					.from(category)
+					.where(eq(category.id, known.categoryId))
+					.limit(1)
+			: [];
+		return {
+			...draft,
+			merchant: known.name,
+			categorySlug: cat?.slug ?? draft.categorySlug,
+		};
+	}
+
 	async function fail(
 		id: string,
 		userId: string,
@@ -67,7 +95,11 @@ export function createReceiptProcessor({
 			});
 			await db
 				.update(receipt)
-				.set({ status: "ready", draft: reading.draft, error: null })
+				.set({
+					status: "ready",
+					draft: await learned(row.userId, reading.draft),
+					error: null,
+				})
 				.where(eq(receipt.id, row.id));
 			await publish(row.userId, {
 				type: "receipt",

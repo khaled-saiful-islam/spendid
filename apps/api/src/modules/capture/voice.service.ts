@@ -2,6 +2,7 @@ import { type Db, profile } from "@spendid/db";
 import type {
 	AiGuard,
 	ExpenseExtractor,
+	MerchantMemory,
 	SpokenExpense,
 	Transcriber,
 } from "@spendid/server";
@@ -27,6 +28,8 @@ interface Deps {
 	extract: ExpenseExtractor;
 	categories: CategoryRepository;
 	asrModel: string;
+	/** Learned shop names + categories, applied to drafts before review. */
+	merchants?: MerchantMemory;
 }
 
 const KNOWN = new Set(Intl.supportedValuesOf("currency"));
@@ -39,6 +42,29 @@ const titleCase = (s: string) =>
 function currencyOr(code: string | null | undefined, home: string): string {
 	const upper = code?.toUpperCase();
 	return upper && KNOWN.has(upper) ? upper : home;
+}
+
+/** Uses what this person taught Spendid: their name for the shop and its category. */
+async function applyLearned(
+	merchants: MerchantMemory | undefined,
+	userId: string,
+	drafts: VoiceDraft[],
+): Promise<VoiceDraft[]> {
+	if (!merchants) return drafts;
+	return Promise.all(
+		drafts.map(async (d) => {
+			const known = d.merchant
+				? await merchants.find(userId, d.merchant)
+				: null;
+			return known
+				? {
+						...d,
+						merchant: known.name,
+						categoryId: known.categoryId ?? d.categoryId,
+					}
+				: d;
+		}),
+	);
 }
 
 /** Voice note → reviewed drafts. Nothing heard is stored; only counts reach the ledger. */
@@ -146,14 +172,22 @@ export function createVoiceService(deps: Deps) {
 				const drafts = result.expenses
 					.map((e) => fromAi(e, home, bySlug))
 					.filter((d): d is VoiceDraft => d !== null);
-				return { transcript: heard.text, drafts, readBy: "ai" };
+				return {
+					transcript: heard.text,
+					drafts: await applyLearned(deps.merchants, userId, drafts),
+					readBy: "ai",
+				};
 			} catch (error) {
 				// The note was heard; reading it offline still beats an error.
 				log.warn({ err: error }, "expense extraction failed; using quick read");
 				const drafts = quickReadSpoken(digits).map((q) =>
 					fromQuick(q, home, bySlug),
 				);
-				return { transcript: heard.text, drafts, readBy: "quick" };
+				return {
+					transcript: heard.text,
+					drafts: await applyLearned(deps.merchants, userId, drafts),
+					readBy: "quick",
+				};
 			}
 		},
 	};

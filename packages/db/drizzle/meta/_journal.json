@@ -43,6 +43,13 @@
       "when": 1792152957187,
       "tag": "0005_tiresome_sprite",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792162544498,
+      "tag": "0006_stiff_aaron_stack",
+      "breakpoints": true
     }
   ]
 }

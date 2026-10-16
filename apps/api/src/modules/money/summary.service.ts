@@ -7,6 +7,7 @@ import {
 	type Summary,
 } from "@spendid/shared";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
+import { recurringFor } from "../insights/charges";
 import { toDto } from "./transactions.repository";
 
 export interface MonthBounds {
@@ -66,36 +67,38 @@ export function createSummaryService(db: Db) {
 				sql`${localDay} < ${bounds.nextMonth}::date`,
 			);
 
-			const [totals, byCategory, todayRows, goals] = await Promise.all([
-				db
-					.select({
-						before: sql<string>`coalesce(sum(${transaction.homeAmountMinor}) filter (where ${localDay} < ${bounds.today}::date), 0)`,
-						today: sql<string>`coalesce(sum(${transaction.homeAmountMinor}) filter (where ${localDay} = ${bounds.today}::date), 0)`,
-					})
-					.from(transaction)
-					.where(inMonth),
-				db
-					.select({
-						categoryId: transaction.categoryId,
-						spentMinor: sql<string>`sum(${transaction.homeAmountMinor})`,
-					})
-					.from(transaction)
-					.where(inMonth)
-					.groupBy(transaction.categoryId),
-				db
-					.select()
-					.from(transaction)
-					.where(and(inMonth, sql`${localDay} = ${bounds.today}::date`))
-					.orderBy(desc(transaction.occurredAt)),
-				db
-					.select({
-						targetMinor: goal.targetMinor,
-						savedMinor: goal.savedMinor,
-						targetDate: goal.targetDate,
-					})
-					.from(goal)
-					.where(and(eq(goal.userId, userId), isNull(goal.archivedAt))),
-			]);
+			const [totals, byCategory, todayRows, goals, recurring] =
+				await Promise.all([
+					db
+						.select({
+							before: sql<string>`coalesce(sum(${transaction.homeAmountMinor}) filter (where ${localDay} < ${bounds.today}::date), 0)`,
+							today: sql<string>`coalesce(sum(${transaction.homeAmountMinor}) filter (where ${localDay} = ${bounds.today}::date), 0)`,
+						})
+						.from(transaction)
+						.where(inMonth),
+					db
+						.select({
+							categoryId: transaction.categoryId,
+							spentMinor: sql<string>`sum(${transaction.homeAmountMinor})`,
+						})
+						.from(transaction)
+						.where(inMonth)
+						.groupBy(transaction.categoryId),
+					db
+						.select()
+						.from(transaction)
+						.where(and(inMonth, sql`${localDay} = ${bounds.today}::date`))
+						.orderBy(desc(transaction.occurredAt)),
+					db
+						.select({
+							targetMinor: goal.targetMinor,
+							savedMinor: goal.savedMinor,
+							targetDate: goal.targetDate,
+						})
+						.from(goal)
+						.where(and(eq(goal.userId, userId), isNull(goal.archivedAt))),
+					recurringFor(db, userId),
+				]);
 
 			const spentBeforeTodayMinor = Number(totals[0]?.before ?? 0);
 			const spentTodayMinor = Number(totals[0]?.today ?? 0);
@@ -119,6 +122,7 @@ export function createSummaryService(db: Db) {
 				safe: computeSafeToSpend({
 					incomeMinor,
 					reservedMinor,
+					billsDueMinor: recurring.billsDue.minor,
 					spentBeforeTodayMinor,
 					spentTodayMinor,
 					daysLeft: bounds.daysLeft,
@@ -128,6 +132,7 @@ export function createSummaryService(db: Db) {
 					categoryId: c.categoryId,
 					spentMinor: Number(c.spentMinor),
 				})),
+				bills: recurring.billsDue,
 			};
 		},
 	};

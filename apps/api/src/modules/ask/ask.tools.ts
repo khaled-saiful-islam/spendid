@@ -11,6 +11,7 @@ import {
 import { and, desc, eq, ilike, isNull, or, type SQL, sql } from "drizzle-orm";
 import { tool } from "langchain";
 import { z } from "zod";
+import { recurringFor } from "../insights/charges";
 import type { PlanRepository } from "../money/plan.repository";
 import type { SummaryService } from "../money/summary.service";
 
@@ -241,6 +242,42 @@ export function createAskTools(
 		},
 	);
 
+	const billsAndSubscriptions = tool(
+		async () => {
+			const r = await recurringFor(db, ctx.userId);
+			return JSON.stringify({
+				currency: cur,
+				monthlyTotal: major(r.monthlyMinor, cur),
+				stillDueThisMonth: {
+					total: major(r.billsDue.minor, cur),
+					items: r.billsDue.items.map((b) => ({
+						shop: b.merchant,
+						on: b.day,
+						amount: major(b.amountMinor, cur),
+					})),
+				},
+				recurring: r.items.map((i) => ({
+					shop: i.merchant,
+					every: i.cadence,
+					amount: major(i.amountMinor, cur),
+					previousAmount:
+						i.previousAmountMinor === null
+							? null
+							: major(i.previousAmountMinor, cur),
+					lastCharged: i.lastDay,
+					nextExpected: i.nextDay,
+					category: i.categoryName,
+				})),
+			});
+		},
+		{
+			name: "bills_and_subscriptions",
+			description:
+				"Subscriptions and bills found from repeating charges: how often, amount (and previous amount if the price changed), last and next date, and which are still due this month. Use for questions about bills, subscriptions, recurring payments or what's coming up.",
+			schema: z.object({}),
+		},
+	);
+
 	const showChart = tool(
 		async (input) => {
 			if (side.charts.length >= 2)
@@ -315,6 +352,7 @@ export function createAskTools(
 		findExpenses,
 		budgetOverview,
 		goalsOverview,
+		billsAndSubscriptions,
 		showChart,
 		proposeExpenses,
 	];
@@ -326,6 +364,7 @@ export const STEP_LABELS: Record<string, string> = {
 	find_expenses: "Looking through your expenses…",
 	budget_overview: "Checking your budget…",
 	goals_overview: "Checking your goals…",
+	bills_and_subscriptions: "Checking your bills and subscriptions…",
 	show_chart: "Drawing a chart…",
 	propose_expenses: "Preparing cards to confirm…",
 };

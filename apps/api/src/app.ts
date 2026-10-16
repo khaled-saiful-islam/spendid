@@ -17,6 +17,10 @@ import {
 	type HealthChecks,
 	healthRoutes,
 } from "./modules/health/health.routes";
+import {
+	type InsightsDeps,
+	insightsRoutes,
+} from "./modules/insights/insights.routes";
 import type { MeRepository } from "./modules/me/me.repository";
 import { meRoutes } from "./modules/me/me.routes";
 import { type MoneyDeps, moneyRoutes } from "./modules/money/money.routes";
@@ -39,6 +43,7 @@ export interface AppDeps {
 	ask?: AskDeps;
 	admin?: AdminDeps;
 	family?: FamilyDeps;
+	insights?: InsightsDeps;
 }
 
 /** Builds the Fastify app without listening, so tests can `inject` requests. */
@@ -66,6 +71,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 			if (deps.ask) await api.register(askRoutes, deps.ask);
 			if (deps.admin) await api.register(adminRoutes, deps.admin);
 			if (deps.family) await api.register(familyRoutes, deps.family);
+			if (deps.insights) await api.register(insightsRoutes, deps.insights);
 		},
 		{ prefix: "/api" },
 	);

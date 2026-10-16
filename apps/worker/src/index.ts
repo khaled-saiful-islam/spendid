@@ -3,15 +3,20 @@ import { EMAIL_QUEUE } from "@spendid/emails";
 import {
 	createAiGuard,
 	createAppSettings,
+	createEmbedder,
 	createFileStore,
+	createMerchantMatcher,
+	createMerchantMemory,
 	createPublisher,
 	createReceiptReader,
+	MERCHANT_QUEUE,
 } from "@spendid/server";
 import { Queue, Worker } from "bullmq";
 import { Redis } from "ioredis";
 import { z } from "zod";
 import { createEmailProcessor, type EmailQueueData } from "./email";
 import { FX_QUEUE, refreshRates } from "./fx";
+import { backfillMerchants, type MerchantJob } from "./merchants";
 import { createReceiptProcessor, RECEIPT_QUEUE } from "./receipts";
 
 const env = z
@@ -24,6 +29,7 @@ const env = z
 		ILMU_BASE_URL: z.url().default("https://api.ilmu.ai/v1"),
 		ILMU_API_KEY: z.string().default(""),
 		ILMU_VISION_MODEL: z.string().min(1).default("ilmu-vision-v1.3"),
+		ILMU_EMBED_MODEL: z.string().min(1).default("bge-m3"),
 		AI_MONTHLY_TOKENS_DEFAULT: z.coerce.number().int().min(0).default(200_000),
 		RECEIPTS_DIR: z.string().min(1).default("/data/receipts"),
 		RECEIPT_ENCRYPTION_KEY: z
@@ -50,6 +56,18 @@ const guard = createAiGuard({
 	redis: publisher,
 	defaultMonthlyTokens: env.AI_MONTHLY_TOKENS_DEFAULT,
 	configured: env.ILMU_API_KEY.length > 0,
+});
+
+const merchants = createMerchantMemory(database.db);
+const merchantQueue = new Queue<MerchantJob>(MERCHANT_QUEUE, { connection });
+const matchMerchant = createMerchantMatcher({
+	db: database.db,
+	guard,
+	embed: createEmbedder({
+		baseUrl: env.ILMU_BASE_URL,
+		apiKey: env.ILMU_API_KEY,
+		model: env.ILMU_EMBED_MODEL,
+	}),
 });
 
 const workers = [
@@ -85,10 +103,23 @@ const workers = [
 				model: env.ILMU_VISION_MODEL,
 			}),
 			publish: createPublisher(publisher),
+			merchants,
 		}),
 		{ connection, concurrency: 3 },
 	),
+	new Worker<MerchantJob>(
+		MERCHANT_QUEUE,
+		async (job) => ({ result: await matchMerchant(job.data.merchantId) }),
+		{ connection, concurrency: 2 },
+	),
 ];
+
+// People who logged spending before shops were remembered: learn from their history once.
+void backfillMerchants(database.db, merchants, merchantQueue)
+	.then((n) => n && process.stdout.write(`[worker] remembered ${n} shops\n`))
+	.catch((err: unknown) =>
+		process.stderr.write(`[worker] shop backfill failed: ${String(err)}\n`),
+	);
 
 // Exchange rates: once at startup, then every 6 hours (ECB publishes once per working day).
 const fxQueue = new Queue(FX_QUEUE, { connection });
@@ -116,7 +147,11 @@ for (const w of workers) {
 }
 
 async function shutdown(): Promise<void> {
-	await Promise.allSettled([...workers.map((w) => w.close()), fxQueue.close()]);
+	await Promise.allSettled([
+		...workers.map((w) => w.close()),
+		fxQueue.close(),
+		merchantQueue.close(),
+	]);
 	await Promise.allSettled([
 		connection.quit(),
 		publisher.quit(),

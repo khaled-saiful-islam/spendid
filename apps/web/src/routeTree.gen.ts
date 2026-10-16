@@ -23,6 +23,7 @@ import { Route as AppActivityRouteImport } from './routes/app/activity'
 import { Route as AppAskRouteImport } from './routes/app/ask'
 import { Route as AppMeRouteImport } from './routes/app/me'
 import { Route as AppPlanRouteImport } from './routes/app/plan'
+import { Route as AppWrappedRouteImport } from './routes/app/wrapped'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as SplitTokenRouteImport } from './routes/split.$token'
 import { Route as AppFamilyIndexRouteImport } from './routes/app/family/index'
@@ -99,6 +100,11 @@ const AppPlanRoute = AppPlanRouteImport.update({
   path: '/plan',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const AppWrappedRoute = AppWrappedRouteImport.update({
+  id: '/wrapped',
+  path: '/wrapped',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const JoinTokenRoute = JoinTokenRouteImport.update({
   id: '/join/$token',
   path: '/join/$token',
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/app/ask': typeof AppAskRoute
   '/app/me': typeof AppMeRoute
   '/app/plan': typeof AppPlanRoute
+  '/app/wrapped': typeof AppWrappedRoute
   '/join/$token': typeof JoinTokenRoute
   '/split/$token': typeof SplitTokenRoute
   '/app/': typeof AppIndexRoute
@@ -159,6 +166,7 @@ export interface FileRoutesByTo {
   '/app/ask': typeof AppAskRoute
   '/app/me': typeof AppMeRoute
   '/app/plan': typeof AppPlanRoute
+  '/app/wrapped': typeof AppWrappedRoute
   '/join/$token': typeof JoinTokenRoute
   '/split/$token': typeof SplitTokenRoute
   '/app': typeof AppIndexRoute
@@ -181,6 +189,7 @@ export interface FileRoutesById {
   '/app/ask': typeof AppAskRoute
   '/app/me': typeof AppMeRoute
   '/app/plan': typeof AppPlanRoute
+  '/app/wrapped': typeof AppWrappedRoute
   '/join/$token': typeof JoinTokenRoute
   '/split/$token': typeof SplitTokenRoute
   '/app/': typeof AppIndexRoute
@@ -204,6 +213,7 @@ export interface FileRouteTypes {
     | '/app/ask'
     | '/app/me'
     | '/app/plan'
+    | '/app/wrapped'
     | '/join/$token'
     | '/split/$token'
     | '/app/'
@@ -224,6 +234,7 @@ export interface FileRouteTypes {
     | '/app/ask'
     | '/app/me'
     | '/app/plan'
+    | '/app/wrapped'
     | '/join/$token'
     | '/split/$token'
     | '/app'
@@ -245,6 +256,7 @@ export interface FileRouteTypes {
     | '/app/ask'
     | '/app/me'
     | '/app/plan'
+    | '/app/wrapped'
     | '/join/$token'
     | '/split/$token'
     | '/app/'
@@ -367,6 +379,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPlanRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/app/wrapped': {
+      id: '/app/wrapped'
+      path: '/wrapped'
+      fullPath: '/app/wrapped'
+      preLoaderRoute: typeof AppWrappedRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/join/$token': {
       id: '/join/$token'
       path: '/join/$token'
@@ -410,6 +429,7 @@ interface AppRouteRouteChildren {
   AppAskRoute: typeof AppAskRoute
   AppMeRoute: typeof AppMeRoute
   AppPlanRoute: typeof AppPlanRoute
+  AppWrappedRoute: typeof AppWrappedRoute
   AppIndexRoute: typeof AppIndexRoute
   AppFamilyUserIdRoute: typeof AppFamilyUserIdRoute
   AppFamilySplitRoute: typeof AppFamilySplitRoute
@@ -421,6 +441,7 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppAskRoute: AppAskRoute,
   AppMeRoute: AppMeRoute,
   AppPlanRoute: AppPlanRoute,
+  AppWrappedRoute: AppWrappedRoute,
   AppIndexRoute: AppIndexRoute,
   AppFamilyUserIdRoute: AppFamilyUserIdRoute,
   AppFamilySplitRoute: AppFamilySplitRoute,

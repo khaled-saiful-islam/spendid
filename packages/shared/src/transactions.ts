@@ -79,6 +79,17 @@ export const SummarySchema = z.object({
 	byCategory: z.array(
 		z.object({ categoryId: z.uuid(), spentMinor: z.number() }),
 	),
+	/** Bills and subscriptions still expected this month (already taken out of safe-to-spend). */
+	bills: z.object({
+		minor: z.number(),
+		items: z.array(
+			z.object({
+				merchant: z.string(),
+				day: z.string(),
+				amountMinor: z.number(),
+			}),
+		),
+	}),
 });
 export type Summary = z.infer<typeof SummarySchema>;
 

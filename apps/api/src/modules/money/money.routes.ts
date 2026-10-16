@@ -1,3 +1,4 @@
+import type { MerchantMemory } from "@spendid/server";
 import {
 	BudgetInputSchema,
 	GoalDepositSchema,
@@ -22,6 +23,7 @@ export interface MoneyDeps {
 	transactionService: TransactionService;
 	summary: SummaryService;
 	plan: PlanRepository;
+	merchants?: MerchantMemory;
 }
 
 const IdParams = z.object({ id: z.uuid("Unknown item") });
@@ -31,6 +33,8 @@ const ListQuery = z.object({
 	categoryId: z.uuid().optional(),
 	q: z.string().trim().max(80).optional(),
 });
+
+const MerchantQuery = z.object({ q: z.string().trim().min(1).max(60) });
 
 const uid = (req: FastifyRequest): string => req.user?.id ?? "";
 
@@ -44,6 +48,18 @@ export async function moneyRoutes(
 		success: true,
 		data: await deps.categories.listFor(uid(req)),
 	}));
+	/** Shops this person has used that match what they're typing, with the category they use. */
+	app.get("/merchants", async (req) => {
+		const { q } = MerchantQuery.parse(req.query);
+		const found = deps.merchants
+			? await deps.merchants.suggest(uid(req), q)
+			: [];
+		return {
+			success: true,
+			data: found.map((m) => ({ name: m.name, categoryId: m.categoryId })),
+		};
+	});
+
 	app.get("/summary", async (req) => ({
 		success: true,
 		data: await deps.summary.forUser(uid(req)),

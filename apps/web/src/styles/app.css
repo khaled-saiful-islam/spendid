@@ -59,6 +59,14 @@
   --scale-stroke: rgb(75 42 123 / 0.07);
   /* Chart mark colour, validated for contrast and chroma on each surface. */
   --chart-1: #7a4fc4;
+  /* Heatmap: one hue, light → dark = less → more. Validated (ordinal, light end ≥ 2:1 on surface). */
+  --heat-1: #b9a3e3;
+  --heat-2: #9a7cd8;
+  --heat-3: #7a4fc4;
+  --heat-4: #5e3699;
+  --heat-5: #3f2168;
+  --heat-ink-low: #20123a;
+  --heat-ink-high: #ffffff;
   color-scheme: light;
 }
 
@@ -73,6 +81,14 @@
   --over: #ff7d95;
   --scale-stroke: rgb(185 163 227 / 0.07);
   --chart-1: #9d7bf5;
+  /* Dark heatmap: dim → bright = less → more, its own validated steps. */
+  --heat-1: #653ba3;
+  --heat-2: #8259cc;
+  --heat-3: #9f7ff2;
+  --heat-4: #c3aef7;
+  --heat-5: #e8defd;
+  --heat-ink-low: #ffffff;
+  --heat-ink-high: #170b26;
   --shadow-lift: 0 1px 0 rgb(255 255 255 / 0.05) inset, 0 18px 40px -18px rgb(0 0 0 / 0.6);
   color-scheme: dark;
 }
@@ -128,4 +144,18 @@
 
 @utility pb-safe {
   padding-bottom: max(env(safe-area-inset-bottom), 0.75rem);
+}
+
+@utility pt-safe {
+  padding-top: max(env(safe-area-inset-top), 0.75rem);
+}
+
+/* Ask: the answer card's border shimmers while the reply streams in. */
+@keyframes ask-shimmer {
+  from {
+    background-position: 0% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
 }

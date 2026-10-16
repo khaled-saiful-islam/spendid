@@ -1,4 +1,5 @@
 import { type Db, profile } from "@spendid/db";
+import type { MerchantMemory } from "@spendid/server";
 import {
 	type Transaction,
 	type TransactionInput,
@@ -19,6 +20,10 @@ interface Deps {
 	fx: FxRepository;
 	/** Called after someone's spending changes (live family pulse). Never awaited. */
 	onChange?: (userId: string) => Promise<unknown>;
+	/** Shop names and learned categories (smart categories, clean merchant names). */
+	merchants?: MerchantMemory;
+	/** A shop seen for the first time: match it to known ones in the background. */
+	onNewMerchant?: (merchantId: string) => Promise<unknown>;
 }
 
 /** Adds, edits and removes spending, always converting into the person's home currency. */
@@ -28,11 +33,29 @@ export function createTransactionService({
 	categories,
 	fx,
 	onChange,
+	merchants,
+	onNewMerchant,
 }: Deps) {
 	const changed = <T>(userId: string, value: T): T => {
 		onChange?.(userId).catch(() => undefined);
 		return value;
 	};
+
+	const nameFor = async (userId: string, raw: string | null | undefined) =>
+		raw && merchants ? merchants.displayName(userId, raw) : raw || null;
+
+	/** Every save teaches Spendid which category this shop belongs in. */
+	async function learn(
+		userId: string,
+		name: string | null,
+		categoryId: string,
+		uses: number,
+	): Promise<void> {
+		if (!name || !merchants) return;
+		const learned = await merchants.remember(userId, name, categoryId, uses);
+		if (learned?.created)
+			onNewMerchant?.(learned.row.id).catch(() => undefined);
+	}
 
 	async function homeCurrencyOf(userId: string): Promise<string> {
 		const [row] = await db
@@ -61,6 +84,7 @@ export function createTransactionService({
 				input.currency,
 				homeCurrency,
 			);
+			const merchant = await nameFor(userId, input.merchant);
 			const created = await transactions.insert({
 				userId,
 				amountMinor: input.amountMinor,
@@ -69,11 +93,12 @@ export function createTransactionService({
 				homeCurrency,
 				fxRate: String(rate),
 				categoryId: input.categoryId,
-				merchant: input.merchant || null,
+				merchant,
 				note: input.note || null,
 				source: input.source,
 				occurredAt: input.occurredAt ? new Date(input.occurredAt) : new Date(),
 			});
+			await learn(userId, merchant, input.categoryId, 1);
 			return changed(userId, created);
 		},
 
@@ -95,6 +120,10 @@ export function createTransactionService({
 				? await fx.convert(amountMinor, currency, existing.homeCurrency)
 				: null;
 
+			const merchant =
+				patch.merchant !== undefined
+					? await nameFor(userId, patch.merchant)
+					: existing.merchant;
 			const updated = await transactions.update(userId, id, {
 				amountMinor,
 				currency,
@@ -103,12 +132,18 @@ export function createTransactionService({
 					fxRate: String(converted.rate),
 				}),
 				...(patch.categoryId && { categoryId: patch.categoryId }),
-				...(patch.merchant !== undefined && {
-					merchant: patch.merchant || null,
-				}),
+				...(patch.merchant !== undefined && { merchant }),
 				...(patch.note !== undefined && { note: patch.note || null }),
 				...(patch.occurredAt && { occurredAt: new Date(patch.occurredAt) }),
 			});
+			// A changed category is a correction: the shop's category follows it.
+			if (patch.categoryId || patch.merchant !== undefined)
+				await learn(
+					userId,
+					merchant,
+					patch.categoryId ?? existing.categoryId,
+					0,
+				);
 			return changed(userId, updated ?? toDto(existing));
 		},
 

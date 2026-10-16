@@ -1,0 +1,105 @@
+import { formatMinor } from "@spendid/shared";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
+import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
+import { useState } from "react";
+import {
+	heatmapQuery,
+	monthName,
+	recurringQuery,
+	shiftMonth,
+	thisMonth,
+	wrappedQuery,
+} from "@/lib/insights-api";
+import { Heatmap } from "./Heatmap";
+import { Subscriptions } from "./Subscriptions";
+
+function WrappedTeaser({ month }: { month: string }) {
+	const reduce = useReducedMotion();
+	const { data } = useQuery(wrappedQuery(month));
+	if (!data)
+		return <div className="h-36 animate-pulse rounded-panel bg-surface-2" />;
+	const name = monthName(month, { month: "long" });
+	return (
+		<Link
+			to="/app/wrapped"
+			search={{ month }}
+			className="group relative block overflow-hidden rounded-panel bg-linear-to-br from-plum-500 via-coral to-marigold p-5 text-white shadow-lift"
+		>
+			<div
+				className="bg-scales pointer-events-none absolute inset-0 opacity-20"
+				aria-hidden="true"
+			/>
+			<motion.span
+				aria-hidden="true"
+				className="absolute -top-2 -right-1 text-[5rem] leading-none"
+				animate={reduce ? undefined : { rotate: [0, 8, -6, 0], y: [0, -4, 0] }}
+				transition={{ repeat: Number.POSITIVE_INFINITY, duration: 5 }}
+			>
+				{data.personality.emoji}
+			</motion.span>
+			<p className="relative flex items-center gap-1.5 font-semibold text-white/85">
+				<Sparkles className="size-4" aria-hidden="true" /> Money Wrapped
+			</p>
+			<p className="relative mt-1 max-w-[16ch] text-[1.7rem] leading-tight font-bold">
+				{data.inProgress ? `${name} so far` : `Your ${name}`}
+			</p>
+			<p className="relative mt-2 text-white/90">
+				{data.personality.title}, {formatMinor(data.totalMinor, data.currency)}{" "}
+				across {data.count} expenses
+			</p>
+			<span className="relative mt-4 inline-flex min-h-10 items-center rounded-full bg-white px-4 font-semibold text-plum-900 transition-transform group-hover:translate-x-1">
+				Play the story
+			</span>
+		</Link>
+	);
+}
+
+/** Insights: the month as a heatmap, its Wrapped story, and subscriptions found in spending. */
+export function InsightsView() {
+	const [month, setMonth] = useState(thisMonth());
+	const current = thisMonth();
+	const heat = useQuery(heatmapQuery(month));
+	const recurring = useQuery(recurringQuery);
+
+	return (
+		<div className="space-y-8">
+			<div className="flex items-center justify-between gap-2 rounded-full border border-line bg-surface p-1">
+				<button
+					type="button"
+					onClick={() => setMonth(shiftMonth(month, -1))}
+					aria-label="Previous month"
+					className="grid size-11 place-items-center rounded-full hover:bg-surface-2"
+				>
+					<ChevronLeft className="size-5" aria-hidden="true" />
+				</button>
+				<p className="text-center font-semibold" aria-live="polite">
+					{monthName(month)}
+				</p>
+				<button
+					type="button"
+					onClick={() => setMonth(shiftMonth(month, 1))}
+					disabled={month >= current}
+					aria-label="Next month"
+					className="grid size-11 place-items-center rounded-full hover:bg-surface-2 disabled:opacity-30"
+				>
+					<ChevronRight className="size-5" aria-hidden="true" />
+				</button>
+			</div>
+			<WrappedTeaser month={month} />
+			<section className="rounded-panel border border-line bg-surface p-4 sm:p-5">
+				{heat.data ? (
+					<Heatmap data={heat.data} />
+				) : (
+					<div className="h-72 animate-pulse rounded-tile bg-surface-2" />
+				)}
+			</section>
+			{recurring.data ? (
+				<Subscriptions data={recurring.data} />
+			) : (
+				<div className="h-40 animate-pulse rounded-panel bg-surface-2" />
+			)}
+		</div>
+	);
+}

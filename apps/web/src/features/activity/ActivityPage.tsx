@@ -1,12 +1,15 @@
 import { formatMinor, type Transaction } from "@spendid/shared";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { LoaderCircle, Search } from "lucide-react";
-import { AnimatePresence } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { useDeferredValue, useEffect, useRef, useState } from "react";
 import { buttonClass } from "@/components/ui/Button";
+import { cn } from "@/lib/cn";
 import { categoriesQuery, transactionsQuery } from "@/lib/money-api";
 import { capture } from "../capture/capture-store";
 import { localDate } from "../capture/draft";
+import { InsightsView } from "../insights/InsightsView";
 import { TransactionRow, useCategoryMap } from "../money/TransactionRow";
 
 interface DayGroup {
@@ -49,7 +52,50 @@ function dayLabel(day: string): string {
 	});
 }
 
-export function ActivityPage() {
+const TABS = [
+	{ id: "expenses", label: "Expenses" },
+	{ id: "insights", label: "Insights" },
+] as const;
+
+/** Expenses list or Insights, switched by `?view=` so other screens can link straight to either. */
+export function ActivityPage({ view }: { view: "expenses" | "insights" }) {
+	return (
+		<div className="space-y-5">
+			<h1 className="text-[clamp(2rem,7vw,2.8rem)] font-bold">Activity</h1>
+			<nav
+				aria-label="Activity views"
+				className="grid grid-cols-2 rounded-full bg-surface-2 p-1"
+			>
+				{TABS.map((t) => (
+					<Link
+						key={t.id}
+						to="/app/activity"
+						search={t.id === "insights" ? { view: "insights" } : {}}
+						aria-current={view === t.id ? "page" : undefined}
+						className={cn(
+							"relative z-10 grid min-h-11 place-items-center rounded-full px-3 font-semibold transition-colors",
+							view === t.id
+								? "text-plum-50 dark:text-plum-900"
+								: "text-ink-soft hover:text-ink",
+						)}
+					>
+						{view === t.id && (
+							<motion.span
+								layoutId="activity-tab"
+								className="absolute inset-0 -z-10 rounded-full bg-plum-900 dark:bg-plum-50"
+								transition={{ type: "spring", stiffness: 420, damping: 34 }}
+							/>
+						)}
+						{t.label}
+					</Link>
+				))}
+			</nav>
+			{view === "insights" ? <InsightsView /> : <ExpensesView />}
+		</div>
+	);
+}
+
+function ExpensesView() {
 	const [search, setSearch] = useState("");
 	const [categoryId, setCategoryId] = useState("");
 	const q = useDeferredValue(search.trim());
@@ -81,8 +127,6 @@ export function ActivityPage() {
 
 	return (
 		<div className="space-y-5">
-			<h1 className="text-[clamp(2rem,7vw,2.8rem)] font-bold">Activity</h1>
-
 			<div className="grid gap-3 sm:grid-cols-[1fr_14rem]">
 				<label className="relative block">
 					<span className="sr-only">Search shops and notes</span>

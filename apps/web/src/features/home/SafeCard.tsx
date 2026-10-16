@@ -5,6 +5,12 @@ import { SafeDial } from "@/components/money/SafeDial";
 import { buttonClass } from "@/components/ui/Button";
 
 /** The heart of Spendid: one number, with the reason behind it in a sentence. */
+/** ", after keeping X for savings and Y for 3 bills still due" — or nothing. */
+function keptAside(...parts: (string | null)[]): string {
+	const kept = parts.filter(Boolean);
+	return kept.length ? `, after keeping ${kept.join(" and ")} aside` : "";
+}
+
 export function SafeCard({ summary }: { summary: Summary }) {
 	const { safe, homeCurrency: cur, daysLeft, reservedMinor } = summary;
 	const money = (m: number) => formatMinor(m, cur);
@@ -49,11 +55,14 @@ export function SafeCard({ summary }: { summary: Summary }) {
 					<p className="mt-3 max-w-[38ch] text-plum-200">
 						{over
 							? `No stress — tomorrow starts fresh at about ${money(tomorrow)}.`
-							: `${money(safe.dailyAllowanceMinor)} a day for the next ${daysLeft} ${daysLeft === 1 ? "day" : "days"}${
+							: `${money(safe.dailyAllowanceMinor)} a day for the next ${daysLeft} ${daysLeft === 1 ? "day" : "days"}${keptAside(
 									reservedMinor > 0
-										? `, after keeping ${money(reservedMinor)} aside for savings`
-										: ""
-								}.`}
+										? `${money(reservedMinor)} for savings`
+										: null,
+									summary.bills.minor > 0
+										? `${money(summary.bills.minor)} for ${summary.bills.items.length === 1 ? "a bill" : `${summary.bills.items.length} bills`} still due`
+										: null,
+								)}.`}
 					</p>
 				</div>
 				<SafeDial

@@ -5,8 +5,10 @@ import {
 	createEventHub,
 	createExpenseExtractor,
 	createFileStore,
+	createMerchantMemory,
 	createPublisher,
 	createTranscriber,
+	MERCHANT_QUEUE,
 } from "@spendid/server";
 import { Queue } from "bullmq";
 import { buildApp } from "./app";
@@ -26,6 +28,7 @@ import {
 import { createJarsService } from "./modules/family/jars.service";
 import { createPulseService } from "./modules/family/pulse.service";
 import { createSplitService } from "./modules/family/split.service";
+import { createInsightsService } from "./modules/insights/insights.service";
 import { createMeRepository } from "./modules/me/me.repository";
 import { createCategoryRepository } from "./modules/money/categories.repository";
 import { createFxRepository } from "./modules/money/fx.repository";
@@ -61,12 +64,23 @@ const fx = createFxRepository(database.db);
 const summary = createSummaryService(database.db);
 const plan = createPlanRepository(database.db);
 const publish = createPublisher(cache.redis);
+const merchants = createMerchantMemory(database.db);
+const merchantQueue = new Queue<{ merchantId: string }>(MERCHANT_QUEUE, {
+	connection: cache.redis,
+});
 const familyRepo = createFamilyRepository(database.db);
 const transactionService = createTransactionService({
 	db: database.db,
 	transactions,
 	categories,
 	fx,
+	merchants,
+	onNewMerchant: (merchantId) =>
+		merchantQueue.add(
+			"match",
+			{ merchantId },
+			{ attempts: 3, removeOnComplete: 500 },
+		),
 	onChange: async (ownerId) => {
 		const viewers = await familyRepo.expenseViewers(ownerId);
 		await Promise.all(
@@ -117,6 +131,7 @@ const app = await buildApp({
 		transactionService,
 		summary,
 		plan,
+		merchants,
 	},
 	receipts: {
 		session,
@@ -134,6 +149,7 @@ const app = await buildApp({
 			appUrl: env.APP_URL,
 		}),
 	},
+	insights: { session, insights: createInsightsService(database.db) },
 	family: {
 		session,
 		family: createFamilyService({
@@ -175,6 +191,7 @@ const app = await buildApp({
 			transcriber: createTranscriber({ ...ilmu, model: env.ILMU_ASR_MODEL }),
 			extract: createExpenseExtractor({ ...ilmu, model: env.ILMU_TEXT_MODEL }),
 			asrModel: env.ILMU_ASR_MODEL,
+			merchants,
 		}),
 	},
 	logger:
@@ -189,6 +206,7 @@ async function shutdown(signal: string): Promise<void> {
 	await Promise.allSettled([
 		outbox.close(),
 		receiptQueue.close(),
+		merchantQueue.close(),
 		events.close(),
 		database.close(),
 		cache.close(),

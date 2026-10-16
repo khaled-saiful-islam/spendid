@@ -4,6 +4,8 @@ export interface SafeToSpendInput {
 	incomeMinor: number | null;
 	/** Money set aside first (savings goals, the 20% of 50/30/20). */
 	reservedMinor: number;
+	/** Bills and subscriptions still expected later this month. */
+	billsDueMinor?: number;
 	/** Spent this month before today, home currency. */
 	spentBeforeTodayMinor: number;
 	spentTodayMinor: number;
@@ -22,7 +24,7 @@ export interface SafeToSpend {
 
 /**
  * The one number on the home screen:
- *   (income − reserved − spent before today) ÷ days left, minus today's spending.
+ *   (income − reserved − bills still due − spent before today) ÷ days left, minus today's spending.
  * Spending today lowers today's number; it only spreads across future days from tomorrow.
  */
 export function computeSafeToSpend(input: SafeToSpendInput): SafeToSpend {
@@ -35,7 +37,10 @@ export function computeSafeToSpend(input: SafeToSpendInput): SafeToSpend {
 		};
 	}
 	const available =
-		input.incomeMinor - input.reservedMinor - input.spentBeforeTodayMinor;
+		input.incomeMinor -
+		input.reservedMinor -
+		(input.billsDueMinor ?? 0) -
+		input.spentBeforeTodayMinor;
 	const dailyAllowanceMinor = Math.max(
 		0,
 		Math.floor(available / Math.max(1, input.daysLeft)),

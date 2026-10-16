@@ -21,6 +21,12 @@ describe("computeSafeToSpend", () => {
 		expect(r.status).toBe("ok");
 	});
 
+	it("keeps money back for bills still due this month", () => {
+		const r = computeSafeToSpend({ ...base, billsDueMinor: 30_000 });
+		expect(r.dailyAllowanceMinor).toBe(15_000);
+		expect(r.leftThisMonthMinor).toBe(450_000);
+	});
+
 	it("subtracts what was already spent today", () => {
 		const r = computeSafeToSpend({ ...base, spentTodayMinor: 4_500 });
 		expect(r.safeTodayMinor).toBe(11_500);

@@ -1,6 +1,7 @@
 import { createDb } from "@spendid/db";
 import { loadEnv } from "../config/env";
 import { seedAccounts } from "./accounts";
+import { seedDemoHistory } from "./demo-history";
 import { seedDemoMonth } from "./demo-month";
 
 // `make demo` — normal (non-admin) people for testing. Password for all: demo1234
@@ -30,5 +31,6 @@ await seedAccounts([
 
 const database = createDb(loadEnv().DATABASE_URL, 2);
 await seedDemoMonth(database.db, "maya");
+await seedDemoHistory(database.db, "maya");
 await database.close();
 process.exit(0);
