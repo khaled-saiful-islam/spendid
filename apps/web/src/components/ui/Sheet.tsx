@@ -1,8 +1,9 @@
 import { X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { type ReactNode, useEffect, useId, useRef } from "react";
+import { type ReactNode, useId, useRef } from "react";
 import { createPortal } from "react-dom";
 import { t } from "@/i18n";
+import { useModal } from "./use-modal";
 
 interface SheetProps {
 	open: boolean;
@@ -19,24 +20,7 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
 	const titleId = useId();
 	const panelRef = useRef<HTMLDivElement>(null);
 
-	useEffect(() => {
-		if (!open) return;
-		const previous = document.activeElement as HTMLElement | null;
-		const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-		window.addEventListener("keydown", onKey);
-		document.body.style.overflow = "hidden";
-		requestAnimationFrame(() => {
-			const target =
-				panelRef.current?.querySelector<HTMLElement>("[data-autofocus]") ??
-				panelRef.current;
-			target?.focus();
-		});
-		return () => {
-			window.removeEventListener("keydown", onKey);
-			document.body.style.overflow = "";
-			previous?.focus?.();
-		};
-	}, [open, onClose]);
+	useModal(open, onClose, panelRef);
 
 	return createPortal(
 		<AnimatePresence>

@@ -12,6 +12,13 @@ export class ApiError extends Error {
 	}
 }
 
+let onSignedOut: () => void = () => {};
+
+/** Runs when the server says the session is gone (expired, or signed out elsewhere). */
+export function whenSignedOut(listener: () => void): void {
+	onSignedOut = listener;
+}
+
 /** Calls the JSON API and unwraps the `{ success, data }` envelope. */
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
 	let res: Response;
@@ -31,6 +38,7 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
 			0,
 		);
 	}
+	if (res.status === 401) onSignedOut();
 	const body = (await res.json().catch(() => null)) as ApiResponse<T> | null;
 	if (!body)
 		throw new ApiError(

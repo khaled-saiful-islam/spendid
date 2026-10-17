@@ -52,6 +52,25 @@ test.describe("member", () => {
 			await expectNoSeriousIssues(page, path);
 		});
 	}
+
+	test("keyboard focus stays inside an open sheet, and Esc closes it", async ({
+		page,
+	}) => {
+		await page.goto("/app");
+		const opener = page.getByRole("button", { name: /Open Pip/ });
+		await opener.click();
+		const dialog = page.getByRole("dialog");
+		await expect(dialog).toBeVisible();
+		for (let i = 0; i < 25; i++) {
+			await page.keyboard.press(i % 5 === 4 ? "Shift+Tab" : "Tab");
+			expect(
+				await dialog.evaluate((d) => d.contains(document.activeElement)),
+			).toBe(true);
+		}
+		await page.keyboard.press("Escape");
+		await expect(dialog).toBeHidden();
+		await expect(opener).toBeFocused();
+	});
 });
 
 test.describe("admin", () => {

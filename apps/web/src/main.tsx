@@ -3,6 +3,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { t } from "./i18n";
+import { whenSignedOut } from "./lib/http";
 import { routeTree } from "./routeTree.gen";
 
 const queryClient = new QueryClient({
@@ -14,6 +16,17 @@ const router = createRouter({
 	context: { queryClient },
 	defaultPreload: "intent",
 	scrollRestoration: true,
+});
+
+// A session that ends mid-use (expired, signed out on another device): back to sign in,
+// with a word about why, instead of a page full of errors.
+whenSignedOut(() => {
+	if (!/^\/(app|admin|onboarding)(\/|$)/.test(window.location.pathname)) return;
+	queryClient.clear();
+	void router.navigate({
+		to: "/signin",
+		search: { notice: t("You were signed out. Sign in again to carry on.") },
+	});
 });
 
 declare module "@tanstack/react-router" {

@@ -1,7 +1,9 @@
 // Spendid's service worker: an offline app shell, nothing more.
 // Never caches /api — money and personal data always come fresh from the server.
-const SHELL = "spendid-shell-v2";
+const SHELL = "spendid-shell-v3";
 const ASSETS = "spendid-assets-v1";
+// Voice and scanner models (several MB). Bump when the VAD or OpenCV packages change.
+const MODELS = "spendid-models-v1";
 // A receipt shared into Spendid from another app waits here until the app picks it up.
 const SHARED = "spendid-shared";
 const PRECACHE = ["/", "/manifest.webmanifest", "/icons/icon-192.png", "/favicon.svg"];
@@ -15,7 +17,7 @@ self.addEventListener("activate", (event) => {
 	event.waitUntil(
 		caches
 			.keys()
-			.then((keys) => Promise.all(keys.filter((k) => ![SHELL, ASSETS, SHARED].includes(k)).map((k) => caches.delete(k))))
+			.then((keys) => Promise.all(keys.filter((k) => ![SHELL, ASSETS, MODELS, SHARED].includes(k)).map((k) => caches.delete(k))))
 			.then(() => self.clients.claim()),
 	);
 });
@@ -54,8 +56,12 @@ self.addEventListener("fetch", (event) => {
 		event.respondWith(
 			fetch(request)
 				.then((res) => {
-					const copy = res.clone();
-					void caches.open(SHELL).then((c) => c.put("/", copy));
+					// Only a real page becomes the offline shell, never an error or a proxy's page.
+					const html = res.headers.get("content-type")?.includes("text/html");
+					if (res.ok && html) {
+						const copy = res.clone();
+						void caches.open(SHELL).then((c) => c.put("/", copy));
+					}
 					return res;
 				})
 				.catch(() => caches.match("/")),
@@ -65,18 +71,25 @@ self.addEventListener("fetch", (event) => {
 
 	// Built files have content hashes: cache first, they never change.
 	if (url.pathname.startsWith("/assets/") || url.pathname.startsWith("/icons/")) {
-		event.respondWith(
-			caches.match(request).then(
-				(hit) =>
-					hit ??
-					fetch(request).then((res) => {
-						if (res.ok) {
-							const copy = res.clone();
-							void caches.open(ASSETS).then((c) => c.put(request, copy));
-						}
-						return res;
-					}),
-			),
-		);
+		event.respondWith(cacheFirst(request, ASSETS));
+		return;
+	}
+	// Models load once, then voice and scanning start fast (and work on a weak signal).
+	if (url.pathname.startsWith("/vad/") || url.pathname.startsWith("/cv/")) {
+		event.respondWith(cacheFirst(request, MODELS));
 	}
 });
+
+function cacheFirst(request, cacheName) {
+	return caches.match(request).then(
+		(hit) =>
+			hit ??
+			fetch(request).then((res) => {
+				if (res.ok) {
+					const copy = res.clone();
+					void caches.open(cacheName).then((c) => c.put(request, copy));
+				}
+				return res;
+			}),
+	);
+}

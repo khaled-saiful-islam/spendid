@@ -106,6 +106,9 @@ export function useVoiceCapture(loudness: MotionValue<number>) {
 	// Kept apart from `timers`: talking again clears those, but never the overall cap.
 	const maxTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const sent = useRef(false);
+	// Bumped on every cleanup: a start still loading the model when the sheet closes (or
+	// when start is tapped again) sees it changed and closes its own mic.
+	const generation = useRef(0);
 
 	const clearTimers = useCallback(() => {
 		for (const t of timers.current) clearTimeout(t);
@@ -113,6 +116,7 @@ export function useVoiceCapture(loudness: MotionValue<number>) {
 	}, []);
 
 	const cleanup = useCallback(() => {
+		generation.current += 1;
 		clearTimers();
 		if (maxTimer.current) clearTimeout(maxTimer.current);
 		maxTimer.current = null;
@@ -153,47 +157,57 @@ export function useVoiceCapture(loudness: MotionValue<number>) {
 		[cleanup],
 	);
 
-	const startRecorderFallback = useCallback(async () => {
-		const stream = await navigator.mediaDevices.getUserMedia({
-			audio: { echoCancellation: true, noiseSuppression: true },
-		});
-		const recorder = new MediaRecorder(stream);
-		const chunks: Blob[] = [];
-		const ctx = new AudioContext();
-		const analyser = ctx.createAnalyser();
-		ctx.createMediaStreamSource(stream).connect(analyser);
-		const frame = new Float32Array(analyser.fftSize);
-		let raf = 0;
-		const tick = () => {
-			analyser.getFloatTimeDomainData(frame);
-			loudness.set(level(frame));
-			raf = requestAnimationFrame(tick);
-		};
-		tick();
-		recorder.ondataavailable = (e) => chunks.push(e.data);
-		recorder.onstop = async () => {
-			const buffer = await ctx.decodeAudioData(
-				await new Blob(chunks).arrayBuffer(),
-			);
-			const channels = Array.from({ length: buffer.numberOfChannels }, (_, i) =>
-				buffer.getChannelData(i),
-			);
-			void finishWhole(downmix(channels), buffer.sampleRate);
-		};
-		recorder.start();
-		session.current = {
-			stop: () => recorder.state !== "inactive" && recorder.stop(),
-			destroy: () => {
-				cancelAnimationFrame(raf);
+	const startRecorderFallback = useCallback(
+		async (stale: () => boolean) => {
+			const stream = await navigator.mediaDevices.getUserMedia({
+				audio: { echoCancellation: true, noiseSuppression: true },
+			});
+			if (stale()) {
 				for (const t of stream.getTracks()) t.stop();
-				void ctx.close();
-			},
-		};
-		setPhase({ kind: "listening", hearing: true });
-	}, [finishWhole, loudness]);
+				return;
+			}
+			const recorder = new MediaRecorder(stream);
+			const chunks: Blob[] = [];
+			const ctx = new AudioContext();
+			const analyser = ctx.createAnalyser();
+			ctx.createMediaStreamSource(stream).connect(analyser);
+			const frame = new Float32Array(analyser.fftSize);
+			let raf = 0;
+			const tick = () => {
+				analyser.getFloatTimeDomainData(frame);
+				loudness.set(level(frame));
+				raf = requestAnimationFrame(tick);
+			};
+			tick();
+			recorder.ondataavailable = (e) => chunks.push(e.data);
+			recorder.onstop = async () => {
+				const buffer = await ctx.decodeAudioData(
+					await new Blob(chunks).arrayBuffer(),
+				);
+				const channels = Array.from(
+					{ length: buffer.numberOfChannels },
+					(_, i) => buffer.getChannelData(i),
+				);
+				void finishWhole(downmix(channels), buffer.sampleRate);
+			};
+			recorder.start();
+			session.current = {
+				stop: () => recorder.state !== "inactive" && recorder.stop(),
+				destroy: () => {
+					cancelAnimationFrame(raf);
+					for (const t of stream.getTracks()) t.stop();
+					void ctx.close();
+				},
+			};
+			setPhase({ kind: "listening", hearing: true });
+		},
+		[finishWhole, loudness],
+	);
 
 	const start = useCallback(async () => {
 		cleanup();
+		const mine = generation.current;
+		const stale = () => generation.current !== mine;
 		sent.current = false;
 		setLive(EMPTY_LIVE);
 		setPhase({ kind: "starting" });
@@ -321,6 +335,10 @@ export function useVoiceCapture(loudness: MotionValue<number>) {
 				onFrameProcessed: (_p: unknown, frame: Float32Array) =>
 					loudness.set(level(frame)),
 			});
+			if (stale()) {
+				void vad.destroy();
+				return;
+			}
 			session.current = {
 				stop: () => {
 					if (stopping) return;
@@ -330,19 +348,24 @@ export function useVoiceCapture(loudness: MotionValue<number>) {
 				destroy: () => void vad.destroy(),
 			};
 			await vad.start();
+			// Closed while the mic was opening: cleanup has already destroyed it.
+			if (stale()) return;
 			setPhase({ kind: "listening", hearing: false });
 		} catch (error) {
+			if (stale()) return;
 			if (error instanceof DOMException) {
 				setPhase({ kind: "error", message: micMessage(error) });
 				return;
 			}
 			try {
-				await startRecorderFallback();
+				await startRecorderFallback(stale);
 			} catch (fallbackError) {
-				setPhase({ kind: "error", message: micMessage(fallbackError) });
+				if (!stale())
+					setPhase({ kind: "error", message: micMessage(fallbackError) });
 				return;
 			}
 		}
+		if (stale()) return;
 		maxTimer.current = setTimeout(() => session.current?.stop(), MAX_MS);
 	}, [cleanup, clearTimers, loudness, startRecorderFallback]);
 

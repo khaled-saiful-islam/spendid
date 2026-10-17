@@ -8,6 +8,7 @@ import type {
 import { queryOptions } from "@tanstack/react-query";
 import { t } from "@/i18n";
 import { api } from "./http";
+import { parseEventData } from "./sse";
 
 const json = (method: string, body?: unknown): RequestInit => ({
 	method,
@@ -80,7 +81,9 @@ export async function streamAsk(
 			const frame = buffer.slice(0, cut);
 			buffer = buffer.slice(cut + 2);
 			const data = frame.split("\n").find((l) => l.startsWith("data: "));
-			if (data) onEvent(JSON.parse(data.slice(6)) as AskEvent);
+			// A frame that isn't JSON is skipped rather than ending the answer.
+			const event = data ? parseEventData(data.slice(6)) : undefined;
+			if (event) onEvent(event as AskEvent);
 			cut = buffer.indexOf("\n\n");
 		}
 	}

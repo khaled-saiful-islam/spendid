@@ -285,4 +285,6 @@ export const msE: Record<string, string> = {
 		"Bulan ini lebih {amount}. Saya bergulung; mari hadkan hari ini kepada keperluan sahaja.",
 	"This stays the same once you've logged spending, so past totals don't mix currencies.":
 		"Ini kekal sama selepas anda merekod perbelanjaan, supaya jumlah lalu tidak bercampur mata wang.",
+	"You were signed out. Sign in again to carry on.":
+		"Anda telah dilog keluar. Log masuk semula untuk teruskan.",
 };

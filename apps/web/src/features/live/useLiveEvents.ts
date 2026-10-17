@@ -7,23 +7,28 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { toast } from "@/components/ui/Toast";
 import { t } from "@/i18n";
+import { parseEventData, reconnectDelay } from "@/lib/sse";
 import { capture, getCaptureState } from "../capture/capture-store";
 import { splitReceipts } from "../family/split/waiting";
 
 /**
  * One server-sent-events stream per open app: receipts finished reading, and family
  * changes (someone joined, changed what they share, cheered, added to a jar).
- * EventSource reconnects by itself; queries also poll while waiting, so nothing is lost.
+ * EventSource reconnects by itself after a dropped line; when it gives up (the server was
+ * down or answered with an error), this reconnects with a growing wait. Queries also poll
+ * while waiting, so nothing is lost.
  */
 export function useLiveEvents(): void {
 	const queryClient = useQueryClient();
 
 	useEffect(() => {
-		const source = new EventSource("/api/events");
-		source.addEventListener("receipt", (e) => {
-			const parsed = ReceiptEventSchema.safeParse(
-				JSON.parse((e as MessageEvent<string>).data),
-			);
+		let source: EventSource | null = null;
+		let retry: ReturnType<typeof setTimeout> | undefined;
+		let failures = 0;
+		const data = (e: Event) => parseEventData((e as MessageEvent<string>).data);
+
+		const onReceipt = (e: Event) => {
+			const parsed = ReceiptEventSchema.safeParse(data(e));
 			if (!parsed.success) return;
 			const { id, status } = parsed.data;
 			void queryClient.invalidateQueries({ queryKey: ["receipts"] });
@@ -43,21 +48,40 @@ export function useLiveEvents(): void {
 					label: "Open",
 					run: () => capture.openReceipt(id),
 				});
-		});
-		source.addEventListener(FAMILY_EVENT, (e) => {
-			const parsed = FamilyEventSchema.safeParse(
-				JSON.parse((e as MessageEvent<string>).data),
-			);
+		};
+		const onFamily = (e: Event) => {
+			const parsed = FamilyEventSchema.safeParse(data(e));
 			if (!parsed.success) return;
 			void queryClient.invalidateQueries({ queryKey: ["family"] });
 			if (parsed.data.what === "jar")
 				void queryClient.invalidateQueries({ queryKey: ["goals"] });
 			if (parsed.data.message) toast(parsed.data.message);
-		});
-		source.addEventListener("export", () => {
+		};
+		const onExport = () => {
 			void queryClient.invalidateQueries({ queryKey: ["export"] });
 			toast(t("Your data is ready to download in Settings."));
-		});
-		return () => source.close();
+		};
+
+		const connect = () => {
+			source = new EventSource("/api/events");
+			source.addEventListener("open", () => {
+				failures = 0;
+			});
+			source.addEventListener("error", () => {
+				// CLOSED means the browser won't retry on its own.
+				if (source?.readyState !== EventSource.CLOSED) return;
+				source.close();
+				retry = setTimeout(connect, reconnectDelay(failures));
+				failures += 1;
+			});
+			source.addEventListener("receipt", onReceipt);
+			source.addEventListener(FAMILY_EVENT, onFamily);
+			source.addEventListener("export", onExport);
+		};
+		connect();
+		return () => {
+			clearTimeout(retry);
+			source?.close();
+		};
 	}, [queryClient]);
 }
