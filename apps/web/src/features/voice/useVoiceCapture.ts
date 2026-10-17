@@ -335,21 +335,27 @@ export function useVoiceCapture(loudness: MotionValue<number>) {
 				onFrameProcessed: (_p: unknown, frame: Float32Array) =>
 					loudness.set(level(frame)),
 			});
-			if (stale()) {
-				void vad.destroy();
-				return;
-			}
+			// Closed while the model loaded: it never opened the mic, so there's nothing to release.
+			if (stale()) return;
+			let started = false;
 			session.current = {
 				stop: () => {
 					if (stopping) return;
 					// Pausing submits any speech in progress as a last phrase.
 					void vad.pause().then(() => setTimeout(finishWhenRead, 50));
 				},
-				destroy: () => void vad.destroy(),
+				// Until start() finishes there's no mic to release; the check below covers that.
+				destroy: () => {
+					if (started) void vad.destroy();
+				},
 			};
 			await vad.start();
-			// Closed while the mic was opening: cleanup has already destroyed it.
-			if (stale()) return;
+			started = true;
+			// Closed while the mic was opening: release it now.
+			if (stale()) {
+				void vad.destroy();
+				return;
+			}
 			setPhase({ kind: "listening", hearing: false });
 		} catch (error) {
 			if (stale()) return;

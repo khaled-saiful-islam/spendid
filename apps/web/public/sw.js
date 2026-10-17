@@ -6,7 +6,7 @@ const ASSETS = "spendid-assets-v1";
 const MODELS = "spendid-models-v1";
 // A receipt shared into Spendid from another app waits here until the app picks it up.
 const SHARED = "spendid-shared";
-const PRECACHE = ["/", "/manifest.webmanifest", "/icons/icon-192.png", "/favicon.svg"];
+const PRECACHE = ["/", "/theme.js", "/manifest.webmanifest", "/icons/icon-192.png", "/favicon.svg"];
 
 self.addEventListener("install", (event) => {
 	event.waitUntil(caches.open(SHELL).then((c) => c.addAll(PRECACHE)));
@@ -65,6 +65,22 @@ self.addEventListener("fetch", (event) => {
 					return res;
 				})
 				.catch(() => caches.match("/")),
+		);
+		return;
+	}
+
+	// The theme script runs before every page: fresh online, cached for offline.
+	if (url.pathname === "/theme.js") {
+		event.respondWith(
+			fetch(request)
+				.then((res) => {
+					if (res.ok) {
+						const copy = res.clone();
+						void caches.open(SHELL).then((c) => c.put(request, copy));
+					}
+					return res;
+				})
+				.catch(() => caches.match(request)),
 		);
 		return;
 	}
