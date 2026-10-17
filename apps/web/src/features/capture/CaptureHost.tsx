@@ -100,7 +100,7 @@ export function CaptureHost() {
 				</ul>
 			</Sheet>
 
-			{state.view === "scan" && <ScanCamera />}
+			{state.view === "scan" && <ScanCamera file={state.file} />}
 
 			<Sheet
 				open={state.view === "receipt"}

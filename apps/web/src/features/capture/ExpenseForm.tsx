@@ -2,7 +2,7 @@ import { formatMinor, minorDigits, type Transaction } from "@spendid/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Trash2 } from "lucide-react";
 import { motion } from "motion/react";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import { MaybeAlert } from "@/components/form/Alert";
 import { SubmitButton } from "@/components/form/SubmitButton";
 import { CategoryIcon } from "@/components/money/CategoryIcon";
@@ -48,7 +48,7 @@ export function ExpenseForm({
 	const [draft, setDraft] = useState<Draft>(() =>
 		editing
 			? draftFrom(editing)
-			: prefill
+			: prefill && "merchant" in prefill
 				? {
 						...emptyDraft(prefill.currency),
 						merchant: prefill.merchant,
@@ -59,10 +59,19 @@ export function ExpenseForm({
 					}
 				: emptyDraft(homeCurrency),
 	);
-	const [shorthand, setShorthand] = useState("");
+	const sharedText = prefill && "text" in prefill ? prefill.text : "";
+	const [shorthand, setShorthand] = useState(sharedText);
 	const [pickedByHand, setPickedByHand] = useState(Boolean(editing));
 	const [error, setError] = useState<string | null>(null);
 	const [pending, setPending] = useState(false);
+
+	// Text shared from another app is read like typed shorthand once categories are known.
+	const readShared = useRef(false);
+	useEffect(() => {
+		if (!sharedText || readShared.current || categories.length === 0) return;
+		readShared.current = true;
+		setDraft((d) => applyShorthand(d, sharedText, categories, false));
+	}, [sharedText, categories]);
 
 	const minor = draftMinor(draft);
 	const category = categories.find((c) => c.id === draft.categoryId);

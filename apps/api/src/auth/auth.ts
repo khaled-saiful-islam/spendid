@@ -36,7 +36,7 @@ export function createAuth({ env, db, redis, sendEmail, events }: AuthDeps) {
 		baseURL: env.APP_URL,
 		basePath: "/api/auth",
 		secret: env.BETTER_AUTH_SECRET,
-		trustedOrigins: [env.APP_URL],
+		trustedOrigins: [env.APP_URL, ...env.EXTRA_ORIGINS],
 		database: drizzleAdapter(db, { provider: "pg", schema }),
 		secondaryStorage: redisStorage(redis),
 		session: {

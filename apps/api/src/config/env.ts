@@ -12,6 +12,20 @@ const EnvSchema = z
 			.default("info"),
 		API_PORT: z.coerce.number().int().positive().default(8601),
 		APP_URL: z.url().default("http://localhost:8600"),
+		/**
+		 * More addresses the web app is opened from, comma-separated, e.g. this computer's
+		 * Wi-Fi address for testing on a phone (http://192.168.1.20:8600). Sign-in accepts them.
+		 */
+		EXTRA_ORIGINS: z
+			.string()
+			.default("")
+			.transform((s) =>
+				s
+					.split(",")
+					.map((o) => o.trim())
+					.filter(Boolean),
+			)
+			.pipe(z.array(z.url())),
 		DATABASE_URL: z.string().startsWith("postgres"),
 		REDIS_URL: z.string().startsWith("redis"),
 		BETTER_AUTH_SECRET: z.string().min(32),

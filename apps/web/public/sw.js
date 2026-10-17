@@ -1,7 +1,9 @@
 // Spendid's service worker: an offline app shell, nothing more.
 // Never caches /api — money and personal data always come fresh from the server.
-const SHELL = "spendid-shell-v1";
+const SHELL = "spendid-shell-v2";
 const ASSETS = "spendid-assets-v1";
+// A receipt shared into Spendid from another app waits here until the app picks it up.
+const SHARED = "spendid-shared";
 const PRECACHE = ["/", "/manifest.webmanifest", "/icons/icon-192.png", "/favicon.svg"];
 
 self.addEventListener("install", (event) => {
@@ -13,14 +15,37 @@ self.addEventListener("activate", (event) => {
 	event.waitUntil(
 		caches
 			.keys()
-			.then((keys) => Promise.all(keys.filter((k) => k !== SHELL && k !== ASSETS).map((k) => caches.delete(k))))
+			.then((keys) => Promise.all(keys.filter((k) => ![SHELL, ASSETS, SHARED].includes(k)).map((k) => caches.delete(k))))
 			.then(() => self.clients.claim()),
 	);
 });
 
+/**
+ * "Share to Spendid" from Touch 'n Go, MAE, a banking app or the gallery (installed app only).
+ * A shared screenshot or PDF is kept for the app; shared text goes along in the address.
+ */
+async function receiveShare(request) {
+	const form = await request.formData();
+	const file = form.get("receipt");
+	if (file && typeof file === "object" && file.size > 0) {
+		const cache = await caches.open(SHARED);
+		await cache.put(
+			"/shared-receipt",
+			new Response(file, { headers: { "content-type": file.type || "application/octet-stream", "x-name": encodeURIComponent(file.name || "receipt") } }),
+		);
+		return Response.redirect("/app?shared=receipt", 303);
+	}
+	const text = [form.get("title"), form.get("text"), form.get("url")].filter((v) => typeof v === "string" && v.trim()).join(" ").slice(0, 300);
+	return Response.redirect(text ? `/app?shared=text&t=${encodeURIComponent(text)}` : "/app", 303);
+}
+
 self.addEventListener("fetch", (event) => {
 	const { request } = event;
 	const url = new URL(request.url);
+	if (request.method === "POST" && url.origin === self.location.origin && url.pathname === "/share-target") {
+		event.respondWith(receiveShare(request));
+		return;
+	}
 	if (request.method !== "GET" || url.origin !== self.location.origin) return;
 	if (url.pathname.startsWith("/api/")) return;
 

@@ -8,7 +8,7 @@ import {
 	X,
 } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { MaybeAlert } from "@/components/form/Alert";
 import { buttonClass } from "@/components/ui/Button";
 import { t } from "@/i18n";
@@ -25,12 +25,15 @@ interface ScanCameraProps {
 	/** Where the read receipt goes. Default: the review sheet. The bill splitter uses its own. */
 	onUploaded?: (receiptId: string) => void;
 	onClose?: () => void;
+	/** A receipt photo or PDF shared from another app: shown straight away. */
+	file?: File;
 }
 
 /** Full-screen camera: find the receipt, hold still, it captures itself. */
 export function ScanCamera({
 	onUploaded = capture.openReceipt,
 	onClose = capture.close,
+	file,
 }: ScanCameraProps = {}) {
 	const queryClient = useQueryClient();
 	const reduce = useReducedMotion();
@@ -42,6 +45,32 @@ export function ScanCamera({
 	const [video, setVideo] = useState({ w: 1, h: 1 });
 	const [uploading, setUploading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+
+	/** A photo, screenshot or PDF: PDFs are drawn to an image first, photos get straightened. */
+	const takeFile = useCallback(
+		(picked: File) => {
+			if (!isPdf(picked)) return void scanner.fromFile(picked);
+			setError(null);
+			void pdfToImage(picked)
+				.then((image) => scanner.fromReadyImage(image))
+				.catch(() =>
+					setError(
+						t(
+							"Couldn't open that PDF. Try a photo or screenshot of the receipt instead.",
+						),
+					),
+				);
+		},
+		[scanner],
+	);
+
+	// A receipt shared into Spendid from another app goes straight to the preview.
+	const sharedTaken = useRef(false);
+	useEffect(() => {
+		if (!file || sharedTaken.current) return;
+		sharedTaken.current = true;
+		takeFile(file);
+	}, [file, takeFile]);
 
 	useEffect(() => {
 		const el = boxRef.current;
@@ -311,20 +340,9 @@ export function ScanCamera({
 				accept="image/*,application/pdf"
 				className="sr-only"
 				onChange={(e) => {
-					const file = e.target.files?.[0];
+					const picked = e.target.files?.[0];
 					e.target.value = "";
-					if (!file) return;
-					if (!isPdf(file)) return void scanner.fromFile(file);
-					setError(null);
-					void pdfToImage(file)
-						.then((image) => scanner.fromReadyImage(image))
-						.catch(() =>
-							setError(
-								t(
-									"Couldn't open that PDF. Try a photo or screenshot of the receipt instead.",
-								),
-							),
-						);
+					if (picked) takeFile(picked);
 				}}
 			/>
 		</div>

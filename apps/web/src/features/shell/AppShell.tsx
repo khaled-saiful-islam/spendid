@@ -10,6 +10,7 @@ import { Toaster } from "@/components/ui/Toast";
 import { getLang, setLang, t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { meQuery } from "@/lib/me";
+import { useSharedIntoSpendid } from "@/lib/shared-in";
 import { CaptureHost } from "../capture/CaptureHost";
 import { useResumeInvite } from "../family/useResumeInvite";
 import { useLiveEvents } from "../live/useLiveEvents";
@@ -83,6 +84,7 @@ export function AppShell() {
 	useLiveEvents();
 	useResumeInvite();
 	useProfileLanguage();
+	useSharedIntoSpendid();
 	const [first, second, ...rest] = NAV_ITEMS;
 	// Ask Spendid shows its chats beside the conversation on wide screens.
 	const wide = useRouterState({
