@@ -2,6 +2,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useId, useState } from "react";
 import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
+import { type Outfit, PipOutfitLayer } from "./PipOutfit";
 
 export type PipMood = "shining" | "calm" | "worried" | "curled" | "sleepy";
 
@@ -124,10 +125,13 @@ function Sparkle({
 export function Pip({
 	mood,
 	bounce = 0,
+	outfit,
 	className,
 }: {
 	mood: PipMood;
 	bounce?: number;
+	/** Gifts and festive looks to wear. */
+	outfit?: Outfit;
 	className?: string;
 }) {
 	const reduce = useReducedMotion();
@@ -219,6 +223,9 @@ export function Pip({
 							/>
 							<circle cx="94" cy="90" r="1.6" fill={INK} />
 						</motion.g>
+						{outfit?.extra && (
+							<PipOutfitLayer outfit={{ extra: outfit.extra }} />
+						)}
 					</motion.g>
 				) : (
 					<motion.g
@@ -316,6 +323,7 @@ export function Pip({
 								/>
 							)}
 						</g>
+						{outfit && <PipOutfitLayer outfit={outfit} />}
 						{mood === "shining" && !reduce && (
 							<g>
 								<Sparkle x={30} y={28} delay={0} />

@@ -116,4 +116,53 @@ export const msE: Record<string, string> = {
 	"{name}'s month, sorted": "Bulan {name}, tersusun",
 	"{name}, today you can safely spend":
 		"{name}, hari ini anda boleh berbelanja dengan selamat",
+	"1 shield": "1 perisai",
+	"1 shield ready: a missed day won't break it.":
+		"1 perisai sedia: satu hari terlepas tidak akan memutuskannya.",
+	"A shield covered a missed day, so your streak lives on.":
+		"Perisai melindungi hari yang terlepas, jadi rentetan anda diteruskan.",
+	"Every day you log, Pip grows. Tap a gift to wear it or take it off.":
+		"Setiap hari anda mencatat, Pip membesar. Ketik hadiah untuk memakai atau menanggalkannya.",
+	"Got it! {amount} left for today.": "Baik! Baki {amount} untuk hari ini.",
+	"Level {n}": "Tahap {n}",
+	"Log something": "Catat sesuatu",
+	"Lv {n}": "Thp {n}",
+	"Most of this month went to {category}: {amount} ({pct}%).":
+		"Kebanyakan bulan ini dibelanjakan untuk {category}: {amount} ({pct}%).",
+	"Open Pip: today's briefing and wardrobe":
+		"Buka Pip: taklimat hari ini dan almari pakaian",
+	"Pip grew into {title} and brought a gift!":
+		"Pip membesar menjadi {title} dan membawa hadiah!",
+	"Pip has every gift. Legendary.": "Pip ada semua hadiah. Lagenda.",
+	"Pip's wardrobe": "Almari pakaian Pip",
+	"Put on": "Pakai",
+	"Shields cover a missed day": "Perisai melindungi hari yang terlepas",
+	"Today, from Pip": "Hari ini, daripada Pip",
+	Wearing: "Dipakai",
+	"in {n} days": "dalam {n} hari",
+	today: "hari ini",
+	tomorrow: "esok",
+	"{name} ({amount}) is due {when}. Already kept aside.":
+		"{name} ({amount}) perlu dibayar {when}. Sudah diketepikan.",
+	"{name} ({amount}) usually lands soon. Already kept aside.":
+		"{name} ({amount}) biasanya tiba tidak lama lagi. Sudah diketepikan.",
+	"{n} days": "{n} hari",
+	"{n} more days of logging to {title}, who brings a {gift}.":
+		"{n} hari lagi mencatat untuk menjadi {title}, yang membawa {gift}.",
+	"{n} shields": "{n} perisai",
+	"{n} shields ready: missed days won't break it.":
+		"{n} perisai sedia: hari yang terlepas tidak akan memutuskannya.",
+	"Little Pip": "Pip Kecil",
+	"Curious Pip": "Pip Ingin Tahu",
+	"Snug Pip": "Pip Selesa",
+	"Explorer Pip": "Pip Penjelajah",
+	"Cool Pip": "Pip Bergaya",
+	"Royal Pip": "Pip Diraja",
+	"Legendary Pip": "Pip Lagenda",
+	"Lucky leaf": "Daun bertuah",
+	"Batik scarf": "Selendang batik",
+	"Explorer hat": "Topi penjelajah",
+	Sunglasses: "Cermin mata hitam",
+	"Little crown": "Mahkota kecil",
+	"Gold coin medal": "Pingat syiling emas",
 };
