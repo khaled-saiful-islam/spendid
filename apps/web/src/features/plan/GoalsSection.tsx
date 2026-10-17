@@ -19,6 +19,7 @@ import { moneyApi, refreshMoney } from "@/lib/money-api";
 import { formatDay } from "@/lib/time";
 import { currencySymbol } from "../onboarding/options";
 import { GoalJar } from "./GoalJar";
+import { goalTint } from "./goal-tint";
 
 const EMOJIS = ["🎯", "🏝️", "🏠", "🚗", "🎓", "💍", "☂️", "🎁"];
 
@@ -30,15 +31,6 @@ function cheer() {
 		origin: { y: 0.6 },
 		colors: ["#FFB224", "#12B886", "#7A4FC4"],
 	});
-}
-
-const GOAL_TINTS = ["amber", "lime", "sky", "teal", "rose", "cyan"];
-
-/** Each goal keeps one colour, picked from its id. */
-function goalTint(id: string): string {
-	let h = 0;
-	for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-	return TINTS[GOAL_TINTS[h % GOAL_TINTS.length] ?? "amber"] ?? "";
 }
 
 /** Progress with quarter marks, so a step like "past halfway" is easy to see. */

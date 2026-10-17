@@ -77,12 +77,7 @@ export function SafeDial({
 				/>
 			</svg>
 			<div className="absolute inset-0 grid place-content-center text-center text-plum-900">
-				<span
-					className={cn(
-						"num leading-none font-extrabold",
-						compact ? "text-[20cqw]" : "text-[17cqw]",
-					)}
-				>
+				<span className={cn("num leading-none font-extrabold", "text-[17cqw]")}>
 					{percent}%
 				</span>
 				<span

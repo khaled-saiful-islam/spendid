@@ -1,23 +1,26 @@
 import { formatMinor } from "@spendid/shared";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Plus } from "lucide-react";
+import { ChevronRight, Plus, Receipt, Target } from "lucide-react";
 import { AnimatePresence } from "motion/react";
 import { buttonClass } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { t } from "@/i18n";
+import { cn } from "@/lib/cn";
 import { meQuery } from "@/lib/me";
 import { goalsQuery, summaryQuery } from "@/lib/money-api";
 import { appHour, formatMoment } from "@/lib/time";
 import { capture } from "../capture/capture-store";
 import { TransactionRow, useCategoryMap } from "../money/TransactionRow";
 import { GoalJar } from "../plan/GoalJar";
+import { goalTint } from "../plan/goal-tint";
 import { PendingReceipts } from "../scan/PendingReceipts";
 import { DueSoonCard } from "../subscriptions/DueSoonCard";
 import { AskCard } from "./AskCard";
-import { MonthCard } from "./MonthCard";
 import { MonthPace } from "./MonthPace";
 import { SafeCard } from "./SafeCard";
+import { StatTiles } from "./StatTiles";
 
 function greeting(date: Date): string {
 	const h = appHour(date);
@@ -56,95 +59,122 @@ export function HomePage() {
 				<div className="h-40 animate-pulse rounded-panel bg-surface-2" />
 			)}
 
+			{summary && <StatTiles summary={summary} goals={goals} />}
 			<AskCard />
 			<DueSoonCard />
-			{summary && <MonthPace summary={summary} />}
 
-			<section
-				aria-labelledby="today-title"
-				className="rounded-panel border border-line bg-surface p-3 sm:p-4"
-			>
-				<div className="flex items-center justify-between gap-3 px-2 pt-2">
-					<h2 id="today-title" className="text-[1.1rem] font-bold">
-						{t("Today")}
-					</h2>
-					{summary && todayTotal > 0 && (
-						<span className="num font-semibold text-ink-soft">
-							{formatMinor(todayTotal, summary.homeCurrency)}
-						</span>
-					)}
-				</div>
-				{summary && summary.today.length === 0 ? (
-					<div className="px-2 py-8 text-center">
-						<p className="font-display text-[1.2rem] font-bold">
-							{t("Nothing logged yet today")}
-						</p>
-						<p className="mx-auto mt-1 max-w-[34ch] text-ink-soft">
-							{t("Say it, snap it or type it. It takes a few seconds.")}
-						</p>
-						<button
-							type="button"
-							onClick={capture.openType}
-							className={buttonClass("coin", "md", "mt-4")}
-						>
-							<Plus className="size-5" aria-hidden="true" />{" "}
-							{t("Add an expense")}
-						</button>
+			<div className="grid gap-5 lg:grid-cols-2 lg:items-start">
+				<section aria-labelledby="today-title" className="space-y-3">
+					<SectionHeader
+						id="today-title"
+						title={t("Today")}
+						icon={Receipt}
+						tint="orange"
+						sub={
+							summary && todayTotal > 0
+								? formatMinor(todayTotal, summary.homeCurrency)
+								: undefined
+						}
+					/>
+					<div className="rounded-panel border border-line bg-surface p-2 sm:p-3">
+						{summary && summary.today.length === 0 ? (
+							<div className="px-2 py-6 text-center">
+								<p className="font-display text-[1.1rem] font-bold">
+									{t("Nothing logged yet today")}
+								</p>
+								<p className="mx-auto mt-1 max-w-[34ch] text-ink-soft">
+									{t("Say it, snap it or type it. It takes a few seconds.")}
+								</p>
+								<button
+									type="button"
+									onClick={capture.openType}
+									className={buttonClass("coin", "md", "mt-4")}
+								>
+									<Plus className="size-5" aria-hidden="true" />{" "}
+									{t("Add an expense")}
+								</button>
+							</div>
+						) : (
+							<ul>
+								<AnimatePresence initial={false}>
+									{summary?.today.map((tx) => (
+										<TransactionRow
+											key={tx.id}
+											t={tx}
+											category={categories.get(tx.categoryId)}
+										/>
+									))}
+								</AnimatePresence>
+							</ul>
+						)}
 					</div>
-				) : (
-					<ul className="mt-2">
-						<AnimatePresence initial={false}>
-							{summary?.today.map((t) => (
-								<TransactionRow
-									key={t.id}
-									t={t}
-									category={categories.get(t.categoryId)}
-								/>
-							))}
-						</AnimatePresence>
-					</ul>
-				)}
-			</section>
-
-			{summary && summary.monthSpentMinor > 0 && (
-				<MonthCard summary={summary} />
-			)}
+				</section>
+				{summary && <MonthPace summary={summary} />}
+			</div>
 
 			{goals.length > 0 && summary && (
-				<section aria-labelledby="goals-title">
-					<div className="flex items-center justify-between">
-						<h2 id="goals-title" className="text-[1.1rem] font-bold">
-							{t("Saving for")}
-						</h2>
-						<Link
-							to="/app/plan"
-							className="font-medium text-ink-soft hover:text-ink"
-						>
-							{t("All goals")}
-						</Link>
-					</div>
-					<ul className="mt-2.5 grid grid-cols-2 gap-3">
-						{goals.slice(0, 2).map((g) => (
-							<li
-								key={g.id}
-								className="rounded-panel border border-line bg-surface p-3"
+				<section aria-labelledby="goals-title" className="space-y-3">
+					<SectionHeader
+						id="goals-title"
+						title={t("Saving for")}
+						icon={Target}
+						tint="lime"
+						action={
+							<Link
+								to="/app/plan"
+								className="inline-flex min-h-10 items-center gap-1 rounded-full px-3 text-[0.9rem] font-semibold text-ink-soft hover:bg-surface-2 hover:text-ink"
 							>
-								<GoalJar
-									ratio={g.savedMinor / g.targetMinor}
-									emoji={g.emoji}
-									className="mx-auto h-16"
-								/>
-								<p className="mt-2 text-center font-semibold break-words">
-									{g.name}
-								</p>
-								<p className="num text-center text-[0.9rem] text-ink-soft">
-									{t("{pct}% of {amount}", {
-										pct: Math.round((g.savedMinor / g.targetMinor) * 100),
-										amount: formatMinor(g.targetMinor, summary.homeCurrency),
-									})}
-								</p>
-							</li>
-						))}
+								{t("All goals")}
+								<ChevronRight className="size-4" aria-hidden="true" />
+							</Link>
+						}
+					/>
+					<ul className="grid grid-cols-2 gap-3">
+						{goals.slice(0, 2).map((g) => {
+							const ratio = Math.min(1, g.savedMinor / g.targetMinor);
+							const tint = goalTint(g.id);
+							return (
+								<li key={g.id}>
+									<Link
+										to="/app/plan"
+										className="relative flex h-full items-center gap-3 overflow-hidden rounded-panel border border-line bg-surface p-3 transition-transform hover:-translate-y-0.5 sm:p-4"
+									>
+										<span
+											aria-hidden="true"
+											className={cn(
+												"pointer-events-none absolute inset-0 bg-linear-to-br opacity-[0.16] dark:opacity-[0.12]",
+												tint,
+											)}
+										/>
+										<GoalJar
+											ratio={ratio}
+											emoji={g.emoji}
+											className="relative h-16 shrink-0"
+										/>
+										<span className="relative min-w-0 flex-1">
+											<span className="block leading-tight font-semibold break-words">
+												{g.name}
+											</span>
+											<span
+												data-money
+												className="num block text-[1.25rem] font-extrabold"
+											>
+												{Math.round(ratio * 100)}%
+											</span>
+											<span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-ink/10">
+												<span
+													className={cn(
+														"block h-full rounded-full bg-linear-to-r",
+														tint,
+													)}
+													style={{ width: `${ratio * 100}%` }}
+												/>
+											</span>
+										</span>
+									</Link>
+								</li>
+							);
+						})}
 					</ul>
 				</section>
 			)}

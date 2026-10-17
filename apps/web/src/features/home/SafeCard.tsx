@@ -4,6 +4,7 @@ import { CountUp } from "@/components/money/CountUp";
 import { SafeDial } from "@/components/money/SafeDial";
 import { buttonClass } from "@/components/ui/Button";
 import { t } from "@/i18n";
+import { WeekRhythm } from "./WeekRhythm";
 
 /** The heart of Spendid: one number, with the reason behind it in a sentence. */
 /** ", after keeping X for savings and Y for 3 bills still due" — or nothing. */
@@ -102,6 +103,7 @@ export function SafeCard({ summary }: { summary: Summary }) {
 			>
 				{reason}
 			</p>
+			<WeekRhythm dailyMinor={safe.dailyAllowanceMinor} currency={cur} />
 		</section>
 	);
 }

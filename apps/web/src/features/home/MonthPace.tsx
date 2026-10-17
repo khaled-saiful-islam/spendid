@@ -11,6 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Check, ChevronDown, TrendingUp, TriangleAlert } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useId, useState } from "react";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { dateLocale, t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { heatmapQuery, thisMonth } from "@/lib/insights-api";
@@ -87,135 +88,137 @@ export function MonthPace({ summary }: { summary: Summary }) {
 				: { tone: "bg-safe/10 text-safe", Icon: Check, label: t("On track") };
 
 	return (
-		<section
-			aria-labelledby="pace-title"
-			className="rounded-panel border border-line bg-surface p-4 sm:p-5"
-		>
-			<div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
-				<h2 id="pace-title" className="text-[1.1rem] font-bold">
-					{t("Where your month is heading")}
-				</h2>
-				<span
-					className={cn(
-						"inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[0.8rem] font-semibold",
-						status.tone,
-					)}
-				>
-					<status.Icon className="size-3.5" aria-hidden="true" />
-					{status.label}
-				</span>
-			</div>
-			<p data-money className="mt-1.5 leading-snug font-semibold">
-				{headline}
-			</p>
-			<p data-money className="text-[0.88rem] text-ink-soft">
-				{pace.vsEvenMinor <= 0
-					? t("{amount} under an even pace so far, about {daily} a day.", {
-							amount: money(-pace.vsEvenMinor),
-							daily: money(pace.perDayMinor),
-						})
-					: t("{amount} over an even pace so far, about {daily} a day.", {
-							amount: money(pace.vsEvenMinor),
-							daily: money(pace.perDayMinor),
-						})}
-			</p>
-
-			<PaceChart
-				pace={pace}
-				daysInMonth={daysInMonth}
-				todayN={todayN}
-				money={money}
-			/>
-
-			<button
-				type="button"
-				aria-expanded={whatIfOpen}
-				aria-controls={whatIfId}
-				onClick={() => setWhatIfOpen((o) => !o)}
-				className="mt-3 flex w-full items-center justify-between gap-3 rounded-tile bg-surface-2 px-3.5 py-2.5 text-left text-[0.92rem] font-semibold hover:bg-plum-500/10"
-			>
-				<span>{t("What if I spent less each day?")}</span>
-				<ChevronDown
-					className={cn(
-						"size-4 shrink-0 text-ink-soft transition-transform",
-						whatIfOpen && "rotate-180",
-					)}
-					aria-hidden="true"
-				/>
-			</button>
-			<AnimatePresence initial={false}>
-				{whatIfOpen && (
-					<motion.div
-						id={whatIfId}
-						initial={{ height: 0, opacity: 0 }}
-						animate={{ height: "auto", opacity: 1 }}
-						exit={{ height: 0, opacity: 0 }}
-						transition={{ duration: 0.25 }}
-						className="overflow-hidden"
+		<section aria-labelledby="pace-title" className="space-y-3">
+			<SectionHeader
+				id="pace-title"
+				title={t("Where your month is heading")}
+				icon={TrendingUp}
+				tint="sky"
+				action={
+					<span
+						className={cn(
+							"inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[0.8rem] font-semibold",
+							status.tone,
+						)}
 					>
-						<div className="px-1 pt-3">
-							<label
-								htmlFor={sliderId}
-								className="flex flex-wrap items-baseline justify-between gap-2 text-[0.9rem] text-ink-soft"
-							>
-								<span>{t("Spend less by")}</span>
-								<span className="num font-semibold text-plum-500">
+						<status.Icon className="size-3.5" aria-hidden="true" />
+						{status.label}
+					</span>
+				}
+			/>
+			<div className="rounded-panel border border-line bg-surface p-4 sm:p-5">
+				<p data-money className="leading-snug font-semibold">
+					{headline}
+				</p>
+				<p data-money className="text-[0.88rem] text-ink-soft">
+					{pace.vsEvenMinor <= 0
+						? t("{amount} under an even pace so far, about {daily} a day.", {
+								amount: money(-pace.vsEvenMinor),
+								daily: money(pace.perDayMinor),
+							})
+						: t("{amount} over an even pace so far, about {daily} a day.", {
+								amount: money(pace.vsEvenMinor),
+								daily: money(pace.perDayMinor),
+							})}
+				</p>
+
+				<PaceChart
+					pace={pace}
+					daysInMonth={daysInMonth}
+					todayN={todayN}
+					money={money}
+				/>
+
+				<button
+					type="button"
+					aria-expanded={whatIfOpen}
+					aria-controls={whatIfId}
+					onClick={() => setWhatIfOpen((o) => !o)}
+					className="mt-3 flex w-full items-center justify-between gap-3 rounded-tile bg-surface-2 px-3.5 py-2.5 text-left text-[0.92rem] font-semibold hover:bg-plum-500/10"
+				>
+					<span>{t("What if I spent less each day?")}</span>
+					<ChevronDown
+						className={cn(
+							"size-4 shrink-0 text-ink-soft transition-transform",
+							whatIfOpen && "rotate-180",
+						)}
+						aria-hidden="true"
+					/>
+				</button>
+				<AnimatePresence initial={false}>
+					{whatIfOpen && (
+						<motion.div
+							id={whatIfId}
+							initial={{ height: 0, opacity: 0 }}
+							animate={{ height: "auto", opacity: 1 }}
+							exit={{ height: 0, opacity: 0 }}
+							transition={{ duration: 0.25 }}
+							className="overflow-hidden"
+						>
+							<div className="px-1 pt-3">
+								<label
+									htmlFor={sliderId}
+									className="flex flex-wrap items-baseline justify-between gap-2 text-[0.9rem] text-ink-soft"
+								>
+									<span>{t("Spend less by")}</span>
+									<span className="num font-semibold text-plum-500">
+										{cut === 0
+											? t("Same as now")
+											: t("{amount} less a day", {
+													amount: money(toMinor(cut, cur)),
+												})}
+									</span>
+								</label>
+								<input
+									id={sliderId}
+									type="range"
+									min={0}
+									max={maxCut}
+									step={5}
+									value={cut}
+									onChange={(e) => setCut(Number(e.target.value))}
+									className="mt-2 w-full accent-plum-500"
+								/>
+								<motion.p
+									key={cut}
+									initial={{ opacity: 0.4 }}
+									animate={{ opacity: 1 }}
+									data-money
+									className="mt-1 text-[0.92rem]"
+								>
 									{cut === 0
-										? t("Same as now")
-										: t("{amount} less a day", {
-												amount: money(toMinor(cut, cur)),
-											})}
-								</span>
-							</label>
-							<input
-								id={sliderId}
-								type="range"
-								min={0}
-								max={maxCut}
-								step={5}
-								value={cut}
-								onChange={(e) => setCut(Number(e.target.value))}
-								className="mt-2 w-full accent-plum-500"
-							/>
-							<motion.p
-								key={cut}
-								initial={{ opacity: 0.4 }}
-								animate={{ opacity: 1 }}
-								data-money
-								className="mt-1 text-[0.92rem]"
-							>
-								{cut === 0
-									? t(
-											"Slide to see how a small change adds up by the end of the month.",
-										)
-									: scenario.landingMinor >= 0
 										? t(
-												"You'd finish with {amount} to spare, {extra} more than now.",
-												{
-													amount: money(scenario.landingMinor),
-													extra: money(scenario.extraMinor),
-												},
+												"Slide to see how a small change adds up by the end of the month.",
 											)
-										: t("You'd be {amount} short, {extra} better than now.", {
-												amount: money(-scenario.landingMinor),
-												extra: money(scenario.extraMinor),
-											})}
-							</motion.p>
-							{cut > 0 && goal && sooner !== null && sooner > 0 && (
-								<p className="mt-1 text-[0.92rem] font-semibold text-safe">
-									{t(
-										"Put it in {goal} and it arrives about {n} weeks sooner.",
-										{
-											goal: `${goal.emoji} ${goal.name}`,
-											n: sooner,
-										},
-									)}
-								</p>
-							)}
-						</div>
-					</motion.div>
-				)}
-			</AnimatePresence>
+										: scenario.landingMinor >= 0
+											? t(
+													"You'd finish with {amount} to spare, {extra} more than now.",
+													{
+														amount: money(scenario.landingMinor),
+														extra: money(scenario.extraMinor),
+													},
+												)
+											: t("You'd be {amount} short, {extra} better than now.", {
+													amount: money(-scenario.landingMinor),
+													extra: money(scenario.extraMinor),
+												})}
+								</motion.p>
+								{cut > 0 && goal && sooner !== null && sooner > 0 && (
+									<p className="mt-1 text-[0.92rem] font-semibold text-safe">
+										{t(
+											"Put it in {goal} and it arrives about {n} weeks sooner.",
+											{
+												goal: `${goal.emoji} ${goal.name}`,
+												n: sooner,
+											},
+										)}
+									</p>
+								)}
+							</div>
+						</motion.div>
+					)}
+				</AnimatePresence>
+			</div>
 		</section>
 	);
 }
