@@ -13,6 +13,7 @@ import { MaybeAlert } from "@/components/form/Alert";
 import { Field } from "@/components/form/Field";
 import { SubmitButton } from "@/components/form/SubmitButton";
 import { buttonClass } from "@/components/ui/Button";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Sheet } from "@/components/ui/Sheet";
 import { toast } from "@/components/ui/Toast";
 import { t } from "@/i18n";
@@ -206,23 +207,23 @@ export function ImpulsePause() {
 	}
 
 	return (
-		<section aria-labelledby="pause-heading" className="space-y-4">
-			<div className="flex flex-wrap items-center justify-between gap-3">
-				<h2
-					id="pause-heading"
-					className="flex items-center gap-2 text-[1.6rem] font-bold"
-				>
-					<Hourglass className="size-6 text-plum-500" aria-hidden="true" />{" "}
-					{t("Wait before you buy")}
-				</h2>
-				<button
-					type="button"
-					onClick={() => setAdding(true)}
-					className={buttonClass("ghost", "md", "border-2 border-line")}
-				>
-					<Plus className="size-5" aria-hidden="true" /> {t("Add a want")}
-				</button>
-			</div>
+		<section aria-labelledby="pause-heading" className="space-y-3">
+			<SectionHeader
+				id="pause-heading"
+				title={t("Wait before you buy")}
+				icon={Hourglass}
+				tint="sky"
+				sub={t("48 hours to be sure, and what skipping saves")}
+				action={
+					<button
+						type="button"
+						onClick={() => setAdding(true)}
+						className={buttonClass("ghost", "md", "border-2 border-line")}
+					>
+						<Plus className="size-5" aria-hidden="true" /> {t("Add a want")}
+					</button>
+				}
+			/>
 			{data.savedMinor > 0 && (
 				<p className="inline-flex items-center gap-2 rounded-full bg-jade/15 px-4 py-2 font-semibold text-safe">
 					<Sparkles className="size-4" aria-hidden="true" />{" "}

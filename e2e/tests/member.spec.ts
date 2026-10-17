@@ -123,8 +123,8 @@ test("challenges: start one, see its days, then stop it", async ({ page }) => {
 		await page.request.post(`/api/challenges/${c.id}/give-up`, { data: {} });
 	await page.goto("/app/plan");
 	const section = page.getByRole("region", { name: "Challenges" });
-	await section.getByRole("button", { name: /Start one/ }).click();
-	await page.getByRole("dialog", { name: "Pick a challenge" }).getByRole("button", { name: /Shopping pause/ }).click();
+	// With none running, the picks start one in a single tap.
+	await section.getByRole("button", { name: /Shopping pause/ }).click();
 	const card = section.getByRole("article").filter({ hasText: "Shopping pause" });
 	await expect(card.getByRole("list", { name: "Days" }).getByRole("listitem")).toHaveCount(7);
 	await card.getByRole("button", { name: "Stop this challenge" }).click();

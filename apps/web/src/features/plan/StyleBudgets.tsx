@@ -37,68 +37,6 @@ function Bar({
 	);
 }
 
-/** Needs / wants / savings against 50 / 30 / 20 of income. */
-export function FiftyThirtyTwenty({
-	summary,
-	categories,
-}: {
-	summary: Summary;
-	categories: Map<string, Category>;
-}) {
-	const income = summary.incomeMinor ?? 0;
-	const spentBy = (kind: Category["kind"]) =>
-		summary.byCategory
-			.filter((c) => categories.get(c.categoryId)?.kind === kind)
-			.reduce((s, c) => s + c.spentMinor, 0);
-	const money = (m: number) => formatMinor(m, summary.homeCurrency);
-	const rows = [
-		{
-			label: t("Needs"),
-			hint: t("Bills, groceries, transport, health"),
-			spent: spentBy("need"),
-			target: income * 0.5,
-			tone: "bg-jade",
-		},
-		{
-			label: t("Wants"),
-			hint: t("Eating out, shopping, fun, travel"),
-			spent: spentBy("want"),
-			target: income * 0.3,
-			tone: "bg-sky",
-		},
-	];
-
-	return (
-		<div className="space-y-3.5">
-			{rows.map((r) => (
-				<div key={r.label} title={r.hint}>
-					<div className="flex flex-wrap items-baseline justify-between gap-x-3">
-						<span className="font-semibold">{r.label}</span>
-						<span className="num text-[0.92rem] text-ink-soft">
-							<strong className="text-ink">{money(r.spent)}</strong>{" "}
-							{t("of {amount}", { amount: money(r.target) })}
-						</span>
-					</div>
-					<Bar spent={r.spent} target={r.target} tone={r.tone} />
-				</div>
-			))}
-			<div className="flex items-center gap-2.5 border-t border-line pt-3 text-[0.92rem]">
-				<Lock
-					className="size-[1.1rem] shrink-0 text-marigold-deep"
-					aria-hidden="true"
-				/>
-				<p className="text-ink-soft">
-					<span className="font-semibold text-ink">{t("Savings")}</span>{" "}
-					<strong className="num text-ink">
-						{money(summary.reservedMinor)}
-					</strong>{" "}
-					{t("kept aside first")}
-				</p>
-			</div>
-		</div>
-	);
-}
-
 interface CategoryBudgetsProps {
 	summary: Summary;
 	categories: Category[];

@@ -7,10 +7,12 @@ import {
 	formatMinor,
 } from "@spendid/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Plus, Trophy, X } from "lucide-react";
+import { Check, Flag, Plus, Trophy, X } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { useState } from "react";
+import { TINTS } from "@/components/money/CategoryIcon";
 import { buttonClass } from "@/components/ui/Button";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Sheet } from "@/components/ui/Sheet";
 import { toast } from "@/components/ui/Toast";
 import { t } from "@/i18n";
@@ -38,34 +40,31 @@ export function Challenges() {
 
 	return (
 		<section aria-labelledby="challenges-title" className="space-y-3">
-			<div className="flex flex-wrap items-center justify-between gap-3">
-				<h2 id="challenges-title" className="text-[1.6rem] font-bold">
-					{t("Challenges")}
-				</h2>
-				<button
-					type="button"
-					onClick={() => setPicking(true)}
-					className={buttonClass("ghost", "md", "border-2 border-line")}
-				>
-					<Plus className="size-5" aria-hidden="true" /> {t("Start one")}
-				</button>
-			</div>
+			<SectionHeader
+				id="challenges-title"
+				title={t("Challenges")}
+				icon={Flag}
+				tint="orange"
+				sub={
+					data.active.length > 0
+						? t("Checked from your spending, day by day")
+						: undefined
+				}
+				action={
+					data.active.length > 0 ? (
+						<button
+							type="button"
+							onClick={() => setPicking(true)}
+							className={buttonClass("ghost", "md", "border-2 border-line")}
+						>
+							<Plus className="size-5" aria-hidden="true" /> {t("Start one")}
+						</button>
+					) : undefined
+				}
+			/>
 
 			{data.active.length === 0 ? (
-				<button
-					type="button"
-					onClick={() => setPicking(true)}
-					className="w-full rounded-panel border-2 border-dashed border-line p-5 text-left hover:border-plum-300"
-				>
-					<span className="block font-semibold">
-						{t("A small challenge makes a habit stick.")}
-					</span>
-					<span className="block text-ink-soft">
-						{t(
-							"Try a no-spend weekend or a cook-at-home week. Spendid checks it from your spending, so there's nothing to tick off.",
-						)}
-					</span>
-				</button>
+				<PickTiles onMore={() => setPicking(true)} />
 			) : (
 				<ul className="grid gap-3 sm:grid-cols-2">
 					{data.active.map((c) => (
@@ -211,21 +210,16 @@ function ChallengeCard({
 	);
 }
 
-function StartSheet({
-	open,
-	onClose,
-	board,
-}: {
-	open: boolean;
-	onClose: () => void;
-	board: ChallengeBoard;
-}) {
+const PICKS: { kind: ChallengeKind; tint: string }[] = [
+	{ kind: "no-spend-weekend", tint: "teal" },
+	{ kind: "cook-at-home", tint: "amber" },
+	{ kind: "shopping-pause", tint: "rose" },
+];
+
+/** Starts a challenge and refreshes the board; `pending` is the one being started. */
+function useStartChallenge(onStarted?: () => void) {
 	const queryClient = useQueryClient();
 	const [pending, setPending] = useState<ChallengeKind | null>(null);
-	const running = new Set(
-		board.active.filter((c) => c.result.status === "active").map((c) => c.kind),
-	);
-	const cur = board.active[0]?.currency ?? "MYR";
 
 	async function start(kind: ChallengeKind) {
 		setPending(kind);
@@ -240,7 +234,7 @@ function StartSheet({
 					title: t(CHALLENGES[kind].title),
 				}),
 			);
-			onClose();
+			onStarted?.();
 		} catch (err) {
 			toast(
 				err instanceof ApiError ? err.message : t("Couldn't save. Try again."),
@@ -249,6 +243,109 @@ function StartSheet({
 			setPending(null);
 		}
 	}
+
+	return { start, pending };
+}
+
+/** Three good first challenges as bright tiles: one tap starts one. */
+function PickTiles({ onMore }: { onMore: () => void }) {
+	const reduce = useReducedMotion();
+	const { start, pending } = useStartChallenge();
+	return (
+		<div className="space-y-2">
+			<ul className="grid gap-3 sm:grid-cols-3">
+				{PICKS.map(({ kind, tint }, i) => {
+					const info = CHALLENGES[kind];
+					return (
+						<motion.li
+							key={kind}
+							initial={reduce ? false : { opacity: 0, y: 10 }}
+							animate={{ opacity: 1, y: 0 }}
+							transition={{ delay: reduce ? 0 : i * 0.07 }}
+						>
+							<button
+								type="button"
+								disabled={pending !== null}
+								onClick={() => void start(kind)}
+								className="group relative flex h-full w-full flex-col overflow-hidden rounded-panel border border-line bg-surface p-3.5 text-left transition-transform hover:-translate-y-0.5 disabled:opacity-60 sm:p-4"
+							>
+								<span
+									aria-hidden="true"
+									className={cn(
+										"pointer-events-none absolute inset-0 bg-linear-to-br opacity-[0.18] dark:opacity-[0.13]",
+										TINTS[tint],
+									)}
+								/>
+								<span className="relative flex items-start gap-3 sm:flex-col sm:gap-0">
+									<span className="flex w-full items-center justify-between gap-2 max-sm:w-auto">
+										<span
+											className="text-[2rem] leading-none transition-transform group-hover:scale-110"
+											aria-hidden="true"
+										>
+											{info.emoji}
+										</span>
+										<span className="rounded-full bg-surface/80 px-2.5 py-0.5 text-[0.78rem] font-semibold ring-1 ring-line max-sm:hidden">
+											{t(info.days === 2 ? "2 days" : "{n} days", {
+												n: info.days,
+											})}
+										</span>
+									</span>
+									<span className="min-w-0 flex-1 sm:mt-3">
+										<span className="block font-bold">
+											{t(info.title)}
+											<span className="ml-1.5 font-medium text-ink-soft sm:hidden">
+												·{" "}
+												{t(info.days === 2 ? "2 days" : "{n} days", {
+													n: info.days,
+												})}
+											</span>
+										</span>
+										<span className="block text-[0.88rem] leading-snug text-ink-soft">
+											{t(info.body)}
+										</span>
+									</span>
+									<span className="shrink-0 self-center text-[0.88rem] font-semibold text-plum-500 sm:hidden">
+										{pending === kind ? t("Starting…") : t("Start")}
+									</span>
+								</span>
+								<span className="relative mt-auto pt-3 text-[0.88rem] font-semibold text-plum-500 max-sm:hidden">
+									{pending === kind ? t("Starting…") : t("Start")}
+								</span>
+							</button>
+						</motion.li>
+					);
+				})}
+			</ul>
+			<p className="px-1 text-[0.85rem] text-ink-soft">
+				{t(
+					"Spendid checks it from your spending, so there's nothing to tick off.",
+				)}{" "}
+				<button
+					type="button"
+					onClick={onMore}
+					className="font-semibold text-ink underline-offset-4 hover:underline"
+				>
+					{t("See all challenges")}
+				</button>
+			</p>
+		</div>
+	);
+}
+
+function StartSheet({
+	open,
+	onClose,
+	board,
+}: {
+	open: boolean;
+	onClose: () => void;
+	board: ChallengeBoard;
+}) {
+	const { start, pending } = useStartChallenge(onClose);
+	const running = new Set(
+		board.active.filter((c) => c.result.status === "active").map((c) => c.kind),
+	);
+	const cur = board.active[0]?.currency ?? "MYR";
 
 	return (
 		<Sheet open={open} onClose={onClose} title={t("Pick a challenge")}>

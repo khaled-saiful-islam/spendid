@@ -4,6 +4,9 @@ import { Link } from "@tanstack/react-router";
 import { BellRing, ChevronRight } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
+import { TINTS } from "@/components/money/CategoryIcon";
+import { buttonClass } from "@/components/ui/Button";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { subscriptionsQuery } from "@/lib/subscriptions-api";
@@ -95,47 +98,85 @@ export function DueSoonCard() {
 }
 
 /** On Plan: a doorway with this month's total and the next payment. */
+/** Plan's view of regular payments: the month's total and the next few, each with its due date. */
 export function SubscriptionsDoorway() {
 	const { data } = useQuery(subscriptionsQuery);
-	const next = data?.active[0];
+	const upcoming = (data?.active ?? []).slice(0, 3);
+
 	return (
-		<Link
-			to="/app/subscriptions"
-			className="flex items-center gap-4 rounded-panel border border-line bg-surface p-5 transition-shadow hover:shadow-lift"
-		>
-			<span className="flex -space-x-3" aria-hidden="true">
-				{(data?.active ?? []).slice(0, 3).map((s) => (
-					<BrandTile
-						key={s.id}
-						sub={s}
-						size="md"
-						className="ring-3 ring-surface"
-					/>
-				))}
-				{(data?.active.length ?? 0) === 0 && (
-					<span className="grid size-12 place-items-center rounded-[28%] bg-marigold text-plum-900">
-						<BellRing className="size-6" />
-					</span>
-				)}
-			</span>
-			<span className="min-w-0 flex-1">
-				<span className="block text-[1.3rem] font-bold">
-					{t("Subscriptions & bills")}
-				</span>
-				<span className="block text-ink-soft">
-					{data && next
-						? t("{amount} this month. Next: {name}, {when}.", {
+		<section aria-labelledby="subs-heading" className="space-y-3">
+			<SectionHeader
+				id="subs-heading"
+				title={t("Subscriptions & bills")}
+				icon={BellRing}
+				tint="amber"
+				sub={
+					data && data.active.length > 0
+						? t("{amount} this month, kept aside for you", {
 								amount: formatMinor(data.thisMonthMinor, data.currency),
-								name: next.name,
-								when: dueLabel(next.nextDue, data.today).text.toLowerCase(),
 							})
-						: t("Add what you pay regularly and get reminded before it's due.")}
-				</span>
-			</span>
-			<ChevronRight
-				className="size-5 shrink-0 text-ink-soft"
-				aria-hidden="true"
+						: undefined
+				}
+				action={
+					<Link
+						to="/app/subscriptions"
+						className={buttonClass("ghost", "md", "border-2 border-line")}
+					>
+						{t("See all")}
+						<ChevronRight className="size-4" aria-hidden="true" />
+					</Link>
+				}
 			/>
-		</Link>
+			{data && upcoming.length > 0 ? (
+				<ol className="relative overflow-hidden rounded-panel border border-line bg-surface p-2">
+					<span
+						aria-hidden="true"
+						className={cn(
+							"pointer-events-none absolute inset-0 bg-linear-to-br opacity-[0.12] dark:opacity-[0.09]",
+							TINTS.amber,
+						)}
+					/>
+					{upcoming.map((s) => {
+						const due = dueLabel(s.nextDue, data.today);
+						return (
+							<li key={s.id} className="relative">
+								<Link
+									to="/app/subscriptions"
+									className="flex items-center gap-3 rounded-tile px-2 py-2.5 hover:bg-surface-2/70"
+								>
+									<BrandTile sub={s} size="sm" />
+									<span className="min-w-0 flex-1">
+										<span className="block font-semibold break-words">
+											{s.name}
+										</span>
+										<span
+											data-money
+											className="num block text-[0.85rem] text-ink-soft"
+										>
+											{formatMinor(s.amountMinor, s.currency)}
+										</span>
+									</span>
+									<span
+										className={cn(
+											"shrink-0 rounded-full px-2.5 py-1 text-[0.8rem] font-semibold",
+											TONE_CLASS[due.tone],
+										)}
+									>
+										{due.text}
+									</span>
+								</Link>
+							</li>
+						);
+					})}
+				</ol>
+			) : (
+				<Link
+					to="/app/subscriptions"
+					className="block rounded-panel border-2 border-dashed border-line p-5 text-ink-soft hover:border-plum-300"
+				>
+					{t("Add what you pay regularly and get reminded before it's due.")}
+				</Link>
+			)}
+		</section>
 	);
 }

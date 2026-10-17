@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { ShieldCheck } from "lucide-react";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { warrantiesQuery } from "@/lib/receipts-api";
@@ -34,9 +35,13 @@ export function WarrantyVault() {
 
 	return (
 		<section aria-labelledby="warranty-heading" className="space-y-3">
-			<h2 id="warranty-heading" className="text-[1.6rem] font-bold">
-				{t("Warranty vault")}
-			</h2>
+			<SectionHeader
+				id="warranty-heading"
+				title={t("Warranty vault")}
+				icon={ShieldCheck}
+				tint="teal"
+				sub={t("Found on your receipts, with time left on each")}
+			/>
 			<ul className="divide-y divide-line rounded-panel border border-line bg-surface">
 				{warranties.map((w) => {
 					const status = left(w.endsOn);

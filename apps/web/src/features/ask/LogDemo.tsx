@@ -205,6 +205,7 @@ export function LogDemo({ currency }: { currency: string }) {
 								</motion.span>
 							)}
 							<svg
+								aria-hidden="true"
 								viewBox="0 0 120 6"
 								preserveAspectRatio="none"
 								className="absolute inset-x-0 -bottom-1.5 h-1.5 w-full text-surface"

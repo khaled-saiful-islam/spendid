@@ -1,12 +1,15 @@
 import { formatMinor, type Goal, toMinor } from "@spendid/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import confetti from "canvas-confetti";
-import { Plus } from "lucide-react";
+import { Plus, Target } from "lucide-react";
+import { motion } from "motion/react";
 import { type FormEvent, useState } from "react";
 import { MaybeAlert } from "@/components/form/Alert";
 import { Field } from "@/components/form/Field";
 import { SubmitButton } from "@/components/form/SubmitButton";
+import { TINTS } from "@/components/money/CategoryIcon";
 import { buttonClass } from "@/components/ui/Button";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Sheet } from "@/components/ui/Sheet";
 import { toast } from "@/components/ui/Toast";
 import { t } from "@/i18n";
@@ -27,6 +30,37 @@ function cheer() {
 		origin: { y: 0.6 },
 		colors: ["#FFB224", "#12B886", "#7A4FC4"],
 	});
+}
+
+const GOAL_TINTS = ["amber", "lime", "sky", "teal", "rose", "cyan"];
+
+/** Each goal keeps one colour, picked from its id. */
+function goalTint(id: string): string {
+	let h = 0;
+	for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+	return TINTS[GOAL_TINTS[h % GOAL_TINTS.length] ?? "amber"] ?? "";
+}
+
+/** Progress with quarter marks, so a step like "past halfway" is easy to see. */
+function MilestoneBar({ ratio, tint }: { ratio: number; tint: string }) {
+	return (
+		<span className="relative mt-2 block h-2.5 overflow-hidden rounded-full bg-ink/10">
+			<motion.span
+				className={cn("block h-full rounded-full bg-linear-to-r", tint)}
+				initial={{ width: 0 }}
+				animate={{ width: `${ratio * 100}%` }}
+				transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+			/>
+			{[25, 50, 75].map((m) => (
+				<span
+					key={m}
+					aria-hidden="true"
+					className="absolute inset-y-0 w-0.5 bg-surface/80"
+					style={{ left: `${m}%` }}
+				/>
+			))}
+		</span>
+	);
 }
 
 function untilLabel(goal: Goal, cur: string): string {
@@ -194,60 +228,114 @@ export function GoalsSection({ goals, cur }: { goals: Goal[]; cur: string }) {
 	const [creating, setCreating] = useState(false);
 
 	return (
-		<section aria-labelledby="goals-heading" className="space-y-4">
-			<div className="flex items-center justify-between gap-3">
-				<h2 id="goals-heading" className="text-[1.6rem] font-bold">
-					{t("Goals")}
-				</h2>
+		<section aria-labelledby="goals-heading" className="space-y-3">
+			<SectionHeader
+				id="goals-heading"
+				title={t("Goals")}
+				icon={Target}
+				tint="lime"
+				sub={
+					goals.length > 0
+						? t("{saved} saved of {target}", {
+								saved: formatMinor(
+									goals.reduce((s, g) => s + g.savedMinor, 0),
+									cur,
+								),
+								target: formatMinor(
+									goals.reduce((s, g) => s + g.targetMinor, 0),
+									cur,
+								),
+							})
+						: undefined
+				}
+				action={
+					<button
+						type="button"
+						onClick={() => setCreating(true)}
+						className={buttonClass("ghost", "md", "border-2 border-line")}
+					>
+						<Plus className="size-5" aria-hidden="true" /> {t("New goal")}
+					</button>
+				}
+			/>
+			{goals.length === 0 ? (
 				<button
 					type="button"
 					onClick={() => setCreating(true)}
-					className={buttonClass("ghost", "md", "border-2 border-line")}
+					className="relative w-full overflow-hidden rounded-panel border-2 border-dashed border-line p-5 text-left hover:border-plum-300"
 				>
-					<Plus className="size-5" aria-hidden="true" /> {t("New goal")}
+					<span className="flex items-center gap-4">
+						<GoalJar ratio={0.35} emoji="🏝️" className="h-20 shrink-0" />
+						<span>
+							<span className="block font-semibold">
+								{t("Saving for something?")}
+							</span>
+							<span className="block text-ink-soft">
+								{t("Make a jar, set a date, and watch it fill.")}
+							</span>
+						</span>
+					</span>
 				</button>
-			</div>
-			{goals.length === 0 ? (
-				<p className="rounded-panel border border-dashed border-line p-6 text-center text-ink-soft">
-					{t("Saving for something? Make a jar and watch it fill.")}
-				</p>
 			) : (
-				<ul className="grid gap-4 sm:grid-cols-2">
-					{goals.map((g) => (
-						<li
-							key={g.id}
-							className="flex gap-4 rounded-panel border border-line bg-surface p-4"
-						>
-							<GoalJar
-								ratio={g.savedMinor / g.targetMinor}
-								emoji={g.emoji}
-								className="h-28 shrink-0"
-							/>
-							<div className="min-w-0 flex-1">
-								<p className="font-display text-[1.2rem] font-bold break-words">
-									{g.name}
-								</p>
-								<p className="num mt-1">
-									<strong>{formatMinor(g.savedMinor, cur)}</strong>{" "}
-									<span className="text-ink-soft">
-										{t("of {amount}", {
-											amount: formatMinor(g.targetMinor, cur),
-										})}
+				<ul className="grid gap-3 sm:grid-cols-2">
+					{goals.map((g) => {
+						const ratio = Math.min(1, g.savedMinor / g.targetMinor);
+						const tint = goalTint(g.id);
+						return (
+							<li
+								key={g.id}
+								className="relative overflow-hidden rounded-panel border border-line bg-surface p-4"
+							>
+								<span
+									aria-hidden="true"
+									className={cn(
+										"pointer-events-none absolute inset-0 bg-linear-to-br opacity-[0.16] dark:opacity-[0.12]",
+										tint,
+									)}
+								/>
+								<div className="relative flex gap-4">
+									<GoalJar
+										ratio={ratio}
+										emoji={g.emoji}
+										className="h-24 shrink-0"
+									/>
+									<div className="min-w-0 flex-1">
+										<p className="font-display text-[1.1rem] leading-tight font-bold break-words">
+											{g.name}
+										</p>
+										<p data-money className="num mt-1 leading-tight">
+											<span className="text-[1.6rem] font-extrabold">
+												{Math.round(ratio * 100)}%
+											</span>{" "}
+											<span className="block text-[0.88rem] text-ink-soft">
+												{t("{saved} of {target}", {
+													saved: formatMinor(g.savedMinor, cur),
+													target: formatMinor(g.targetMinor, cur),
+												})}
+											</span>
+										</p>
+										<MilestoneBar ratio={ratio} tint={tint} />
+									</div>
+								</div>
+								<div className="relative mt-3 flex flex-wrap items-center justify-between gap-2">
+									<span
+										data-money
+										className="rounded-full bg-surface/80 px-3 py-1 text-[0.82rem] font-medium ring-1 ring-line"
+									>
+										{untilLabel(g, cur)}
 									</span>
-								</p>
-								<p className="mt-1 text-[0.88rem] text-ink-soft">
-									{untilLabel(g, cur)}
-								</p>
-								<button
-									type="button"
-									onClick={() => setDepositFor(g)}
-									className={buttonClass("coin", "md", "mt-3 h-10 px-4")}
-								>
-									{t("Add money")}
-								</button>
-							</div>
-						</li>
-					))}
+									<button
+										type="button"
+										onClick={() => setDepositFor(g)}
+										className={buttonClass("coin", "md", "h-10 px-4")}
+									>
+										<Plus className="size-4" aria-hidden="true" />{" "}
+										{t("Add money")}
+									</button>
+								</div>
+							</li>
+						);
+					})}
 				</ul>
 			)}
 
