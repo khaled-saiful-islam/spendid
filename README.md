@@ -27,6 +27,8 @@ Postgres is on `localhost:8602`, Redis on `localhost:8603`.
 `http://192.168.100.88:8600`). Add it once to `.env` as `EXTRA_ORIGINS=…`, then
 `docker compose restart api`, so sign-in accepts it. Over plain HTTP, phones block the
 microphone, live camera and passkeys; typing, picking a photo or PDF, and everything else work.
+For voice and the camera on Android Chrome, open `chrome://flags/#unsafely-treat-insecure-origin-as-secure`,
+enable it with that address, and relaunch Chrome (passkeys still need a real https address).
 
 ## Test accounts
 
