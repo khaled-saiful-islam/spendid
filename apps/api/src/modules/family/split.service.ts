@@ -12,7 +12,7 @@ import {
 	SplitPaidSchema,
 } from "@spendid/shared";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
-import { badRequest, notFound } from "../../http/app-error";
+import { AppError, badRequest, notFound } from "../../http/app-error";
 import type { FamilyRepository } from "./family.repository";
 import type { Publish } from "./family.service";
 
@@ -28,6 +28,9 @@ export interface ReceiptChoice {
 	taxMinor: number | null;
 	items: { name: string; totalMinor: number }[];
 }
+
+/** A split link works this long: plenty to settle up, not forever on the internet. */
+const LINK_DAYS = 60;
 
 /** Bill splits: who had what, a fair share of tax, and a read-only link to send. */
 export function createSplitService(deps: {
@@ -210,7 +213,7 @@ export function createSplitService(deps: {
 			if (rows.length === 0) throw notFound("Split");
 		},
 
-		/** The read-only page behind a split link: names and amounts only. */
+		/** The read-only page behind a split link: names and amounts only, for a while. */
 		async publicView(token: string): Promise<SplitDto> {
 			const [row] = await db
 				.select({ split, ownerName: user.name })
@@ -219,6 +222,11 @@ export function createSplitService(deps: {
 				.where(eq(split.publicToken, token))
 				.limit(1);
 			if (!row) throw notFound("Split");
+			if (row.split.createdAt.getTime() < Date.now() - LINK_DAYS * 86_400_000)
+				throw new AppError(
+					410,
+					"This split link has ended. Ask the person who split it for the amounts.",
+				);
 			const view = dto(row.split, row.ownerName, false);
 			return {
 				...view,

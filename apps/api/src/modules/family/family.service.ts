@@ -119,6 +119,12 @@ export function createFamilyService(deps: Deps) {
 		if (viewerId === invite.inviterId) return "yours";
 		if (viewerId && (await repo.isConnected(viewerId, invite.inviterId)))
 			return "connected";
+		// An invite sent to an email is for that person only, not whoever got the link.
+		if (viewerId && invite.email) {
+			const viewer = await repo.contact(viewerId);
+			if (viewer?.email.toLowerCase() !== invite.email.toLowerCase())
+				return "someone-else";
+		}
 		return "ok";
 	}
 
@@ -218,6 +224,11 @@ export function createFamilyService(deps: Deps) {
 				);
 			if (state === "connected")
 				throw badRequest("You're already in each other's circle.");
+			if (state === "someone-else")
+				throw new AppError(
+					403,
+					"This invite was sent to a different email. Sign in with that email, or ask for a new link.",
+				);
 			if (state !== "ok")
 				throw badRequest(
 					"This invite has expired or was already used. Ask for a new link.",

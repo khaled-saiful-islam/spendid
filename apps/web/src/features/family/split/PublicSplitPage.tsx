@@ -27,7 +27,7 @@ export function PublicSplitPage({ token }: { token: string }) {
 						</h1>
 						<p className="text-ink-soft">
 							{t(
-								"It may have been deleted. Ask the person who sent it for a new one.",
+								"Links stop working after 60 days, or when the split is deleted. Ask the person who sent it for the amounts.",
 							)}
 						</p>
 					</div>

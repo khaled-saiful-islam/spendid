@@ -1,4 +1,4 @@
-import { createDb, fxRate, user } from "@spendid/db";
+import { createDb, fxRate, split as splitTable, user } from "@spendid/db";
 import type { EmailJob } from "@spendid/emails";
 import type {
 	Category,
@@ -72,6 +72,8 @@ describe.skipIf(!url)("family circle (real database)", () => {
 			body: res.json() as { success: boolean; data: T; error?: string },
 		};
 	};
+	// Unique per run: the test database keeps earlier runs' people.
+	const adamEmail = () => `adam-${adam}@example.com`;
 	const tokenOf = (invite: InviteCreated) =>
 		invite.url.split("/join/")[1] ?? "";
 	const spend = (
@@ -103,7 +105,10 @@ describe.skipIf(!url)("family circle (real database)", () => {
 		stranger = await createPerson(db);
 		admin = await createPerson(db, { role: "admin" });
 		await db.update(user).set({ name: "Maya" }).where(eq(user.id, maya));
-		await db.update(user).set({ name: "Adam" }).where(eq(user.id, adam));
+		await db
+			.update(user)
+			.set({ name: "Adam", email: adamEmail() })
+			.where(eq(user.id, adam));
 
 		const publish = async (userId: string, event: unknown) => {
 			events.push({ userId, event });
@@ -170,12 +175,12 @@ describe.skipIf(!url)("family circle (real database)", () => {
 		const created = await call<InviteCreated>(maya, "POST", "/family/invites", {
 			relation: "parent",
 			level: "totals",
-			email: "adam@example.com",
+			email: adamEmail(),
 		});
 		expect(created.status).toBe(201);
 		expect(emails.at(-1)).toMatchObject({
 			type: "family-invite",
-			to: "adam@example.com",
+			to: adamEmail(),
 			inviterName: "Maya",
 		});
 		const token = tokenOf(created.body.data);
@@ -197,6 +202,23 @@ describe.skipIf(!url)("family circle (real database)", () => {
 			level: "totals",
 		});
 		expect(own.status).toBe(400);
+
+		// Sent to Adam's email: someone else holding the link can't use it.
+		const forwarded = await call<InvitePreview>(
+			stranger,
+			"GET",
+			`/family/invites/${token}`,
+		);
+		expect(forwarded.body.data.state).toBe("someone-else");
+		const taken = await call(
+			stranger,
+			"POST",
+			`/family/invites/${token}/accept`,
+			{
+				level: "totals",
+			},
+		);
+		expect(taken.status).toBe(403);
 
 		const before = await call<FamilyOverview>(adam, "GET", "/family");
 		expect(before.body.data.people).toHaveLength(0);
@@ -454,6 +476,16 @@ describe.skipIf(!url)("family circle (real database)", () => {
 			paid: true,
 		});
 		expect(paid.body.data.paid).toEqual(["adam"]);
+
+		// The read-only link ends after a while; the split itself stays for its people.
+		await db
+			.update(splitTable)
+			.set({ createdAt: new Date(Date.now() - 61 * 86_400_000) })
+			.where(eq(splitTable.id, split.id));
+		const old = await call(null, "GET", `/splits/public/${token}`);
+		expect(old.status).toBe(410);
+		const stillMine = await call<SplitDto[]>(adam, "GET", "/splits/with-me");
+		expect(stillMine.body.data.map((s) => s.id)).toContain(split.id);
 	});
 
 	it("keeps admins out", async () => {

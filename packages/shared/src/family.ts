@@ -161,7 +161,8 @@ export interface InvitePreview {
 	level: ShareLevel;
 	expiresAt: string;
 	/** "ok" or why it can't be used. */
-	state: "ok" | "expired" | "used" | "yours" | "connected";
+	/** "someone-else": sent to another email than the viewer's. */
+	state: "ok" | "expired" | "used" | "yours" | "connected" | "someone-else";
 }
 
 /** Exactly what one person can see of another's money — built the same way for the preview. */

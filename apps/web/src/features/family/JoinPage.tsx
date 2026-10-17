@@ -26,6 +26,9 @@ const STATE_TEXT = {
 		"This is your own invite. Send the link to the person you're inviting.",
 	),
 	connected: t("You're already in each other's circle."),
+	"someone-else": t(
+		"This invite was sent to a different email. Sign in with that email, or ask them for a new link.",
+	),
 } as const;
 
 /** Opening an invite link: see who's asking and what they share, then say yes. */
