@@ -166,3 +166,69 @@ test("a deleted chat stays deleted after a reload", async ({ page, isMobile }) =
 	const list = await (await page.request.get("/api/ask/threads")).json();
 	expect((list.data as { title: string }[]).map((t) => t.title)).not.toContain("Playwright chat to delete");
 });
+
+test("a card from Ask fixes an expense, and Undo puts it back", async ({ page, isMobile }) => {
+	const shop = "Playwright Ask shop";
+	await removeLeftovers(page.request, shop);
+	const cats = (await (await page.request.get("/api/categories")).json()).data as { id: string; slug: string }[];
+	const transport = cats.find((c) => c.slug === "transport");
+	const created = await page.request.post("/api/transactions", {
+		data: { amountMinor: 1800, currency: "MYR", categoryId: transport?.id, merchant: shop },
+	});
+	expect(created.ok()).toBe(true);
+	const tx = (await created.json()).data as { id: string; occurredAt: string };
+	const day = tx.occurredAt.slice(0, 10);
+	const look = { merchant: shop, amountMinor: 1800, categoryName: "Transport", day };
+	const id = crypto.randomUUID();
+	await page.request.put(`/api/ask/threads/${id}`, {
+		data: {
+			messages: [
+				{ id: "u1", role: "user", text: "Playwright: my grab was 15", steps: [], charts: [], drafts: null, status: "done" },
+				{
+					id: "a1",
+					role: "assistant",
+					text: "Here's the fix, ready to confirm.",
+					steps: [],
+					charts: [],
+					drafts: null,
+					status: "done",
+					actions: [
+						{
+							status: "ready",
+							action: {
+								kind: "expense-edit",
+								transactionId: tx.id,
+								currency: "MYR",
+								before: look,
+								after: { ...look, amountMinor: 1500 },
+								patch: { amountMinor: 1500 },
+								undo: { amountMinor: 1800 },
+							},
+						},
+					],
+				},
+			],
+		},
+	});
+	const amount = async () => {
+		const res = await page.request.get("/api/transactions", { params: { q: shop, limit: 5 } });
+		const items = (await res.json()).data.items as { id: string; amountMinor: number }[];
+		return items.find((i) => i.id === tx.id)?.amountMinor;
+	};
+
+	await page.goto("/app/ask");
+	if (isMobile) await page.getByRole("button", { name: /^Chats/ }).click();
+	await page.getByRole("listitem").filter({ hasText: "Playwright: my grab was 15" }).first().click();
+	const card = page.getByRole("region", { name: "Fix an expense" });
+	await expect(card.getByText("RM 15.00")).toBeVisible();
+	await card.getByRole("button", { name: "Save change" }).click();
+	await expect(card.getByText("Expense updated.")).toBeVisible();
+	await expect.poll(amount).toBe(1500);
+	await card.getByRole("button", { name: "Undo" }).click();
+	await expect(card.getByText("Undone. It's back as it was.")).toBeVisible();
+	await expect.poll(amount).toBe(1800);
+
+	await page.request.delete(`/api/transactions/${tx.id}`, { headers: { "content-type": "application/json" }, data: {} });
+	await page.request.delete(`/api/ask/threads/${id}`);
+});
+

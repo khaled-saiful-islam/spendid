@@ -15,11 +15,18 @@ export interface AskDeps {
 
 const IdParams = z.object({ id: z.uuid("Unknown chat") });
 
-function messageOf(error: unknown): string {
+/**
+ * What to tell the person when an answer fails. Expected failures (limits, bad input) keep
+ * their own words, also when the agent wraps them; anything else stays vague.
+ */
+export function messageOf(error: unknown): string {
 	if (error instanceof ZodError)
 		return error.issues[0]?.message ?? "Check your question and try again.";
-	const status = (error as { statusCode?: number }).statusCode;
-	if (status && status < 500 && error instanceof Error) return error.message;
+	for (let e: unknown = error, depth = 0; e && depth < 5; depth++) {
+		const status = (e as { statusCode?: number }).statusCode;
+		if (status && status < 500 && e instanceof Error) return e.message;
+		e = (e as { cause?: unknown }).cause;
+	}
 	return "The assistant had a problem answering. Try again in a moment.";
 }
 
