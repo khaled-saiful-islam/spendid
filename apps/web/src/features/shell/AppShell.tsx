@@ -54,7 +54,10 @@ function MeLink({ withName }: { withName?: boolean }) {
 	return (
 		<Link
 			to="/app/me"
-			className="flex min-w-0 items-center gap-3 rounded-full p-1 pr-3 hover:bg-surface-2 data-[status=active]:bg-surface-2"
+			className={cn(
+				"flex min-w-0 items-center gap-3 hover:bg-surface-2 data-[status=active]:bg-surface-2",
+				withName ? "w-full rounded-tile p-2" : "rounded-full p-1",
+			)}
 		>
 			<span
 				aria-hidden="true"
@@ -62,12 +65,22 @@ function MeLink({ withName }: { withName?: boolean }) {
 			>
 				{initials || "?"}
 			</span>
-			<span
-				className={withName ? "min-w-0 font-semibold break-words" : "sr-only"}
-			>
-				{name}
-			</span>
-			<span className="sr-only">, {t("profile and settings")}</span>
+			{withName ? (
+				<span className="min-w-0 flex-1">
+					<span className="block leading-snug font-semibold [overflow-wrap:anywhere]">
+						{name}
+					</span>
+					<span className="block text-[0.8rem] text-ink-soft">
+						<span className="sr-only">, </span>
+						{t("Profile and settings")}
+					</span>
+				</span>
+			) : (
+				<>
+					<span className="sr-only">{name}</span>
+					<span className="sr-only">, {t("profile and settings")}</span>
+				</>
+			)}
 		</Link>
 	);
 }
@@ -105,9 +118,9 @@ export function AppShell() {
 					))}
 					<NavLink item={ASK_ITEM} />
 				</nav>
-				<div className="mt-auto flex items-center justify-between gap-2">
+				<div className="mt-auto rounded-panel border border-line bg-surface p-1.5">
 					<MeLink withName />
-					<div className="flex items-center">
+					<div className="mt-1 flex items-center justify-end gap-1 border-t border-line px-1 pt-1.5">
 						<HideMoneyToggle />
 						<ThemeToggle />
 					</div>

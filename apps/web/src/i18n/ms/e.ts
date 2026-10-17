@@ -91,4 +91,29 @@ export const msE: Record<string, string> = {
 	Voice: "Suara",
 	Receipts: "Resit",
 	"Shop names": "Nama kedai",
+	"Profile and settings": "Profil dan tetapan",
+	"Add your monthly income any time to get your daily number.":
+		"Tambah pendapatan bulanan anda bila-bila masa untuk mendapat angka harian anda.",
+	"Daily amount": "Jumlah harian",
+	"It updates every time you spend":
+		"Ia dikemas kini setiap kali anda berbelanja",
+	"Kept aside for savings first": "Diketepikan untuk simpanan dahulu",
+	"Let's go": "Jom mula",
+	"Shared over the {n} days left this month":
+		"Dibahagikan kepada {n} hari yang tinggal bulan ini",
+	"Today you can safely spend": "Hari ini anda boleh berbelanja dengan selamat",
+	"Type your pay to see it sorted":
+		"Taip gaji anda untuk melihat ia diasingkan",
+	"Your month, sorted": "Bulan anda, tersusun",
+	"Your pay goes here next": "Gaji anda akan dimasukkan di sini seterusnya",
+	"a day": "sehari",
+	"comes in each month": "masuk setiap bulan",
+	"then about {amount} a day": "kemudian kira-kira {amount} sehari",
+	"{amount} kept aside for bills still due":
+		"{amount} diketepikan untuk bil yang belum dibayar",
+	"{amount} kept aside for savings first":
+		"{amount} diketepikan untuk simpanan dahulu",
+	"{name}'s month, sorted": "Bulan {name}, tersusun",
+	"{name}, today you can safely spend":
+		"{name}, hari ini anda boleh berbelanja dengan selamat",
 };
