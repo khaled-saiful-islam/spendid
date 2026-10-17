@@ -72,6 +72,11 @@ export function createAskAgent(deps: AgentDeps) {
 		signal: AbortSignal,
 	): AsyncGenerator<AskEvent> {
 		const input = AskRequestSchema.parse(raw);
+		// One zero-token row per question, so the allowance view can say "about N questions left".
+		await deps.guard.record(userId, {
+			feature: "ask-question",
+			model: deps.ilmu.model,
+		});
 		const [p] = await deps.db
 			.select()
 			.from(profile)

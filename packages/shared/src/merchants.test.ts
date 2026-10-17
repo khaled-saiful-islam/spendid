@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cleanMerchant, merchantKey } from "./merchants";
+import { cleanMerchant, merchantKey, sameMerchant } from "./merchants";
 
 describe("cleanMerchant", () => {
 	it.each([
@@ -27,5 +27,15 @@ describe("merchantKey", () => {
 	it("treats variants of one shop the same", () => {
 		expect(merchantKey("TEALIVE @ KLCC")).toBe(merchantKey("Tealive"));
 		expect(merchantKey("Jaya Grocer Sdn Bhd")).toBe("jaya grocer");
+	});
+});
+
+describe("sameMerchant", () => {
+	it("matches a name and a longer version of it, not look-alikes", () => {
+		expect(sameMerchant("unifi", "unifi internet")).toBe(true);
+		expect(sameMerchant("netflix", "netflix")).toBe(true);
+		expect(sameMerchant("celcom postpaid", "celcomdigi")).toBe(false);
+		expect(sameMerchant("grab", "grabfood")).toBe(false);
+		expect(sameMerchant("", "grab")).toBe(false);
 	});
 });

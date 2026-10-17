@@ -6,6 +6,7 @@ import {
 	user,
 	warranty,
 } from "@spendid/db";
+import { daysUntil } from "@spendid/shared";
 import {
 	and,
 	desc,
@@ -20,6 +21,7 @@ import {
 import { recurringFor } from "../modules/insights/charges";
 import type { InsightsService } from "../modules/insights/insights.service";
 import type { SummaryService } from "../modules/money/summary.service";
+import type { SubscriptionService } from "../modules/subscriptions/subscriptions.service";
 import { localParts, type Notifier } from "./notifier";
 
 const BILL_NOTICE_DAYS = 3;
@@ -47,6 +49,11 @@ export function createDigests(deps: {
 	notifier: Notifier;
 	summary: SummaryService;
 	insights: InsightsService;
+	/**
+	 * The person's own subscriptions: reminders before each due date and a monthly plan.
+	 * A getter, because the subscription service is built after notifications.
+	 */
+	subscriptions?: () => SubscriptionService | undefined;
 }) {
 	const { db } = deps;
 	let sendNow = false;
@@ -173,6 +180,59 @@ export function createDigests(deps: {
 		}
 	}
 
+	/** "Netflix is due in 3 days", once per due date, from the person's reminder setting. */
+	async function subscriptionReminders(
+		userId: string,
+		today: string,
+	): Promise<void> {
+		for (const s of (await deps.subscriptions?.()?.remindersFor(userId)) ??
+			[]) {
+			const days = daysUntil(s.nextDue, today);
+			const when =
+				days === 0 ? "today" : days === 1 ? "tomorrow" : `in ${days} days`;
+			await notifier.notify(userId, {
+				kind: "subscription-due",
+				group: "bills",
+				dedupeKey: `sub:${s.id}:${s.nextDue}`,
+				build: ({ money, appUrl }) => ({
+					subject: `${s.name} is due ${when}`,
+					preview: `${s.amountVaries ? "About " : ""}${money(s.amountMinor, s.currency)} on ${prettyDay(s.nextDue)}.`,
+					heading: `${s.name} is due ${when}`,
+					body: `${s.amountVaries ? "About " : ""}${money(s.amountMinor, s.currency)} on ${prettyDay(s.nextDue)}. It's already kept aside in your safe-to-spend. Once it's paid, tap Mark paid and it's logged for you.`,
+					action: "Open subscriptions",
+					url: `${appUrl}/app/subscriptions`,
+				}),
+			});
+		}
+	}
+
+	/** On the 1st: everything due this month, worked out up front. */
+	async function subscriptionMonth(
+		userId: string,
+		today: string,
+	): Promise<void> {
+		const o = await deps.subscriptions?.()?.overview(userId);
+		if (!o || o.thisMonth.length === 0) return;
+		const names = new Map(o.active.map((s) => [s.id, s.name]));
+		await notifier.notify(userId, {
+			kind: "subscriptions-month",
+			group: "bills",
+			dedupeKey: today.slice(0, 7),
+			build: ({ money, appUrl }) => ({
+				subject: `This month's subscriptions: ${money(o.thisMonthMinor, o.currency)}`,
+				preview: `${o.thisMonth.length} payments, already kept aside.`,
+				heading: "Your subscriptions this month",
+				body: `${o.thisMonth.length} payments, ${money(o.thisMonthMinor, o.currency)} in all. It's already kept aside in your safe-to-spend, and you'll get a reminder before each one.`,
+				rows: o.thisMonth.slice(0, 12).map((p) => ({
+					label: `${prettyDay(p.day)}: ${names.get(p.subscriptionId) ?? "Subscription"}`,
+					value: money(p.amountMinor, o.currency),
+				})),
+				action: "Open subscriptions",
+				url: `${appUrl}/app/subscriptions`,
+			}),
+		});
+	}
+
 	async function warranties(userId: string, today: string): Promise<void> {
 		for (const days of WARRANTY_NOTICE_DAYS) {
 			const ending = await db
@@ -261,8 +321,11 @@ export function createDigests(deps: {
 				if (local.hour === 9)
 					jobs.push(
 						bills(p.id, local.date, p.currency),
+						subscriptionReminders(p.id, local.date),
 						warranties(p.id, local.date),
 					);
+				if (local.day === 1 && local.hour === 8)
+					jobs.push(subscriptionMonth(p.id, local.date));
 				if (local.day === 1 && local.hour === 9)
 					jobs.push(wrapped(p.id, local.date));
 				if (jobs.length) {
@@ -285,6 +348,8 @@ export function createDigests(deps: {
 			await Promise.allSettled([
 				weekly(userId, p.timeZone, local.date, p.currency),
 				bills(userId, local.date, p.currency),
+				subscriptionReminders(userId, local.date),
+				subscriptionMonth(userId, local.date),
 				warranties(userId, local.date),
 				wrapped(userId, local.date),
 			]);

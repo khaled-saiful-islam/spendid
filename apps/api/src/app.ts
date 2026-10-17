@@ -37,6 +37,10 @@ import {
 	type ReceiptDeps,
 	receiptRoutes,
 } from "./modules/receipts/receipts.routes";
+import {
+	type SubscriptionDeps,
+	subscriptionRoutes,
+} from "./modules/subscriptions/subscriptions.routes";
 import { type NotifyDeps, notifyRoutes } from "./notify/notify.routes";
 
 export interface AppDeps {
@@ -59,6 +63,7 @@ export interface AppDeps {
 	notify?: NotifyDeps;
 	delight?: DelightDeps;
 	privacy?: PrivacyDeps;
+	subscriptions?: SubscriptionDeps;
 }
 
 /** Builds the Fastify app without listening, so tests can `inject` requests. */
@@ -91,6 +96,8 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 			if (deps.notify) await api.register(notifyRoutes, deps.notify);
 			if (deps.delight) await api.register(delightRoutes, deps.delight);
 			if (deps.privacy) await api.register(privacyRoutes, deps.privacy);
+			if (deps.subscriptions)
+				await api.register(subscriptionRoutes, deps.subscriptions);
 		},
 		{ prefix: "/api" },
 	);

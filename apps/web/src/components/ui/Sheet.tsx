@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { type ReactNode, useEffect, useId, useRef } from "react";
+import { createPortal } from "react-dom";
 import { t } from "@/i18n";
 
 interface SheetProps {
@@ -10,7 +11,10 @@ interface SheetProps {
 	children: ReactNode;
 }
 
-/** Bottom sheet on phones, centred dialog on larger screens. Esc and backdrop close it. */
+/**
+ * Bottom sheet on phones, centred dialog on larger screens. Esc and backdrop close it.
+ * Rendered into <body>, so a blurred or transformed parent can't trap it.
+ */
 export function Sheet({ open, onClose, title, children }: SheetProps) {
 	const titleId = useId();
 	const panelRef = useRef<HTMLDivElement>(null);
@@ -34,7 +38,7 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
 		};
 	}, [open, onClose]);
 
-	return (
+	return createPortal(
 		<AnimatePresence>
 			{open && (
 				<div className="fixed inset-0 z-50 grid items-end sm:place-items-center sm:p-6">
@@ -78,6 +82,7 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
 					</motion.div>
 				</div>
 			)}
-		</AnimatePresence>
+		</AnimatePresence>,
+		document.body,
 	);
 }

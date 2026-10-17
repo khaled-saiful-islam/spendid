@@ -2,7 +2,7 @@ import type { ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/cn";
 
 type Variant = "coin" | "ink" | "ghost";
-type Size = "md" | "lg";
+type Size = "sm" | "md" | "lg";
 
 const variants: Record<Variant, string> = {
 	coin: "bg-marigold text-plum-900 shadow-coin hover:bg-marigold-deep",
@@ -11,6 +11,7 @@ const variants: Record<Variant, string> = {
 };
 
 const sizes: Record<Size, string> = {
+	sm: "h-10 px-4 text-[0.9rem]",
 	md: "h-11 px-5 text-[0.95rem]",
 	lg: "h-14 px-7 text-[1.05rem]",
 };

@@ -14,6 +14,7 @@ import {
 	receipt,
 	shareGrant,
 	split,
+	subscription,
 	transaction,
 	user,
 	warranty,
@@ -73,6 +74,7 @@ warranties.json      Warranty reminders
 wishlist.json        Impulse-pause items and what you decided
 check-ins.json       Nightly check-ins
 ask-chats.json       Your saved Ask Spendid chats
+subscriptions.json   Subscriptions and regular bills you added
 family.json          Your family circle: who, how you're related, what each side shares
 splits.json          Bills you split
 shops.json           Shop names Spendid learned and their usual category
@@ -236,6 +238,12 @@ export async function buildArchive(
 		),
 		"check-ins.json": json(
 			await db.select().from(checkIn).where(eq(checkIn.userId, userId)),
+		),
+		"subscriptions.json": json(
+			await db
+				.select()
+				.from(subscription)
+				.where(eq(subscription.userId, userId)),
 		),
 		"ask-chats.json": json(
 			await db

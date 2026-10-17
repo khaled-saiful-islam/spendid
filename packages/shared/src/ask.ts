@@ -112,6 +112,11 @@ export interface AskThreadSummary {
 	title: string;
 	messageCount: number;
 	updatedAt: string;
+	/** The last thing said, or the matching words when searching. */
+	preview: string;
+	hasChart: boolean;
+	/** Something was created from this chat (a goal, a limit, expenses…). */
+	madeSomething: boolean;
 }
 
 export interface AskThread extends AskThreadSummary {

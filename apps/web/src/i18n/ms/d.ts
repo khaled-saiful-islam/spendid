@@ -525,4 +525,42 @@ export const msD: Record<string, string> = {
 	"{n} messages, {when}": "{n} mesej, {when}",
 	"{spent} spent this month, {left} left.":
 		"{spent} dibelanjakan bulan ini, baki {left}.",
+	"1 phrase heard": "1 frasa didengar",
+	"1 question": "1 soalan",
+	"1 receipt read": "1 resit dibaca",
+	"1 shop matched": "1 kedai dipadankan",
+	"A fresh allowance starts on {date}, in {n} days.":
+		"Peruntukan baharu bermula pada {date}, dalam {n} hari.",
+	"A fresh allowance starts tomorrow.": "Peruntukan baharu bermula esok.",
+	"AI features are paused for a moment for everyone. Typing still works.":
+		"Ciri AI dijeda seketika untuk semua orang. Menaip masih berfungsi.",
+	"AI is turned off for your account. Typing expenses still works.":
+		"AI dimatikan untuk akaun anda. Menaip perbelanjaan masih berfungsi.",
+	"AI paused": "AI dijeda",
+	"About {n}": "Kira-kira {n}",
+	"Ask, voice and receipts are back on {date}.":
+		"Tanya, suara dan resit kembali pada {date}.",
+	Chart: "Carta",
+	"Chat deleted.": "Sembang dipadam.",
+	Chats: "Sembang",
+	"Clear search": "Kosongkan carian",
+	Earlier: "Lebih awal",
+	"Earlier this week": "Awal minggu ini",
+	"No chats mention “{term}”.": "Tiada sembang yang menyebut “{term}”.",
+	"Or about {voice} voice notes, or {receipts} receipts. Mix them however you like.":
+		"Atau kira-kira {voice} nota suara, atau {receipts} resit. Campurkan ikut suka anda.",
+	"Pick up where you left off": "Sambung dari tempat anda berhenti",
+	"Saved something": "Ada yang disimpan",
+	"Search your chats": "Cari sembang anda",
+	"Searching…": "Mencari…",
+	"Typing expenses never uses AI, so you can always log. Only you see this; Spendid counts usage, never what you asked.":
+		"Menaip perbelanjaan tidak pernah menggunakan AI, jadi anda sentiasa boleh mencatat. Hanya anda yang nampak ini; Spendid mengira penggunaan, bukan apa yang anda tanya.",
+	"Used up": "Sudah habis",
+	"Your AI this month": "AI anda bulan ini",
+	"more questions this month": "soalan lagi bulan ini",
+	"{n} phrases heard": "{n} frasa didengar",
+	"{n} questions": "{n} soalan",
+	"{n} questions left": "Baki {n} soalan",
+	"{n} receipts read": "{n} resit dibaca",
+	"{n} shops matched": "{n} kedai dipadankan",
 };

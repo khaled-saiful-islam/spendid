@@ -54,4 +54,9 @@ export async function captureRoutes(
 		success: true,
 		data: await deps.guard.status(req.user?.id ?? ""),
 	}));
+
+	app.get("/ai/usage", async (req) => ({
+		success: true,
+		data: await deps.guard.usage(req.user?.id ?? ""),
+	}));
 }

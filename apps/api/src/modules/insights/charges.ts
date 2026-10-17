@@ -1,10 +1,19 @@
-import { category, type Db, profile, transaction } from "@spendid/db";
 import {
+	category,
+	type Db,
+	profile,
+	subscription,
+	transaction,
+} from "@spendid/db";
+import {
+	type BillingCycle,
 	billsStillDue,
 	type Charge,
 	detectRecurring,
+	dueDatesUntil,
 	merchantKey,
 	type RecurringOverview,
+	sameMerchant,
 } from "@spendid/shared";
 import { and, eq, gt, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { monthBounds } from "../money/summary.service";
@@ -61,6 +70,32 @@ export async function loadCharges(
 	}));
 }
 
+/** Adds every unpaid payment of the person's own subscriptions due by month end (overdue counts as today). */
+function withSubscriptions(
+	detected: RecurringOverview["billsDue"],
+	subs: {
+		name: string;
+		amountMinor: number;
+		nextDue: string;
+		cycle: BillingCycle;
+		dueDay: number;
+	}[],
+	today: string,
+	monthEnd: string,
+): RecurringOverview["billsDue"] {
+	const items = [
+		...detected.items,
+		...subs.flatMap((s) =>
+			dueDatesUntil(s, monthEnd).map((day) => ({
+				merchant: s.name,
+				day: day < today ? today : day,
+				amountMinor: s.amountMinor,
+			})),
+		),
+	].sort((a, b) => a.day.localeCompare(b.day));
+	return { minor: items.reduce((n, i) => n + i.amountMinor, 0), items };
+}
+
 /** Subscriptions and bills, plus what's still due this month. Used by Insights and safe-to-spend. */
 export async function recurringFor(
 	db: Db,
@@ -71,7 +106,23 @@ export async function recurringFor(
 		loadCharges(db, userId, timeZone),
 		monthBounds(db, timeZone),
 	]);
-	const found = detectRecurring(charges, bounds.today);
+	const subs = await db
+		.select({
+			name: subscription.name,
+			amountMinor: subscription.amountMinor,
+			nextDue: subscription.nextDue,
+			cycle: subscription.cycle,
+			dueDay: subscription.dueDay,
+		})
+		.from(subscription)
+		.where(
+			and(eq(subscription.userId, userId), isNull(subscription.cancelledAt)),
+		);
+	// Subscriptions the person added win over the same shop found in their spending.
+	const added = subs.map((s) => merchantKey(s.name));
+	const found = detectRecurring(charges, bounds.today).filter(
+		(r) => !added.some((k) => sameMerchant(k, r.merchantKey)),
+	);
 	const cats = found.length
 		? await db
 				.select({
@@ -103,6 +154,11 @@ export async function recurringFor(
 			};
 		}),
 		monthlyMinor: found.reduce((s, r) => s + r.monthlyMinor, 0),
-		billsDue: billsStillDue(found, bounds.today, monthEnd),
+		billsDue: withSubscriptions(
+			billsStillDue(found, bounds.today, monthEnd),
+			subs,
+			bounds.today,
+			monthEnd,
+		),
 	};
 }

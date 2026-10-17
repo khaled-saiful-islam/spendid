@@ -3,6 +3,7 @@ import { and, eq, gte, sql } from "drizzle-orm";
 import type { Redis } from "ioredis";
 import { ServiceError as AppError } from "../errors";
 import type { AppSettingsStore } from "../settings";
+import { type AiUsage, summariseAiUsage } from "@spendid/shared";
 
 /** Spoken seconds are billed as tokens so one allowance covers every AI feature. */
 export const AUDIO_TOKENS_PER_SECOND = 25;
@@ -77,8 +78,31 @@ export function createAiGuard(deps: {
 		};
 	}
 
+	/** This month's ledger by feature, in everyday terms, for the person's own allowance view. */
+	async function usage(userId: string): Promise<AiUsage> {
+		const s = await status(userId);
+		const now = new Date();
+		const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+		const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+		const rows = await db
+			.select({
+				feature: aiUsage.feature,
+				tokens: sql<number>`coalesce(sum(${aiUsage.billedTokens}), 0)::int`,
+				rows: sql<number>`count(*)::int`,
+			})
+			.from(aiUsage)
+			.where(and(eq(aiUsage.userId, userId), gte(aiUsage.createdAt, start)))
+			.groupBy(aiUsage.feature);
+		return {
+			...s,
+			resetsOn: next.toISOString().slice(0, 10),
+			...summariseAiUsage(rows, s.usedTokens, s.limitTokens),
+		};
+	}
+
 	return {
 		status,
+		usage,
 
 		/** Throws a plain-language AppError when AI can't be used right now. */
 		async assertAllowed(userId: string): Promise<void> {

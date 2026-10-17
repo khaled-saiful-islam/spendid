@@ -1,4 +1,4 @@
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import {
 	ArrowUp,
 	Check,
@@ -11,13 +11,13 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
-import { api } from "@/lib/http";
 import { meQuery } from "@/lib/me";
 import { VoiceReview } from "../voice/VoiceReview";
 import { ActionCards, type ActionStatus } from "./ActionCards";
+import { AiAllowance } from "./AiAllowance";
 import { AnswerText } from "./AnswerText";
 import { AskWelcome } from "./AskWelcome";
-import { ChatHistory } from "./ChatHistory";
+import { ChatsDrawerButton, ChatsPanel, RecentChats } from "./ChatsPanel";
 import { ChartView } from "./charts/ChartView";
 import { type CoinState, SpendidCoin } from "./SpendidCoin";
 import { ThinkingTrail } from "./ThinkingTrail";
@@ -28,65 +28,6 @@ const FOLLOW_UPS = [
 	t("Break it down by category"),
 	t("Where could I spend less?"),
 ];
-
-interface AiStatus {
-	enabled: boolean;
-	usedTokens: number;
-	limitTokens: number;
-}
-
-const aiStatusQuery = {
-	queryKey: ["ai-status"],
-	queryFn: () => api<AiStatus>("/api/ai/status"),
-	staleTime: 30_000,
-};
-
-/** A small ring: how much of this month's AI allowance is used. */
-function AllowanceRing() {
-	const { data } = useQuery(aiStatusQuery);
-	if (!data) return null;
-	const pct =
-		data.limitTokens > 0
-			? Math.min(100, Math.round((data.usedTokens / data.limitTokens) * 100))
-			: 100;
-	const r = 15;
-	const c = 2 * Math.PI * r;
-	return (
-		<span
-			className="inline-flex items-center gap-1.5 text-[0.82rem] text-ink-soft"
-			title={t("AI allowance used this month")}
-		>
-			<svg
-				viewBox="0 0 36 36"
-				className="size-6 shrink-0 -rotate-90"
-				aria-hidden="true"
-			>
-				<circle
-					cx="18"
-					cy="18"
-					r={r}
-					fill="none"
-					stroke="var(--surface-2)"
-					strokeWidth="4"
-				/>
-				<motion.circle
-					cx="18"
-					cy="18"
-					r={r}
-					fill="none"
-					stroke={pct > 85 ? "var(--color-coral)" : "var(--color-jade)"}
-					strokeWidth="4"
-					strokeLinecap="round"
-					strokeDasharray={c}
-					initial={{ strokeDashoffset: c }}
-					animate={{ strokeDashoffset: c * (1 - pct / 100) }}
-					transition={{ duration: 1, ease: "easeOut" }}
-				/>
-			</svg>
-			<span>{data.enabled ? `${pct}% AI used` : t("AI is off")}</span>
-		</span>
-	);
-}
 
 /** Starts a fresh conversation: a gradient coin icon that spins on hover, with a clear label. */
 function NewChatButton({ onClick }: { onClick: () => void }) {
@@ -309,110 +250,124 @@ export function AskPage({ initialQuestion }: { initialQuestion?: string }) {
 		void chat.send(q);
 	}
 
+	const threads = {
+		currentId: chat.threadId,
+		onOpen: chat.open,
+		onDelete: chat.remove,
+	};
+
 	return (
-		<div className="relative flex min-h-[calc(100dvh-10rem)] flex-col">
-			<Aurora />
-			<div className="sticky top-0 z-20 -mx-4 flex flex-wrap items-center justify-between gap-3 bg-bg/80 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6">
-				{chat.messages.length > 0 ? (
-					<div className="flex min-w-0 items-center gap-3">
-						<SpendidCoin size="md" state={coinState} />
-						<div className="min-w-0">
-							<h1 className="text-[1.25rem] leading-tight font-extrabold">
-								{t("Ask Spendid")}
-							</h1>
-							<AllowanceRing />
+		<div className="lg:grid lg:grid-cols-[17rem_minmax(0,1fr)] lg:gap-8">
+			<aside
+				aria-labelledby="chats-rail"
+				className="sticky top-6 hidden max-h-[calc(100dvh-3rem)] self-start overflow-y-auto overscroll-contain rounded-panel border border-line bg-surface/80 p-3 backdrop-blur lg:block"
+			>
+				<h2
+					id="chats-rail"
+					className="px-2 pt-1 pb-3 font-display text-[1.2rem] font-bold"
+				>
+					{t("Your chats")}
+				</h2>
+				<ChatsPanel {...threads} />
+			</aside>
+			<div className="relative flex min-h-[calc(100dvh-10rem)] flex-col">
+				<Aurora />
+				<div className="sticky top-0 z-20 -mx-4 flex flex-wrap items-center justify-between gap-3 bg-bg/80 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6">
+					{chat.messages.length > 0 ? (
+						<div className="flex min-w-0 items-center gap-3">
+							<SpendidCoin size="md" state={coinState} />
+							<div className="min-w-0">
+								<h1 className="text-[1.25rem] leading-tight font-extrabold">
+									{t("Ask Spendid")}
+								</h1>
+								<AiAllowance />
+							</div>
 						</div>
+					) : (
+						<AiAllowance />
+					)}
+					<div className="flex flex-wrap items-center justify-end gap-2">
+						<ChatsDrawerButton {...threads} />
+						{chat.messages.length > 0 && <NewChatButton onClick={chat.clear} />}
 					</div>
-				) : (
-					<span />
-				)}
-				<div className="flex flex-wrap items-center justify-end gap-2">
-					<ChatHistory
-						currentId={chat.threadId}
-						onOpen={chat.open}
-						onDelete={chat.remove}
-					/>
-					{chat.messages.length > 0 && <NewChatButton onClick={chat.clear} />}
 				</div>
-			</div>
 
-			<div className="flex-1 space-y-5 py-6">
-				{chat.messages.length === 0 ? (
-					<>
-						<AskWelcome name={firstName} onAsk={(q) => void chat.send(q)} />
-						<div className="flex justify-center pt-2">
-							<AllowanceRing />
-						</div>
-					</>
-				) : (
-					<AnimatePresence initial={false}>
-						{chat.messages.map((m, i) => (
-							<Message
-								key={m.id}
-								m={m}
-								question={chat.messages[i - 1]?.text ?? ""}
-								last={i === chat.messages.length - 1}
-								onDraftsSaved={() => chat.markDraftsSaved(m.id)}
-								onResolveAction={(index, status) =>
-									chat.resolveAction(m.id, index, status)
-								}
-								onAsk={(q) => void chat.send(q)}
+				<div className="flex-1 space-y-5 py-6">
+					{chat.messages.length === 0 ? (
+						<>
+							<AskWelcome name={firstName} onAsk={(q) => void chat.send(q)} />
+							<RecentChats onOpen={chat.open} />
+						</>
+					) : (
+						<AnimatePresence initial={false}>
+							{chat.messages.map((m, i) => (
+								<Message
+									key={m.id}
+									m={m}
+									question={chat.messages[i - 1]?.text ?? ""}
+									last={i === chat.messages.length - 1}
+									onDraftsSaved={() => chat.markDraftsSaved(m.id)}
+									onResolveAction={(index, status) =>
+										chat.resolveAction(m.id, index, status)
+									}
+									onAsk={(q) => void chat.send(q)}
+								/>
+							))}
+						</AnimatePresence>
+					)}
+					<div ref={endRef} className="scroll-mb-40" />
+				</div>
+
+				<form onSubmit={onSubmit} className="sticky bottom-24 z-20 md:bottom-4">
+					<div className="rounded-[1.75rem] bg-linear-to-r from-plum-500 via-coral to-marigold p-[2px] shadow-lift transition-shadow focus-within:shadow-[0_0_0_6px_rgb(122_79_196/0.18),0_18px_40px_-18px_rgb(42_20_70/0.45)]">
+						<div className="flex items-end gap-2 rounded-[calc(1.75rem-2px)] bg-surface p-1.5 pl-4">
+							<Sparkles
+								className="mb-3 size-5 shrink-0 text-plum-500"
+								aria-hidden="true"
 							/>
-						))}
-					</AnimatePresence>
-				)}
-				<div ref={endRef} className="scroll-mb-40" />
-			</div>
-
-			<form onSubmit={onSubmit} className="sticky bottom-24 z-20 md:bottom-4">
-				<div className="rounded-[1.75rem] bg-linear-to-r from-plum-500 via-coral to-marigold p-[2px] shadow-lift transition-shadow focus-within:shadow-[0_0_0_6px_rgb(122_79_196/0.18),0_18px_40px_-18px_rgb(42_20_70/0.45)]">
-					<div className="flex items-end gap-2 rounded-[calc(1.75rem-2px)] bg-surface p-1.5 pl-4">
-						<Sparkles
-							className="mb-3 size-5 shrink-0 text-plum-500"
-							aria-hidden="true"
-						/>
-						<label htmlFor="ask-input" className="sr-only">
-							{t("Your question")}
-						</label>
-						<textarea
-							id="ask-input"
-							rows={1}
-							value={draft}
-							maxLength={500}
-							placeholder={t("Ask or log something…")}
-							onChange={(e) => setDraft(e.target.value)}
-							onKeyDown={(e) => {
-								if (e.key === "Enter" && !e.shiftKey) {
-									e.preventDefault();
-									e.currentTarget.form?.requestSubmit();
-								}
-							}}
-							className="max-h-32 min-h-11 flex-1 resize-none bg-transparent py-2.5 outline-none [field-sizing:content] placeholder:text-ink-soft/70"
-						/>
-						{chat.busy ? (
-							<button
-								type="button"
-								onClick={chat.stop}
-								aria-label={t("Stop")}
-								className="relative grid size-11 shrink-0 place-items-center rounded-full bg-plum-900 text-plum-50 dark:bg-plum-50 dark:text-plum-900"
-							>
-								<span className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-marigold motion-reduce:hidden" />
-								<Square className="size-4" fill="currentColor" />
-							</button>
-						) : (
-							<motion.button
-								type="submit"
-								disabled={!draft.trim()}
-								aria-label={t("Ask")}
-								whileTap={{ scale: 0.9 }}
-								className="grid size-11 shrink-0 place-items-center rounded-full bg-marigold text-plum-900 shadow-coin transition-opacity disabled:opacity-40 disabled:shadow-none"
-							>
-								<ArrowUp className="size-5" strokeWidth={2.5} />
-							</motion.button>
-						)}
+							<label htmlFor="ask-input" className="sr-only">
+								{t("Your question")}
+							</label>
+							<textarea
+								id="ask-input"
+								rows={1}
+								value={draft}
+								maxLength={500}
+								placeholder={t("Ask or log something…")}
+								onChange={(e) => setDraft(e.target.value)}
+								onKeyDown={(e) => {
+									if (e.key === "Enter" && !e.shiftKey) {
+										e.preventDefault();
+										e.currentTarget.form?.requestSubmit();
+									}
+								}}
+								className="max-h-32 min-h-11 flex-1 resize-none bg-transparent py-2.5 outline-none [field-sizing:content] placeholder:text-ink-soft/70"
+							/>
+							{chat.busy ? (
+								<button
+									type="button"
+									onClick={chat.stop}
+									aria-label={t("Stop")}
+									className="relative grid size-11 shrink-0 place-items-center rounded-full bg-plum-900 text-plum-50 dark:bg-plum-50 dark:text-plum-900"
+								>
+									<span className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-marigold motion-reduce:hidden" />
+									<Square className="size-4" fill="currentColor" />
+								</button>
+							) : (
+								<motion.button
+									type="submit"
+									disabled={!draft.trim()}
+									aria-label={t("Ask")}
+									whileTap={{ scale: 0.9 }}
+									className="grid size-11 shrink-0 place-items-center rounded-full bg-marigold text-plum-900 shadow-coin transition-opacity disabled:opacity-40 disabled:shadow-none"
+								>
+									<ArrowUp className="size-5" strokeWidth={2.5} />
+								</motion.button>
+							)}
+						</div>
 					</div>
-				</div>
-			</form>
+				</form>
+			</div>
 		</div>
 	);
 }

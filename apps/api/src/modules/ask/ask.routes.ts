@@ -68,7 +68,10 @@ export async function askRoutes(
 
 	app.get("/ask/threads", async (req) => ({
 		success: true,
-		data: await deps.threads.list(req.user?.id ?? ""),
+		data: await deps.threads.list(
+			req.user?.id ?? "",
+			z.object({ q: z.string().max(80).optional() }).parse(req.query).q,
+		),
 	}));
 
 	app.get("/ask/threads/:id", async (req) => {

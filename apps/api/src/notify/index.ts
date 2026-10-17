@@ -6,6 +6,7 @@ import { Redis } from "ioredis";
 import type { SendEmail } from "../email/outbox";
 import type { InsightsService } from "../modules/insights/insights.service";
 import type { SummaryService } from "../modules/money/summary.service";
+import type { SubscriptionService } from "../modules/subscriptions/subscriptions.service";
 import { createMoneyAlerts } from "./alerts";
 import { createDigests } from "./digests";
 import { createNotifier, type Notifier } from "./notifier";
@@ -45,6 +46,7 @@ export function createNotifications(deps: {
 	appUrl: string;
 	summary: SummaryService;
 	insights: InsightsService;
+	subscriptions?: () => SubscriptionService | undefined;
 }) {
 	const links = createUnsubscribeLinks(deps.secret, deps.appUrl);
 	const notifier = createNotifier({
@@ -58,6 +60,7 @@ export function createNotifications(deps: {
 		notifier,
 		summary: deps.summary,
 		insights: deps.insights,
+		subscriptions: deps.subscriptions,
 	});
 	// BullMQ workers need their own blocking connection.
 	const connection = new Redis(deps.redisUrl, { maxRetriesPerRequest: null });

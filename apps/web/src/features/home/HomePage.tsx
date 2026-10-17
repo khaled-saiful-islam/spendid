@@ -13,6 +13,7 @@ import { CheckInCard } from "../pip/CheckInCard";
 import { PipCorner } from "../pip/PipCorner";
 import { GoalJar } from "../plan/GoalJar";
 import { PendingReceipts } from "../scan/PendingReceipts";
+import { DueSoonCard } from "../subscriptions/DueSoonCard";
 import { AskCard } from "./AskCard";
 import { MonthCard } from "./MonthCard";
 import { SafeCard } from "./SafeCard";
@@ -61,6 +62,8 @@ export function HomePage() {
 			) : (
 				<div className="h-56 animate-pulse rounded-panel bg-surface-2" />
 			)}
+
+			<DueSoonCard />
 
 			<section
 				aria-labelledby="today-title"

@@ -3,7 +3,7 @@ import { ASK_THREAD_MAX_MESSAGES } from "@spendid/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { t } from "@/i18n";
-import { askThreadsApi, streamAsk, threadsQuery } from "@/lib/ask-api";
+import { askThreadsApi, streamAsk, THREADS_KEY } from "@/lib/ask-api";
 import { uuid } from "@/lib/uuid";
 import type { ActionItem, ActionStatus } from "./ActionCards";
 
@@ -109,7 +109,7 @@ export function useAskChat(userId: string) {
 				.then(() => {
 					setSaveFailed(false);
 					return queryClient.invalidateQueries({
-						queryKey: threadsQuery.queryKey,
+						queryKey: THREADS_KEY,
 					});
 				})
 				.catch(() => setSaveFailed(true));
@@ -230,7 +230,7 @@ export function useAskChat(userId: string) {
 	const remove = useCallback(
 		async (id: string) => {
 			await askThreadsApi.remove(id);
-			await queryClient.invalidateQueries({ queryKey: threadsQuery.queryKey });
+			await queryClient.invalidateQueries({ queryKey: THREADS_KEY });
 			if (id === threadId) {
 				setMessages([]);
 				setThreadId(uuid());

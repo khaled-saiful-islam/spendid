@@ -43,6 +43,7 @@ import {
 	createReceiptService,
 	RECEIPT_QUEUE,
 } from "./modules/receipts/receipts.service";
+import { createSubscriptionService } from "./modules/subscriptions/subscriptions.service";
 import { createNotifications } from "./notify";
 
 const env = loadEnv();
@@ -64,6 +65,8 @@ const notifications = createNotifications({
 	appUrl: env.APP_URL,
 	summary,
 	insights,
+	// Built further down (it needs expenses, which need these notifications).
+	subscriptions: () => subscriptionService,
 });
 const auth = createAuth({
 	env,
@@ -93,7 +96,11 @@ const transactionService = createTransactionService({
 	categories,
 	fx,
 	merchants,
-	onCreated: notifications.alerts.afterExpense,
+	onCreated: (userId, transactionId) =>
+		Promise.all([
+			notifications.alerts.afterExpense(userId, transactionId),
+			subscriptionService.noticePayment(userId, transactionId),
+		]),
 	onNewMerchant: (merchantId) =>
 		merchantQueue.add(
 			"match",
@@ -106,6 +113,11 @@ const transactionService = createTransactionService({
 			viewers.map((id) => publish(id, { type: "family", what: "pulse" })),
 		);
 	},
+});
+const subscriptionService = createSubscriptionService({
+	db: database.db,
+	categories,
+	addExpense: (userId, input) => transactionService.create(userId, input),
 });
 const events = createEventHub(env.REDIS_URL);
 const receiptQueue = new Queue<{ receiptId: string }>(RECEIPT_QUEUE, {
@@ -174,6 +186,7 @@ const app = await buildApp({
 	},
 	insights: { session, insights },
 	delight: { session, delight: createDelightService(database.db) },
+	subscriptions: { session, subscriptions: subscriptionService },
 	privacy: {
 		session,
 		privacy: createPrivacyService({

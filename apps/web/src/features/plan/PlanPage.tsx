@@ -9,6 +9,7 @@ import {
 } from "@/lib/money-api";
 import { useCategoryMap } from "../money/TransactionRow";
 import { METHODS } from "../onboarding/options";
+import { SubscriptionsDoorway } from "../subscriptions/DueSoonCard";
 import { GoalsSection } from "./GoalsSection";
 import { ImpulsePause } from "./ImpulsePause";
 import { CategoryBudgets, FiftyThirtyTwenty } from "./StyleBudgets";
@@ -68,6 +69,7 @@ export function PlanPage() {
 				</div>
 			</section>
 
+			<SubscriptionsDoorway />
 			<GoalsSection goals={goals} cur={summary.homeCurrency} />
 			<ImpulsePause />
 			<WarrantyVault />

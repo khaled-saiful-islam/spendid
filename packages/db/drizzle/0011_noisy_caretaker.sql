@@ -1,0 +1,1 @@
+ALTER TABLE "subscription" ADD COLUMN "due_day" integer DEFAULT 1 NOT NULL;

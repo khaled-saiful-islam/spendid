@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link, Outlet } from "@tanstack/react-router";
+import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { Sparkles } from "lucide-react";
 import { useEffect } from "react";
 import { Logo } from "@/components/brand/Logo";
@@ -87,6 +87,10 @@ export function AppShell() {
 	useResumeInvite();
 	useProfileLanguage();
 	const [first, second, ...rest] = NAV_ITEMS;
+	// Ask Spendid shows its chats beside the conversation on wide screens.
+	const wide = useRouterState({
+		select: (s) => s.location.pathname.startsWith("/app/ask"),
+	});
 
 	return (
 		<div className="min-h-dvh md:grid md:grid-cols-[16rem_1fr]">
@@ -128,7 +132,12 @@ export function AppShell() {
 						<MeLink />
 					</div>
 				</header>
-				<main className="mx-auto max-w-3xl px-4 py-6 sm:px-6 md:py-10">
+				<main
+					className={cn(
+						"mx-auto max-w-3xl px-4 py-6 sm:px-6 md:py-10",
+						wide && "lg:max-w-6xl",
+					)}
+				>
 					<Outlet />
 				</main>
 			</div>

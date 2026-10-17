@@ -15,12 +15,19 @@ const json = (method: string, body?: unknown): RequestInit => ({
 	body: JSON.stringify(body ?? {}),
 });
 
-/** Saved chats, newest first. */
-export const threadsQuery = queryOptions({
-	queryKey: ["ask-threads"],
-	queryFn: () => api<AskThreadSummary[]>("/api/ask/threads"),
-	staleTime: 30_000,
-});
+/** Saved chats, newest first; with a search, only the matching ones. */
+export const threadsQuery = (q = "") =>
+	queryOptions({
+		queryKey: ["ask-threads", q],
+		queryFn: () =>
+			api<AskThreadSummary[]>(
+				`/api/ask/threads${q ? `?q=${encodeURIComponent(q)}` : ""}`,
+			),
+		staleTime: 30_000,
+	});
+
+/** Every cached list of chats, for refreshing after a change. */
+export const THREADS_KEY = ["ask-threads"] as const;
 
 export const askThreadsApi = {
 	get: (id: string) => api<AskThread>(`/api/ask/threads/${id}`),

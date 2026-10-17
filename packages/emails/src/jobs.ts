@@ -18,6 +18,8 @@ export const NOTICE_KINDS = [
 	"unusual-charge",
 	"duplicate-charge",
 	"bill-due",
+	"subscription-due",
+	"subscriptions-month",
 	"price-rise",
 	"warranty-ending",
 	"goal-reached",

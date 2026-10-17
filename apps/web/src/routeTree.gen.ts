@@ -24,6 +24,7 @@ import { Route as AppActivityRouteImport } from './routes/app/activity'
 import { Route as AppAskRouteImport } from './routes/app/ask'
 import { Route as AppMeRouteImport } from './routes/app/me'
 import { Route as AppPlanRouteImport } from './routes/app/plan'
+import { Route as AppSubscriptionsRouteImport } from './routes/app/subscriptions'
 import { Route as AppWrappedRouteImport } from './routes/app/wrapped'
 import { Route as JoinTokenRouteImport } from './routes/join.$token'
 import { Route as SplitTokenRouteImport } from './routes/split.$token'
@@ -106,6 +107,11 @@ const AppPlanRoute = AppPlanRouteImport.update({
   path: '/plan',
   getParentRoute: () => AppRouteRoute,
 } as any)
+const AppSubscriptionsRoute = AppSubscriptionsRouteImport.update({
+  id: '/subscriptions',
+  path: '/subscriptions',
+  getParentRoute: () => AppRouteRoute,
+} as any)
 const AppWrappedRoute = AppWrappedRouteImport.update({
   id: '/wrapped',
   path: '/wrapped',
@@ -152,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/app/ask': typeof AppAskRoute
   '/app/me': typeof AppMeRoute
   '/app/plan': typeof AppPlanRoute
+  '/app/subscriptions': typeof AppSubscriptionsRoute
   '/app/wrapped': typeof AppWrappedRoute
   '/join/$token': typeof JoinTokenRoute
   '/split/$token': typeof SplitTokenRoute
@@ -174,6 +181,7 @@ export interface FileRoutesByTo {
   '/app/ask': typeof AppAskRoute
   '/app/me': typeof AppMeRoute
   '/app/plan': typeof AppPlanRoute
+  '/app/subscriptions': typeof AppSubscriptionsRoute
   '/app/wrapped': typeof AppWrappedRoute
   '/join/$token': typeof JoinTokenRoute
   '/split/$token': typeof SplitTokenRoute
@@ -198,6 +206,7 @@ export interface FileRoutesById {
   '/app/ask': typeof AppAskRoute
   '/app/me': typeof AppMeRoute
   '/app/plan': typeof AppPlanRoute
+  '/app/subscriptions': typeof AppSubscriptionsRoute
   '/app/wrapped': typeof AppWrappedRoute
   '/join/$token': typeof JoinTokenRoute
   '/split/$token': typeof SplitTokenRoute
@@ -223,6 +232,7 @@ export interface FileRouteTypes {
     | '/app/ask'
     | '/app/me'
     | '/app/plan'
+    | '/app/subscriptions'
     | '/app/wrapped'
     | '/join/$token'
     | '/split/$token'
@@ -245,6 +255,7 @@ export interface FileRouteTypes {
     | '/app/ask'
     | '/app/me'
     | '/app/plan'
+    | '/app/subscriptions'
     | '/app/wrapped'
     | '/join/$token'
     | '/split/$token'
@@ -268,6 +279,7 @@ export interface FileRouteTypes {
     | '/app/ask'
     | '/app/me'
     | '/app/plan'
+    | '/app/subscriptions'
     | '/app/wrapped'
     | '/join/$token'
     | '/split/$token'
@@ -399,6 +411,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPlanRouteImport
       parentRoute: typeof AppRouteRoute
     }
+    '/app/subscriptions': {
+      id: '/app/subscriptions'
+      path: '/subscriptions'
+      fullPath: '/app/subscriptions'
+      preLoaderRoute: typeof AppSubscriptionsRouteImport
+      parentRoute: typeof AppRouteRoute
+    }
     '/app/wrapped': {
       id: '/app/wrapped'
       path: '/wrapped'
@@ -449,6 +468,7 @@ interface AppRouteRouteChildren {
   AppAskRoute: typeof AppAskRoute
   AppMeRoute: typeof AppMeRoute
   AppPlanRoute: typeof AppPlanRoute
+  AppSubscriptionsRoute: typeof AppSubscriptionsRoute
   AppWrappedRoute: typeof AppWrappedRoute
   AppIndexRoute: typeof AppIndexRoute
   AppFamilyUserIdRoute: typeof AppFamilyUserIdRoute
@@ -461,6 +481,7 @@ const AppRouteRouteChildren: AppRouteRouteChildren = {
   AppAskRoute: AppAskRoute,
   AppMeRoute: AppMeRoute,
   AppPlanRoute: AppPlanRoute,
+  AppSubscriptionsRoute: AppSubscriptionsRoute,
   AppWrappedRoute: AppWrappedRoute,
   AppIndexRoute: AppIndexRoute,
   AppFamilyUserIdRoute: AppFamilyUserIdRoute,

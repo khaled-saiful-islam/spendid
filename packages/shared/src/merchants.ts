@@ -50,3 +50,12 @@ export function merchantKey(raw: string): string {
 		.replace(/[^\p{L}\p{N}]+/gu, " ")
 		.trim();
 }
+
+/**
+ * Two shop keys for the same service: equal, or one is the other plus more words
+ * ("unifi" and "unifi internet"). Keys come from `merchantKey`.
+ */
+export function sameMerchant(a: string, b: string): boolean {
+	if (!a || !b) return false;
+	return a === b || a.startsWith(`${b} `) || b.startsWith(`${a} `);
+}
