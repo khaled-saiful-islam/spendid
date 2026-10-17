@@ -5,6 +5,7 @@ import { buttonClass } from "@/components/ui/Button";
 import { t } from "@/i18n";
 import { capture } from "../capture/capture-store";
 import { ListeningOrb } from "./ListeningOrb";
+import { LiveCatch } from "./LiveCatch";
 import { useVoiceCapture } from "./useVoiceCapture";
 import { VoiceReview } from "./VoiceReview";
 
@@ -17,7 +18,7 @@ const EXAMPLES = [
 /** The whole voice flow inside the sheet: listen → read → review → save. */
 export function VoiceCapture() {
 	const loudness = useMotionValue(0);
-	const { phase, start, stop, reset } = useVoiceCapture(loudness);
+	const { phase, live, start, stop, reset } = useVoiceCapture(loudness);
 
 	// Start listening as soon as the sheet opens — one tap from the + button.
 	useEffect(() => {
@@ -37,16 +38,19 @@ export function VoiceCapture() {
 
 	const listening = phase.kind === "listening";
 	const hearing = listening && phase.hearing;
+	const caught = live.drafts.length > 0;
 	const title =
 		phase.kind === "starting"
 			? t("Getting the mic ready…")
 			: phase.kind === "reading"
 				? t("Reading your note…")
-				: phase.kind === "error"
-					? t("Let's try that again")
-					: hearing
-						? t("Listening…")
-						: t("Say what you spent");
+				: phase.kind === "finishing"
+					? t("Catching the last bit…")
+					: phase.kind === "error"
+						? t("Let's try that again")
+						: hearing
+							? t("Listening…")
+							: t("Say what you spent");
 
 	return (
 		<div className="space-y-6 pb-2 text-center">
@@ -54,7 +58,11 @@ export function VoiceCapture() {
 				<ListeningOrb
 					loudness={loudness}
 					hearing={hearing}
-					busy={phase.kind === "starting" || phase.kind === "reading"}
+					busy={
+						phase.kind === "starting" ||
+						phase.kind === "reading" ||
+						phase.kind === "finishing"
+					}
 					label={listening ? t("Done talking") : t("Start listening")}
 					onClick={
 						listening
@@ -68,7 +76,18 @@ export function VoiceCapture() {
 			<div aria-live="polite">
 				<p className="font-display text-[1.6rem] font-bold">{title}</p>
 				<AnimatePresence mode="wait">
-					{listening && !hearing && (
+					{listening && !hearing && caught && (
+						<motion.p
+							key="more"
+							initial={{ opacity: 0 }}
+							animate={{ opacity: 1 }}
+							exit={{ opacity: 0 }}
+							className="mt-2 text-ink-soft"
+						>
+							{t("Keep going, or tap Done. You can fix anything next.")}
+						</motion.p>
+					)}
+					{listening && !hearing && !caught && (
 						<motion.p
 							key="hint"
 							initial={{ opacity: 0 }}
@@ -89,11 +108,12 @@ export function VoiceCapture() {
 							exit={{ opacity: 0 }}
 							className="mt-2 text-ink-soft"
 						>
-							{t("Pause when you're done, or tap the coin.")}
+							{t("Take your time. Each pause, I write down what you said.")}
 						</motion.p>
 					)}
 				</AnimatePresence>
 			</div>
+			{(listening || phase.kind === "finishing") && <LiveCatch live={live} />}
 			{phase.kind === "error" && (
 				<div className="space-y-3 text-left">
 					<MaybeAlert tone="error" message={phase.message} />
@@ -121,7 +141,7 @@ export function VoiceCapture() {
 					onClick={stop}
 					className={buttonClass("ink", "lg", "w-full")}
 				>
-					{t("Done")}
+					{caught ? t("Done, check {n}", { n: live.drafts.length }) : t("Done")}
 				</button>
 			)}
 			<p className="text-[0.82rem] text-ink-soft">

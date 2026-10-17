@@ -6,7 +6,7 @@ import { seedCategories } from "../../scripts/categories";
 import { createCategoryRepository } from "../money/categories.repository";
 import { createPlanRepository } from "../money/plan.repository";
 import { createSummaryService } from "../money/summary.service";
-import { createAskTools, type SideChannel } from "./ask.tools";
+import { createAskTools, matchByName, type SideChannel } from "./ask.tools";
 
 const url = testDbUrl();
 
@@ -20,7 +20,7 @@ describe.skipIf(!url)("ask tools (real database)", () => {
 
 	const toolsFor = (
 		userId: string,
-		side: SideChannel = { charts: [], drafts: [] },
+		side: SideChannel = { charts: [], drafts: [], actions: [] },
 	) => {
 		const all = createAskTools(
 			{ db, summary: createSummaryService(db), plan: createPlanRepository(db) },
@@ -106,7 +106,7 @@ describe.skipIf(!url)("ask tools (real database)", () => {
 	});
 
 	it("turns logged purchases into cards to confirm, never saved expenses", async () => {
-		const side: SideChannel = { charts: [], drafts: [] };
+		const side: SideChannel = { charts: [], drafts: [], actions: [] };
 		const reply = await toolsFor(maya, side)("propose_expenses", {
 			expenses: [
 				{
@@ -130,7 +130,7 @@ describe.skipIf(!url)("ask tools (real database)", () => {
 	});
 
 	it("shows at most two charts per answer", async () => {
-		const side: SideChannel = { charts: [], drafts: [] };
+		const side: SideChannel = { charts: [], drafts: [], actions: [] };
 		const call = toolsFor(maya, side);
 		const chart = {
 			kind: "bar" as const,
@@ -140,5 +140,86 @@ describe.skipIf(!url)("ask tools (real database)", () => {
 		for (let i = 0; i < 3; i++) await call("show_chart", chart);
 		expect(side.charts).toHaveLength(2);
 		expect(side.charts[0]?.points[0]?.value).toBe(150);
+	});
+
+	it("prepares goals, deposits, limits and wishes as cards, and saves nothing", async () => {
+		const plan = createPlanRepository(db);
+		await plan.createGoal(maya, {
+			name: "Bali trip",
+			emoji: "🏝️",
+			targetMinor: 400_000,
+		});
+		await plan.createGoal(sam, {
+			name: "Bali villa",
+			emoji: "🏡",
+			targetMinor: 900_000,
+		});
+		const before = (await plan.goals(maya)).length;
+		const side: SideChannel = { charts: [], drafts: [], actions: [] };
+		const call = toolsFor(maya, side);
+
+		expect(
+			await call("propose_goal", {
+				name: "Laptop",
+				target: 5000,
+				byDate: null,
+				emoji: "💻",
+			}),
+		).toMatch(/NOT created/);
+		await call("propose_goal_deposit", {
+			goal: "bali",
+			amount: 150,
+			takeOut: false,
+		});
+		await call("propose_budget", { category: "food", monthlyLimit: 400 });
+		await call("propose_wish", { name: "Headphones", price: 899 });
+
+		expect(side.actions).toEqual([
+			expect.objectContaining({
+				kind: "goal",
+				name: "Laptop",
+				targetMinor: 500_000,
+				currency: "MYR",
+			}),
+			// Only maya's own goal is found, never sam's similarly named one.
+			expect.objectContaining({
+				kind: "deposit",
+				goalName: "Bali trip",
+				amountMinor: 15_000,
+			}),
+			expect.objectContaining({ kind: "budget", limitMinor: 40_000 }),
+			expect.objectContaining({
+				kind: "wish",
+				name: "Headphones",
+				priceMinor: 89_900,
+			}),
+		]);
+		expect((await plan.goals(maya)).length).toBe(before);
+	});
+
+	it("lists the goal names when a deposit's goal isn't found", async () => {
+		const side: SideChannel = { charts: [], drafts: [], actions: [] };
+		const out = JSON.parse(
+			await toolsFor(maya, side)("propose_goal_deposit", {
+				goal: "villa",
+				amount: 10,
+				takeOut: false,
+			}),
+		);
+		expect(out.error).toBeTruthy();
+		expect(out.goals).not.toContain("Bali villa");
+		expect(side.actions).toEqual([]);
+	});
+
+	it("matches names loosely but prefers exact ones", () => {
+		const items = [
+			{ name: "Bali trip" },
+			{ name: "Bali" },
+			{ name: "Rainy-day fund" },
+		];
+		expect(matchByName(items, "bali")?.name).toBe("Bali");
+		expect(matchByName(items, "rainy")?.name).toBe("Rainy-day fund");
+		expect(matchByName(items, "my bali trip")?.name).toBe("Bali trip");
+		expect(matchByName(items, "car")).toBeNull();
 	});
 });

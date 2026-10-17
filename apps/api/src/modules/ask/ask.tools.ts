@@ -1,5 +1,6 @@
 import { category, type Db, transaction } from "@spendid/db";
 import {
+	type AskAction,
 	type Category,
 	type ChartSpec,
 	formatMinor,
@@ -30,6 +31,56 @@ export interface AskContext {
 export interface SideChannel {
 	charts: ChartSpec[];
 	drafts: VoiceDraft[];
+	actions: AskAction[];
+}
+
+const MAX_ACTIONS = 4;
+
+/** Plain words the model picks from (models garble emoji in tool arguments). */
+const GOAL_ICONS: Record<string, string> = {
+	travel: "✈️",
+	beach: "🏝️",
+	laptop: "💻",
+	phone: "📱",
+	car: "🚗",
+	motorbike: "🛵",
+	house: "🏠",
+	wedding: "💍",
+	baby: "👶",
+	education: "🎓",
+	emergency: "☂️",
+	health: "🩺",
+	gift: "🎁",
+	game: "🎮",
+	camera: "📷",
+	pet: "🐾",
+	festive: "🌙",
+	other: "🎯",
+};
+const GOAL_ICON_WORDS = Object.keys(GOAL_ICONS) as [string, ...string[]];
+
+/** Last day of a month as YYYY-MM-DD. */
+function endOfMonth(year: number, month: number): string {
+	const last = new Date(Date.UTC(year, month, 0)).getUTCDate();
+	return `${year}-${String(month).padStart(2, "0")}-${String(last).padStart(2, "0")}`;
+}
+const NOT_SAVED =
+	"Shown to the person as a card to confirm. It is NOT created until they tap the button. Say so briefly; never claim it's done.";
+
+/** Loose name match for "add 100 to bali": exact, then starts-with, then contains (case-insensitive). */
+export function matchByName<T extends { name: string }>(
+	items: T[],
+	query: string,
+): T | null {
+	const q = query.trim().toLowerCase();
+	if (!q) return null;
+	return (
+		items.find((i) => i.name.toLowerCase() === q) ??
+		items.find((i) => i.name.toLowerCase().startsWith(q)) ??
+		items.find((i) => i.name.toLowerCase().includes(q)) ??
+		items.find((i) => q.includes(i.name.toLowerCase())) ??
+		null
+	);
 }
 
 interface ToolDeps {
@@ -44,8 +95,33 @@ const major = (minor: number, currency: string) =>
 const escapeLike = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);
 
 /**
- * Read-only views of the person's own money, plus two "show" tools whose output goes to the
- * app (a chart, expense drafts to confirm). Nothing here can write money or read another person.
+ * The listed word a model meant, forgiving small slips ("laptopp", "Food "): exact, then one
+ * being the start of the other. Null when nothing is close.
+ */
+export function closestWord(
+	value: string | null | undefined,
+	words: readonly string[],
+): string | null {
+	const v = (value ?? "").trim().toLowerCase();
+	if (!v) return null;
+	return (
+		words.find((w) => w === v) ??
+		words.find((w) => v.startsWith(w) || (v.length >= 3 && w.startsWith(v))) ??
+		null
+	);
+}
+
+const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/** A category word the model may garble; described with every allowed slug. */
+const CategoryWord = z.string().describe(`One of: ${SLUGS.join(", ")}`);
+const unknownCategory = () =>
+	`Unknown category. Use one of: ${SLUGS.join(", ")}.`;
+
+/**
+ * Read-only views of the person's own money, plus "show" tools whose output goes to the app
+ * (a chart, expense drafts and goal / limit / wish cards to confirm). Nothing here can write
+ * money or read another person: every change waits for the person's tap.
  */
 export function createAskTools(
 	deps: ToolDeps,
@@ -68,7 +144,10 @@ export function createAskTools(
 			sql`${localDay} >= ${input.from}::date`,
 			sql`${localDay} <= ${input.to}::date`,
 		];
-		if (input.category) out.push(eq(category.slug, input.category));
+		if (input.category)
+			out.push(
+				eq(category.slug, closestWord(input.category, SLUGS) ?? input.category),
+			);
 		if (input.search) {
 			const term = `%${escapeLike(input.search)}%`;
 			const match = or(
@@ -138,7 +217,7 @@ export function createAskTools(
 				from: DateSchema,
 				to: DateSchema,
 				groupBy: z.enum(["category", "merchant", "day", "week", "month"]),
-				category: z.enum(SLUGS).optional(),
+				category: CategoryWord.optional(),
 				search: z
 					.string()
 					.max(40)
@@ -179,7 +258,7 @@ export function createAskTools(
 			schema: z.object({
 				from: DateSchema,
 				to: DateSchema,
-				category: z.enum(SLUGS).optional(),
+				category: CategoryWord.optional(),
 				search: z.string().max(40).optional(),
 				limit: z.number().int().min(1).max(20).default(10),
 			}),
@@ -319,7 +398,10 @@ export function createAskTools(
 					merchant:
 						e.description.charAt(0).toUpperCase() + e.description.slice(1),
 					categoryId:
-						(bySlug.get(e.category) ?? bySlug.get("other"))?.id ?? null,
+						(
+							bySlug.get(closestWord(e.category, SLUGS) ?? "other") ??
+							bySlug.get("other")
+						)?.id ?? null,
 					daysAgo: e.daysAgo,
 					note: null,
 				});
@@ -337,12 +419,144 @@ export function createAskTools(
 							amount: z.number().positive(),
 							currency: z.string().length(3).nullable(),
 							description: z.string().max(60),
-							category: z.enum(SLUGS),
+							category: CategoryWord,
 							daysAgo: z.number().int().min(0).max(7),
 						}),
 					)
 					.min(1)
 					.max(10),
+			}),
+		},
+	);
+
+	function offer(action: AskAction): string | null {
+		if (side.actions.length >= MAX_ACTIONS)
+			return "Enough cards are shown already; ask the person to confirm those first.";
+		side.actions.push(action);
+		return null;
+	}
+
+	const proposeGoal = tool(
+		async (input) => {
+			const targetMinor = toMinor(input.target, cur);
+			if (targetMinor <= 0) return "The target must be above zero. Ask for it.";
+			const targetDate = input.byYear
+				? endOfMonth(input.byYear, input.byMonth ?? 12)
+				: null;
+			if (targetDate && targetDate <= new Date().toISOString().slice(0, 10))
+				return "That date has passed. Ask for a date in the future.";
+			return (
+				offer({
+					kind: "goal",
+					name: capitalise(input.name.trim().slice(0, 60)),
+					emoji:
+						GOAL_ICONS[closestWord(input.icon, GOAL_ICON_WORDS) ?? "other"] ??
+						"🎯",
+					targetMinor,
+					currency: cur,
+					targetDate,
+				}) ?? NOT_SAVED
+			);
+		},
+		{
+			name: "propose_goal",
+			description: `Prepare a new savings goal for the person to confirm (e.g. "save 5000 for a laptop by June 2027"). Amount in ${cur}. byYear and byMonth (1-12) are optional, for a deadline. Pick the icon word that fits best.`,
+			schema: z.object({
+				name: z.string().min(1).max(60),
+				target: z.number().positive(),
+				byYear: z.number().int().min(2000).max(2100).nullish(),
+				byMonth: z.number().int().min(1).max(12).nullish(),
+				icon: z
+					.string()
+					.describe(`One of: ${GOAL_ICON_WORDS.join(", ")}`)
+					.nullish(),
+			}),
+		},
+	);
+
+	const proposeGoalDeposit = tool(
+		async (input) => {
+			const goals = await deps.plan.goals(ctx.userId);
+			const found = matchByName(goals, input.goal);
+			if (!found)
+				return JSON.stringify({
+					error: "No goal with that name.",
+					goals: goals.map((g) => g.name),
+				});
+			const amountMinor = toMinor(input.amount, cur) * (input.takeOut ? -1 : 1);
+			if (amountMinor === 0) return "The amount must not be zero. Ask for it.";
+			return (
+				offer({
+					kind: "deposit",
+					goalId: found.id,
+					goalName: found.name,
+					emoji: found.emoji,
+					amountMinor,
+					currency: cur,
+					savedMinor: found.savedMinor,
+					targetMinor: found.targetMinor,
+				}) ?? NOT_SAVED
+			);
+		},
+		{
+			name: "propose_goal_deposit",
+			description: `Prepare money going into (or, with takeOut, out of) one of the person's existing goals, for them to confirm. Amount in ${cur}. If the goal isn't found you get the list of goal names; ask which one.`,
+			schema: z.object({
+				goal: z.string().min(1).max(60),
+				amount: z.number().positive(),
+				takeOut: z.boolean().nullish(),
+			}),
+		},
+	);
+
+	const proposeBudget = tool(
+		async (input) => {
+			const slug = closestWord(input.category, SLUGS);
+			const found = ctx.categories.find((c) => c.slug === slug);
+			if (!found) return unknownCategory();
+			const s = await deps.summary.forUser(ctx.userId);
+			return (
+				offer({
+					kind: "budget",
+					categoryId: found.id,
+					categoryName: found.name,
+					limitMinor: toMinor(input.monthlyLimit, cur),
+					currency: cur,
+					spentMinor:
+						s.byCategory.find((c) => c.categoryId === found.id)?.spentMinor ??
+						0,
+				}) ?? NOT_SAVED
+			);
+		},
+		{
+			name: "propose_budget",
+			description: `Prepare a monthly spending limit for one category, for the person to confirm (e.g. "cap eating out at 400 a month"). Amount in ${cur}; 0 means no spending at all in it.`,
+			schema: z.object({
+				category: CategoryWord,
+				monthlyLimit: z.number().min(0),
+			}),
+		},
+	);
+
+	const proposeWish = tool(
+		async (input) => {
+			const priceMinor = toMinor(input.price, cur);
+			if (priceMinor <= 0) return "The price must be above zero. Ask for it.";
+			return (
+				offer({
+					kind: "wish",
+					name: capitalise(input.name.trim().slice(0, 80)),
+					priceMinor,
+					currency: cur,
+				}) ?? NOT_SAVED
+			);
+		},
+		{
+			name: "propose_wish",
+			description: `When the person is tempted to buy something ("should I buy the new headphones for 899?"), offer to park it in the 48-hour impulse pause. Price in ${cur}.`,
+			schema: z.object({
+				name: z.string().min(1).max(80),
+				price: z.number().positive(),
 			}),
 		},
 	);
@@ -355,6 +569,10 @@ export function createAskTools(
 		billsAndSubscriptions,
 		showChart,
 		proposeExpenses,
+		proposeGoal,
+		proposeGoalDeposit,
+		proposeBudget,
+		proposeWish,
 	];
 }
 
@@ -367,4 +585,8 @@ export const STEP_LABELS: Record<string, string> = {
 	bills_and_subscriptions: "Checking your bills and subscriptions…",
 	show_chart: "Drawing a chart…",
 	propose_expenses: "Preparing cards to confirm…",
+	propose_goal: "Preparing your goal…",
+	propose_goal_deposit: "Finding your goal…",
+	propose_budget: "Preparing your limit…",
+	propose_wish: "Preparing the impulse pause…",
 };

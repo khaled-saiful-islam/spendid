@@ -1,11 +1,13 @@
 import {
 	type ApiResponse,
+	type VoiceDraft,
 	type VoiceResult,
 	VoiceResultSchema,
 } from "@spendid/shared";
 import type { MotionValue } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { t } from "@/i18n";
+import { buzz } from "@/lib/haptics";
 import { joinSegments } from "./segments";
 import { downmix, level, toWav, WAV_RATE } from "./wav";
 
@@ -13,23 +15,46 @@ export type VoicePhase =
 	| { kind: "idle" }
 	| { kind: "starting" }
 	| { kind: "listening"; hearing: boolean }
+	/** Done was tapped; the last phrases are still being read. */
+	| { kind: "finishing" }
 	| { kind: "reading" }
 	| { kind: "review"; result: VoiceResult }
 	| { kind: "error"; message: string };
 
-const MAX_MS = 60_000;
-/** After speech stops, wait this long for more ("grab 15… coffee 6…") before sending. */
-const GRACE_MS = 900;
+/** What has been understood so far while the person keeps talking. */
+export interface LiveNote {
+	drafts: VoiceDraft[];
+	heard: string[];
+	working: boolean;
+	missed: boolean;
+}
+
+const EMPTY_LIVE: LiveNote = {
+	drafts: [],
+	heard: [],
+	working: false,
+	missed: false,
+};
+const MAX_MS = 120_000;
+/** Quiet this long after the last phrase (and nothing left to read) ends the note by itself. */
+const AUTO_DONE_MS = 8_000;
+/** A phrase with no amount waits for the next one ("grab… fifteen"), at most this many. */
+const MAX_CARRY = 3;
 
 interface Session {
 	stop: () => void;
 	destroy: () => void;
 }
 
-async function upload(wav: Blob): Promise<VoiceResult> {
+class NoWordsError extends Error {}
+
+async function upload(wav: Blob, earlier = ""): Promise<VoiceResult> {
+	const query = earlier
+		? `?context=${encodeURIComponent(earlier.slice(-600))}`
+		: "";
 	let res: Response;
 	try {
-		res = await fetch("/api/capture/voice", {
+		res = await fetch(`/api/capture/voice${query}`, {
 			method: "POST",
 			headers: { "Content-Type": "audio/wav" },
 			body: wav,
@@ -43,7 +68,10 @@ async function upload(wav: Blob): Promise<VoiceResult> {
 		.json()
 		.catch(() => null)) as ApiResponse<VoiceResult> | null;
 	if (!body) throw new Error(t("Spendid sent an unexpected reply. Try again."));
-	if (!body.success) throw new Error(body.error);
+	if (!body.success) {
+		if (res.status === 422) throw new NoWordsError(body.error);
+		throw new Error(body.error);
+	}
 	return VoiceResultSchema.parse(body.data);
 }
 
@@ -59,14 +87,19 @@ function micMessage(error: unknown): string {
 }
 
 /**
- * Tap, talk, done. Silero VAD (in the browser) notices speech; short pauses between items
- * are kept in the same note, which goes to ILMU once you stop or tap Done.
- * Falls back to a plain recorder with a Done button if the VAD can't load.
+ * Tap and talk as long as you like. Silero VAD (in the browser) cuts the note into phrases at
+ * natural pauses; each phrase is read right away, so expenses appear while you're still
+ * talking. A phrase without an amount waits for the next ("grab… fifteen"). Earlier words go
+ * along as context, so "yesterday" said once still applies. Tap Done, or go quiet, to review.
+ * Falls back to one plain recording if the VAD can't load.
  */
 export function useVoiceCapture(loudness: MotionValue<number>) {
 	const [phase, setPhase] = useState<VoicePhase>({ kind: "idle" });
+	const [live, setLive] = useState<LiveNote>(EMPTY_LIVE);
 	const session = useRef<Session | null>(null);
 	const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+	// Kept apart from `timers`: talking again clears those, but never the overall cap.
+	const maxTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const sent = useRef(false);
 
 	const clearTimers = useCallback(() => {
@@ -76,13 +109,15 @@ export function useVoiceCapture(loudness: MotionValue<number>) {
 
 	const cleanup = useCallback(() => {
 		clearTimers();
+		if (maxTimer.current) clearTimeout(maxTimer.current);
+		maxTimer.current = null;
 		session.current?.destroy();
 		session.current = null;
 		loudness.set(0);
 	}, [clearTimers, loudness]);
 
-	/** Sends the note exactly once per recording. */
-	const finish = useCallback(
+	/** Fallback path: the whole recording read at once. */
+	const finishWhole = useCallback(
 		async (samples: Float32Array, rate: number) => {
 			if (sent.current) return;
 			sent.current = true;
@@ -104,9 +139,9 @@ export function useVoiceCapture(loudness: MotionValue<number>) {
 				setPhase({
 					kind: "error",
 					message:
-						error instanceof Error
+						error instanceof Error && !(error instanceof NoWordsError)
 							? error.message
-							: t("Couldn't read that. Try again."),
+							: t("We didn't hear anything. Tap the mic and try again."),
 				});
 			}
 		},
@@ -138,7 +173,7 @@ export function useVoiceCapture(loudness: MotionValue<number>) {
 			const channels = Array.from({ length: buffer.numberOfChannels }, (_, i) =>
 				buffer.getChannelData(i),
 			);
-			void finish(downmix(channels), buffer.sampleRate);
+			void finishWhole(downmix(channels), buffer.sampleRate);
 		};
 		recorder.start();
 		session.current = {
@@ -150,15 +185,104 @@ export function useVoiceCapture(loudness: MotionValue<number>) {
 			},
 		};
 		setPhase({ kind: "listening", hearing: true });
-	}, [finish, loudness]);
+	}, [finishWhole, loudness]);
 
 	const start = useCallback(async () => {
 		cleanup();
 		sent.current = false;
+		setLive(EMPTY_LIVE);
 		setPhase({ kind: "starting" });
-		const segments: Float32Array[] = [];
+
+		// Phrases are read one after another, so a phrase can wait for the next one.
+		let queue: Promise<void> = Promise.resolve();
+		let pending = 0;
+		let carry: Float32Array[] = [];
+		let carryText = "";
 		let hearing = false;
-		const send = () => void finish(joinSegments(segments, WAV_RATE), WAV_RATE);
+		let stopping = false;
+		const heard: string[] = [];
+		const drafts: VoiceDraft[] = [];
+		let quick = false;
+
+		const show = (patch: Partial<LiveNote>) =>
+			setLive({
+				drafts: [...drafts],
+				heard: [...heard],
+				working: pending > 0,
+				missed: false,
+				...patch,
+			});
+
+		const review = () => {
+			if (sent.current) return;
+			sent.current = true;
+			cleanup();
+			if (carryText) heard.push(carryText);
+			if (heard.length === 0 && drafts.length === 0) {
+				setPhase({
+					kind: "error",
+					message: t("We didn't hear anything. Tap the mic and try again."),
+				});
+				return;
+			}
+			setPhase({
+				kind: "review",
+				result: {
+					transcript: heard.join(" "),
+					drafts,
+					readBy: quick ? "quick" : "ai",
+				},
+			});
+		};
+
+		/** Ends the note once nothing is left to read. */
+		const finishWhenRead = () => {
+			stopping = true;
+			setPhase({ kind: "finishing" });
+			void queue.then(review);
+		};
+
+		const armAutoDone = () => {
+			clearTimers();
+			timers.current.push(
+				setTimeout(() => {
+					if (!hearing && (drafts.length > 0 || heard.length > 0))
+						finishWhenRead();
+				}, AUTO_DONE_MS),
+			);
+		};
+
+		const readPhrase = (audio: Float32Array) => {
+			pending += 1;
+			show({});
+			queue = queue.then(async () => {
+				carry.push(audio);
+				try {
+					const result = await upload(
+						toWav(joinSegments(carry, WAV_RATE), WAV_RATE),
+						heard.join(" "),
+					);
+					quick ||= result.readBy === "quick";
+					if (result.drafts.length > 0 || carry.length >= MAX_CARRY) {
+						heard.push(result.transcript);
+						drafts.push(...result.drafts);
+						carry = [];
+						carryText = "";
+						if (result.drafts.length > 0) buzz("tap");
+					} else {
+						// No amount yet: keep this phrase and read it again with the next one.
+						carryText = result.transcript;
+					}
+					pending -= 1;
+					show({});
+				} catch (error) {
+					carry = [];
+					pending -= 1;
+					show({ missed: !(error instanceof NoWordsError) });
+				}
+				if (!stopping) armAutoDone();
+			});
+		};
 
 		try {
 			const { MicVAD } = await import("@ricky0123/vad-web");
@@ -168,7 +292,7 @@ export function useVoiceCapture(loudness: MotionValue<number>) {
 				onnxWASMBasePath: "/vad/",
 				positiveSpeechThreshold: 0.5,
 				negativeSpeechThreshold: 0.35,
-				redemptionMs: 1000,
+				redemptionMs: 700,
 				minSpeechMs: 250,
 				preSpeechPadMs: 400,
 				submitUserSpeechOnPause: true,
@@ -181,30 +305,22 @@ export function useVoiceCapture(loudness: MotionValue<number>) {
 				},
 				onVADMisfire: () => {
 					hearing = false;
-					setPhase({ kind: "listening", hearing: segments.length > 0 });
+					setPhase({ kind: "listening", hearing: false });
+					armAutoDone();
 				},
 				onSpeechEnd: (audio: Float32Array) => {
 					hearing = false;
-					segments.push(audio);
-					timers.current.push(setTimeout(send, GRACE_MS));
+					if (!stopping) setPhase({ kind: "listening", hearing: false });
+					readPhrase(audio);
 				},
 				onFrameProcessed: (_p: unknown, frame: Float32Array) =>
 					loudness.set(level(frame)),
 			});
 			session.current = {
 				stop: () => {
-					if (hearing) {
-						// Pausing submits the speech in progress; send right after it lands.
-						void vad.pause().then(() => setTimeout(send, 50));
-					} else if (segments.length > 0) {
-						send();
-					} else {
-						cleanup();
-						setPhase({
-							kind: "error",
-							message: t("We didn't hear anything. Tap the mic and try again."),
-						});
-					}
+					if (stopping) return;
+					// Pausing submits any speech in progress as a last phrase.
+					void vad.pause().then(() => setTimeout(finishWhenRead, 50));
 				},
 				destroy: () => void vad.destroy(),
 			};
@@ -222,16 +338,17 @@ export function useVoiceCapture(loudness: MotionValue<number>) {
 				return;
 			}
 		}
-		timers.current.push(setTimeout(() => session.current?.stop(), MAX_MS));
-	}, [cleanup, clearTimers, finish, loudness, startRecorderFallback]);
+		maxTimer.current = setTimeout(() => session.current?.stop(), MAX_MS);
+	}, [cleanup, clearTimers, loudness, startRecorderFallback]);
 
 	const stop = useCallback(() => session.current?.stop(), []);
 	const reset = useCallback(() => {
 		cleanup();
+		setLive(EMPTY_LIVE);
 		setPhase({ kind: "idle" });
 	}, [cleanup]);
 
 	useEffect(() => cleanup, [cleanup]);
 
-	return { phase, start, stop, reset };
+	return { phase, live, start, stop, reset };
 }

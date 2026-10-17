@@ -26,6 +26,7 @@
 		"fastify": "5.12.7",
 		"fflate": "0.8.3",
 		"ioredis": "6.0.0",
+		"jsonrepair": "3.13.3",
 		"langchain": "1.5.18",
 		"zod": "4.6.7"
 	},

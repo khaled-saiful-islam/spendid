@@ -6,7 +6,7 @@ import {
 	type VoiceResult,
 } from "@spendid/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Mic, Quote, X } from "lucide-react";
+import { Mic, Plus, Quote, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { MaybeAlert } from "@/components/form/Alert";
@@ -14,7 +14,15 @@ import { SubmitButton } from "@/components/form/SubmitButton";
 import { CategoryIcon } from "@/components/money/CategoryIcon";
 import { toast } from "@/components/ui/Toast";
 import { t } from "@/i18n";
-import { categoriesQuery, moneyApi, refreshMoney } from "@/lib/money-api";
+import {
+	categoriesQuery,
+	moneyApi,
+	refreshMoney,
+	summaryQuery,
+} from "@/lib/money-api";
+import { uuid } from "@/lib/uuid";
+
+const DAYS_BACK = [0, 1, 2, 3, 4, 5, 6, 7];
 
 interface Row extends VoiceDraft {
 	key: string;
@@ -50,6 +58,7 @@ export function VoiceReview({
 }: VoiceReviewProps) {
 	const queryClient = useQueryClient();
 	const { data: categories = [] } = useQuery(categoriesQuery);
+	const { data: summary } = useQuery(summaryQuery);
 	const [rows, setRows] = useState<Row[]>(() =>
 		result.drafts.map((d, i) => ({
 			...d,
@@ -64,6 +73,20 @@ export function VoiceReview({
 
 	const update = (key: string, patch: Partial<Row>) =>
 		setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...patch } : r)));
+	const addMissed = () =>
+		setRows((rs) => [
+			...rs,
+			{
+				key: uuid(),
+				merchant: "",
+				amountText: "",
+				amountMinor: 0,
+				currency: rs[0]?.currency ?? summary?.homeCurrency ?? "MYR",
+				categoryId: categories.find((c) => c.slug === "other")?.id ?? null,
+				daysAgo: rs.at(-1)?.daysAgo ?? 0,
+				note: null,
+			},
+		]);
 	const valid = rows.filter(
 		(r) => Number(r.amountText.replace(",", ".")) > 0 && r.categoryId,
 	);
@@ -131,8 +154,9 @@ export function VoiceReview({
 
 			{rows.length === 0 ? (
 				<p className="rounded-tile border border-dashed border-line p-5 text-center text-ink-soft">
-					We heard you, but no amounts. Try saying the price, like "lunch twelve
-					fifty".
+					{t(
+						"We heard you, but no amounts. Try saying the price, like “lunch twelve fifty”, or add it below.",
+					)}
 				</p>
 			) : (
 				<ul className="space-y-3" aria-label={t("Expenses heard")}>
@@ -158,6 +182,7 @@ export function VoiceReview({
 										<CategoryIcon icon={cat?.icon} tint={cat?.tint} />
 										<input
 											aria-label={t("What was it?")}
+											placeholder={t("What was it?")}
 											value={r.merchant}
 											onChange={(e) =>
 												update(r.key, { merchant: e.target.value })
@@ -206,25 +231,49 @@ export function VoiceReview({
 										>
 											{categories.map((c) => (
 												<option key={c.id} value={c.id}>
-													{c.name}
+													{t(c.name)}
 												</option>
 											))}
 										</select>
-										<span className="text-[0.85rem] text-ink-soft">
-											{dayLabel(r.daysAgo)}
-										</span>
+										<select
+											aria-label={t("Day for {name}", { name: r.merchant })}
+											value={r.daysAgo}
+											onChange={(e) =>
+												update(r.key, { daysAgo: Number(e.target.value) })
+											}
+											className="h-10 rounded-full border-2 border-line bg-surface px-3 text-[0.9rem]"
+										>
+											{DAYS_BACK.map((n) => (
+												<option key={n} value={n}>
+													{dayLabel(n)}
+												</option>
+											))}
+										</select>
 									</div>
-									{r.note && (
-										<p className="mt-2 pl-14 text-[0.85rem] text-ink-soft">
-											{r.note}
-										</p>
-									)}
+									<input
+										aria-label={t("Note for {name}", { name: r.merchant })}
+										placeholder={t("Add a note (optional)")}
+										value={r.note ?? ""}
+										maxLength={200}
+										onChange={(e) =>
+											update(r.key, { note: e.target.value || null })
+										}
+										className="mt-2 ml-14 w-[calc(100%-3.5rem)] rounded-full border-2 border-transparent bg-surface px-3 py-2 text-[0.9rem] outline-none placeholder:text-ink-soft focus:border-line"
+									/>
 								</motion.li>
 							);
 						})}
 					</AnimatePresence>
 				</ul>
 			)}
+
+			<button
+				type="button"
+				onClick={addMissed}
+				className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full border-2 border-dashed border-line font-semibold text-ink-soft hover:border-plum-300 hover:text-ink"
+			>
+				<Plus className="size-4" aria-hidden="true" /> {t("Add one I missed")}
+			</button>
 
 			<MaybeAlert tone="error" message={error} />
 			{valid.length > 0 && (
@@ -236,7 +285,15 @@ export function VoiceReview({
 				>
 					<SubmitButton pending={pending} pendingLabel={t("Saving…")}>
 						{valid.length === 1
-							? `Add ${formatMinor(toMinor(Number(valid[0]?.amountText.replace(",", ".") ?? 0), valid[0]?.currency ?? "MYR"), valid[0]?.currency ?? "MYR")}`
+							? t("Add {amount}", {
+									amount: formatMinor(
+										toMinor(
+											Number(valid[0]?.amountText.replace(",", ".") ?? 0),
+											valid[0]?.currency ?? "MYR",
+										),
+										valid[0]?.currency ?? "MYR",
+									),
+								})
 							: t("Add all {n}", { n: valid.length })}
 					</SubmitButton>
 				</form>

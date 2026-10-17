@@ -19,6 +19,7 @@ import { createRedis } from "./infra/redis";
 import { createAdminRepository } from "./modules/admin/admin.repository";
 import { createAdminService } from "./modules/admin/admin.service";
 import { createAskAgent } from "./modules/ask/ask.agent";
+import { createThreadRepository } from "./modules/ask/threads.repository";
 import { createVoiceService } from "./modules/capture/voice.service";
 import { createDelightService } from "./modules/delight/delight.service";
 import { createFamilyRepository } from "./modules/family/family.repository";
@@ -220,6 +221,7 @@ const app = await buildApp({
 	},
 	ask: {
 		session,
+		threads: createThreadRepository(database.db),
 		ask: createAskAgent({
 			db: database.db,
 			guard,

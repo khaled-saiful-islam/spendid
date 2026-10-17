@@ -53,6 +53,8 @@ export interface ExtractionResult {
 export type ExpenseExtractor = (
 	transcript: string,
 	homeCurrency: string,
+	/** What the person said earlier in the same note: context only (dates, who), not items. */
+	earlier?: string,
 ) => Promise<ExtractionResult>;
 
 /** One structured call (no agent loop): transcript in, typed expenses out. */
@@ -75,12 +77,15 @@ export function createExpenseExtractor(cfg: {
 		includeRaw: true,
 	});
 
-	return async (transcript, homeCurrency) => {
+	return async (transcript, homeCurrency, earlier) => {
+		const context = earlier?.trim()
+			? `Said earlier in the same note (context only, its expenses are already recorded): "${earlier.trim().slice(-600)}"\n`
+			: "";
 		const messages = [
 			{ role: "system", content: SYSTEM },
 			{
 				role: "user",
-				content: `Home currency: ${homeCurrency}.\nTranscript: ${transcript}`,
+				content: `Home currency: ${homeCurrency}.\n${context}Transcript: ${transcript}`,
 			},
 		];
 		const { raw, parsed } = await hedged(

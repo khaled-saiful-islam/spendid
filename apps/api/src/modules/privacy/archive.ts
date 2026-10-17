@@ -1,5 +1,6 @@
 import {
 	aiUsage,
+	askThread,
 	budget,
 	category,
 	checkIn,
@@ -71,6 +72,7 @@ receipts/            Your receipt photos
 warranties.json      Warranty reminders
 wishlist.json        Impulse-pause items and what you decided
 check-ins.json       Nightly check-ins
+ask-chats.json       Your saved Ask Spendid chats
 family.json          Your family circle: who, how you're related, what each side shares
 splits.json          Bills you split
 shops.json           Shop names Spendid learned and their usual category
@@ -234,6 +236,17 @@ export async function buildArchive(
 		),
 		"check-ins.json": json(
 			await db.select().from(checkIn).where(eq(checkIn.userId, userId)),
+		),
+		"ask-chats.json": json(
+			await db
+				.select({
+					title: askThread.title,
+					messages: askThread.messages,
+					createdAt: askThread.createdAt,
+					updatedAt: askThread.updatedAt,
+				})
+				.from(askThread)
+				.where(eq(askThread.userId, userId)),
 		),
 		"family.json": json({
 			connections: connections.map((c) => ({

@@ -14,8 +14,10 @@ import { cn } from "@/lib/cn";
 import { api } from "@/lib/http";
 import { meQuery } from "@/lib/me";
 import { VoiceReview } from "../voice/VoiceReview";
+import { ActionCards, type ActionStatus } from "./ActionCards";
 import { AnswerText } from "./AnswerText";
 import { AskWelcome } from "./AskWelcome";
+import { ChatHistory } from "./ChatHistory";
 import { ChartView } from "./charts/ChartView";
 import { type CoinState, SpendidCoin } from "./SpendidCoin";
 import { ThinkingTrail } from "./ThinkingTrail";
@@ -134,12 +136,14 @@ function Message({
 	question,
 	last,
 	onDraftsSaved,
+	onResolveAction,
 	onAsk,
 }: {
 	m: ChatMessage;
 	question: string;
 	last: boolean;
 	onDraftsSaved: () => void;
+	onResolveAction: (index: number, status: ActionStatus) => void;
 	onAsk: (q: string) => void;
 }) {
 	if (m.role === "user") {
@@ -202,6 +206,9 @@ function Message({
 							onDone={onDraftsSaved}
 						/>
 					</div>
+				)}
+				{m.actions && m.actions.length > 0 && (
+					<ActionCards items={m.actions} onResolve={onResolveAction} />
 				)}
 				{m.status === "done" && m.text && (
 					<div className="flex flex-wrap items-center gap-1.5">
@@ -305,8 +312,8 @@ export function AskPage({ initialQuestion }: { initialQuestion?: string }) {
 	return (
 		<div className="relative flex min-h-[calc(100dvh-10rem)] flex-col">
 			<Aurora />
-			{chat.messages.length > 0 && (
-				<div className="sticky top-0 z-20 -mx-4 flex items-center justify-between gap-3 bg-bg/80 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6">
+			<div className="sticky top-0 z-20 -mx-4 flex flex-wrap items-center justify-between gap-3 bg-bg/80 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6">
+				{chat.messages.length > 0 ? (
 					<div className="flex min-w-0 items-center gap-3">
 						<SpendidCoin size="md" state={coinState} />
 						<div className="min-w-0">
@@ -316,9 +323,18 @@ export function AskPage({ initialQuestion }: { initialQuestion?: string }) {
 							<AllowanceRing />
 						</div>
 					</div>
-					<NewChatButton onClick={chat.clear} />
+				) : (
+					<span />
+				)}
+				<div className="flex flex-wrap items-center justify-end gap-2">
+					<ChatHistory
+						currentId={chat.threadId}
+						onOpen={chat.open}
+						onDelete={chat.remove}
+					/>
+					{chat.messages.length > 0 && <NewChatButton onClick={chat.clear} />}
 				</div>
-			)}
+			</div>
 
 			<div className="flex-1 space-y-5 py-6">
 				{chat.messages.length === 0 ? (
@@ -337,6 +353,9 @@ export function AskPage({ initialQuestion }: { initialQuestion?: string }) {
 								question={chat.messages[i - 1]?.text ?? ""}
 								last={i === chat.messages.length - 1}
 								onDraftsSaved={() => chat.markDraftsSaved(m.id)}
+								onResolveAction={(index, status) =>
+									chat.resolveAction(m.id, index, status)
+								}
 								onAsk={(q) => void chat.send(q)}
 							/>
 						))}

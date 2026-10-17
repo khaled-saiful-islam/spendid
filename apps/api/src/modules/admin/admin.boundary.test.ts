@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-/** Tables that hold people's money or family links. The admin module must never import them. */
+/** Tables that hold people's money, chats or family links. The admin module must never import them. */
 const MONEY_TABLES = [
 	"transaction",
 	"transactionItem",
@@ -18,6 +18,10 @@ const MONEY_TABLES = [
 	"goalDeposit",
 	"reaction",
 	"split",
+	"wish",
+	"checkIn",
+	"askThread",
+	"dataExport",
 ];
 const dir = __dirname;
 

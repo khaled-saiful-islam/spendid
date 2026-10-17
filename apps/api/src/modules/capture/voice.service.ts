@@ -132,6 +132,7 @@ export function createVoiceService(deps: Deps) {
 			audio: Buffer,
 			mime: string,
 			log: FastifyBaseLogger,
+			earlier?: string,
 		): Promise<VoiceResult> {
 			const { home, language, bySlug } = await context(userId);
 			await deps.guard.assertAllowed(userId);
@@ -155,7 +156,7 @@ export function createVoiceService(deps: Deps) {
 
 			const digits = wordsToDigits(heard.text);
 			try {
-				const result = await deps.extract(digits, home);
+				const result = await deps.extract(digits, home, earlier);
 				log.info(
 					{
 						listenMs,

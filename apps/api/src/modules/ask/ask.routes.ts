@@ -1,13 +1,18 @@
 import type { AskEvent, AskRequest } from "@spendid/shared";
 import type { FastifyInstance } from "fastify";
-import { ZodError } from "zod";
+import { ZodError, z } from "zod";
 import { requireMember, type SessionLookup } from "../../auth/guards";
+import { notFound } from "../../http/app-error";
 import type { AskAgent } from "./ask.agent";
+import type { ThreadRepository } from "./threads.repository";
 
 export interface AskDeps {
 	session: SessionLookup;
 	ask: AskAgent;
+	threads: ThreadRepository;
 }
+
+const IdParams = z.object({ id: z.uuid("Unknown chat") });
 
 function messageOf(error: unknown): string {
 	if (error instanceof ZodError)
@@ -17,7 +22,10 @@ function messageOf(error: unknown): string {
 	return "The assistant had a problem answering. Try again in a moment.";
 }
 
-/** POST /api/ask — streams the assistant's progress and answer as server-sent events. */
+/**
+ * POST /api/ask — streams the assistant's progress and answer as server-sent events.
+ * /api/ask/threads — the person's saved chats (list, open, save, delete).
+ */
 export async function askRoutes(
 	app: FastifyInstance,
 	deps: AskDeps,
@@ -56,5 +64,31 @@ export async function askRoutes(
 				reply.raw.end();
 			}
 		})();
+	});
+
+	app.get("/ask/threads", async (req) => ({
+		success: true,
+		data: await deps.threads.list(req.user?.id ?? ""),
+	}));
+
+	app.get("/ask/threads/:id", async (req) => {
+		const { id } = IdParams.parse(req.params);
+		const thread = await deps.threads.get(req.user?.id ?? "", id);
+		if (!thread) throw notFound("Chat");
+		return { success: true, data: thread };
+	});
+
+	app.put("/ask/threads/:id", { bodyLimit: 512 * 1024 }, async (req) => {
+		const { id } = IdParams.parse(req.params);
+		const saved = await deps.threads.save(req.user?.id ?? "", id, req.body);
+		if (!saved) throw notFound("Chat");
+		return { success: true, data: saved };
+	});
+
+	app.delete("/ask/threads/:id", async (req) => {
+		const { id } = IdParams.parse(req.params);
+		if (!(await deps.threads.remove(req.user?.id ?? "", id)))
+			throw notFound("Chat");
+		return { success: true, data: null };
 	});
 }

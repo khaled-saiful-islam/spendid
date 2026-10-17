@@ -1,8 +1,12 @@
 import type { AiGuard } from "@spendid/server";
 import type { FastifyInstance } from "fastify";
+import { z } from "zod";
 import { requireMember, type SessionLookup } from "../../auth/guards";
 import { badRequest } from "../../http/app-error";
 import type { VoiceService } from "./voice.service";
+
+/** Earlier words from the same note, when a long note arrives phrase by phrase. */
+const VoiceQuery = z.object({ context: z.string().max(600).optional() });
 
 /** About a minute of 16 kHz mono WAV, with headroom for compressed fallbacks. */
 const MAX_AUDIO_BYTES = 4 * 1024 * 1024;
@@ -36,7 +40,13 @@ export async function captureRoutes(
 			(req.headers["content-type"] ?? "audio/wav").split(";")[0] ?? "audio/wav";
 		return {
 			success: true,
-			data: await deps.voice.read(req.user?.id ?? "", audio, mime, req.log),
+			data: await deps.voice.read(
+				req.user?.id ?? "",
+				audio,
+				mime,
+				req.log,
+				VoiceQuery.parse(req.query).context,
+			),
 		};
 	});
 

@@ -480,4 +480,49 @@ export const msD: Record<string, string> = {
 	"You can switch any time in Settings.":
 		"Anda boleh tukar bila-bila masa dalam Tetapan.",
 	"profile and settings": "profil dan tetapan",
+	"About {n} hours of work. Wait {h} hours; most urges pass.":
+		"Kira-kira {n} jam bekerja. Tunggu {h} jam; kebanyakan keinginan akan berlalu.",
+	"Add a note (optional)": "Tambah nota (pilihan)",
+	"Add one I missed": "Tambah yang tertinggal",
+	"Add to a goal": "Tambah ke matlamat",
+	"Already {amount} spent this month, over this limit.":
+		"Sudah {amount} dibelanjakan bulan ini, melebihi had ini.",
+	"Catching the last bit…": "Menangkap bahagian terakhir…",
+	"Caught 1 so far": "1 ditangkap setakat ini",
+	"Caught {n} so far": "{n} ditangkap setakat ini",
+	"Couldn't open that chat. Try again.":
+		"Tidak dapat membuka sembang itu. Cuba lagi.",
+	"Day for {name}": "Hari untuk {name}",
+	Delete: "Padam",
+	"Delete chat: {title}": "Padam sembang: {title}",
+	"Done, check {n}": "Siap, semak {n}",
+	History: "Sejarah",
+	"Impulse pause": "Jeda impuls",
+	"Keep going, or tap Done. You can fix anything next.":
+		"Teruskan, atau ketik Siap. Anda boleh betulkan apa-apa selepas ini.",
+	"Limit set for {name}.": "Had ditetapkan untuk {name}.",
+	"Listening for amounts…": "Mendengar jumlah…",
+	"Missed one bit. Say it again if something's not on the list.":
+		"Ada yang terlepas. Sebut lagi jika ada yang tiada dalam senarai.",
+	"New savings goal": "Matlamat simpanan baharu",
+	"No saved chats yet. Ask something and it's kept here.":
+		"Belum ada sembang disimpan. Tanya sesuatu dan ia disimpan di sini.",
+	"Not now": "Bukan sekarang",
+	"Note for {name}": "Nota untuk {name}",
+	"Open now": "Sedang dibuka",
+	"See it in your plan": "Lihat dalam pelan anda",
+	"Take out of a goal": "Keluarkan daripada matlamat",
+	"Take out {amount}": "Keluarkan {amount}",
+	"Take your time. Each pause, I write down what you said.":
+		"Ambil masa anda. Setiap kali anda berhenti, saya catat apa yang anda sebut.",
+	"Took {amount} out of {name}.": "{amount} dikeluarkan daripada {name}.",
+	"Wait {h} hours; most urges pass.":
+		"Tunggu {h} jam; kebanyakan keinginan akan berlalu.",
+	"We heard you, but no amounts. Try saying the price, like “lunch twelve fifty”, or add it below.":
+		"Kami dengar anda, tetapi tiada jumlah. Cuba sebut harganya, seperti “makan tengah hari dua belas lima puluh”, atau tambah di bawah.",
+	"Your chats": "Sembang anda",
+	"{amount} a month": "{amount} sebulan",
+	"{n} messages, {when}": "{n} mesej, {when}",
+	"{spent} spent this month, {left} left.":
+		"{spent} dibelanjakan bulan ini, baki {left}.",
 };

@@ -6,7 +6,8 @@ import type { AppSettingsStore } from "../settings";
 
 /** Spoken seconds are billed as tokens so one allowance covers every AI feature. */
 export const AUDIO_TOKENS_PER_SECOND = 25;
-const BURST_LIMIT = 12;
+/** Requests per minute. Voice reads a long note phrase by phrase, so this leaves room for that. */
+const BURST_LIMIT = 30;
 const BURST_WINDOW_SECONDS = 60;
 
 export interface UsageRecord {

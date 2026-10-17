@@ -1,5 +1,33 @@
-import type { AskEvent, AskRequest } from "@spendid/shared";
+import type {
+	AskEvent,
+	AskRequest,
+	AskThread,
+	AskThreadSummary,
+	StoredAskMessage,
+} from "@spendid/shared";
+import { queryOptions } from "@tanstack/react-query";
 import { t } from "@/i18n";
+import { api } from "./http";
+
+const json = (method: string, body?: unknown): RequestInit => ({
+	method,
+	headers: { "Content-Type": "application/json" },
+	body: JSON.stringify(body ?? {}),
+});
+
+/** Saved chats, newest first. */
+export const threadsQuery = queryOptions({
+	queryKey: ["ask-threads"],
+	queryFn: () => api<AskThreadSummary[]>("/api/ask/threads"),
+	staleTime: 30_000,
+});
+
+export const askThreadsApi = {
+	get: (id: string) => api<AskThread>(`/api/ask/threads/${id}`),
+	save: (id: string, messages: StoredAskMessage[]) =>
+		api<AskThreadSummary>(`/api/ask/threads/${id}`, json("PUT", { messages })),
+	remove: (id: string) => api<null>(`/api/ask/threads/${id}`, json("DELETE")),
+};
 
 /**
  * Sends a question and calls `onEvent` for each streamed event (steps, answer words,
