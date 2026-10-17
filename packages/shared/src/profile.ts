@@ -54,6 +54,8 @@ export const MeSchema = z.object({
 		onboardedAt: z.string().nullable(),
 	}),
 	needsOnboarding: z.boolean(),
+	/** Spending exists, so the home currency is fixed (changing it would mix past amounts). */
+	currencyLocked: z.boolean(),
 });
 
 export type Me = z.infer<typeof MeSchema>;

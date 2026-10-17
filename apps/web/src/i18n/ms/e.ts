@@ -278,4 +278,11 @@ export const msE: Record<string, string> = {
 	"The camera needs a secure address": "Kamera memerlukan alamat selamat",
 	"Browsers only open the camera on https addresses. Pick a photo, screenshot or PDF instead; your phone can still take a photo from here.":
 		"Pelayar hanya membuka kamera pada alamat https. Pilih foto, tangkapan skrin atau PDF; telefon anda masih boleh mengambil foto dari sini.",
+	"This month is over budget by": "Bulan ini melebihi bajet sebanyak",
+	"Keep today to the essentials. The 1st brings a fresh month.":
+		"Hadkan hari ini kepada keperluan sahaja. Bulan baharu bermula pada 1 haribulan.",
+	"This month is {amount} over. I'm curled up; let's keep today to the essentials.":
+		"Bulan ini lebih {amount}. Saya bergulung; mari hadkan hari ini kepada keperluan sahaja.",
+	"This stays the same once you've logged spending, so past totals don't mix currencies.":
+		"Ini kekal sama selepas anda merekod perbelanjaan, supaya jumlah lalu tidak bercampur mata wang.",
 };

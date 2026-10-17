@@ -187,38 +187,45 @@ export function createChallengeService(db: Db) {
 		async start(userId: string, raw: unknown): Promise<ChallengeView> {
 			const input = StartChallengeSchema.parse(raw);
 			const { timeZone, currency, today } = await home(userId);
-			const running = await db
-				.select({ kind: challenge.kind })
-				.from(challenge)
-				.where(and(eq(challenge.userId, userId), isNull(challenge.outcome)));
-			if (running.some((r) => r.kind === input.kind))
-				throw badRequest("That challenge is already running.");
-			if (running.length >= MAX_ACTIVE)
-				throw badRequest(
-					"Two challenges at a time is plenty. Finish one first.",
-				);
 			const capped = input.kind === "eat-out-cap" || input.kind === "daily-cap";
 			const s =
 				capped && !input.targetMinor
 					? await suggestions(userId, timeZone, today)
 					: null;
 			const window = challengeWindow(input.kind, today);
-			const [row] = await db
-				.insert(challenge)
-				.values({
-					userId,
-					kind: input.kind,
-					targetMinor: capped
-						? (input.targetMinor ??
-							(input.kind === "eat-out-cap"
-								? s?.eatOutWeekMinor
-								: s?.dailyMinor) ??
-							null)
-						: null,
-					startDay: window.start,
-					endDay: window.end,
-				})
-				.returning();
+			// Check and insert under a per-person lock, so quick taps can't pass the checks together.
+			const row = await db.transaction(async (tx) => {
+				await tx.execute(
+					sql`select pg_advisory_xact_lock(hashtext(${`challenge:${userId}`}))`,
+				);
+				const running = await tx
+					.select({ kind: challenge.kind })
+					.from(challenge)
+					.where(and(eq(challenge.userId, userId), isNull(challenge.outcome)));
+				if (running.some((r) => r.kind === input.kind))
+					throw badRequest("That challenge is already running.");
+				if (running.length >= MAX_ACTIVE)
+					throw badRequest(
+						"Two challenges at a time is plenty. Finish one first.",
+					);
+				const [inserted] = await tx
+					.insert(challenge)
+					.values({
+						userId,
+						kind: input.kind,
+						targetMinor: capped
+							? (input.targetMinor ??
+								(input.kind === "eat-out-cap"
+									? s?.eatOutWeekMinor
+									: s?.dailyMinor) ??
+								null)
+							: null,
+						startDay: window.start,
+						endDay: window.end,
+					})
+					.returning();
+				return inserted;
+			});
 			if (!row) throw new Error("challenge insert returned nothing");
 			return view(row, timeZone, today, currency);
 		},

@@ -1,4 +1,4 @@
-import { createDb, receipt } from "@spendid/db";
+import { createDb, receipt, transaction } from "@spendid/db";
 import type { EventHub, FileStore } from "@spendid/server";
 import type {
 	Category,
@@ -8,7 +8,7 @@ import type {
 	Transaction,
 } from "@spendid/shared";
 import type { Queue } from "bullmq";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createPerson, testDbUrl } from "../../../test/db";
@@ -49,6 +49,7 @@ describe.skipIf(!url)("receipts API (real database)", () => {
 	let sam: string;
 	let groceries: Category;
 	const queued: string[] = [];
+	let receipts: ReturnType<typeof createReceiptService>;
 
 	const session: SessionLookup = async (headers) => {
 		const id = headers.get("x-test-user");
@@ -145,18 +146,15 @@ describe.skipIf(!url)("receipts API (real database)", () => {
 			subscribe: () => () => {},
 			close: async () => {},
 		} as unknown as EventHub;
+		receipts = createReceiptService({
+			db,
+			store: memoryStore(),
+			queue,
+			transactions: service,
+		});
 		app = await buildApp({
 			checks: { database: database.ping, redis: async () => true },
-			receipts: {
-				session,
-				events,
-				receipts: createReceiptService({
-					db,
-					store: memoryStore(),
-					queue,
-					transactions: service,
-				}),
-			},
+			receipts: { session, events, receipts },
 		});
 		groceries = (await categories.listFor(maya)).find(
 			(c) => c.slug === "groceries",
@@ -217,6 +215,37 @@ describe.skipIf(!url)("receipts API (real database)", () => {
 		expect(warranties.body.data).toContainEqual(
 			expect.objectContaining({ itemName: "Power Bank", endsOn: "2027-10-02" }),
 		);
+	});
+
+	it("saves a receipt once, even when Save is tapped twice at the same moment", async () => {
+		const up = await call<Receipt>(maya, "POST", "/capture/receipt", JPEG);
+		await markRead(up.body.data.id, draft(700));
+		const body = saveBody(draft(700), "2026-10-03T10:00:00+08:00");
+		const results = await Promise.allSettled([
+			receipts.save(maya, up.body.data.id, body),
+			receipts.save(maya, up.body.data.id, body),
+		]);
+		expect(results.map((r) => r.status).sort()).toEqual([
+			"fulfilled",
+			"rejected",
+		]);
+		const created = results.find((r) => r.status === "fulfilled")?.value.id;
+		// Exactly one expense came from this receipt.
+		const fromReceipt = await db
+			.select({ transactionId: receipt.transactionId })
+			.from(receipt)
+			.where(eq(receipt.id, up.body.data.id));
+		expect(fromReceipt[0]?.transactionId).toBe(created);
+		const photo = await db
+			.select({ id: transaction.id })
+			.from(transaction)
+			.where(
+				and(
+					eq(transaction.userId, maya),
+					eq(transaction.amountMinor, body.totalMinor),
+				),
+			);
+		expect(photo).toHaveLength(1);
 	});
 
 	it("keeps receipts private to their owner", async () => {

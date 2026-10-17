@@ -188,6 +188,7 @@ export function OnboardingPage({ me }: { me: Me }) {
 										currency={homeCurrency}
 										locale={locale}
 										nameError={errors.name}
+										currencyLocked={me.currencyLocked}
 										onChange={(p) => {
 											if (p.name !== undefined) setName(p.name);
 											if (p.homeCurrency) setCurrency(p.homeCurrency);

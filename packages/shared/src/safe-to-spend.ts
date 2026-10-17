@@ -46,11 +46,13 @@ export function computeSafeToSpend(input: SafeToSpendInput): SafeToSpend {
 		Math.floor(available / Math.max(1, input.daysLeft)),
 	);
 	const safeTodayMinor = dailyAllowanceMinor - input.spentTodayMinor;
+	const leftThisMonthMinor = available - input.spentTodayMinor;
 	return {
-		status: safeTodayMinor < 0 ? "over" : "ok",
+		// Over today's share, or the month as a whole is already in the red.
+		status: safeTodayMinor < 0 || leftThisMonthMinor < 0 ? "over" : "ok",
 		dailyAllowanceMinor,
 		safeTodayMinor,
-		leftThisMonthMinor: available - input.spentTodayMinor,
+		leftThisMonthMinor,
 	};
 }
 

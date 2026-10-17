@@ -15,7 +15,7 @@ import {
 	yearlyCost,
 } from "@spendid/shared";
 import { and, asc, eq, isNotNull, isNull } from "drizzle-orm";
-import { badRequest, notFound } from "../../http/app-error";
+import { AppError, badRequest, notFound } from "../../http/app-error";
 import { homeOf, recurringFor } from "../insights/charges";
 import type { CategoryRepository } from "../money/categories.repository";
 import { monthBounds } from "../money/summary.service";
@@ -231,24 +231,44 @@ export function createSubscriptionService(deps: Deps) {
 			const row = await find(userId, id);
 			if (row.cancelledAt) throw badRequest("This subscription is cancelled.");
 			const { today: day } = await today(userId);
-			// Move the date first, so the expense below isn't taken as paying the next one too.
+			// Claim this payment in one statement: only the tap that moves the date logs it.
 			const [moved] = await db
 				.update(subscription)
 				.set({
 					nextDue: nextDueAfter(row.nextDue, row.cycle, row.dueDay),
 					lastPaidOn: day,
 				})
-				.where(owned(userId, id))
+				.where(
+					and(
+						owned(userId, id),
+						eq(subscription.nextDue, row.nextDue),
+						isNull(subscription.cancelledAt),
+					),
+				)
 				.returning();
-			const expense = await deps.addExpense(userId, {
-				amountMinor: amountMinor ?? row.amountMinor,
-				currency: row.currency,
-				categoryId: row.categoryId,
-				merchant: row.name,
-				note: null,
-				source: "manual",
-			});
-			return { subscription: toDto(moved ?? row), expense };
+			if (!moved)
+				throw new AppError(409, "This payment is already marked paid.");
+			let expense: Transaction;
+			try {
+				expense = await deps.addExpense(userId, {
+					amountMinor: amountMinor ?? row.amountMinor,
+					currency: row.currency,
+					categoryId: row.categoryId,
+					merchant: row.name,
+					note: null,
+					source: "manual",
+				});
+			} catch (error) {
+				// Couldn't log it: put the due date back, so it isn't silently skipped.
+				await db
+					.update(subscription)
+					.set({ nextDue: row.nextDue, lastPaidOn: row.lastPaidOn })
+					.where(
+						and(owned(userId, id), eq(subscription.nextDue, moved.nextDue)),
+					);
+				throw error;
+			}
+			return { subscription: toDto(moved), expense };
 		},
 
 		async cancel(userId: string, id: string): Promise<Subscription> {

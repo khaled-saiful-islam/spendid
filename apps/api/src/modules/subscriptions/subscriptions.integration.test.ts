@@ -1,5 +1,5 @@
 import { createDb, transaction } from "@spendid/db";
-import type { Category, Transaction } from "@spendid/shared";
+import { type Category, nextDueAfter, type Transaction } from "@spendid/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createPerson, testDbUrl } from "../../../test/db";
 import { seedCategories } from "../../scripts/categories";
@@ -81,6 +81,31 @@ describe.skipIf(!url)("subscriptions (real database)", () => {
 		expect(subscription.nextDue > sub.nextDue).toBe(true);
 		expect(subscription.lastPaidOn).toBe(dayFromToday(0));
 		expect(await service.remindersFor(maya)).toEqual([]);
+	});
+
+	it("marks paid once, even when tapped twice at the same moment", async () => {
+		const sub = await service.create(maya, {
+			...netflix(),
+			name: "Disney",
+			brand: "disney",
+		});
+		const before = logged.length;
+		const results = await Promise.allSettled([
+			service.markPaid(maya, sub.id, {}),
+			service.markPaid(maya, sub.id, {}),
+		]);
+		expect(results.map((r) => r.status).sort()).toEqual([
+			"fulfilled",
+			"rejected",
+		]);
+		expect(logged.length - before).toBe(1);
+		const after = (await service.overview(maya)).active.find(
+			(s) => s.id === sub.id,
+		);
+		// Moved on by exactly one cycle, not two.
+		expect(after?.nextDue).toBe(
+			nextDueAfter(sub.nextDue, sub.cycle, sub.dueDay),
+		);
 	});
 
 	it("counts an expense logged by hand as paying it", async () => {

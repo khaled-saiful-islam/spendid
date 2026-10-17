@@ -29,6 +29,7 @@ function fakeRepo(): MeRepository & { saved: ProfileInput[] } {
 			onboardedAt: onboarded ? new Date(0).toISOString() : null,
 		},
 		needsOnboarding: !onboarded,
+		currencyLocked: false,
 	});
 	return {
 		saved,

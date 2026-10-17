@@ -37,6 +37,8 @@ export function SafeCard({ summary }: { summary: Summary }) {
 	}
 
 	const over = safe.status === "over";
+	// The month as a whole is in the red (not just today's share).
+	const monthOver = safe.leftThisMonthMinor < 0;
 	const tomorrowDays = Math.max(1, daysLeft - 1);
 	const tomorrow = Math.max(
 		0,
@@ -48,36 +50,44 @@ export function SafeCard({ summary }: { summary: Summary }) {
 			<div className="grid items-center gap-6 sm:grid-cols-[1fr_auto]">
 				<div>
 					<p className="text-plum-200">
-						{over ? t("Over today's amount by") : t("Safe to spend today")}
+						{monthOver
+							? t("This month is over budget by")
+							: over
+								? t("Over today's amount by")
+								: t("Safe to spend today")}
 					</p>
 					<CountUp
-						minor={Math.abs(safe.safeTodayMinor)}
+						minor={Math.abs(
+							monthOver ? safe.leftThisMonthMinor : safe.safeTodayMinor,
+						)}
 						currency={cur}
 						className={`num mt-1 block text-[clamp(3rem,13vw,4.5rem)] leading-none font-extrabold ${over ? "text-coral" : "text-marigold"}`}
 					/>
 					<p data-money className="mt-3 max-w-[38ch] text-plum-200">
-						{over
-							? t("No stress — tomorrow starts fresh at about {amount}.", {
-									amount: money(tomorrow),
-								})
-							: `${t(daysLeft === 1 ? "{amount} a day for the next day" : "{amount} a day for the next {n} days", { amount: money(safe.dailyAllowanceMinor), n: daysLeft })}${keptAside(
-									reservedMinor > 0
-										? t("{amount} for savings", {
-												amount: money(reservedMinor),
-											})
-										: null,
-									summary.bills.minor > 0
-										? t(
-												summary.bills.items.length === 1
-													? "{amount} for a bill still due"
-													: "{amount} for {n} bills still due",
-												{
-													amount: money(summary.bills.minor),
-													n: summary.bills.items.length,
-												},
-											)
-										: null,
-								)}.`}
+						{monthOver
+							? t("Keep today to the essentials. The 1st brings a fresh month.")
+							: over
+								? t("No stress — tomorrow starts fresh at about {amount}.", {
+										amount: money(tomorrow),
+									})
+								: `${t(daysLeft === 1 ? "{amount} a day for the next day" : "{amount} a day for the next {n} days", { amount: money(safe.dailyAllowanceMinor), n: daysLeft })}${keptAside(
+										reservedMinor > 0
+											? t("{amount} for savings", {
+													amount: money(reservedMinor),
+												})
+											: null,
+										summary.bills.minor > 0
+											? t(
+													summary.bills.items.length === 1
+														? "{amount} for a bill still due"
+														: "{amount} for {n} bills still due",
+													{
+														amount: money(summary.bills.minor),
+														n: summary.bills.items.length,
+													},
+												)
+											: null,
+									)}.`}
 					</p>
 				</div>
 				<SafeDial

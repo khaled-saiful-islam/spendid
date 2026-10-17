@@ -6,7 +6,7 @@ import { cn } from "@/lib/cn";
 import { currencyOptions, currencySymbol, METHODS } from "./options";
 
 const selectClass =
-	"h-13 w-full appearance-none rounded-tile border-2 border-line bg-surface bg-[length:1.1rem] bg-[right_1rem_center] bg-no-repeat px-4 pr-11 text-[1.02rem] outline-none focus:border-plum-500";
+	"h-13 w-full appearance-none rounded-tile border-2 border-line bg-surface bg-[length:1.1rem] bg-[right_1rem_center] bg-no-repeat px-4 pr-11 text-[1.02rem] outline-none focus:border-plum-500 disabled:opacity-60";
 const chevron = {
 	backgroundImage:
 		"url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a4fc4' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")",
@@ -22,6 +22,8 @@ interface PlaceStepProps {
 		locale?: Locale;
 	}) => void;
 	nameError?: string;
+	/** Spending exists, so the currency is fixed. */
+	currencyLocked?: boolean;
 }
 
 export function PlaceStep({
@@ -30,6 +32,7 @@ export function PlaceStep({
 	locale,
 	onChange,
 	nameError,
+	currencyLocked = false,
 }: PlaceStepProps) {
 	const { popular, rest } = currencyOptions(locale === "ms" ? "ms-MY" : "en");
 	return (
@@ -50,6 +53,8 @@ export function PlaceStep({
 					className={selectClass}
 					style={chevron}
 					value={currency}
+					disabled={currencyLocked}
+					aria-describedby="currency-help"
 					onChange={(e) => onChange({ homeCurrency: e.target.value })}
 				>
 					<optgroup label={t("Popular")}>
@@ -67,8 +72,12 @@ export function PlaceStep({
 						))}
 					</optgroup>
 				</select>
-				<p className="text-[0.9rem] text-ink-soft">
-					{t("Spending abroad is converted to this automatically.")}
+				<p id="currency-help" className="text-[0.9rem] text-ink-soft">
+					{currencyLocked
+						? t(
+								"This stays the same once you've logged spending, so past totals don't mix currencies.",
+							)
+						: t("Spending abroad is converted to this automatically.")}
 				</p>
 			</div>
 			<fieldset className="space-y-2">

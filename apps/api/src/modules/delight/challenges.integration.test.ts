@@ -76,6 +76,18 @@ describe.skipIf(!url)("challenges (real database)", () => {
 		]);
 	});
 
+	it("starts a challenge once, even when tapped twice at the same moment", async () => {
+		const zoe = await createPerson(db);
+		const results = await Promise.allSettled([
+			challenges.start(zoe, { kind: "shopping-pause" }),
+			challenges.start(zoe, { kind: "shopping-pause" }),
+			challenges.start(zoe, { kind: "log-daily" }),
+			challenges.start(zoe, { kind: "cook-at-home" }),
+		]);
+		expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(2);
+		expect((await challenges.board(zoe)).active).toHaveLength(2);
+	});
+
 	it("suggests caps a little under recent spending", async () => {
 		const capped = await challenges.start(sam, { kind: "daily-cap" });
 		expect(capped.targetMinor).toBeGreaterThan(0);

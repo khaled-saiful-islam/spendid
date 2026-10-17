@@ -194,22 +194,40 @@ export function createReceiptService({ db, store, queue, transactions }: Deps) {
 		): Promise<Transaction> {
 			const input = ReceiptSaveSchema.parse(raw);
 			const row = await findOwned(userId, id);
-			if (row.status === "saved")
-				throw new AppError(409, "This receipt is already saved.");
-			if (row.status === "reading")
+			// Claim the receipt in one statement, so two taps can't both save it.
+			const [claimed] = await db
+				.update(receipt)
+				.set({ status: "saved" })
+				.where(
+					and(owned(userId, id), inArray(receipt.status, ["ready", "failed"])),
+				)
+				.returning({ id: receipt.id });
+			if (!claimed) {
+				const now = await findOwned(userId, id);
 				throw new AppError(
 					409,
-					"Still reading this receipt. Give it a moment.",
+					now.status === "reading"
+						? "Still reading this receipt. Give it a moment."
+						: "This receipt is already saved.",
 				);
+			}
+			const release = () =>
+				db.update(receipt).set({ status: row.status }).where(owned(userId, id));
 
-			const created = await transactions.create(userId, {
-				amountMinor: input.totalMinor,
-				currency: input.currency,
-				categoryId: input.categoryId,
-				merchant: input.merchant,
-				occurredAt: input.occurredAt,
-				source: "photo",
-			});
+			let created: Transaction;
+			try {
+				created = await transactions.create(userId, {
+					amountMinor: input.totalMinor,
+					currency: input.currency,
+					categoryId: input.categoryId,
+					merchant: input.merchant,
+					occurredAt: input.occurredAt,
+					source: "photo",
+				});
+			} catch (error) {
+				await release();
+				throw error;
+			}
 			try {
 				const boughtAt = new Date(input.occurredAt);
 				const purchasedOn = input.occurredAt.slice(0, 10);
@@ -243,12 +261,13 @@ export function createReceiptService({ db, store, queue, transactions }: Deps) {
 					}
 					await tx
 						.update(receipt)
-						.set({ status: "saved", transactionId: created.id })
+						.set({ transactionId: created.id })
 						.where(owned(userId, id));
 				});
 			} catch (error) {
 				// Keep it all-or-nothing from the person's point of view.
 				await transactions.remove(userId, created.id);
+				await release();
 				throw error;
 			}
 			return created;

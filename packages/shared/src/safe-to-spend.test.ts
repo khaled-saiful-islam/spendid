@@ -48,9 +48,20 @@ describe("computeSafeToSpend", () => {
 		expect(r.safeTodayMinor).toBe(-4_000);
 	});
 
-	it("never offers a negative daily allowance when the month is already overspent", () => {
+	it("says 'over' when the month is already overspent, with no negative allowance", () => {
 		const r = computeSafeToSpend({ ...base, spentBeforeTodayMinor: 700_000 });
 		expect(r.dailyAllowanceMinor).toBe(0);
+		expect(r.status).toBe("over");
+		expect(r.leftThisMonthMinor).toBeLessThan(0);
+	});
+
+	it("stays 'ok' at exactly nothing left", () => {
+		const r = computeSafeToSpend({
+			...base,
+			incomeMinor: 0,
+			reservedMinor: 0,
+			spentBeforeTodayMinor: 0,
+		});
 		expect(r.status).toBe("ok");
 	});
 

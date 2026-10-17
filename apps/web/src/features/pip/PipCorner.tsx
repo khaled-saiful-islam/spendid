@@ -38,6 +38,13 @@ function pipLine(mood: PipMood, summary: Summary | undefined): string {
 				? t("It's late. Rest up, I'll keep watch over your money.")
 				: t("Getting late. Anything to log before bed? Then I'll keep watch.");
 		case "curled":
+			if (summary && summary.safe.leftThisMonthMinor < 0)
+				return t(
+					"This month is {amount} over. I'm curled up; let's keep today to the essentials.",
+					{
+						amount: money(-summary.safe.leftThisMonthMinor),
+					},
+				);
 			return t(
 				"We went {amount} over today. I'm curled up, but tomorrow starts fresh.",
 				{ amount: money(-left) },

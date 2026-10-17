@@ -1,6 +1,7 @@
-import { type Db, profile, user } from "@spendid/db";
+import { type Db, profile, transaction, user } from "@spendid/db";
 import type { Locale, Me, ProfileInput } from "@spendid/shared";
 import { eq, sql } from "drizzle-orm";
+import { AppError } from "../../http/app-error";
 
 export interface MeRepository {
 	find(userId: string): Promise<Me | null>;
@@ -21,6 +22,11 @@ export function createMeRepository(db: Db): MeRepository {
 		if (!row) return null;
 
 		const p = row.profile;
+		const [spent] = await db
+			.select({ id: transaction.id })
+			.from(transaction)
+			.where(eq(transaction.userId, userId))
+			.limit(1);
 		return {
 			user: {
 				id: row.user.id,
@@ -39,12 +45,31 @@ export function createMeRepository(db: Db): MeRepository {
 				onboardedAt: p?.onboardedAt?.toISOString() ?? null,
 			},
 			needsOnboarding: row.user.role !== "admin" && !p?.onboardedAt,
+			currencyLocked: Boolean(spent),
 		};
 	}
 
 	async function saveProfile(userId: string, input: ProfileInput): Promise<Me> {
 		const { name, ...money } = input;
 		await db.transaction(async (tx) => {
+			const [current] = await tx
+				.select({ homeCurrency: profile.homeCurrency })
+				.from(profile)
+				.where(eq(profile.userId, userId))
+				.for("update")
+				.limit(1);
+			if (current && current.homeCurrency !== money.homeCurrency) {
+				const [spent] = await tx
+					.select({ id: transaction.id })
+					.from(transaction)
+					.where(eq(transaction.userId, userId))
+					.limit(1);
+				if (spent)
+					throw new AppError(
+						409,
+						"Your home currency stays the same once you've logged spending, so past totals don't mix currencies.",
+					);
+			}
 			await tx.update(user).set({ name }).where(eq(user.id, userId));
 			await tx
 				.insert(profile)
