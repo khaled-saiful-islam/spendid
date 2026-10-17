@@ -13,15 +13,12 @@ export const msA: Record<string, string> = {
 	"Add income": "Tambah pendapatan",
 	"Add line": "Tambah baris",
 	"Add money": "Tambah wang",
-	"Add something": "Tambah sesuatu",
 	"Add spending": "Tambah perbelanjaan",
 	"Add spending: say it, snap it or type it":
 		"Tambah perbelanjaan: sebut, tangkap gambar atau taip",
 	"Add the items yourself.": "Tambah barang sendiri.",
 	"Add the price.": "Masukkan harga.",
 	"Add the shop name.": "Masukkan nama kedai.",
-	"Add your monthly income in settings and I'll work out what's safe each day.":
-		"Masukkan pendapatan bulanan dalam tetapan dan saya akan kira jumlah selamat setiap hari.",
 	"Add your monthly income to plan your budget.":
 		"Masukkan pendapatan bulanan untuk merancang bajet anda.",
 	"Add your monthly income to see your daily number.":
@@ -43,7 +40,6 @@ export const msA: Record<string, string> = {
 		"Jawapan hanya guna data anda sendiri. Perbualan ini kekal dalam peranti ini.",
 	"Anyone with the link sees the names and amounts on this bill, nothing else.":
 		"Sesiapa yang ada pautan boleh lihat nama dan jumlah dalam bil ini sahaja.",
-	"Anything I missed today?": "Ada apa-apa yang tertinggal hari ini?",
 	"App lock": "Kunci aplikasi",
 	Ask: "Tanya",
 	"Ask Spendid": "Tanya Spendid",
@@ -174,8 +170,6 @@ export const msA: Record<string, string> = {
 	"Free, private, and ready in a minute.":
 		"Percuma, peribadi, dan sedia dalam seminit.",
 	From: "Dari",
-	"Getting late. Anything to log before bed? Then I'll keep watch.":
-		"Dah lewat. Ada apa-apa nak dicatat sebelum tidur? Lepas tu saya jaga.",
 	"Getting the mic ready…": "Menyediakan mikrofon…",
 	"Go home": "Ke laman utama",
 	"Go to Spendid": "Ke Spendid",

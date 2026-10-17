@@ -1,4 +1,4 @@
-/** Bahasa Melayu, part E: the October 2026 round (subscriptions, Pip, month pace, onboarding). */
+/** Bahasa Melayu, part E: the October 2026 round (subscriptions, month pace, onboarding). */
 export const msE: Record<string, string> = {
 	"1 day before": "1 hari sebelum",
 	"1 day late": "Lewat 1 hari",
@@ -116,55 +116,7 @@ export const msE: Record<string, string> = {
 	"{name}'s month, sorted": "Bulan {name}, tersusun",
 	"{name}, today you can safely spend":
 		"{name}, hari ini anda boleh berbelanja dengan selamat",
-	"1 shield": "1 perisai",
-	"1 shield ready: a missed day won't break it.":
-		"1 perisai sedia: satu hari terlepas tidak akan memutuskannya.",
-	"A shield covered a missed day, so your streak lives on.":
-		"Perisai melindungi hari yang terlepas, jadi rentetan anda diteruskan.",
-	"Every day you log, Pip grows. Tap a gift to wear it or take it off.":
-		"Setiap hari anda mencatat, Pip membesar. Ketik hadiah untuk memakai atau menanggalkannya.",
-	"Got it! {amount} left for today.": "Baik! Baki {amount} untuk hari ini.",
-	"Level {n}": "Tahap {n}",
-	"Log something": "Catat sesuatu",
-	"Lv {n}": "Thp {n}",
-	"Most of this month went to {category}: {amount} ({pct}%).":
-		"Kebanyakan bulan ini dibelanjakan untuk {category}: {amount} ({pct}%).",
-	"Open Pip: today's briefing and wardrobe":
-		"Buka Pip: taklimat hari ini dan almari pakaian",
-	"Pip grew into {title} and brought a gift!":
-		"Pip membesar menjadi {title} dan membawa hadiah!",
-	"Pip has every gift. Legendary.": "Pip ada semua hadiah. Lagenda.",
-	"Pip's wardrobe": "Almari pakaian Pip",
-	"Put on": "Pakai",
-	"Shields cover a missed day": "Perisai melindungi hari yang terlepas",
-	"Today, from Pip": "Hari ini, daripada Pip",
-	Wearing: "Dipakai",
-	"in {n} days": "dalam {n} hari",
 	today: "hari ini",
-	tomorrow: "esok",
-	"{name} ({amount}) is due {when}. Already kept aside.":
-		"{name} ({amount}) perlu dibayar {when}. Sudah diketepikan.",
-	"{name} ({amount}) usually lands soon. Already kept aside.":
-		"{name} ({amount}) biasanya tiba tidak lama lagi. Sudah diketepikan.",
-	"{n} days": "{n} hari",
-	"{n} more days of logging to {title}, who brings a {gift}.":
-		"{n} hari lagi mencatat untuk menjadi {title}, yang membawa {gift}.",
-	"{n} shields": "{n} perisai",
-	"{n} shields ready: missed days won't break it.":
-		"{n} perisai sedia: hari yang terlepas tidak akan memutuskannya.",
-	"Little Pip": "Pip Kecil",
-	"Curious Pip": "Pip Ingin Tahu",
-	"Snug Pip": "Pip Selesa",
-	"Explorer Pip": "Pip Penjelajah",
-	"Cool Pip": "Pip Bergaya",
-	"Royal Pip": "Pip Diraja",
-	"Legendary Pip": "Pip Lagenda",
-	"Lucky leaf": "Daun bertuah",
-	"Batik scarf": "Selendang batik",
-	"Explorer hat": "Topi penjelajah",
-	Sunglasses: "Cermin mata hitam",
-	"Little crown": "Mahkota kecil",
-	"Gold coin medal": "Pingat syiling emas",
 	"(forecast)": "(ramalan)",
 	"At this pace, the money runs out around {date}.":
 		"Pada kadar ini, wang akan habis sekitar {date}.",
@@ -271,8 +223,8 @@ export const msE: Record<string, string> = {
 	"Stay under your daily target every day for 7 days. Bills don't count.":
 		"Kekal di bawah sasaran harian setiap hari selama 7 hari. Bil tidak dikira.",
 	"Log every day": "Catat setiap hari",
-	"Log something, or check in, every day for 7 days.":
-		"Catat sesuatu, atau daftar masuk, setiap hari selama 7 hari.",
+	"Log something every day for 7 days.":
+		"Catat sesuatu setiap hari selama 7 hari.",
 	"Voice needs a secure (https) address, and this one isn't. Type it for now, or open Spendid from its https address.":
 		"Suara memerlukan alamat selamat (https), dan alamat ini bukan. Taip dahulu, atau buka Spendid dari alamat https.",
 	"The camera needs a secure address": "Kamera memerlukan alamat selamat",
@@ -281,8 +233,6 @@ export const msE: Record<string, string> = {
 	"This month is over budget by": "Bulan ini melebihi bajet sebanyak",
 	"Keep today to the essentials. The 1st brings a fresh month.":
 		"Hadkan hari ini kepada keperluan sahaja. Bulan baharu bermula pada 1 haribulan.",
-	"This month is {amount} over. I'm curled up; let's keep today to the essentials.":
-		"Bulan ini lebih {amount}. Saya bergulung; mari hadkan hari ini kepada keperluan sahaja.",
 	"This stays the same once you've logged spending, so past totals don't mix currencies.":
 		"Ini kekal sama selepas anda merekod perbelanjaan, supaya jumlah lalu tidak bercampur mata wang.",
 	"You were signed out. Sign in again to carry on.":

@@ -1,9 +1,6 @@
-import { checkIn, type Db, profile, transaction, wish } from "@spendid/db";
+import { type Db, profile, wish } from "@spendid/db";
 import {
-	CheckInSchema,
-	computeStreak,
 	hoursOfWork,
-	type Streak,
 	WISH_COOLDOWN_HOURS,
 	type Wish,
 	WishDecisionSchema,
@@ -11,15 +8,12 @@ import {
 	WishInputSchema,
 	type WishList,
 } from "@spendid/shared";
-import { and, desc, eq, gte, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { badRequest, notFound } from "../../http/app-error";
-import { localParts } from "../../notify/notifier";
 
-/** From this local hour, an unanswered day shows "Anything I missed today?". */
-const CHECK_IN_FROM_HOUR = 20;
 const MAX_WAITING = 30;
 
-/** Streaks, the nightly check-in and the impulse-pause wishlist. Everything scoped to one person. */
+/** The impulse-pause wishlist. Everything scoped to one person. */
 export function createDelightService(db: Db) {
 	async function me(userId: string) {
 		const [p] = await db
@@ -54,58 +48,6 @@ export function createDelightService(db: Db) {
 	}
 
 	return {
-		async streak(userId: string): Promise<Streak> {
-			const { timeZone } = await me(userId);
-			const local = localParts(timeZone);
-			const [spendDays, checks] = await Promise.all([
-				db
-					.selectDistinct({
-						day: sql<string>`(${transaction.occurredAt} at time zone ${timeZone})::date::text`,
-					})
-					.from(transaction)
-					.where(
-						and(
-							eq(transaction.userId, userId),
-							isNull(transaction.deletedAt),
-							gte(transaction.occurredAt, sql`now() - interval '400 days'`),
-						),
-					),
-				db
-					.select({ day: checkIn.day })
-					.from(checkIn)
-					.where(
-						and(
-							eq(checkIn.userId, userId),
-							gte(checkIn.day, sql`(current_date - 400)`),
-						),
-					),
-			]);
-			const s = computeStreak(
-				[...spendDays.map((d) => d.day), ...checks.map((c) => c.day)],
-				local.date,
-			);
-			const checkedInToday = checks.some((c) => c.day === local.date);
-			return {
-				...s,
-				checkedInToday,
-				checkInDue: local.hour >= CHECK_IN_FROM_HOUR && !checkedInToday,
-			};
-		},
-
-		async checkIn(userId: string, raw: unknown): Promise<Streak> {
-			const { kind } = CheckInSchema.parse(raw);
-			const { timeZone } = await me(userId);
-			const day = localParts(timeZone).date;
-			await db
-				.insert(checkIn)
-				.values({ userId, day, kind })
-				.onConflictDoUpdate({
-					target: [checkIn.userId, checkIn.day],
-					set: { kind },
-				});
-			return this.streak(userId);
-		},
-
 		async wishes(userId: string): Promise<WishList> {
 			const { currency, income } = await me(userId);
 			const rows = await db

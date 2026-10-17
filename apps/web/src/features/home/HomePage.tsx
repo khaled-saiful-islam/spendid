@@ -10,8 +10,6 @@ import { goalsQuery, summaryQuery } from "@/lib/money-api";
 import { appHour, formatMoment } from "@/lib/time";
 import { capture } from "../capture/capture-store";
 import { TransactionRow, useCategoryMap } from "../money/TransactionRow";
-import { CheckInCard } from "../pip/CheckInCard";
-import { PipCorner } from "../pip/PipCorner";
 import { GoalJar } from "../plan/GoalJar";
 import { PendingReceipts } from "../scan/PendingReceipts";
 import { DueSoonCard } from "../subscriptions/DueSoonCard";
@@ -52,10 +50,6 @@ export function HomePage() {
 					{greeting(now)}, {firstName}
 				</h1>
 			</div>
-
-			<PipCorner summary={summary} />
-
-			<CheckInCard summary={summary} />
 
 			<PendingReceipts />
 

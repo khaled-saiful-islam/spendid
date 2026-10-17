@@ -80,7 +80,7 @@ export function appToday(at: Date = new Date()): string {
 	return appDayOf(at);
 }
 
-/** The hour (0-23) in the app's zone: greetings and Pip's bedtime. */
+/** The hour (0-23) in the app's zone: for greetings. */
 export function appHour(at: Date = new Date()): number {
 	const hour = new Intl.DateTimeFormat("en-US", {
 		timeZone: zone,

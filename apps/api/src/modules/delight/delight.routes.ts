@@ -23,11 +23,6 @@ export async function delightRoutes(
 	app.addHook("preHandler", requireMember(deps.session));
 	const { delight } = deps;
 
-	app.get("/streak", async (req) => ok(await delight.streak(uid(req))));
-	app.post("/check-ins", async (req) =>
-		ok(await delight.checkIn(uid(req), req.body)),
-	);
-
 	app.get("/wishes", async (req) => ok(await delight.wishes(uid(req))));
 	app.post("/wishes", async (req, reply) =>
 		reply

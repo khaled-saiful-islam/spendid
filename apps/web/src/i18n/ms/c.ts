@@ -58,7 +58,6 @@ export const msC: Record<string, string> = {
 	"That didn't work. Try again, or use your password.":
 		"Tidak berjaya. Cuba lagi, atau guna kata laluan anda.",
 	"That didn't work. Try again.": "Tidak berjaya. Cuba lagi.",
-	"That's everything": "Itu sahaja",
 	"That's everything.": "Itu sahaja.",
 	"The last export didn't finish. Try again.":
 		"Eksport terakhir tidak selesai. Cuba lagi.",

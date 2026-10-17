@@ -57,7 +57,7 @@ test.describe("member", () => {
 		page,
 	}) => {
 		await page.goto("/app");
-		const opener = page.getByRole("button", { name: /Open Pip/ });
+		const opener = page.getByRole("button", { name: /^Add spending/ });
 		await opener.click();
 		const dialog = page.getByRole("dialog");
 		await expect(dialog).toBeVisible();

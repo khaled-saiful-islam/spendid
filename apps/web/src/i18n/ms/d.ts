@@ -16,10 +16,8 @@ export const msD: Record<string, string> = {
 	"Am I on track for {goal}?": "Adakah saya di landasan untuk {goal}?",
 	"Amount for {name}": "Jumlah untuk {name}",
 	"Arrives in {when}": "Tiba dalam {when}",
-	"Best: {n} days": "Terbaik: {n} hari",
 	"Biggest category": "Kategori terbesar",
 	"Category for {name}": "Kategori untuk {name}",
-	"Checked in. {n}-day streak!": "Sudah daftar masuk. Rentetan {n} hari!",
 	"Converted to {currency} at today's rate when you save.":
 		"Ditukar ke {currency} pada kadar hari ini apabila disimpan.",
 	"Create split link, total {amount}":
@@ -52,14 +50,11 @@ export const msD: Record<string, string> = {
 	"New goal: {name}.": "Matlamat baharu: {name}.",
 	"No stress — tomorrow starts fresh at about {amount}.":
 		"Jangan risau, esok bermula semula dengan kira-kira {amount}.",
-	"Only {amount} left for today. Let's take it easy.":
-		"Tinggal {amount} sahaja untuk hari ini. Mari berjimat sedikit.",
 	"Open it on this device to finish setting up.":
 		"Buka pada peranti ini untuk melengkapkan tetapan.",
 	"Open the link for {name}": "Buka pautan untuk {name}",
 	"Park it here for {n} hours. If you still want it then, buy it with a clear head.":
 		"Simpan di sini selama {n} jam. Jika masih mahu selepas itu, belilah dengan fikiran yang tenang.",
-	"Pip the pangolin, {mood}": "Pip si tenggiling, {mood}",
 	Plan: "Rancangan",
 	"Price of {name}": "Harga {name}",
 	"Ready, {size}. Available until {date}.":
@@ -91,8 +86,6 @@ export const msD: Record<string, string> = {
 	"Up late": "Belum tidur",
 	"Warranty kept, {n} months": "Waranti disimpan, {n} bulan",
 	"We sent a confirmation link to": "Kami telah hantar pautan pengesahan ke",
-	"We went {amount} over today. I'm curled up, but tomorrow starts fresh.":
-		"Kita terlebih {amount} hari ini. Saya bergulung dulu, tapi esok bermula semula.",
 	"We won't send {label} emails any more.":
 		"Kami tidak akan hantar e-mel {label} lagi.",
 	"Went up {amount}": "Naik {amount}",
@@ -138,10 +131,6 @@ export const msD: Record<string, string> = {
 	"{amount} a month to make it by {date}.":
 		"{amount} sebulan untuk capai menjelang {date}.",
 	"{amount} for savings": "{amount} untuk simpanan",
-	"{amount} left for today. Right on track.":
-		"Baki {amount} untuk hari ini. Tepat di landasan.",
-	"{amount} left for today. You're doing great!":
-		"Baki {amount} untuk hari ini. Hebat!",
 	"{amount} less than {month}.": "{amount} kurang daripada {month}.",
 	"{amount} more than {month}.": "{amount} lebih daripada {month}.",
 	"{amount} not spent thanks to waiting":
@@ -177,8 +166,6 @@ export const msD: Record<string, string> = {
 	"{n} percent of today's safe-to-spend amount is left.":
 		"Tinggal {n} peratus daripada jumlah selamat hari ini.",
 	"{n} receipts to check": "{n} resit untuk disemak",
-	"{n}-day streak! Pip is proud of you.":
-		"Rentetan {n} hari! Pip bangga dengan anda.",
 	"{pct}% of {amount}": "{pct}% daripada {amount}",
 	"{pct}% since {date}": "{pct}% sejak {date}",
 	"{relation}, since {date}": "{relation}, sejak {date}",
@@ -192,10 +179,6 @@ export const msD: Record<string, string> = {
 
 	// Inside ternaries
 	"{amount}, 1 expense": "{amount}, 1 perbelanjaan",
-	"You logged 1 thing, {amount} in all.":
-		"Anda catat 1 perkara, jumlahnya {amount}.",
-	"You logged {n} things, {amount} in all.":
-		"Anda catat {n} perkara, jumlahnya {amount}.",
 	"{n} expenses on 1 day.": "{n} perbelanjaan dalam 1 hari.",
 	"{n} expenses on {days} days.": "{n} perbelanjaan dalam {days} hari.",
 	"{amount} across 1 expense.": "{amount} untuk 1 perbelanjaan.",
@@ -221,9 +204,6 @@ export const msD: Record<string, string> = {
 		"{n} orang dalam bulatan anda. Kedua-dua pihak sentiasa nampak apa yang dikongsi.",
 	"1 item, total {amount}": "1 barang, jumlah {amount}",
 	"{n} items, total {amount}": "{n} barang, jumlah {amount}",
-	"{n}-day streak": "Rentetan {n} hari",
-	"{n}-day streak, log today to keep it":
-		"Rentetan {n} hari, catat hari ini untuk kekalkannya",
 	"{amount} for a bill still due": "{amount} untuk satu bil yang belum dibayar",
 	"{amount} for {n} bills still due":
 		"{amount} untuk {n} bil yang belum dibayar",
@@ -333,13 +313,6 @@ export const msD: Record<string, string> = {
 	Thursdays: "Khamis",
 	Fridays: "Jumaat",
 	Saturdays: "Sabtu",
-
-	// Pip's moods
-	shining: "bersinar",
-	calm: "tenang",
-	worried: "risau",
-	"curled up": "bergulung",
-	sleepy: "mengantuk",
 
 	// Ask Spendid steps (labels come from the API)
 	"Adding up your spending…": "Menjumlahkan perbelanjaan anda…",

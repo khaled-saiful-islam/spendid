@@ -1,7 +1,5 @@
 /** Bahasa Melayu, part B (I–S). */
 export const msB: Record<string, string> = {
-	"It's late. Rest up, I'll keep watch over your money.":
-		"Dah lewat. Rehatlah, saya jaga wang anda.",
 	"It's yours. Take a full copy any time, or delete everything.":
 		"Ini milik anda. Ambil salinan penuh bila-bila masa, atau padam semuanya.",
 	Items: "Barang",
@@ -24,7 +22,6 @@ export const msB: Record<string, string> = {
 	"Loading more": "Memuatkan lagi",
 	"Lock Spendid when I come back": "Kunci Spendid apabila saya kembali",
 	"Log it the way it happened.": "Catat seperti yang berlaku.",
-	"Log something to start a streak": "Catat sesuatu untuk mulakan rentetan",
 	"Logged as Lunch RM 12.00. Sam owes you RM 6.00.":
 		"Dicatat sebagai Makan tengah hari RM 12.00. Sam berhutang RM 6.00.",
 	"Logged today": "Dicatat hari ini",
@@ -60,15 +57,12 @@ export const msB: Record<string, string> = {
 	"No quiet hours.": "Tiada waktu senyap.",
 	"No spending this month yet.": "Belum ada perbelanjaan bulan ini.",
 	"No spending this month.": "Tiada perbelanjaan bulan ini.",
-	"No spending today": "Tiada perbelanjaan hari ini",
 	"No spending yet": "Belum ada perbelanjaan",
 	"Nobody yet. Drag it onto someone.":
 		"Belum ada sesiapa. Seret kepada seseorang.",
 	"Noise-cancelling headphones": "Fon kepala penghapus bunyi",
 	"Not set": "Belum ditetapkan",
 	"Nothing here": "Tiada apa-apa di sini",
-	"Nothing logged today. Was it a no-spend day?":
-		"Tiada catatan hari ini. Hari tanpa belanja ke?",
 	"Nothing logged yet today": "Belum ada catatan hari ini",
 	"Nothing matches that": "Tiada yang sepadan",
 	"On this device, after 5 minutes away.":

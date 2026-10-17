@@ -6,7 +6,7 @@ interface LogoProps {
 	showWord?: boolean;
 }
 
-/** Coin mark + wordmark. The coin's dotted ring echoes Pip's scales. */
+/** Coin mark + wordmark. */
 export function Logo({ className, showWord = true }: LogoProps) {
 	return (
 		<span className={cn("inline-flex items-center gap-2", className)}>

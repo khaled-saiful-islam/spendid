@@ -52,7 +52,7 @@ export const CHALLENGES: Record<
 	},
 	"log-daily": {
 		title: "Log every day",
-		body: "Log something, or check in, every day for 7 days.",
+		body: "Log something every day for 7 days.",
 		days: 7,
 		emoji: "📝",
 	},

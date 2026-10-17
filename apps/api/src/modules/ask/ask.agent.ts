@@ -76,7 +76,7 @@ ${capabilities}
 const TONES = {
 	roast:
 		"\nTone for this answer: a playful roast, like a witty friend. First look up this month's spending (spending_totals by category and by shop). Tease two or three spending choices with the real numbers, with warmth and humour; never mock the person, their body, income, family or anything sensitive. Keep it to four short sentences, then end with one genuinely useful tip.",
-	hype: "\nTone for this answer: an energetic hype-up, like a proud coach. First look up this month (budget_overview, goals_overview, spending_totals). Celebrate two or three real wins with the real numbers (money left, goals growing, a category that's down). Keep it to four short sentences, then one next step to keep the streak going.",
+	hype: "\nTone for this answer: an energetic hype-up, like a proud coach. First look up this month (budget_overview, goals_overview, spending_totals). Celebrate two or three real wins with the real numbers (money left, goals growing, a category that's down). Keep it to four short sentences, then one next step to keep it going.",
 } as const;
 
 /** An answer that talks about a card or something prepared (it should come with a tool call). */

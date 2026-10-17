@@ -45,7 +45,7 @@ function Shine() {
 	);
 }
 
-/** The coin's dashed rim (Pip's scales), turning slowly. */
+/** The coin's dashed rim, turning slowly. */
 function Rim({ className }: { className?: string }) {
 	return (
 		<motion.svg

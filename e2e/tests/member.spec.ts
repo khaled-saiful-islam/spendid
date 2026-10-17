@@ -13,7 +13,7 @@ async function removeLeftovers(request: APIRequestContext, shop: string): Promis
 
 test.use({ storageState: stateFile("maya") });
 
-test("home shows today's safe-to-spend and Pip", async ({ page }) => {
+test("home shows today's safe-to-spend", async ({ page }) => {
 	await page.goto("/app");
 	// The card has three states, depending on how today and the month are going.
 	await expect(
@@ -21,7 +21,7 @@ test("home shows today's safe-to-spend and Pip", async ({ page }) => {
 			.getByText(/^(Safe to spend today|Over today's amount by|This month is over budget by)$/)
 			.first(),
 	).toBeVisible();
-	await expect(page.getByRole("img", { name: /Pip the pangolin/ }).first()).toBeVisible();
+	await expect(page.getByRole("img", { name: /pangolin/i })).toHaveCount(0);
 });
 
 test("add an expense by typing, see it in Activity, then remove it", async ({ page }) => {
@@ -128,14 +128,6 @@ test("challenges: start one, see its days, then stop it", async ({ page }) => {
 	await expect(card.getByRole("list", { name: "Days" }).getByRole("listitem")).toHaveCount(7);
 	await card.getByRole("button", { name: "Stop this challenge" }).click();
 	await expect(card).toBeHidden();
-});
-
-test("Pip opens a briefing with the wardrobe", async ({ page }) => {
-	await page.goto("/app");
-	await page.getByRole("button", { name: /Open Pip/ }).click();
-	const sheet = page.getByRole("dialog");
-	await expect(sheet.getByRole("heading", { name: "Today, from Pip" })).toBeVisible();
-	await expect(sheet.getByRole("heading", { name: "Pip's wardrobe" })).toBeVisible();
 });
 
 test("month pace shows where the month is heading and a what-if", async ({ page }) => {
