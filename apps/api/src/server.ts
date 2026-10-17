@@ -130,6 +130,7 @@ const transactionService = createTransactionService({
 			{ merchantId },
 			{ attempts: 3, removeOnComplete: 500 },
 		),
+	logError,
 	onChange: async (ownerId) => {
 		const viewers = await familyRepo.expenseViewers(ownerId);
 		await Promise.all(

@@ -3,6 +3,7 @@ import {
 	bigint,
 	boolean,
 	char,
+	check,
 	date,
 	index,
 	integer,
@@ -58,5 +59,7 @@ export const subscription = pgTable(
 	(t) => [
 		index("subscription_user_due_idx").on(t.userId, t.nextDue),
 		index("subscription_category_idx").on(t.categoryId),
+		check("subscription_amount_positive", sql`${t.amountMinor} > 0`),
+		check("subscription_currency_code", sql`${t.currency} ~ '^[A-Z]{3}$'`),
 	],
 );

@@ -1,8 +1,9 @@
 import { type Db, emailLog } from "@spendid/db";
 import { type EmailJob, EmailJobSchema, renderEmail } from "@spendid/emails";
+import { type ErrorLog, stderrLog } from "@spendid/server";
 import type { Job } from "bullmq";
 import { eq } from "drizzle-orm";
-import { createTransport } from "nodemailer";
+import { createTransport, type SendMailOptions } from "nodemailer";
 
 export interface EmailQueueData {
 	logId: string;
@@ -19,17 +20,32 @@ interface MailConfig {
 }
 
 /** Renders and sends one email; marks the log row sent, or failed after the last retry. */
-export function createEmailProcessor(db: Db, mail: MailConfig) {
-	const transport = createTransport({
-		host: mail.host,
-		port: mail.port,
-		// 465 is TLS from the start; 587 upgrades with STARTTLS when the server offers it.
-		secure: mail.port === 465,
-		auth: mail.user ? { user: mail.user, pass: mail.pass ?? "" } : undefined,
-	});
-
+export function createEmailProcessor(
+	db: Db,
+	mail: MailConfig,
+	{
+		transport = createTransport({
+			host: mail.host,
+			port: mail.port,
+			// 465 is TLS from the start; 587 upgrades with STARTTLS when the server offers it.
+			secure: mail.port === 465,
+			auth: mail.user ? { user: mail.user, pass: mail.pass ?? "" } : undefined,
+		}),
+		logError = stderrLog("worker"),
+	}: {
+		transport?: { sendMail(mail: SendMailOptions): Promise<unknown> };
+		logError?: ErrorLog;
+	} = {},
+) {
 	return async (job: Job<EmailQueueData>): Promise<void> => {
 		const data = EmailJobSchema.parse(job.data.job);
+		const [log] = await db
+			.select({ status: emailLog.status })
+			.from(emailLog)
+			.where(eq(emailLog.id, job.data.logId))
+			.limit(1);
+		// A retry of an email that already went out: never send it twice.
+		if (log?.status === "sent") return;
 		try {
 			const email = await renderEmail(data);
 			// Optional emails get one-click unsubscribe (RFC 8058) for mail apps' own button.
@@ -48,10 +64,6 @@ export function createEmailProcessor(db: Db, mail: MailConfig) {
 					},
 				}),
 			});
-			await db
-				.update(emailLog)
-				.set({ status: "sent", sentAt: new Date(), error: null })
-				.where(eq(emailLog.id, job.data.logId));
 		} catch (error) {
 			const lastTry = job.attemptsMade + 1 >= (job.opts.attempts ?? 1);
 			if (lastTry) {
@@ -64,5 +76,13 @@ export function createEmailProcessor(db: Db, mail: MailConfig) {
 			}
 			throw error;
 		}
+		// Sent. If noting that fails, log it rather than throw: a retry would send it again.
+		await db
+			.update(emailLog)
+			.set({ status: "sent", sentAt: new Date(), error: null })
+			.where(eq(emailLog.id, job.data.logId))
+			.catch((err: unknown) =>
+				logError("email sent, but marking it sent failed", err),
+			);
 	};
 }

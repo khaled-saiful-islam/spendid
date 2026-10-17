@@ -141,13 +141,16 @@ export function createNotifier(deps: {
 			if (who.role === "admin" && notice.group !== null) return "nobody";
 			const p = await prefs(userId);
 			if (notice.group && !p[notice.group]) return "off";
+			// Claimed before sending, so two ticks can't both send it.
+			let claimId: string | undefined;
 			if (notice.dedupeKey) {
-				const inserted = await db
+				const [inserted] = await db
 					.insert(notificationLog)
 					.values({ userId, kind: notice.kind, dedupeKey: notice.dedupeKey })
 					.onConflictDoNothing()
 					.returning({ id: notificationLog.id });
-				if (inserted.length === 0) return "already";
+				if (!inserted) return "already";
+				claimId = inserted.id;
 			}
 			const content = notice.build({
 				hidden: p.hideAmounts,
@@ -162,7 +165,7 @@ export function createNotifier(deps: {
 						p.quietStart,
 						p.quietEnd,
 					);
-			await deps.sendEmail(
+			const job = deps.sendEmail(
 				{
 					type: "notice",
 					kind: notice.kind,
@@ -178,6 +181,16 @@ export function createNotifier(deps: {
 				},
 				{ delayMs },
 			);
+			try {
+				await job;
+			} catch (err) {
+				// Not queued: give the claim back, so the next try can send it.
+				if (claimId)
+					await db
+						.delete(notificationLog)
+						.where(eq(notificationLog.id, claimId));
+				throw err;
+			}
 			return "sent";
 		},
 	};

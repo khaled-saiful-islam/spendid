@@ -128,6 +128,21 @@ describe.skipIf(!url)("email notifications (real database)", () => {
 		expect(await notifier.notify(admin, notice("w1"))).toBe("nobody");
 	});
 
+	it("tries again next time when the email couldn't be queued", async () => {
+		let down = true;
+		const flaky = createNotifier({
+			db,
+			links,
+			appUrl: "http://spendid.test",
+			sendEmail: async () => {
+				if (down) throw new Error("redis down");
+			},
+		});
+		await expect(flaky.notify(maya, notice("retry-1"))).rejects.toThrow();
+		down = false;
+		expect(await flaky.notify(maya, notice("retry-1"))).toBe("sent");
+	});
+
 	it("respects preferences, hidden amounts and quiet hours", async () => {
 		await notifier.setPrefs(maya, { weekly: false });
 		expect(await notifier.notify(maya, notice("w2"))).toBe("off");

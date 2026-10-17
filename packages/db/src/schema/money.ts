@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import {
 	bigint,
 	char,
+	check,
 	date,
 	index,
 	integer,
@@ -94,6 +95,14 @@ export const transaction = pgTable(
 		index("transaction_user_category_idx").on(t.userId, t.categoryId),
 		// Deleting a custom category (or an account's categories) finds its expenses fast.
 		index("transaction_category_idx").on(t.categoryId),
+		// The last line of defence behind the API's validation.
+		check("transaction_amount_positive", sql`${t.amountMinor} > 0`),
+		check("transaction_home_amount_positive", sql`${t.homeAmountMinor} >= 0`),
+		check("transaction_currency_code", sql`${t.currency} ~ '^[A-Z]{3}$'`),
+		check(
+			"transaction_home_currency_code",
+			sql`${t.homeCurrency} ~ '^[A-Z]{3}$'`,
+		),
 	],
 );
 
@@ -113,6 +122,7 @@ export const budget = pgTable(
 	(t) => [
 		primaryKey({ columns: [t.userId, t.categoryId] }),
 		index("budget_category_idx").on(t.categoryId),
+		check("budget_limit_not_negative", sql`${t.monthlyLimitMinor} >= 0`),
 	],
 );
 
@@ -133,7 +143,11 @@ export const goal = pgTable(
 		updatedAt: updatedAt(),
 		archivedAt: timestamp({ withTimezone: true }),
 	},
-	(t) => [index("goal_user_idx").on(t.userId)],
+	(t) => [
+		index("goal_user_idx").on(t.userId),
+		check("goal_target_positive", sql`${t.targetMinor} > 0`),
+		check("goal_saved_not_negative", sql`${t.savedMinor} >= 0`),
+	],
 );
 
 /** Daily reference rates, base EUR (ECB via Frankfurter). */

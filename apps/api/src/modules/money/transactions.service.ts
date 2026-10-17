@@ -1,5 +1,5 @@
 import { type Db, profile } from "@spendid/db";
-import type { MerchantMemory } from "@spendid/server";
+import { type ErrorLog, type MerchantMemory, stderrLog } from "@spendid/server";
 import {
 	type Transaction,
 	type TransactionInput,
@@ -26,6 +26,8 @@ interface Deps {
 	onNewMerchant?: (merchantId: string) => Promise<unknown>;
 	/** After a new expense: budget, unusual and double-charge alerts. Never awaited. */
 	onCreated?: (userId: string, transactionId: string) => Promise<unknown>;
+	/** Where background failures go; they never fail the save itself. */
+	logError?: ErrorLog;
 }
 
 /** Adds, edits and removes spending, always converting into the person's home currency. */
@@ -38,9 +40,12 @@ export function createTransactionService({
 	merchants,
 	onNewMerchant,
 	onCreated,
+	logError = stderrLog("expenses"),
 }: Deps) {
 	const changed = <T>(userId: string, value: T): T => {
-		onChange?.(userId).catch(() => undefined);
+		onChange?.(userId).catch((err) =>
+			logError("expenses: live family update failed", err),
+		);
 		return value;
 	};
 
@@ -57,7 +62,9 @@ export function createTransactionService({
 		if (!name || !merchants) return;
 		const learned = await merchants.remember(userId, name, categoryId, uses);
 		if (learned?.created)
-			onNewMerchant?.(learned.row.id).catch(() => undefined);
+			onNewMerchant?.(learned.row.id).catch((err) =>
+				logError("expenses: queueing shop matching failed", err),
+			);
 	}
 
 	async function homeCurrencyOf(userId: string): Promise<string> {
@@ -82,10 +89,15 @@ export function createTransactionService({
 			const input = TransactionInputSchema.parse(raw);
 			await assertCategory(userId, input.categoryId);
 			const homeCurrency = await homeCurrencyOf(userId);
+			const occurredAt = input.occurredAt
+				? new Date(input.occurredAt)
+				: new Date();
+			// A backdated expense converts at its own day's rate.
 			const { homeMinor, rate } = await fx.convert(
 				input.amountMinor,
 				input.currency,
 				homeCurrency,
+				occurredAt,
 			);
 			const merchant = await nameFor(userId, input.merchant);
 			const created = await transactions.insert({
@@ -99,10 +111,12 @@ export function createTransactionService({
 				merchant,
 				note: input.note || null,
 				source: input.source,
-				occurredAt: input.occurredAt ? new Date(input.occurredAt) : new Date(),
+				occurredAt,
 			});
 			await learn(userId, merchant, input.categoryId, 1);
-			onCreated?.(userId, created.id).catch(() => undefined);
+			onCreated?.(userId, created.id).catch((err) =>
+				logError("expenses: alerts after a new expense failed", err),
+			);
 			return changed(userId, created);
 		},
 
@@ -118,10 +132,21 @@ export function createTransactionService({
 
 			const amountMinor = patch.amountMinor ?? existing.amountMinor;
 			const currency = patch.currency ?? existing.currency;
+			const occurredAt = patch.occurredAt
+				? new Date(patch.occurredAt)
+				: existing.occurredAt;
 			const moneyChanged =
-				amountMinor !== existing.amountMinor || currency !== existing.currency;
+				amountMinor !== existing.amountMinor ||
+				currency !== existing.currency ||
+				(currency !== existing.homeCurrency &&
+					occurredAt.getTime() !== existing.occurredAt.getTime());
 			const converted = moneyChanged
-				? await fx.convert(amountMinor, currency, existing.homeCurrency)
+				? await fx.convert(
+						amountMinor,
+						currency,
+						existing.homeCurrency,
+						occurredAt,
+					)
 				: null;
 
 			const merchant =
