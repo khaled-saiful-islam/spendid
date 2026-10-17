@@ -170,7 +170,7 @@ export function useAskChat(userId: string) {
 	);
 
 	const send = useCallback(
-		async (question: string) => {
+		async (question: string, tone?: "roast" | "hype") => {
 			const q = question.trim();
 			if (!q || busy) return;
 			const history = usefulHistory(messages)
@@ -202,7 +202,7 @@ export function useAskChat(userId: string) {
 			controller.current = abort;
 			try {
 				await streamAsk(
-					{ question: q, history },
+					{ question: q, history, tone },
 					(e) => {
 						if (e.type === "step")
 							patchLast((m) => ({ ...m, steps: [...m.steps, e.label] }));

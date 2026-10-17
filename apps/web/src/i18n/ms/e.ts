@@ -208,4 +208,14 @@ export const msE: Record<string, string> = {
 	"Profile, settings and sign out": "Profil, tetapan dan log keluar",
 	"Subscription to track": "Langganan untuk dijejak",
 	"Track it": "Jejak",
+	"Roast my month": "Kutuk bulan saya",
+	"Honest, funny, and with one tip": "Jujur, lucu, dan dengan satu tip",
+	"Hype me up": "Beri saya semangat",
+	"Your real wins this month, cheered":
+		"Kejayaan sebenar anda bulan ini, diraikan",
+	"Roast my spending this month.": "Kutuk perbelanjaan saya bulan ini.",
+	"Hype me up about my money this month.":
+		"Beri saya semangat tentang wang saya bulan ini.",
+	"Answers use only your own data. Chats are saved to your account, and only you can see them.":
+		"Jawapan hanya menggunakan data anda sendiri. Sembang disimpan dalam akaun anda, dan hanya anda boleh melihatnya.",
 };

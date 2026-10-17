@@ -14,6 +14,8 @@ export const AskRequestSchema = z.object({
 		.min(1, "Ask a question")
 		.max(500, "Keep it under 500 characters"),
 	history: z.array(AskTurnSchema).max(12).default([]),
+	/** Playful modes: a kind roast of the month's spending, or a hype-up of its wins. */
+	tone: z.enum(["roast", "hype"]).optional(),
 });
 export type AskRequest = z.input<typeof AskRequestSchema>;
 

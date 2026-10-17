@@ -3,7 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import {
 	ArrowUpRight,
 	CalendarClock,
+	Flame,
 	Lock,
+	PartyPopper,
 	PenLine,
 	Target,
 	Wallet,
@@ -141,9 +143,12 @@ function StatCard({
 /** First screen: the person's month as three tappable cards, plus quick ideas. */
 export function AskWelcome({
 	onAsk,
+	onTone,
 	name,
 }: {
 	onAsk: (q: string) => void;
+	/** A roast of the month's spending, or a hype-up of its wins. */
+	onTone: (tone: "roast" | "hype") => void;
 	name: string;
 }) {
 	const { data: summary } = useQuery(summaryQuery);
@@ -287,7 +292,47 @@ export function AskWelcome({
 				</ul>
 			)}
 
-			<div className="mt-5 flex flex-wrap gap-2">
+			<div className="mt-5 grid gap-3 sm:grid-cols-2">
+				<motion.button
+					type="button"
+					whileHover={{ y: -2 }}
+					whileTap={{ scale: 0.97 }}
+					onClick={() => onTone("roast")}
+					className="flex items-center gap-3 rounded-panel bg-linear-to-br from-coral to-[#ff8a3d] p-4 text-left text-white shadow-lift"
+				>
+					<Flame className="size-7 shrink-0" aria-hidden="true" />
+					<span>
+						<span className="block text-[1.1rem] font-extrabold">
+							{t("Roast my month")}
+						</span>
+						<span className="block text-[0.88rem] text-white/90">
+							{t("Honest, funny, and with one tip")}
+						</span>
+					</span>
+				</motion.button>
+				<motion.button
+					type="button"
+					whileHover={{ y: -2 }}
+					whileTap={{ scale: 0.97 }}
+					onClick={() => onTone("hype")}
+					className="flex items-center gap-3 rounded-panel bg-linear-to-br from-plum-700 to-plum-500 p-4 text-left text-white shadow-lift"
+				>
+					<PartyPopper
+						className="size-7 shrink-0 text-marigold"
+						aria-hidden="true"
+					/>
+					<span>
+						<span className="block text-[1.1rem] font-extrabold">
+							{t("Hype me up")}
+						</span>
+						<span className="block text-[0.88rem] text-white/90">
+							{t("Your real wins this month, cheered")}
+						</span>
+					</span>
+				</motion.button>
+			</div>
+
+			<div className="mt-4 flex flex-wrap gap-2">
 				{ideas.map((idea, i) => (
 					<motion.button
 						key={idea.text}
@@ -308,7 +353,9 @@ export function AskWelcome({
 
 			<p className="mt-6 inline-flex items-center gap-2 text-[0.9rem] text-ink-soft">
 				<Lock className="size-4 shrink-0" aria-hidden="true" />{" "}
-				{t("Answers use only your own data. This chat stays on this device.")}
+				{t(
+					"Answers use only your own data. Chats are saved to your account, and only you can see them.",
+				)}
 			</p>
 		</div>
 	);

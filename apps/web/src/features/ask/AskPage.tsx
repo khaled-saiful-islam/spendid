@@ -295,7 +295,18 @@ export function AskPage({ initialQuestion }: { initialQuestion?: string }) {
 				<div className="flex-1 space-y-5 py-6">
 					{chat.messages.length === 0 ? (
 						<>
-							<AskWelcome name={firstName} onAsk={(q) => void chat.send(q)} />
+							<AskWelcome
+								name={firstName}
+								onAsk={(q) => void chat.send(q)}
+								onTone={(tone) =>
+									void chat.send(
+										tone === "roast"
+											? t("Roast my spending this month.")
+											: t("Hype me up about my money this month."),
+										tone,
+									)
+								}
+							/>
 							<RecentChats onOpen={chat.open} />
 						</>
 					) : (
