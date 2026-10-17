@@ -234,7 +234,7 @@ export function AskWelcome({
 							</span>
 						}
 						question={t("How is today's amount worked out?")}
-						className="bg-linear-to-br from-plum-800 to-plum-500 text-white"
+						className="bg-linear-to-br from-plum-800 to-plum-500 text-white dark:bg-none dark:bg-plum-800"
 					>
 						<CountUp
 							minor={Math.max(0, summary.safe.safeTodayMinor)}
@@ -318,7 +318,7 @@ export function AskWelcome({
 					whileHover={{ y: -2 }}
 					whileTap={{ scale: 0.97 }}
 					onClick={() => onTone("hype")}
-					className="flex items-center gap-3 rounded-panel bg-linear-to-br from-plum-700 to-plum-500 p-4 text-left text-white shadow-lift"
+					className="flex items-center gap-3 rounded-panel bg-linear-to-br from-plum-700 to-plum-500 p-4 text-left text-white shadow-lift dark:bg-none dark:bg-plum-800"
 				>
 					<PartyPopper
 						className="size-7 shrink-0 text-marigold"

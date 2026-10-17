@@ -26,7 +26,7 @@ export function SourcePicker({
 					type="button"
 					whileTap={{ scale: 0.97 }}
 					onClick={onSnap}
-					className="relative flex items-center gap-4 overflow-hidden rounded-panel bg-linear-to-br from-plum-500 to-coral p-5 text-left text-white shadow-lift"
+					className="relative flex items-center gap-4 overflow-hidden rounded-panel bg-linear-to-br from-plum-500 to-coral p-5 text-left text-white shadow-lift dark:bg-none dark:bg-plum-800"
 				>
 					<span className="grid size-14 shrink-0 place-items-center rounded-full bg-white/20">
 						<Camera className="size-7" aria-hidden="true" />

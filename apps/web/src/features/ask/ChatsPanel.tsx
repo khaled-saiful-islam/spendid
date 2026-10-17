@@ -298,7 +298,7 @@ export function ChatsDrawerButton(props: Omit<PanelProps, "onOpened">) {
 				<MessagesSquare className="size-5 text-plum-500" aria-hidden="true" />
 				{t("Chats")}
 				{threads.length > 0 && (
-					<span className="num min-w-6 rounded-full bg-plum-500 px-1.5 text-center text-[0.8rem] text-white">
+					<span className="num min-w-6 rounded-full bg-plum-500 px-1.5 text-center text-[0.8rem] text-white dark:text-plum-950">
 						{threads.length}
 					</span>
 				)}

@@ -72,27 +72,45 @@
   color-scheme: light;
 }
 
+/*
+ * Dark is Graphite: near-black neutrals with a gold accent, no purple. The plum scale is
+ * remapped step for step (same light/dark role, no hue), so every bg-/text-plum-* class
+ * follows without its own dark: variant; plum-500, the accent, becomes gold.
+ */
 [data-theme="dark"] {
-  --bg: #170b26;
-  --surface: #221236;
-  --surface-2: #2e1a48;
-  --ink: #f4effc;
-  --ink-soft: #bfb0d8;
-  --line: #3d2760;
-  --safe: #3ddba8;
+  --color-plum-50: #f2f3f5;
+  --color-plum-100: #e2e4e8;
+  --color-plum-200: #c4c8cf;
+  --color-plum-300: #9ba1aa;
+  --color-plum-500: #f5b83d;
+  --color-plum-700: #2c3036;
+  --color-plum-800: #202328;
+  --color-plum-900: #17191c;
+  --color-plum-950: #0e0f11;
+  --color-marigold: #f5b83d;
+  --color-jade: #3dd68c;
+  --color-coral: #ff6b5e;
+
+  --bg: #0e0f11;
+  --surface: #17191c;
+  --surface-2: #202328;
+  --ink: #f2f3f5;
+  --ink-soft: #9ba1aa;
+  --line: #2c3036;
+  --safe: #3dd68c;
   --warn: #ffcf70;
-  --over: #ff7d95;
-  --scale-stroke: rgb(185 163 227 / 0.07);
-  --chart-1: #9d7bf5;
-  /* Dark heatmap: dim → bright = less → more, its own validated steps. */
-  --heat-1: #653ba3;
-  --heat-2: #8259cc;
-  --heat-3: #9f7ff2;
-  --heat-4: #c3aef7;
-  --heat-5: #e8defd;
+  --over: #ff6b5e;
+  --scale-stroke: rgb(255 255 255 / 0.035);
+  --chart-1: #f5b83d;
+  /* Dark heatmap: dim → bright gold = less → more, its own validated steps. */
+  --heat-1: #6b4f18;
+  --heat-2: #946c22;
+  --heat-3: #bf8c2c;
+  --heat-4: #e3a838;
+  --heat-5: #f8cf72;
   --heat-ink-low: #ffffff;
-  --heat-ink-high: #170b26;
-  --shadow-lift: 0 1px 0 rgb(255 255 255 / 0.05) inset, 0 18px 40px -18px rgb(0 0 0 / 0.6);
+  --heat-ink-high: #0e0f11;
+  --shadow-lift: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 18px 40px -18px rgb(0 0 0 / 0.7);
   color-scheme: dark;
 }
 

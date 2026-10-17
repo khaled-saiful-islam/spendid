@@ -192,7 +192,7 @@ export function MethodStep({ value, onChange }: MethodStepProps) {
 								className={cn(
 									"grid size-7 shrink-0 place-items-center rounded-full border-2",
 									selected
-										? "border-plum-500 bg-plum-500 text-white"
+										? "border-plum-500 bg-plum-500 text-white dark:text-plum-950"
 										: "border-line",
 								)}
 								aria-hidden="true"

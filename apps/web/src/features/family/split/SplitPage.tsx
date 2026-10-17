@@ -79,7 +79,7 @@ function Reading({
 			<motion.span
 				animate={{ rotate: [0, 12, -12, 0], scale: [1, 1.15, 1] }}
 				transition={{ repeat: Number.POSITIVE_INFINITY, duration: 1.6 }}
-				className="grid size-16 place-items-center rounded-full bg-linear-to-br from-plum-500 to-coral text-white"
+				className="grid size-16 place-items-center rounded-full bg-linear-to-br from-plum-500 to-coral text-white dark:text-plum-950"
 			>
 				<Sparkles className="size-8" aria-hidden="true" />
 			</motion.span>

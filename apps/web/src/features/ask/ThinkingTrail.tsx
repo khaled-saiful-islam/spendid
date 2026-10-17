@@ -53,7 +53,9 @@ export function ThinkingTrail({
 						<span
 							className={cn(
 								"relative grid size-6 shrink-0 place-items-center rounded-full",
-								current ? "bg-plum-500 text-white" : "bg-jade/15 text-safe",
+								current
+									? "bg-plum-500 text-white dark:text-plum-950"
+									: "bg-jade/15 text-safe",
 							)}
 							aria-hidden="true"
 						>

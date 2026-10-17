@@ -149,7 +149,7 @@ function MySide({ person }: { person: FamilyPerson }) {
 				aria-labelledby="preview-heading"
 				className="relative rounded-panel border-2 border-plum-300 bg-surface p-5"
 			>
-				<span className="absolute -top-3.5 left-5 inline-flex items-center gap-1.5 rounded-full bg-plum-500 px-3 py-1 text-[0.85rem] font-semibold text-white">
+				<span className="absolute -top-3.5 left-5 inline-flex items-center gap-1.5 rounded-full bg-plum-500 px-3 py-1 text-[0.85rem] font-semibold text-white dark:text-plum-950">
 					<Eye className="size-4" aria-hidden="true" />{" "}
 					{tr("Exactly what {name} sees", { name: person.name })}
 				</span>

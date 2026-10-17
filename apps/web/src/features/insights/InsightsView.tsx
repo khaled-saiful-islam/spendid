@@ -28,7 +28,7 @@ function WrappedTeaser({ month }: { month: string }) {
 		<Link
 			to="/app/wrapped"
 			search={{ month }}
-			className="group relative block overflow-hidden rounded-panel bg-linear-to-br from-plum-500 via-coral to-marigold p-5 text-white shadow-lift"
+			className="group relative block overflow-hidden rounded-panel bg-linear-to-br from-plum-500 via-coral to-marigold p-5 text-white shadow-lift dark:bg-none dark:bg-plum-800"
 		>
 			<div
 				className="bg-scales pointer-events-none absolute inset-0 opacity-20"

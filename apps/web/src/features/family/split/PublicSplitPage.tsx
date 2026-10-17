@@ -34,7 +34,7 @@ export function PublicSplitPage({ token }: { token: string }) {
 					</div>
 				) : (
 					<>
-						<div className="relative overflow-hidden rounded-panel bg-linear-to-br from-plum-500 via-plum-700 to-plum-900 p-6 text-white shadow-lift">
+						<div className="relative overflow-hidden rounded-panel bg-linear-to-br from-plum-500 via-plum-700 to-plum-900 p-6 text-white shadow-lift dark:bg-none dark:bg-plum-800">
 							<div
 								className="bg-scales pointer-events-none absolute inset-0 opacity-20"
 								aria-hidden="true"

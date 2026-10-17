@@ -33,7 +33,7 @@ function NewChatButton({ onClick }: { onClick: () => void }) {
 			whileTap={{ scale: 0.94 }}
 			className="group inline-flex h-11 shrink-0 items-center gap-2 rounded-full border border-line bg-surface py-1 pr-4 pl-1 font-semibold shadow-sm transition-[box-shadow,border-color] hover:border-plum-300 hover:shadow-lift"
 		>
-			<span className="grid size-9 place-items-center rounded-full bg-linear-to-br from-marigold via-coral to-plum-500 text-white shadow-coin transition-transform duration-500 group-hover:rotate-[360deg]">
+			<span className="grid size-9 place-items-center rounded-full bg-linear-to-br from-marigold via-coral to-plum-500 text-white shadow-coin dark:text-plum-950 transition-transform duration-500 group-hover:rotate-[360deg]">
 				<MessageSquarePlus className="size-4.5" aria-hidden="true" />
 			</span>
 			{t("New chat")}
@@ -88,7 +88,7 @@ function Message({
 				layout
 				initial={{ opacity: 0, y: 12, scale: 0.96 }}
 				animate={{ opacity: 1, y: 0, scale: 1 }}
-				className="ml-auto max-w-[85%] rounded-[1.4rem] rounded-br-md bg-linear-to-br from-plum-500 to-plum-800 px-4 py-3 text-white shadow-lift"
+				className="ml-auto max-w-[85%] rounded-[1.4rem] rounded-br-md bg-linear-to-br from-plum-500 to-plum-800 px-4 py-3 text-white shadow-lift dark:bg-none dark:bg-plum-800 dark:text-ink"
 			>
 				{m.receiptId && (
 					<img
