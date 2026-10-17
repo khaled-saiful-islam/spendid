@@ -173,6 +173,32 @@ const guard = createAiGuard({
 	onLimitReached: notifications.aiLimit,
 });
 
+// Shared by their routes and Ask Spendid's lookups.
+const challengeService = createChallengeService(database.db);
+const familyService = createFamilyService({
+	...familyDeps,
+	sendEmail: outbox.send,
+	appUrl: env.APP_URL,
+	receiptImage: (ownerId, id) => receiptService.image(ownerId, id),
+	familyEmail: {
+		wanted: async (userId) =>
+			(await notifications.notifier.prefs(userId)).family,
+		unsubscribeUrl: (userId) => notifications.links.url(userId, "family"),
+	},
+	allowEmail: async (key) =>
+		(await cache.redis.set(
+			`email-quiet:${key}`,
+			"1",
+			"PX",
+			EMAIL_QUIET_MS,
+			"NX",
+		)) === "OK",
+});
+const jarsService = createJarsService({
+	...familyDeps,
+	onDeposit: notifications.alerts.afterDeposit,
+});
+
 const app = await buildApp({
 	checks: { database: database.ping, redis: cache.ping },
 	version: process.env.npm_package_version ?? "0.0.0",
@@ -209,7 +235,7 @@ const app = await buildApp({
 	delight: {
 		session,
 		delight: createDelightService(database.db),
-		challenges: createChallengeService(database.db),
+		challenges: challengeService,
 	},
 	subscriptions: { session, subscriptions: subscriptionService },
 	privacy: {
@@ -231,30 +257,9 @@ const app = await buildApp({
 	},
 	family: {
 		session,
-		family: createFamilyService({
-			...familyDeps,
-			sendEmail: outbox.send,
-			appUrl: env.APP_URL,
-			receiptImage: (ownerId, id) => receiptService.image(ownerId, id),
-			familyEmail: {
-				wanted: async (userId) =>
-					(await notifications.notifier.prefs(userId)).family,
-				unsubscribeUrl: (userId) => notifications.links.url(userId, "family"),
-			},
-			allowEmail: async (key) =>
-				(await cache.redis.set(
-					`email-quiet:${key}`,
-					"1",
-					"PX",
-					EMAIL_QUIET_MS,
-					"NX",
-				)) === "OK",
-		}),
+		family: familyService,
 		pulse: createPulseService(familyDeps),
-		jars: createJarsService({
-			...familyDeps,
-			onDeposit: notifications.alerts.afterDeposit,
-		}),
+		jars: jarsService,
 		splits: createSplitService({ ...familyDeps, appUrl: env.APP_URL }),
 	},
 	ask: {
@@ -266,6 +271,13 @@ const app = await buildApp({
 			categories,
 			summary,
 			plan,
+			// Read-only lookups for the change tools; every change itself goes through the card.
+			subscriptions: subscriptionService,
+			challenges: challengeService,
+			family: familyService,
+			jars: jarsService,
+			notifier: notifications.notifier,
+			receipts: receiptService,
 			ilmu: { ...ilmu, model: env.ILMU_TEXT_MODEL },
 		}),
 	},

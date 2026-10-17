@@ -1,23 +1,18 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import {
-	ArrowUp,
-	Check,
-	Copy,
-	MessageSquarePlus,
-	Sparkles,
-	Square,
-} from "lucide-react";
+import { Check, Copy, MessageSquarePlus, Sparkles } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { type FormEvent, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { meQuery } from "@/lib/me";
+import { receiptImageUrl } from "@/lib/receipts-api";
 import { VoiceReview } from "../voice/VoiceReview";
 import { ActionCards, type ActionStatus } from "./ActionCards";
 import { AiAllowance } from "./AiAllowance";
 import { AnswerText } from "./AnswerText";
 import { AskWelcome } from "./AskWelcome";
 import { ChatsDrawerButton, ChatsPanel } from "./ChatsPanel";
+import { Composer } from "./Composer";
 import { ChartView } from "./charts/ChartView";
 import { type CoinState, SpendidCoin } from "./SpendidCoin";
 import { ThinkingTrail } from "./ThinkingTrail";
@@ -95,6 +90,16 @@ function Message({
 				animate={{ opacity: 1, y: 0, scale: 1 }}
 				className="ml-auto max-w-[85%] rounded-[1.4rem] rounded-br-md bg-linear-to-br from-plum-500 to-plum-800 px-4 py-3 text-white shadow-lift"
 			>
+				{m.receiptId && (
+					<img
+						src={receiptImageUrl(m.receiptId)}
+						alt={t("The receipt you attached")}
+						className="mb-2 max-h-48 w-auto rounded-tile bg-white/10 object-contain"
+						onError={(e) => {
+							e.currentTarget.style.display = "none";
+						}}
+					/>
+				)}
 				{m.text}
 			</motion.div>
 		);
@@ -218,7 +223,6 @@ function Aurora() {
 export function AskPage({ initialQuestion }: { initialQuestion?: string }) {
 	const { data: me } = useSuspenseQuery(meQuery);
 	const chat = useAskChat(me?.user.id ?? "anon");
-	const [draft, setDraft] = useState("");
 	const endRef = useRef<HTMLDivElement>(null);
 	const asked = useRef(false);
 	const firstName = (me?.user.name ?? "there").split(/\s+/)[0] ?? "there";
@@ -243,72 +247,13 @@ export function AskPage({ initialQuestion }: { initialQuestion?: string }) {
 		endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
 	}, [chat.messages.length, lastText.length]);
 
-	function onSubmit(e: FormEvent) {
-		e.preventDefault();
-		const q = draft;
-		setDraft("");
-		void chat.send(q);
-	}
-
 	const composer = (
-		<form
-			onSubmit={onSubmit}
-			className={cn(
-				"z-20",
-				// Floats over a conversation; on the welcome screen it sits in the flow.
-				chat.messages.length > 0
-					? "sticky bottom-24 md:bottom-4"
-					: "mb-24 md:mb-4",
-			)}
-		>
-			<div className="rounded-[1.75rem] bg-linear-to-r from-plum-500 via-coral to-marigold p-[2px] shadow-lift transition-shadow focus-within:shadow-[0_0_0_6px_rgb(122_79_196/0.18),0_18px_40px_-18px_rgb(42_20_70/0.45)]">
-				<div className="flex items-end gap-2 rounded-[calc(1.75rem-2px)] bg-surface p-1.5 pl-4">
-					<Sparkles
-						className="mb-3 size-5 shrink-0 text-plum-500"
-						aria-hidden="true"
-					/>
-					<label htmlFor="ask-input" className="sr-only">
-						{t("Your question")}
-					</label>
-					<textarea
-						id="ask-input"
-						rows={1}
-						value={draft}
-						maxLength={500}
-						placeholder={t("Ask or log something…")}
-						onChange={(e) => setDraft(e.target.value)}
-						onKeyDown={(e) => {
-							if (e.key === "Enter" && !e.shiftKey) {
-								e.preventDefault();
-								e.currentTarget.form?.requestSubmit();
-							}
-						}}
-						className="max-h-32 min-h-11 flex-1 resize-none bg-transparent py-2.5 outline-none [field-sizing:content] placeholder:text-ink-soft/70"
-					/>
-					{chat.busy ? (
-						<button
-							type="button"
-							onClick={chat.stop}
-							aria-label={t("Stop")}
-							className="relative grid size-11 shrink-0 place-items-center rounded-full bg-plum-900 text-plum-50 dark:bg-plum-50 dark:text-plum-900"
-						>
-							<span className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-marigold motion-reduce:hidden" />
-							<Square className="size-4" fill="currentColor" />
-						</button>
-					) : (
-						<motion.button
-							type="submit"
-							disabled={!draft.trim()}
-							aria-label={t("Ask")}
-							whileTap={{ scale: 0.9 }}
-							className="grid size-11 shrink-0 place-items-center rounded-full bg-marigold text-plum-900 shadow-coin transition-opacity disabled:opacity-40 disabled:shadow-none"
-						>
-							<ArrowUp className="size-5" strokeWidth={2.5} />
-						</motion.button>
-					)}
-				</div>
-			</div>
-		</form>
+		<Composer
+			busy={chat.busy}
+			floating={chat.messages.length > 0}
+			onSend={(q, file) => void chat.send(q, undefined, file ?? undefined)}
+			onStop={chat.stop}
+		/>
 	);
 
 	const threads = {

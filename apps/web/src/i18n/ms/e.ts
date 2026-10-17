@@ -291,4 +291,119 @@ export const msE: Record<string, string> = {
 		"Jemputan ini dihantar ke e-mel lain. Log masuk dengan e-mel itu, atau minta pautan baharu.",
 	"Links stop working after 60 days, or when the split is deleted. Ask the person who sent it for the amounts.":
 		"Pautan berhenti berfungsi selepas 60 hari, atau apabila pembahagian dipadam. Tanya orang yang menghantarnya untuk jumlahnya.",
+	"A family jar you save into.": "Tabung keluarga yang anda simpan.",
+	"All your data": "Semua data anda",
+	"An email goes to {email}. They join only if they say yes too.":
+		"E-mel dihantar ke {email}. Mereka hanya menyertai jika mereka juga bersetuju.",
+	"Archive a goal": "Arkibkan matlamat",
+	"Archive it": "Arkibkan",
+	"Attach a receipt photo or PDF": "Lampirkan foto resit atau PDF",
+	"Being prepared. You'll get an email, and it'll be under Your data.":
+		"Sedang disediakan. Anda akan terima e-mel, dan ia ada di bawah Data anda.",
+	"Cancel a subscription": "Batalkan langganan",
+	"Cancel it": "Batalkan",
+	"Change a goal": "Ubah matlamat",
+	"Change a setting": "Ubah tetapan",
+	"Change a subscription": "Ubah langganan",
+	"Change it": "Ubah",
+	"Change what you share": "Ubah apa yang anda kongsi",
+	"Change your plan": "Ubah pelan anda",
+	"Check and save": "Semak dan simpan",
+	"Check the lines, then save it as one expense.":
+		"Semak setiap baris, kemudian simpan sebagai satu perbelanjaan.",
+	"Couldn't copy. Press and hold the link instead.":
+		"Tidak dapat menyalin. Tekan lama pada pautan itu.",
+	"Create invite": "Cipta jemputan",
+	"Create split link": "Cipta pautan bahagi",
+	"Delete an expense": "Padam perbelanjaan",
+	"Delete it": "Padam",
+	"Download your data": "Muat turun data anda",
+	"Due {date}. Logged as an expense, and the next payment moves on.":
+		"Perlu dibayar {date}. Direkod sebagai perbelanjaan, dan bayaran seterusnya dikemas kini.",
+	"Emails that would arrive then wait until it ends.":
+		"E-mel yang tiba pada waktu itu menunggu sehingga ia tamat.",
+	"Expense deleted.": "Perbelanjaan dipadam.",
+	"Expense updated.": "Perbelanjaan dikemas kini.",
+	"Expenses as a spreadsheet, receipts, goals, family and settings, in one file. An email says when it's ready.":
+		"Perbelanjaan dalam hamparan, resit, matlamat, keluarga dan tetapan, dalam satu fail. E-mel akan memberitahu apabila sedia.",
+	"Fix an expense": "Betulkan perbelanjaan",
+	"From {day}.": "Dari {day}.",
+	"Invite ready. Send the link.": "Jemputan sedia. Hantar pautannya.",
+	"Limit removed for {name}.": "Had dibuang untuk {name}.",
+	"Link copied.": "Pautan disalin.",
+	"Mark as paid": "Tanda sudah dibayar",
+	"Mark paid, {amount}": "Tanda dibayar, {amount}",
+	"No deadline": "Tiada tarikh akhir",
+	"No monthly limit any more. {amount} spent so far this month.":
+		"Tiada had bulanan lagi. {amount} dibelanjakan setakat ini bulan ini.",
+	"No more reminders, and it's no longer kept aside each month.":
+		"Tiada lagi peringatan, dan ia tidak lagi diketepikan setiap bulan.",
+	"On this device. The eye button switches it back.":
+		"Pada peranti ini. Butang mata menukarnya semula.",
+	"Opened. Save it from there.": "Dibuka. Simpan dari situ.",
+	"Plan updated. Safe to spend is fresh.":
+		"Pelan dikemas kini. Selamat dibelanja sudah dikira semula.",
+	"Quiet hours {from}:00 to {to}:00": "Waktu senyap {from}:00 hingga {to}:00",
+	"Reading the receipt is taking long. Try again in a moment.":
+		"Membaca resit mengambil masa. Cuba lagi sebentar nanti.",
+	"Receipt attached": "Resit dilampirkan",
+	"Remove a limit": "Buang had",
+	"Remove limit": "Buang had",
+	"Remove the receipt": "Buang resit",
+	"Safe to spend is worked out again from these.":
+		"Selamat dibelanja dikira semula daripada ini.",
+	"Save change": "Simpan perubahan",
+	"Setting changed.": "Tetapan diubah.",
+	"Share again": "Kongsi semula",
+	"Split ready. Send the link; it opens without an account.":
+		"Bahagian sedia. Hantar pautannya; ia boleh dibuka tanpa akaun.",
+	"Start a challenge": "Mulakan cabaran",
+	"Start it": "Mulakan",
+	"Stop a challenge": "Hentikan cabaran",
+	"Stop it": "Hentikan",
+	"Stops now. You can start it again whenever you like.":
+		"Berhenti sekarang. Anda boleh mulakannya semula bila-bila masa.",
+	"Target: {amount}": "Sasaran: {amount}",
+	"The app, emails and Ask Spendid switch language.":
+		"Aplikasi, e-mel dan Tanya Spendid bertukar bahasa.",
+	"The receipt you attached": "Resit yang anda lampirkan",
+	"These emails turn off.": "E-mel ini dimatikan.",
+	"These emails turn on.": "E-mel ini dihidupkan.",
+	"Undone. It's back as it was.": "Dibatalkan. Ia kembali seperti asal.",
+	"Updated. {name} sees the change.":
+		"Dikemas kini. {name} nampak perubahannya.",
+	"We couldn't read that receipt. Try a sharper photo.":
+		"Kami tidak dapat membaca resit itu. Cuba foto yang lebih jelas.",
+	"What should I do with it? (optional)":
+		"Apa yang perlu saya buat dengannya? (pilihan)",
+	"What's on this receipt?": "Apa yang ada pada resit ini?",
+	"You get a link to send. They join only if they say yes too.":
+		"Anda dapat pautan untuk dihantar. Mereka hanya menyertai jika mereka juga bersetuju.",
+	"You'll share: {level}": "Anda akan kongsi: {level}",
+	"Your receipt": "Resit anda",
+	"{amount} saved so far.": "{amount} disimpan setakat ini.",
+	"{name} archived.": "{name} diarkibkan.",
+	"{name} cancelled.": "{name} dibatalkan.",
+	"{name} marked paid and logged.": "{name} ditanda dibayar dan direkod.",
+	"{name} sees nothing while it's paused, and is told.":
+		"{name} tidak nampak apa-apa semasa dijeda, dan akan dimaklumkan.",
+	"{name} updated.": "{name} dikemas kini.",
+	"{saved} of {target} saved. It leaves your plan; its history stays.":
+		"{saved} daripada {target} disimpan. Ia keluar dari pelan anda; sejarahnya kekal.",
+	"{title} stopped.": "{title} dihentikan.",
+	"See it in Activity": "Lihat di Aktiviti",
+	"See your subscriptions": "Lihat langganan anda",
+	"See it in Family": "Lihat di Keluarga",
+	"See it in Profile & settings": "Lihat di Profil & tetapan",
+	"Finding that expense…": "Mencari perbelanjaan itu…",
+	"Checking your subscriptions…": "Menyemak langganan anda…",
+	"Preparing the change…": "Menyediakan perubahan…",
+	"Preparing your plan…": "Menyediakan pelan anda…",
+	"Checking your challenges…": "Menyemak cabaran anda…",
+	"Preparing the challenge…": "Menyediakan cabaran…",
+	"Checking your family circle…": "Menyemak bulatan keluarga anda…",
+	"Preparing the invite…": "Menyediakan jemputan…",
+	"Working out the shares…": "Mengira bahagian masing-masing…",
+	"Checking your settings…": "Menyemak tetapan anda…",
+	"Preparing your download…": "Menyediakan muat turun anda…",
 };

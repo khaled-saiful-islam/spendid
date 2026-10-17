@@ -1,10 +1,18 @@
-import type { ChartSpec, StoredAskMessage, VoiceDraft } from "@spendid/shared";
+import type {
+	AskAction,
+	ChartSpec,
+	Receipt,
+	StoredAskMessage,
+	VoiceDraft,
+} from "@spendid/shared";
 import { ASK_THREAD_MAX_MESSAGES } from "@spendid/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { t } from "@/i18n";
 import { askThreadsApi, streamAsk, THREADS_KEY } from "@/lib/ask-api";
-import { ApiError } from "@/lib/http";
+import { ApiError, api } from "@/lib/http";
+import { receiptPhoto } from "@/lib/receipt-photo";
+import { receiptsApi } from "@/lib/receipts-api";
 import { uuid } from "@/lib/uuid";
 import type { ActionItem, ActionStatus } from "./ActionCards";
 
@@ -15,8 +23,10 @@ export interface ChatMessage {
 	steps: string[];
 	charts: ChartSpec[];
 	drafts: VoiceDraft[] | null;
-	/** Goals, deposits, limits and wishes to confirm. Older saved chats don't have it. */
+	/** Cards to confirm. Older saved chats don't have it. */
 	actions?: ActionItem[];
+	/** A receipt photo the person attached to this question. */
+	receiptId?: string | null;
 	status: "streaming" | "done" | "error";
 }
 
@@ -88,6 +98,7 @@ function toStored(messages: ChatMessage[]): StoredAskMessage[] {
 			charts: m.charts.slice(0, 4),
 			drafts: m.drafts?.slice(0, 10) ?? null,
 			actions: m.actions,
+			receiptId: m.receiptId ?? null,
 			status: m.status === "error" ? "error" : "done",
 		}));
 }
@@ -119,14 +130,56 @@ function usefulHistory(messages: ChatMessage[]): ChatMessage[] {
 	return keep;
 }
 
+/** Which tool made each kind of card (for the note on earlier answers). */
+const TOOL_OF: Record<AskAction["kind"], string> = {
+	goal: "propose_goal",
+	deposit: "propose_goal_deposit",
+	budget: "propose_budget",
+	subscription: "propose_subscription",
+	wish: "propose_wish",
+	"expense-edit": "propose_expense_change",
+	"expense-delete": "propose_expense_change",
+	"subscription-paid": "propose_subscription_change",
+	"subscription-edit": "propose_subscription_change",
+	"subscription-cancel": "propose_subscription_change",
+	"goal-edit": "propose_goal_change",
+	"goal-archive": "propose_goal_change",
+	plan: "propose_plan_change",
+	"challenge-start": "propose_challenge",
+	"challenge-stop": "propose_challenge",
+	share: "propose_sharing",
+	invite: "propose_invite",
+	split: "propose_split",
+	setting: "propose_setting",
+	export: "propose_export",
+	receipt: "propose_receipt_review",
+};
+
+/** How long to wait for an attached receipt to be read. */
+const RECEIPT_WAIT_MS = 90_000;
+
+/** Waits until the worker has read the receipt; throws with a plain message if it couldn't. */
+async function readReceipt(id: string, signal: AbortSignal): Promise<void> {
+	const until = Date.now() + RECEIPT_WAIT_MS;
+	while (Date.now() < until) {
+		if (signal.aborted) throw new DOMException("Stopped", "AbortError");
+		const r = await api<Receipt>(`/api/receipts/${id}`);
+		if (r.status === "ready") return;
+		if (r.status === "failed")
+			throw new Error(
+				r.error ?? t("We couldn't read that receipt. Try a sharper photo."),
+			);
+		await new Promise((res) => setTimeout(res, 2_000));
+	}
+	throw new Error(
+		t("Reading the receipt is taking long. Try again in a moment."),
+	);
+}
+
 function historyText(m: ChatMessage): string {
 	const kinds = [
 		...(m.drafts?.length ? ["propose_expenses"] : []),
-		...(m.actions ?? []).map((a) =>
-			a.action.kind === "deposit"
-				? "propose_goal_deposit"
-				: `propose_${a.action.kind}`,
-		),
+		...(m.actions ?? []).map((a) => TOOL_OF[a.action.kind]),
 	];
 	if (kinds.length)
 		return `${m.text}\n(This answer's card came from calling ${[...new Set(kinds)].join(", ")}.)`.slice(
@@ -202,8 +255,9 @@ export function useAskChat(userId: string) {
 	}, []);
 
 	const send = useCallback(
-		async (question: string, tone?: "roast" | "hype") => {
-			const q = question.trim();
+		async (question: string, tone?: "roast" | "hype", attachment?: File) => {
+			const q =
+				question.trim() || (attachment ? t("What's on this receipt?") : "");
 			if (!q || busy) return;
 			const history = usefulHistory(messages)
 				.slice(-HISTORY_SENT)
@@ -225,7 +279,7 @@ export function useAskChat(userId: string) {
 					id: `a${now}`,
 					role: "assistant",
 					text: "",
-					steps: [],
+					steps: attachment ? [t("Reading your receipt…")] : [],
 					charts: [],
 					drafts: null,
 					status: "streaming",
@@ -234,8 +288,20 @@ export function useAskChat(userId: string) {
 			const abort = new AbortController();
 			controller.current = abort;
 			try {
+				let receiptId: string | undefined;
+				if (attachment) {
+					const uploaded = await receiptsApi.upload(
+						await receiptPhoto(attachment),
+					);
+					receiptId = uploaded.id;
+					// Show the photo on the question as soon as it's uploaded.
+					setMessages((ms) =>
+						ms.map((m) => (m.id === `u${now}` ? { ...m, receiptId } : m)),
+					);
+					await readReceipt(uploaded.id, abort.signal);
+				}
 				await streamAsk(
-					{ question: q, history, tone },
+					{ question: q, history, tone, receiptId },
 					(e) => {
 						if (e.type === "step")
 							patchLast((m) => ({ ...m, steps: [...m.steps, e.label] }));

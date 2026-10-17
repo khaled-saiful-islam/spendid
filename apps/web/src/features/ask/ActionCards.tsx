@@ -1,33 +1,18 @@
-import {
-	type AskAction,
-	formatMinor,
-	hoursOfWork,
-	WISH_COOLDOWN_HOURS,
-} from "@spendid/shared";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type { AskAction } from "@spendid/shared";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Check, Hourglass, Loader2 } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { type ReactNode, useState } from "react";
-import { CategoryIcon } from "@/components/money/CategoryIcon";
+import { Check, Copy, Loader2, Share2, Undo2 } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import { useState } from "react";
 import { buttonClass } from "@/components/ui/Button";
 import { toast } from "@/components/ui/Toast";
-import { dateLocale, t } from "@/i18n";
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
-import { delightApi } from "@/lib/delight-api";
 import { buzz } from "@/lib/haptics";
 import { ApiError } from "@/lib/http";
-import {
-	categoriesQuery,
-	moneyApi,
-	refreshMoney,
-	summaryQuery,
-} from "@/lib/money-api";
-import { subscriptionsApi } from "@/lib/subscriptions-api";
-import { GoalJar } from "../plan/GoalJar";
-import { BrandTile, CYCLE_LABEL } from "../subscriptions/brand";
+import { specFor } from "./actions";
 
-export type ActionStatus = "ready" | "done" | "dismissed";
+export type ActionStatus = "ready" | "done" | "dismissed" | "undone";
 export interface ActionItem {
 	action: AskAction;
 	status: ActionStatus;
@@ -38,7 +23,7 @@ interface CardsProps {
 	onResolve: (index: number, status: ActionStatus) => void;
 }
 
-/** What the assistant prepared, one card each. Nothing exists until the person confirms. */
+/** What the assistant prepared, one card each. Nothing changes until the person confirms. */
 export function ActionCards({ items, onResolve }: CardsProps) {
 	return (
 		<div className="space-y-3">
@@ -67,41 +52,49 @@ function ActionCard({
 	const queryClient = useQueryClient();
 	const [pending, setPending] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [url, setUrl] = useState<string | null>(null);
 	const { action } = item;
+	const spec = specFor(action);
 	const done = item.status === "done";
+	const undone = item.status === "undone";
+	const canUndo = Boolean(spec.undo) && (spec.canUndo?.(action) ?? true);
 
-	async function confirm() {
+	/** Runs a step, refreshes what's on screen, and reports errors in the card. */
+	async function step(work: () => Promise<void>): Promise<boolean> {
 		setPending(true);
 		setError(null);
 		try {
-			await run(action);
-			await refreshMoney(queryClient);
-			await queryClient.invalidateQueries({ queryKey: ["wishes"] });
-			await queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
-			buzz("success");
-			toast(doneMessage(action));
-			onResolve("done");
+			await work();
+			await queryClient.invalidateQueries();
+			return true;
 		} catch (err) {
 			setError(
 				err instanceof ApiError ? err.message : t("Couldn't save. Try again."),
 			);
+			return false;
 		} finally {
 			setPending(false);
 		}
 	}
 
-	const body =
-		action.kind === "goal" ? (
-			<GoalBody action={action} done={done} />
-		) : action.kind === "deposit" ? (
-			<DepositBody action={action} done={done} />
-		) : action.kind === "budget" ? (
-			<BudgetBody action={action} />
-		) : action.kind === "subscription" ? (
-			<SubscriptionBody action={action} />
-		) : (
-			<WishBody action={action} />
-		);
+	async function confirm() {
+		const ok = await step(async () => {
+			const result = await spec.run(action);
+			if (result?.url) setUrl(result.url);
+		});
+		if (!ok) return;
+		buzz("success");
+		toast(spec.done(action));
+		onResolve("done");
+	}
+
+	async function undo() {
+		if (!(await step(() => spec.undo?.(action) ?? Promise.resolve()))) return;
+		toast(t("Undone. It's back as it was."));
+		onResolve("undone");
+	}
+
+	const link = spec.link?.(action);
 
 	return (
 		<motion.section
@@ -111,64 +104,105 @@ function ActionCard({
 			className={cn(
 				"relative overflow-hidden rounded-panel border bg-surface p-4 shadow-lift",
 				done ? "border-jade/50" : "border-line",
+				undone && "opacity-80",
 			)}
-			aria-label={cardTitle(action)}
+			aria-label={spec.title(action)}
 		>
 			<p className="text-[0.85rem] font-semibold text-ink-soft">
-				{cardTitle(action)}
+				{spec.title(action)}
 			</p>
-			<div className="mt-2">{body}</div>
+			<div className="mt-2">
+				<spec.Body action={action} done={done} />
+			</div>
+			{error && (
+				<p role="alert" className="mt-3 text-[0.9rem] font-medium text-coral">
+					{error}
+				</p>
+			)}
 			<AnimatePresence mode="wait" initial={false}>
-				{done ? (
+				{done || undone ? (
 					<motion.div
 						key="done"
 						initial={{ opacity: 0, y: 6 }}
 						animate={{ opacity: 1, y: 0 }}
-						className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2"
+						className="mt-4 space-y-3"
 					>
-						<span className="inline-flex items-center gap-1.5 rounded-full bg-jade/12 px-3 py-1.5 font-semibold text-safe">
-							<Check className="size-4" aria-hidden="true" />
-							{doneMessage(action)}
-						</span>
-						<Link
-							to="/app/plan"
-							className="font-semibold underline decoration-marigold decoration-2 underline-offset-4"
-						>
-							{t("See it in your plan")}
-						</Link>
+						<div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+							<span
+								className={cn(
+									"inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-semibold",
+									undone
+										? "bg-surface-2 text-ink-soft"
+										: "bg-jade/12 text-safe",
+								)}
+							>
+								{undone ? (
+									<Undo2 className="size-4" aria-hidden="true" />
+								) : (
+									<Check className="size-4" aria-hidden="true" />
+								)}
+								{undone ? t("Undone. It's back as it was.") : spec.done(action)}
+							</span>
+							{done && link && (
+								<Link
+									to={link.to}
+									className="font-semibold underline decoration-marigold decoration-2 underline-offset-4"
+								>
+									{t(link.label)}
+								</Link>
+							)}
+							{done && canUndo && (
+								<button
+									type="button"
+									onClick={undo}
+									disabled={pending}
+									className="inline-flex items-center gap-1.5 font-semibold text-ink-soft underline-offset-4 hover:text-ink hover:underline"
+								>
+									{pending ? (
+										<Loader2
+											className="size-4 animate-spin"
+											aria-hidden="true"
+										/>
+									) : (
+										<Undo2 className="size-4" aria-hidden="true" />
+									)}
+									{t("Undo")}
+								</button>
+							)}
+						</div>
+						{done && url && <ShareLink url={url} />}
 					</motion.div>
 				) : (
 					<motion.div
 						key="ask"
 						exit={{ opacity: 0 }}
-						className="mt-4 space-y-2"
+						className="mt-4 flex flex-wrap gap-2"
 					>
-						{error && (
-							<p role="alert" className="text-[0.9rem] font-medium text-coral">
-								{error}
-							</p>
-						)}
-						<div className="flex flex-wrap gap-2">
-							<button
-								type="button"
-								onClick={confirm}
-								disabled={pending}
-								className={buttonClass("coin", "md")}
-							>
-								{pending && (
-									<Loader2 className="size-4 animate-spin" aria-hidden="true" />
-								)}
-								{confirmLabel(action)}
-							</button>
-							<button
-								type="button"
-								onClick={() => onResolve("dismissed")}
-								disabled={pending}
-								className={buttonClass("ghost", "md")}
-							>
-								{t("Not now")}
-							</button>
-						</div>
+						<button
+							type="button"
+							onClick={confirm}
+							disabled={pending}
+							className={buttonClass(
+								spec.careful ? "ghost" : "coin",
+								"md",
+								spec.careful
+									? "border-2 border-coral/50 text-coral"
+									: undefined,
+							)}
+						>
+							{pending && (
+								<Loader2 className="size-4 animate-spin" aria-hidden="true" />
+							)}
+							{spec.confirm(action)}
+						</button>
+						<button
+							type="button"
+							onClick={() => onResolve("dismissed")}
+							disabled={pending}
+							className={buttonClass("ghost", "md")}
+						>
+							{t("Not now")}
+						</button>
 					</motion.div>
 				)}
 			</AnimatePresence>
@@ -176,295 +210,39 @@ function ActionCard({
 	);
 }
 
-/** Calls the normal API for the action, so every rule and limit applies as if typed by hand. */
-async function run(action: AskAction): Promise<void> {
-	if (action.kind === "goal") {
-		await moneyApi.createGoal({
-			name: action.name,
-			emoji: action.emoji,
-			targetMinor: action.targetMinor,
-			targetDate: action.targetDate,
-		});
-	} else if (action.kind === "deposit") {
-		await moneyApi.depositGoal(action.goalId, action.amountMinor);
-	} else if (action.kind === "budget") {
-		await moneyApi.setBudget({
-			categoryId: action.categoryId,
-			monthlyLimitMinor: action.limitMinor,
-		});
-	} else if (action.kind === "subscription") {
-		await subscriptionsApi.create({
-			name: action.name,
-			brand: action.brand,
-			amountMinor: action.amountMinor,
-			currency: action.currency,
-			cycle: action.cycle,
-			nextDue: action.nextDue,
-			remindDays: 3,
-			categoryId: action.categoryId,
-		});
-	} else {
-		await delightApi.addWish({
-			name: action.name,
-			priceMinor: action.priceMinor,
-			currency: action.currency,
-		});
-	}
-}
-
-function cardTitle(a: AskAction): string {
-	if (a.kind === "goal") return t("New savings goal");
-	if (a.kind === "deposit")
-		return a.amountMinor > 0 ? t("Add to a goal") : t("Take out of a goal");
-	if (a.kind === "budget") return t("Monthly limit");
-	if (a.kind === "subscription") return t("Subscription to track");
-	return t("Impulse pause");
-}
-
-function confirmLabel(a: AskAction): string {
-	const money = (m: number) => formatMinor(Math.abs(m), a.currency);
-	if (a.kind === "goal") return t("Create goal");
-	if (a.kind === "deposit")
-		return a.amountMinor > 0
-			? t("Add {amount}", { amount: money(a.amountMinor) })
-			: t("Take out {amount}", { amount: money(a.amountMinor) });
-	if (a.kind === "budget") return t("Set limit");
-	if (a.kind === "subscription") return t("Track it");
-	return t("Start the {n}-hour wait", { n: WISH_COOLDOWN_HOURS });
-}
-
-function doneMessage(a: AskAction): string {
-	if (a.kind === "goal") return t("New goal: {name}.", { name: a.name });
-	if (a.kind === "deposit")
-		return a.amountMinor > 0
-			? t("Added {amount} to {name}.", {
-					amount: formatMinor(a.amountMinor, a.currency),
-					name: a.goalName,
-				})
-			: t("Took {amount} out of {name}.", {
-					amount: formatMinor(-a.amountMinor, a.currency),
-					name: a.goalName,
-				});
-	if (a.kind === "budget")
-		return t("Limit set for {name}.", { name: t(a.categoryName) });
-	if (a.kind === "subscription")
-		return t("{name} added. You'll get a reminder before each payment.", {
-			name: a.name,
-		});
-	return t("{name} is waiting. Decide in {n} hours.", {
-		name: a.name,
-		n: WISH_COOLDOWN_HOURS,
-	});
-}
-
-function Row({ visual, children }: { visual: ReactNode; children: ReactNode }) {
+/** A link to send (an invite or a split): copy it, or the phone's share sheet. */
+function ShareLink({ url }: { url: string }) {
+	const canShare = typeof navigator !== "undefined" && "share" in navigator;
 	return (
-		<div className="flex items-center gap-4">
-			<div className="shrink-0">{visual}</div>
-			<div className="min-w-0 flex-1 space-y-1">{children}</div>
+		<div className="space-y-2 rounded-tile bg-surface-2 p-3">
+			<p className="num text-[0.9rem] break-all">{url}</p>
+			<div className="flex flex-wrap gap-2">
+				<button
+					type="button"
+					onClick={() =>
+						void navigator.clipboard
+							.writeText(url)
+							.then(() => toast(t("Link copied.")))
+							.catch(() =>
+								toast(t("Couldn't copy. Press and hold the link instead.")),
+							)
+					}
+					className={buttonClass("ghost", "sm", "border-2 border-line")}
+				>
+					<Copy className="size-4" aria-hidden="true" />
+					{t("Copy link")}
+				</button>
+				{canShare && (
+					<button
+						type="button"
+						onClick={() => void navigator.share({ url }).catch(() => undefined)}
+						className={buttonClass("ghost", "sm", "border-2 border-line")}
+					>
+						<Share2 className="size-4" aria-hidden="true" />
+						{t("Share")}
+					</button>
+				)}
+			</div>
 		</div>
 	);
-}
-
-function GoalBody({
-	action,
-	done,
-}: {
-	action: Extract<AskAction, { kind: "goal" }>;
-	done: boolean;
-}) {
-	const money = (m: number) => formatMinor(m, action.currency);
-	const months = action.targetDate ? monthsUntil(action.targetDate) : null;
-	return (
-		<Row
-			visual={
-				<GoalJar
-					ratio={done ? 0.08 : 0}
-					emoji={action.emoji}
-					className="h-20 w-16"
-				/>
-			}
-		>
-			<p className="font-display text-[1.3rem] font-bold break-words">
-				{action.name}
-			</p>
-			<p className="num font-semibold">{money(action.targetMinor)}</p>
-			<p className="text-[0.92rem] text-ink-soft">
-				{action.targetDate && months
-					? t("{amount} a month to make it by {date}.", {
-							amount: money(Math.ceil(action.targetMinor / months)),
-							date: new Date(`${action.targetDate}T12:00`).toLocaleDateString(
-								dateLocale(),
-								{ month: "short", year: "numeric" },
-							),
-						})
-					: t("No deadline. Add whenever you like.")}
-			</p>
-		</Row>
-	);
-}
-
-function DepositBody({
-	action,
-	done,
-}: {
-	action: Extract<AskAction, { kind: "deposit" }>;
-	done: boolean;
-}) {
-	const money = (m: number) => formatMinor(m, action.currency);
-	const after = Math.max(0, action.savedMinor + action.amountMinor);
-	const ratio = (n: number) =>
-		action.targetMinor > 0 ? n / action.targetMinor : 0;
-	return (
-		<Row
-			visual={
-				<GoalJar
-					ratio={ratio(done ? after : action.savedMinor)}
-					emoji={action.emoji}
-					className="h-20 w-16"
-				/>
-			}
-		>
-			<p className="font-display text-[1.3rem] font-bold break-words">
-				{action.goalName}
-			</p>
-			<p className="num">
-				<span className="text-ink-soft">{money(action.savedMinor)}</span>
-				{" → "}
-				<strong>{money(after)}</strong>
-			</p>
-			<p className="text-[0.92rem] text-ink-soft">
-				{t("{pct}% of {amount}", {
-					pct: Math.min(100, Math.round(ratio(after) * 100)),
-					amount: money(action.targetMinor),
-				})}
-			</p>
-		</Row>
-	);
-}
-
-function BudgetBody({
-	action,
-}: {
-	action: Extract<AskAction, { kind: "budget" }>;
-}) {
-	const { data: categories = [] } = useQuery(categoriesQuery);
-	const reduce = useReducedMotion();
-	const cat = categories.find((c) => c.id === action.categoryId);
-	const money = (m: number) => formatMinor(m, action.currency);
-	const share =
-		action.limitMinor > 0
-			? Math.min(1, action.spentMinor / action.limitMinor)
-			: 1;
-	const over = action.spentMinor > action.limitMinor;
-	return (
-		<Row visual={<CategoryIcon icon={cat?.icon} tint={cat?.tint} size="lg" />}>
-			<p className="font-display text-[1.3rem] font-bold break-words">
-				{t(action.categoryName)}
-			</p>
-			<p className="num font-semibold">
-				{t("{amount} a month", { amount: money(action.limitMinor) })}
-			</p>
-			<div className="h-2.5 overflow-hidden rounded-full bg-surface-2">
-				<motion.div
-					className={cn("h-full rounded-full", over ? "bg-coral" : "bg-jade")}
-					initial={{ width: reduce ? `${share * 100}%` : 0 }}
-					animate={{ width: `${share * 100}%` }}
-					transition={{ duration: 0.8, ease: "easeOut" }}
-				/>
-			</div>
-			<p className="text-[0.92rem] text-ink-soft">
-				{over
-					? t("Already {amount} spent this month, over this limit.", {
-							amount: money(action.spentMinor),
-						})
-					: t("{spent} spent this month, {left} left.", {
-							spent: money(action.spentMinor),
-							left: money(action.limitMinor - action.spentMinor),
-						})}
-			</p>
-		</Row>
-	);
-}
-
-function WishBody({
-	action,
-}: {
-	action: Extract<AskAction, { kind: "wish" }>;
-}) {
-	const { data: summary } = useQuery(summaryQuery);
-	const hours = hoursOfWork(action.priceMinor, summary?.incomeMinor ?? null);
-	return (
-		<Row
-			visual={
-				<span className="grid size-16 place-items-center rounded-full bg-marigold/20 text-marigold-deep">
-					<Hourglass className="size-8" aria-hidden="true" />
-				</span>
-			}
-		>
-			<p className="font-display text-[1.3rem] font-bold break-words">
-				{action.name}
-			</p>
-			<p className="num font-semibold">
-				{formatMinor(action.priceMinor, action.currency)}
-			</p>
-			<p className="text-[0.92rem] text-ink-soft">
-				{hours !== null
-					? t("About {n} hours of work. Wait {h} hours; most urges pass.", {
-							n: hours,
-							h: WISH_COOLDOWN_HOURS,
-						})
-					: t("Wait {h} hours; most urges pass.", { h: WISH_COOLDOWN_HOURS })}
-			</p>
-		</Row>
-	);
-}
-
-function SubscriptionBody({
-	action,
-}: {
-	action: Extract<AskAction, { kind: "subscription" }>;
-}) {
-	return (
-		<Row
-			visual={
-				<BrandTile sub={{ brand: action.brand, name: action.name }} size="lg" />
-			}
-		>
-			<p className="font-display text-[1.3rem] font-bold break-words">
-				{action.name}
-			</p>
-			<p className="num font-semibold">
-				{t("{amount} {cycle}", {
-					amount: formatMinor(action.amountMinor, action.currency),
-					cycle: t(CYCLE_LABEL[action.cycle]),
-				})}
-			</p>
-			<p className="text-[0.92rem] text-ink-soft">
-				{t(
-					"Next payment {date}. Kept aside each month, with a reminder 3 days before.",
-					{
-						date: new Date(`${action.nextDue}T12:00`).toLocaleDateString(
-							dateLocale(),
-							{
-								day: "numeric",
-								month: "short",
-							},
-						),
-					},
-				)}
-			</p>
-		</Row>
-	);
-}
-
-/** Whole months from now until a YYYY-MM-DD date, at least 1. */
-function monthsUntil(date: string): number {
-	const end = new Date(`${date}T12:00`);
-	const now = new Date();
-	const months =
-		(end.getFullYear() - now.getFullYear()) * 12 +
-		end.getMonth() -
-		now.getMonth();
-	return Math.max(1, months);
 }
