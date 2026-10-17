@@ -15,6 +15,8 @@ export interface Draft {
 	merchant: string;
 	categoryId: string;
 	day: Day;
+	/** The day came from words typed in the shorthand ("monday"), so deleting them resets it. */
+	dayTyped?: boolean;
 }
 
 /** The calendar date "YYYY-MM-DD" of a moment, in the app's time zone. */
@@ -51,7 +53,8 @@ export function applyShorthand(
 	categories: Category[],
 	pickedByHand: boolean,
 ): Draft {
-	const parsed = parseQuickEntry(text);
+	const today = appToday();
+	const parsed = parseQuickEntry(text, today);
 	const guessed = parsed.categorySlug
 		? categories.find((c) => c.slug === parsed.categorySlug)
 		: undefined;
@@ -64,13 +67,21 @@ export function applyShorthand(
 		currency: parsed.currency ?? draft.currency,
 		merchant: parsed.description,
 		categoryId: !pickedByHand && guessed ? guessed.id : draft.categoryId,
-		day:
-			parsed.daysAgo === 1
-				? "yesterday"
-				: draft.day === "yesterday"
-					? "today"
-					: draft.day,
+		...dayFromWords(draft, parsed.daysAgo, today),
 	};
+}
+
+/** The draft's day after the shorthand names `daysAgo` (0 when it names no day). */
+function dayFromWords(
+	draft: Draft,
+	daysAgo: number,
+	today: string,
+): Pick<Draft, "day" | "dayTyped"> {
+	if (daysAgo === 1) return { day: "yesterday", dayTyped: true };
+	if (daysAgo > 1) return { day: addDays(today, -daysAgo), dayTyped: true };
+	return draft.dayTyped
+		? { day: "today", dayTyped: false }
+		: { day: draft.day, dayTyped: false };
 }
 
 /** Parsed amount in minor units, or null when it isn't a positive number. */

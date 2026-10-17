@@ -7,7 +7,6 @@ import {
 	toMinor,
 } from "@spendid/shared";
 import { useQueryClient } from "@tanstack/react-query";
-import { Lock } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
 import { CategoryIcon } from "@/components/money/CategoryIcon";

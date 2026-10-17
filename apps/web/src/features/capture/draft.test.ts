@@ -1,5 +1,6 @@
 import type { Category } from "@spendid/shared";
 import { describe, expect, it } from "vitest";
+import { addDays, appToday } from "@/lib/time";
 import { applyShorthand, draftMinor, emptyDraft } from "./draft";
 
 const cats: Category[] = [
@@ -49,6 +50,25 @@ describe("applyShorthand", () => {
 		);
 		expect(y.day).toBe("yesterday");
 		expect(applyShorthand(y, "grab 9", cats, false).day).toBe("today");
+	});
+
+	it("goes further back for '3 days ago' and resets when the words go", () => {
+		const back = applyShorthand(
+			emptyDraft("MYR"),
+			"grab 9 3 days ago",
+			cats,
+			false,
+		);
+		expect(back.day).toBe(addDays(appToday(), -3));
+		expect(back.amountText).toBe("9.00");
+		expect(applyShorthand(back, "grab 9", cats, false).day).toBe("today");
+	});
+
+	it("keeps a day picked by hand when the words name no day", () => {
+		const picked = { ...emptyDraft("MYR"), day: "2026-09-01" };
+		expect(applyShorthand(picked, "grab 9", cats, false).day).toBe(
+			"2026-09-01",
+		);
 	});
 });
 

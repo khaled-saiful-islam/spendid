@@ -10,8 +10,14 @@ import { createSubscriptionService } from "./subscriptions.service";
 const url = testDbUrl();
 
 /** YYYY-MM-DD in UTC (test people live in UTC), `days` from today. */
+/** A day counted from today in the test person's own zone (createPerson uses Kuala Lumpur). */
 const dayFromToday = (days: number) =>
-	new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
+	new Intl.DateTimeFormat("en-CA", {
+		timeZone: "Asia/Kuala_Lumpur",
+		year: "numeric",
+		month: "2-digit",
+		day: "2-digit",
+	}).format(new Date(Date.now() + days * 86_400_000));
 
 describe.skipIf(!url)("subscriptions (real database)", () => {
 	const database = createDb(url ?? "postgres://unused", 2);

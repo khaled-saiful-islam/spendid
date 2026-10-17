@@ -1,4 +1,4 @@
-import { SUBSCRIPTION_BRANDS, toMinor } from "@spendid/shared";
+import { MAX_DAYS_BACK, SUBSCRIPTION_BRANDS, toMinor } from "@spendid/shared";
 import { tool } from "langchain";
 import { z } from "zod";
 import {
@@ -62,7 +62,14 @@ export function createTools(
 							currency: z.string().length(3).nullable(),
 							description: z.string().max(60),
 							category: CategoryWord,
-							daysAgo: z.number().int().min(0).max(7),
+							daysAgo: z
+								.number()
+								.int()
+								.min(0)
+								.max(MAX_DAYS_BACK)
+								.describe(
+									"Days before today: 0 today, 1 yesterday; for a weekday or a date, count back from today",
+								),
 						}),
 					)
 					.min(1)

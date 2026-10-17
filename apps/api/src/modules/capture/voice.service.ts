@@ -11,6 +11,7 @@ import {
 	type Category,
 	formatMinor,
 	hasSpokenAmount,
+	MAX_DAYS_BACK,
 	type QuickEntry,
 	quickReadSpoken,
 	toMinor,
@@ -36,7 +37,24 @@ interface Deps {
 
 const KNOWN = new Set(Intl.supportedValuesOf("currency"));
 const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-const clampDays = (n: number) => Math.min(7, Math.max(0, Math.round(n)));
+const clampDays = (n: number) =>
+	Math.min(MAX_DAYS_BACK, Math.max(0, Math.round(n)));
+
+/** The person's own day: "2026-10-17" and "Saturday 2026-10-17" for the AI. */
+function localToday(timeZone: string): { date: string; label: string } {
+	const now = new Date();
+	const date = new Intl.DateTimeFormat("en-CA", {
+		timeZone,
+		year: "numeric",
+		month: "2-digit",
+		day: "2-digit",
+	}).format(now);
+	const weekday = new Intl.DateTimeFormat("en", {
+		timeZone,
+		weekday: "long",
+	}).format(now);
+	return { date, label: `${weekday} ${date}` };
+}
 /** Speech-to-text often lower-cases names: "sam" → "Sam". */
 const titleCase = (s: string) =>
 	s.trim().replace(/\p{L}+/gu, (w) => w.charAt(0).toUpperCase() + w.slice(1));
@@ -82,6 +100,7 @@ export function createVoiceService(deps: Deps) {
 		return {
 			home: p?.homeCurrency ?? "MYR",
 			language: p?.locale === "ms" ? "ms" : "en",
+			today: localToday(p?.timeZone ?? "UTC"),
 			bySlug,
 		};
 	}
@@ -136,7 +155,7 @@ export function createVoiceService(deps: Deps) {
 			log: FastifyBaseLogger,
 			earlier?: string,
 		): Promise<VoiceResult> {
-			const { home, language, bySlug } = await context(userId);
+			const { home, language, bySlug, today } = await context(userId);
 			await deps.guard.assertAllowed(userId);
 
 			const started = performance.now();
@@ -162,7 +181,7 @@ export function createVoiceService(deps: Deps) {
 				return { transcript: heard.text, drafts: [], readBy: "ai" };
 			const digits = wordsToDigits(heard.text);
 			try {
-				const result = await deps.extract(digits, home, earlier);
+				const result = await deps.extract(digits, home, earlier, today.label);
 				log.info(
 					{
 						listenMs,
@@ -192,7 +211,7 @@ export function createVoiceService(deps: Deps) {
 					});
 				// The note was heard; reading it offline still beats an error.
 				log.warn({ err: error }, "expense extraction failed; using quick read");
-				const drafts = quickReadSpoken(digits).map((q) =>
+				const drafts = quickReadSpoken(digits, today.date).map((q) =>
 					fromQuick(q, home, bySlug),
 				);
 				return {

@@ -9,8 +9,8 @@ import {
 	Target,
 	TrendingUp,
 } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { type ReactNode, useEffect, useState } from "react";
+import { motion, useReducedMotion } from "motion/react";
+import type { ReactNode } from "react";
 import { CategoryIcon, TINTS } from "@/components/money/CategoryIcon";
 import { t } from "@/i18n";
 import { cn } from "@/lib/cn";

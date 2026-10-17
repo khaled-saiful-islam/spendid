@@ -2,13 +2,16 @@ import { z } from "zod";
 import { wordsToDigits } from "./number-words";
 import { parseQuickEntry, type QuickEntry } from "./quick-entry";
 
+/** How far back an expense said or typed in words can go (about three months). */
+export const MAX_DAYS_BACK = 92;
+
 /** One expense heard in a voice note, ready to review before saving. */
 export const VoiceDraftSchema = z.object({
 	amountMinor: z.number().int().positive(),
 	currency: z.string().length(3),
 	merchant: z.string(),
 	categoryId: z.uuid().nullable(),
-	daysAgo: z.number().int().min(0).max(7),
+	daysAgo: z.number().int().min(0).max(MAX_DAYS_BACK),
 	note: z.string().nullable(),
 });
 export type VoiceDraft = z.infer<typeof VoiceDraftSchema>;
@@ -96,9 +99,9 @@ export function hasSpokenAmount(text: string): boolean {
 }
 
 /** Fallback read of a transcript: split, then parse each piece like typed shorthand. */
-export function quickReadSpoken(text: string): QuickEntry[] {
+export function quickReadSpoken(text: string, today?: string): QuickEntry[] {
 	return splitSpokenEntries(text)
-		.map(parseQuickEntry)
+		.map((piece) => parseQuickEntry(piece, today))
 		.filter((e) => e.amount !== null && e.amount > 0)
 		.map((e) => ({ ...e, description: cleanSpokenDescription(e.description) }));
 }

@@ -20,7 +20,7 @@ import {
 	refreshMoney,
 	summaryQuery,
 } from "@/lib/money-api";
-import { addDays, appToday, momentOnDay } from "@/lib/time";
+import { addDays, appToday, formatDay, momentOnDay } from "@/lib/time";
 import { uuid } from "@/lib/uuid";
 
 const DAYS_BACK = [0, 1, 2, 3, 4, 5, 6, 7];
@@ -36,7 +36,20 @@ function occurredAt(daysAgo: number): string {
 }
 
 const dayLabel = (n: number) =>
-	n === 0 ? t("Today") : n === 1 ? t("Yesterday") : t("{n} days ago", { n });
+	n === 0
+		? t("Today")
+		: n === 1
+			? t("Yesterday")
+			: n <= 7
+				? t("{n} days ago", { n })
+				: formatDay(addDays(appToday(), -n), {
+						day: "numeric",
+						month: "short",
+					});
+
+/** The usual choices, plus the row's own day when it was said further back. */
+const daysFor = (current: number) =>
+	DAYS_BACK.includes(current) ? DAYS_BACK : [...DAYS_BACK, current];
 
 interface VoiceReviewProps {
 	result: VoiceResult;
@@ -241,7 +254,7 @@ export function VoiceReview({
 											}
 											className="h-10 rounded-full border-2 border-line bg-surface px-3 text-[0.9rem]"
 										>
-											{DAYS_BACK.map((n) => (
+											{daysFor(r.daysAgo).map((n) => (
 												<option key={n} value={n}>
 													{dayLabel(n)}
 												</option>

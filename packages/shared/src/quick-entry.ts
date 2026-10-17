@@ -1,4 +1,5 @@
 import { guessCategorySlug } from "./categories";
+import { takePastDay } from "./past-day";
 
 export interface QuickEntry {
 	/** Major units as typed (6.5), or null when no number was found. */
@@ -7,7 +8,8 @@ export interface QuickEntry {
 	currency: string | null;
 	description: string;
 	categorySlug: string | null;
-	daysAgo: 0 | 1;
+	/** 0 for today; "yesterday", "monday", "3 oct" and the like count back from `today`. */
+	daysAgo: number;
 }
 
 /** Only unambiguous markers — "$" alone could be USD, SGD or AUD, so it is not mapped. */
@@ -50,9 +52,17 @@ function capitalise(s: string): string {
 	return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-/** Turns shorthand like "coffee 6.50" or "rm12 grab yesterday" into a draft expense. */
-export function parseQuickEntry(text: string): QuickEntry {
-	let rest = ` ${text.trim()} `;
+/**
+ * Turns shorthand like "coffee 6.50" or "rm12 grab yesterday" into a draft expense.
+ * `today` is the person's calendar day, for words like "monday" or "3 oct".
+ */
+export function parseQuickEntry(
+	text: string,
+	today: string = new Date().toISOString().slice(0, 10),
+): QuickEntry {
+	// Day words first, so "3 oct" or "3 days ago" never become the amount.
+	const past = takePastDay(` ${text.trim()} `, today);
+	let rest = past.rest;
 	let currency: string | null = null;
 
 	// Split symbols glued to numbers ("rm12", "€120", "12rm") so tokens can be read.
@@ -64,12 +74,6 @@ export function parseQuickEntry(text: string): QuickEntry {
 		const code = CURRENCY_TOKENS[token.toLowerCase()];
 		if (!code) return match;
 		currency ??= code;
-		return " ";
-	});
-
-	let daysAgo: 0 | 1 = 0;
-	rest = rest.replace(/\s(yesterday|semalam)(?=\s)/gi, () => {
-		daysAgo = 1;
 		return " ";
 	});
 
@@ -90,6 +94,6 @@ export function parseQuickEntry(text: string): QuickEntry {
 		currency,
 		description,
 		categorySlug: guessCategorySlug(description),
-		daysAgo,
+		daysAgo: past.daysAgo,
 	};
 }

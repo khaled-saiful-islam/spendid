@@ -4,7 +4,6 @@ import {
 	type Relation,
 	SHARE_LEVELS,
 	type ShareLevel,
-	type ShareState,
 } from "@spendid/shared";
 import { t } from "@/i18n";
 import { cn } from "@/lib/cn";

@@ -44,6 +44,62 @@ describe("parseQuickEntry", () => {
 		});
 	});
 
+	describe("earlier days", () => {
+		// Saturday 17 October 2026.
+		const today = "2026-10-17";
+		const daysAgo = (text: string) => parseQuickEntry(text, today).daysAgo;
+
+		it("reads 'N days ago' without taking N as the amount", () => {
+			expect(parseQuickEntry("grab 9 3 days ago", today)).toMatchObject({
+				amount: 9,
+				daysAgo: 3,
+				description: "Grab",
+			});
+			expect(daysAgo("makan 15 2 hari lepas")).toBe(2);
+		});
+
+		it("knows the day before yesterday in English and Malay", () => {
+			expect(daysAgo("lunch 12 day before yesterday")).toBe(2);
+			expect(daysAgo("nasi lemak 6 kelmarin")).toBe(2);
+		});
+
+		it("reads weekday names as the most recent one", () => {
+			expect(daysAgo("petrol 80 on monday")).toBe(5);
+			expect(daysAgo("petrol 80 thu")).toBe(2);
+			expect(daysAgo("petrol 80 isnin")).toBe(5);
+			// Today's own weekday is today; "last" means the week before.
+			expect(daysAgo("lunch 12 saturday")).toBe(0);
+			expect(daysAgo("lunch 12 last saturday")).toBe(7);
+		});
+
+		it("reads dates like '3 oct', 'oct 3' and '3/10'", () => {
+			expect(parseQuickEntry("lunch 12 on 3 oct", today)).toMatchObject({
+				amount: 12,
+				daysAgo: 14,
+				description: "Lunch",
+			});
+			expect(daysAgo("lunch rm12 oct 3")).toBe(14);
+			// Both readings fit "12 oct 3"; day-before-month (the Malaysian way) wins.
+			expect(parseQuickEntry("lunch 12 oct 3", today)).toMatchObject({
+				amount: 3,
+				daysAgo: 5,
+			});
+			expect(daysAgo("lunch 12 3 oktober")).toBe(14);
+			expect(daysAgo("lunch 12 3/10")).toBe(14);
+		});
+
+		it("puts a date later in the year into last year", () => {
+			expect(daysAgo("gift 50 25 dec")).toBe(296);
+		});
+
+		it("leaves a plain amount alone", () => {
+			expect(parseQuickEntry("coffee 6.50", today)).toMatchObject({
+				amount: 6.5,
+				daysAgo: 0,
+			});
+		});
+	});
+
 	it("drops stray punctuation around the description", () => {
 		expect(parseQuickEntry("Lunch, 20").description).toBe("Lunch");
 		expect(parseQuickEntry("coffee - 6.50.").description).toBe("Coffee");

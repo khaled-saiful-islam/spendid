@@ -1,6 +1,6 @@
 import { formatMinor, minorDigits, type Transaction } from "@spendid/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Trash2 } from "lucide-react";
+import { CalendarDays, Trash2 } from "lucide-react";
 import { motion } from "motion/react";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { MaybeAlert } from "@/components/form/Alert";
@@ -11,6 +11,7 @@ import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { ApiError } from "@/lib/http";
 import { categoriesQuery, moneyApi, refreshMoney } from "@/lib/money-api";
+import { addDays, appToday, formatDay } from "@/lib/time";
 import { currencyOptions } from "../onboarding/options";
 import type { TypePrefill } from "./capture-store";
 import {
@@ -21,7 +22,6 @@ import {
 	draftMinor,
 	draftOccurredAt,
 	emptyDraft,
-	localDate,
 } from "./draft";
 import { ShopSuggestions } from "./ShopSuggestions";
 
@@ -149,6 +149,11 @@ export function ExpenseForm({
 	];
 	const customDay =
 		draft.day !== "today" && draft.day !== "yesterday" ? draft.day : "";
+	const today = appToday();
+	/** The four days before yesterday, one tap each. */
+	const recentDays = [2, 3, 4, 5].map((n) => addDays(today, -n));
+	const earlierDay =
+		customDay && !recentDays.includes(customDay) ? customDay : "";
 
 	return (
 		<form onSubmit={onSubmit} className="space-y-5" noValidate>
@@ -239,20 +244,54 @@ export function ExpenseForm({
 						<button
 							key={d.value}
 							type="button"
-							onClick={() => patch({ day: d.value })}
+							aria-pressed={draft.day === d.value}
+							onClick={() => patch({ day: d.value, dayTyped: false })}
 							className={cn(chip, draft.day === d.value ? chipOn : chipOff)}
 						>
 							{d.label}
 						</button>
 					))}
-					<input
-						type="date"
-						aria-label={t("Pick another day")}
-						max={localDate(new Date())}
-						value={customDay}
-						onChange={(e) => e.target.value && patch({ day: e.target.value })}
-						className={cn(chip, customDay ? chipOn : chipOff, "bg-transparent")}
-					/>
+					{recentDays.map((d) => (
+						<button
+							key={d}
+							type="button"
+							aria-pressed={draft.day === d}
+							onClick={() => patch({ day: d, dayTyped: false })}
+							className={cn(chip, draft.day === d ? chipOn : chipOff)}
+						>
+							{formatDay(d, { weekday: "short", day: "numeric" })}
+						</button>
+					))}
+					<label
+						className={cn(
+							chip,
+							"relative cursor-pointer gap-1.5",
+							earlierDay ? chipOn : chipOff,
+						)}
+					>
+						<CalendarDays className="size-4" aria-hidden="true" />
+						{earlierDay
+							? formatDay(earlierDay, { day: "numeric", month: "short" })
+							: t("Earlier date")}
+						<input
+							type="date"
+							aria-label={t("Pick another day")}
+							max={today}
+							value={customDay}
+							onClick={(e) => {
+								try {
+									e.currentTarget.showPicker?.();
+								} catch {
+									// Older browsers open their own picker on tap.
+								}
+							}}
+							onChange={(e) =>
+								e.target.value &&
+								patch({ day: e.target.value, dayTyped: false })
+							}
+							className="absolute inset-0 cursor-pointer opacity-0"
+						/>
+					</label>
 				</div>
 			</fieldset>
 

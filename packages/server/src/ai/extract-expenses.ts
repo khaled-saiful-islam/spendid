@@ -1,5 +1,5 @@
 import { ChatOpenAI } from "@langchain/openai";
-import { SYSTEM_CATEGORIES } from "@spendid/shared";
+import { MAX_DAYS_BACK, SYSTEM_CATEGORIES } from "@spendid/shared";
 import { z } from "zod";
 import { hedged } from "./hedge";
 import { structuredResult } from "./structured";
@@ -25,7 +25,12 @@ export const SpokenExpenseSchema = z.object({
 		.number()
 		.nullable()
 		.describe("What the speaker paid when the bill was split, else null"),
-	daysAgo: z.number().int().min(0).max(7).describe("0 today, 1 yesterday"),
+	daysAgo: z
+		.number()
+		.int()
+		.min(0)
+		.max(MAX_DAYS_BACK)
+		.describe("Days before today: 0 today, 1 yesterday, and so on"),
 });
 
 const ExtractionSchema = z.object({
@@ -40,7 +45,7 @@ Rules:
 - Grab, Uber, Gojek, taxi, LRT, petrol = transport. Coffee, lunch, dinner, kopi, teh = food.
 - Currency: use one only if said ("ringgit" = MYR, "dollars" = USD unless context says otherwise), else null.
 - Split bills: amount is the whole bill, yourShare is what the speaker paid, splitWith is the other person.
-- "yesterday" / "semalam" means daysAgo 1. Otherwise 0.
+- daysAgo counts back from today (given below): "yesterday" / "semalam" = 1, "kelmarin" / "day before yesterday" = 2, "3 days ago" = 3, a weekday ("on Monday", "hari Isnin") = the most recent one, a date ("3 October", "3/10" is day/month) = the days from that date to today. Otherwise 0. Never a future day.
 - Never invent amounts. Skip anything without an amount. The person may mix English and Malay.
 - Ignore greetings, small talk and filler ("hi", "hello", "um", "so", "okay", "I spent", "saya belanja"). The description is only the shop or item ("Grab", "Lunch"), never "Hi" or "I spent".
 - If nothing was bought, return an empty list.
@@ -58,6 +63,8 @@ export type ExpenseExtractor = (
 	homeCurrency: string,
 	/** What the person said earlier in the same note: context only (dates, who), not items. */
 	earlier?: string,
+	/** The person's own day, e.g. "Saturday 2026-10-17", for "on Monday" or "3 October". */
+	today?: string,
 ) => Promise<ExtractionResult>;
 
 /** One structured call (no agent loop): transcript in, typed expenses out. */
@@ -80,7 +87,7 @@ export function createExpenseExtractor(cfg: {
 		includeRaw: true,
 	});
 
-	return async (transcript, homeCurrency, earlier) => {
+	return async (transcript, homeCurrency, earlier, today) => {
 		const context = earlier?.trim()
 			? `Said earlier in the same note (context only, its expenses are already recorded): "${earlier.trim().slice(-600)}"\n`
 			: "";
@@ -88,7 +95,7 @@ export function createExpenseExtractor(cfg: {
 			{ role: "system", content: SYSTEM },
 			{
 				role: "user",
-				content: `Home currency: ${homeCurrency}.\n${context}Transcript: ${transcript}`,
+				content: `${today ? `Today is ${today}.\n` : ""}Home currency: ${homeCurrency}.\n${context}Transcript: ${transcript}`,
 			},
 		];
 		const out = await hedged(
