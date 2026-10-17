@@ -7,5 +7,6 @@
 | [pwa.md](pwa.md) | Installing as an app, what works offline |
 | [deploy.md](deploy.md) | Running it on a server with HTTPS |
 | [testing.md](testing.md) | Unit, API, browser and accessibility tests |
+| [research-wow.md](research-wow.md) | What makes money apps feel "wow", and what Spendid built from it |
 
 Product and build plan: [../SPEC.md](../SPEC.md), [../PLAN.md](../PLAN.md). Quick start: [../README.md](../README.md).

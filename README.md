@@ -23,6 +23,11 @@ make up        # first run installs dependencies inside Docker (a few minutes)
 
 Postgres is on `localhost:8602`, Redis on `localhost:8603`.
 
+**On a phone (same Wi-Fi):** `make phone-url` prints this computer's address (e.g.
+`http://192.168.100.88:8600`). Add it once to `.env` as `EXTRA_ORIGINS=…`, then
+`docker compose restart api`, so sign-in accepts it. Over plain HTTP, phones block the
+microphone, live camera and passkeys; typing, picking a photo or PDF, and everything else work.
+
 ## Test accounts
 
 `make up` seeds the admin. `make demo` adds normal people.
@@ -59,6 +64,7 @@ maya and adam are already in each other's circle (spouses) and save into maya's 
 | `make db-generate` | New migration after editing `packages/db/src/schema` |
 | `make test` | Unit + API tests |
 | `make e2e` | Browser + accessibility tests at phone and desktop sizes (on your machine; needs `make up` + `make demo`) |
+| `make phone-url` | The address to open Spendid on a phone on the same Wi-Fi |
 | `make typecheck` | TypeScript 7 across all packages |
 | `make check` / `make fix` | Biome lint + format |
 | `make reset` | Delete all local data (asks first) |
@@ -92,6 +98,24 @@ docs/           Feature docs
   an email says when it's ready) or *Delete my account* (password + type DELETE).
 - **Install**: in the production build Spendid installs to the home screen and opens offline. See [docs/pwa.md](docs/pwa.md).
 - **Production**: [docs/deploy.md](docs/deploy.md) — one command with HTTPS by Caddy.
+
+### Try the October round
+
+- **Ask Spendid creates things**: "save 5000 for a laptop by June 2027", "put 50 into Bali trip",
+  "cap eating out at 400", "should I buy headphones for 899?", "track Netflix 54.90 on the 5th",
+  "lunch 12 and grab 9". Each shows a card; nothing is saved until you tap it.
+  **Roast my month** / **Hype me up** for a playful take on your real numbers.
+- **Chats**: saved to your account; the chats panel (desktop) or **Chats** button (phone) has search,
+  day groups and one-tap delete with Undo. The battery shows AI questions left; tap it for details.
+- **Voice**: talk as long as you like; each phrase is caught as you pause, then edit everything.
+- **Subscriptions & bills** (Plan → Subscriptions, or the due-soon card on Home): add Netflix, Unifi,
+  the gym…; due amounts are kept aside each month, a reminder email comes N days before, Mark paid logs it.
+- **Home**: Pip (tap for the briefing and wardrobe; Pip grows as you log), streak shields,
+  **Where your month is heading** with a what-if slider.
+- **Plan → Challenges**: no-spend weekend, cook-at-home week and more, checked from your spending.
+- **Insights → Where your money flowed**: income into needs, wants, savings and categories.
+- **Receipts**: photos, screenshots or PDFs. Installed on Android, Spendid is in the share menu.
+- **Onboarding** (Me → change style, or a new account): watch your pay sorted live, then the reveal.
 
 ## Rules worth knowing
 

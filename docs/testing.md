@@ -17,9 +17,9 @@ Playwright's Chromium on your machine.
 | File | Covers |
 |---|---|
 | `tests/signup.spec.ts` | Sign up → sign-in refused until the email is confirmed → confirm from Mailpit → onboarding → today's number → delete the account → goodbye email |
-| `tests/member.spec.ts` | Home with Pip, add an expense by typing → Activity → remove it, hide amounts, Ask, Family, no sideways scroll |
+| `tests/member.spec.ts` | Home with Pip, add an expense by typing → Activity → remove it, hide amounts (header on phones, account menu on desktop), Ask welcome, Family, subscriptions, challenges, Pip's briefing, month pace, chat delete, no sideways scroll |
 | `tests/admin.spec.ts` | Admin is kept out of member pages and member data |
-| `tests/a11y.spec.ts` | axe (WCAG 2.2 AA) on every main page: no serious or critical problems |
+| `tests/a11y.spec.ts` | axe (WCAG 2.2 AA) on every main page, with reduced motion so it judges the settled screen |
 
 - `global-setup.ts` signs `maya` and `admin` in once and sets maya's language to English, so tests
   read English text.

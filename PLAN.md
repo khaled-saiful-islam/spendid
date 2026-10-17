@@ -111,4 +111,12 @@ Dev: `make up` → web http://localhost:8600 · API http://localhost:8601 · Mai
 - Export (JSON / CSV / images) and full delete; hide balances; Bahasa Melayu; PWA install + offline shell.
 - Playwright + axe E2E at 390 / 1280; phone audit; README + docs per feature; production Dockerfiles.
 - Done: export (async encrypted zip with CSV + JSON + receipt photos, 24 h, live update + email) and full delete (password + "DELETE", files removed, goodbye email); hide amounts toggle; Bahasa Melayu for the whole member app (743 strings, placeholders for values, dates in the app language, saved to the profile, Ask answers in Malay); PWA (manifest, icons, service worker that never caches `/api`, offline banner); production image (Node + Caddy with HTTPS and security headers), `docker-compose.prod.yml`, SMTP login for real providers; `make e2e`: 41 Playwright tests at 390 and 1280 px including sign-up → email confirm → onboarding → delete, and axe WCAG 2.2 AA on every main page (fixed: contrast of the green "safe" text, label-in-name on the profile link and Ask cards, unnamed admin sign-out on phones); phone audit at 360/390/768/1280 (admin tabs now wrap); docs/ for privacy, language, PWA, deploy, testing.
-- Not in v1: Malay for the admin console, API error messages and emails; PDF receipts.
+- Not in v1: Malay for the admin console, API error messages and emails.
+
+## October round — feedback and research ("wow")
+Research notes: [docs/research-wow.md](docs/research-wow.md).
+- Done: Ask creates goals, deposits, limits, wishes, subscriptions and expenses as confirm cards (repairs ILMU's garbled tool JSON; forces a tool call when an answer only claims a card); saved chats with a searchable panel and Undo delete; AI allowance battery with a breakdown; Roast / Hype modes.
+- Done: live phrase-by-phrase voice with full editing; PDF receipts (pdf.js in the browser); Share to Spendid (PWA share target).
+- Done: subscriptions & bills (kept aside, reminders, Mark paid, monthly plan email, detected suggestions); challenges checked from spending; month pace with forecast and what-if; money-flow chart; Pip levels, wardrobe, briefing, festive looks; streak shields.
+- Done: onboarding as a live pay sorter with a coin-drop reveal; account card in the sidebar; full page pass at 360/390/768/1280 in light/dark and English/Malay; 55 E2E + axe tests.
+- On hold: HTTPS for phones (camera, mic, passkeys, install) until deploy.
