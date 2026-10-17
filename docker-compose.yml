@@ -83,7 +83,8 @@ services:
     command: pnpm --filter @spendid/api dev
     restart: unless-stopped
     ports:
-      - "8601:8601"
+      # Local only: phones and other devices reach the API through the web app on 8600.
+      - "127.0.0.1:8601:8601"
     depends_on:
       migrate: { condition: service_completed_successfully }
       redis: { condition: service_healthy }
