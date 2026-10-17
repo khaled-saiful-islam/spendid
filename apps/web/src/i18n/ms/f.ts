@@ -62,4 +62,19 @@ export const msF: Record<string, string> = {
 		"{amount} bulan ini, diketepikan untuk anda",
 	"See all": "Lihat semua",
 	"2 days": "2 hari",
+	Invite: "Jemput",
+	"What your circle shares, as it happens":
+		"Apa yang bulatan anda kongsi, secara langsung",
+	"sees your {what}": "melihat {what} anda",
+	"your sharing is paused": "perkongsian anda dijeda",
+	"sees nothing of yours": "tidak melihat apa-apa milik anda",
+	"you see their {what}": "anda melihat {what} mereka",
+	"their sharing is paused": "perkongsian mereka dijeda",
+	"you see nothing of theirs": "anda tidak melihat apa-apa milik mereka",
+	"Waiting for your {relation}": "Menunggu {relation} anda",
+	"Who sees what": "Siapa melihat apa",
+	"Your circle starts with you. Who should join?":
+		"Bulatan anda bermula dengan anda. Siapa patut sertai?",
+	"{amount} saved together": "{amount} disimpan bersama",
+	Kid: "Anak",
 };

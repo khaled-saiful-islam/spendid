@@ -7,11 +7,14 @@ import {
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import confetti from "canvas-confetti";
 import { HandCoins, Plus, UsersRound } from "lucide-react";
+import { motion } from "motion/react";
 import { useState } from "react";
 import { MaybeAlert } from "@/components/form/Alert";
 import { Field } from "@/components/form/Field";
 import { SubmitButton } from "@/components/form/SubmitButton";
+import { TINTS } from "@/components/money/CategoryIcon";
 import { buttonClass } from "@/components/ui/Button";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Sheet } from "@/components/ui/Sheet";
 import { toast } from "@/components/ui/Toast";
 import { t } from "@/i18n";
@@ -20,7 +23,7 @@ import { familyApi, jarsQuery, refreshFamily } from "@/lib/family-api";
 import { ApiError } from "@/lib/http";
 import { currencySymbol } from "../onboarding/options";
 import { GoalJar } from "../plan/GoalJar";
-import { Avatar } from "./parts";
+import { Avatar, personGradient } from "./parts";
 
 const errorText = (err: unknown) =>
 	err instanceof ApiError ? err.message : t("That didn't work. Try again.");
@@ -224,8 +227,15 @@ function JarCard({
 	const queryClient = useQueryClient();
 	const ratio = jar.targetMinor > 0 ? jar.savedMinor / jar.targetMinor : 0;
 	return (
-		<li className="flex flex-col gap-4 rounded-panel border border-line bg-surface p-5">
-			<div className="flex items-start gap-4">
+		<li className="relative flex flex-col gap-4 overflow-hidden rounded-panel border border-line bg-surface p-4 sm:p-5">
+			<span
+				aria-hidden="true"
+				className={cn(
+					"pointer-events-none absolute inset-0 bg-linear-to-br opacity-[0.15] dark:opacity-[0.11]",
+					TINTS.amber,
+				)}
+			/>
+			<div className="relative flex items-start gap-4">
 				<GoalJar
 					ratio={ratio}
 					emoji={jar.emoji}
@@ -251,7 +261,30 @@ function JarCard({
 					)}
 				</div>
 			</div>
-			<ul className="space-y-1.5" aria-label={t("Who put in what")}>
+			<div className="relative">
+				<span
+					className="flex h-3 gap-[2px] overflow-hidden rounded-full bg-ink/10"
+					aria-hidden="true"
+				>
+					{jar.members
+						.filter((m) => m.givenMinor > 0)
+						.map((m) => (
+							<motion.span
+								key={m.userId}
+								className={cn(
+									"h-full bg-linear-to-r",
+									personGradient(m.userId),
+								)}
+								initial={{ width: 0 }}
+								animate={{
+									width: `${(m.givenMinor / Math.max(jar.targetMinor, jar.savedMinor, 1)) * 100}%`,
+								}}
+								transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+							/>
+						))}
+				</span>
+			</div>
+			<ul className="relative space-y-1.5" aria-label={t("Who put in what")}>
 				{jar.members.map((m) => (
 					<li key={m.userId} className="flex items-center gap-2 text-[0.92rem]">
 						<Avatar name={m.name} seed={m.userId} size="sm" />
@@ -262,7 +295,7 @@ function JarCard({
 					</li>
 				))}
 			</ul>
-			<div className="mt-auto flex flex-wrap gap-2">
+			<div className="relative mt-auto flex flex-wrap gap-2">
 				<button
 					type="button"
 					onClick={onAdd}
@@ -315,24 +348,33 @@ export function SharedJars({ people }: { people: FamilyPerson[] }) {
 
 	return (
 		<section aria-labelledby="jars-heading" className="space-y-3">
-			<div className="flex flex-wrap items-center justify-between gap-3">
-				<h2
-					id="jars-heading"
-					className="flex items-center gap-2 text-[1.6rem] font-bold"
-				>
-					<HandCoins className="size-6 text-marigold-deep" aria-hidden="true" />{" "}
-					{t("Saving together")}
-				</h2>
-				{canShare && (
-					<button
-						type="button"
-						onClick={() => setChoosing(true)}
-						className={buttonClass("ghost", "md", "border-2 border-line")}
-					>
-						<Plus className="size-5" aria-hidden="true" /> {t("Share a goal")}
-					</button>
-				)}
-			</div>
+			<SectionHeader
+				id="jars-heading"
+				title={t("Saving together")}
+				icon={HandCoins}
+				tint="amber"
+				sub={
+					data.jars.length > 0
+						? t("{amount} saved together", {
+								amount: formatMinor(
+									data.jars.reduce((n, j) => n + j.savedMinor, 0),
+									data.jars[0]?.currency ?? "MYR",
+								),
+							})
+						: undefined
+				}
+				action={
+					canShare ? (
+						<button
+							type="button"
+							onClick={() => setChoosing(true)}
+							className={buttonClass("ghost", "md", "border-2 border-line")}
+						>
+							<Plus className="size-5" aria-hidden="true" /> {t("Share a goal")}
+						</button>
+					) : undefined
+				}
+			/>
 			{data.jars.length === 0 ? (
 				<p className="rounded-panel border-2 border-dashed border-line p-5 text-ink-soft">
 					{people.length === 0
@@ -346,7 +388,7 @@ export function SharedJars({ people }: { people: FamilyPerson[] }) {
 							: t("Share one of your goals so your circle can add to it.")}
 				</p>
 			) : (
-				<ul className="grid gap-3 sm:grid-cols-2">
+				<ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
 					{data.jars.map((jar) => (
 						<JarCard
 							key={jar.id}

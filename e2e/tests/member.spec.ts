@@ -82,7 +82,10 @@ test("Ask Spendid opens with real numbers, playful modes and the question box", 
 test("Family shows the circle and what each side shares", async ({ page }) => {
 	await page.goto("/app/family");
 	await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-	await expect(page.getByText("Adam").first()).toBeVisible();
+	const map = page.getByRole("region", { name: "Who sees what" });
+	await expect(map.getByRole("link", { name: /Adam/ })).toBeVisible();
+	await expect(map.getByText(/^(sees your|sees nothing of yours|your sharing is paused)/)).toBeVisible();
+	await expect(map.getByText(/^(you see their|you see nothing|their sharing is paused)/)).toBeVisible();
 });
 
 test("no page scrolls sideways on this screen size", async ({ page }) => {

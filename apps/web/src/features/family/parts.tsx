@@ -6,7 +6,6 @@ import {
 	type ShareLevel,
 	type ShareState,
 } from "@spendid/shared";
-import { Eye, EyeOff } from "lucide-react";
 import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { formatMoment } from "@/lib/time";
@@ -41,6 +40,10 @@ const AVATAR_SIZES = {
 	lg: "size-20 text-[1.6rem]",
 };
 
+/** A person's own colour (as gradient classes), the same as their avatar. */
+export const personGradient = (seed: string): string =>
+	GRADIENTS[hash(seed) % GRADIENTS.length] ?? GRADIENTS[0] ?? "";
+
 /** A person's colourful initials; the colour stays the same everywhere for them. */
 export function Avatar({
 	name,
@@ -69,36 +72,6 @@ export function Avatar({
 }
 
 export const relationLabel = (r: Relation) => t(RELATION_LABELS[r]);
-
-/** "Sees your categories", "Paused" — one short chip per direction. */
-export function ShareChip({
-	state,
-	label,
-}: {
-	state: ShareState | null;
-	label: string;
-}) {
-	const off = !state || state.paused;
-	const Icon = off ? EyeOff : Eye;
-	return (
-		<span
-			className={cn(
-				"inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[0.85rem] font-semibold",
-				off ? "bg-surface-2 text-ink-soft" : "bg-jade/12 text-safe",
-			)}
-		>
-			<Icon className="size-4 shrink-0" aria-hidden="true" />
-			<span>
-				{label}:{" "}
-				{!state
-					? "nothing"
-					: state.paused
-						? "paused"
-						: t(LEVEL_INFO[state.level].label).toLowerCase()}
-			</span>
-		</span>
-	);
-}
 
 /** Pick what to share. Each step adds to the one before, shown as a growing stack of bars. */
 export function LevelPicker({

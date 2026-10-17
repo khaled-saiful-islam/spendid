@@ -1,12 +1,14 @@
 import { formatMinor, type SplitDto } from "@spendid/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { ReceiptText, Trash2 } from "lucide-react";
+import { Plus, ReceiptText, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { buttonClass } from "@/components/ui/Button";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Sheet } from "@/components/ui/Sheet";
 import { toast } from "@/components/ui/Toast";
 import { t } from "@/i18n";
+import { cn } from "@/lib/cn";
 import {
 	familyApi,
 	refreshFamily,
@@ -28,17 +30,20 @@ function Row({
 	split,
 	line,
 	onOpen,
+	paid,
 }: {
 	split: SplitDto;
 	line: string;
 	onOpen: () => void;
+	/** For bills I split: how many of the people have paid. */
+	paid?: { done: number; of: number };
 }) {
 	return (
 		<li>
 			<button
 				type="button"
 				onClick={onOpen}
-				className="flex w-full items-center gap-3 rounded-tile border border-line bg-surface p-3 text-left hover:bg-surface-2"
+				className="flex w-full items-center gap-3 rounded-tile px-2 py-2.5 text-left hover:bg-surface-2"
 			>
 				<span className="grid size-11 shrink-0 place-items-center rounded-full bg-linear-to-br from-marigold to-coral text-plum-900">
 					<ReceiptText className="size-5" aria-hidden="true" />
@@ -46,6 +51,20 @@ function Row({
 				<span className="min-w-0 flex-1">
 					<span className="block font-semibold break-words">{split.title}</span>
 					<span className="block text-[0.85rem] text-ink-soft">{line}</span>
+					{paid && paid.of > 0 && (
+						<span className="mt-1.5 flex gap-1" aria-hidden="true">
+							{Array.from({ length: paid.of }, (_, i) => (
+								<span
+									// biome-ignore lint/suspicious/noArrayIndexKey: one fixed slot per person
+									key={i}
+									className={cn(
+										"h-1.5 flex-1 rounded-full",
+										i < paid.done ? "bg-jade" : "bg-ink/10",
+									)}
+								/>
+							))}
+						</span>
+					)}
 				</span>
 				<span className="num shrink-0 font-bold">
 					{formatMinor(split.result.totalMinor, split.currency)}
@@ -70,17 +89,20 @@ export function SplitsSection() {
 
 	return (
 		<section aria-labelledby="splits-heading" className="space-y-3">
-			<div className="flex flex-wrap items-center justify-between gap-3">
-				<h2 id="splits-heading" className="text-[1.6rem] font-bold">
-					{t("Split bills")}
-				</h2>
-				<Link
-					to="/app/family/split"
-					className={buttonClass("ghost", "md", "border-2 border-line")}
-				>
-					{t("New split")}
-				</Link>
-			</div>
+			<SectionHeader
+				id="splits-heading"
+				title={t("Split bills")}
+				icon={ReceiptText}
+				tint="cyan"
+				action={
+					<Link
+						to="/app/family/split"
+						className={buttonClass("ghost", "md", "border-2 border-line")}
+					>
+						<Plus className="size-5" aria-hidden="true" /> {t("New split")}
+					</Link>
+				}
+			/>
 			{mine.length === 0 && withMe.length === 0 ? (
 				<p className="rounded-panel border-2 border-dashed border-line p-5 text-ink-soft">
 					{t(
@@ -88,7 +110,7 @@ export function SplitsSection() {
 					)}
 				</p>
 			) : (
-				<ul className="space-y-2">
+				<ul className="rounded-panel border border-line bg-surface p-2">
 					{withMe.map((s) => {
 						const share = myShare(s);
 						return (
@@ -119,6 +141,7 @@ export function SplitsSection() {
 								paid: s.paid.length,
 								n: s.people.length,
 							})}
+							paid={{ done: s.paid.length, of: s.people.length }}
 						/>
 					))}
 				</ul>

@@ -4,6 +4,7 @@ import { Activity, SmilePlus } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { CategoryIcon } from "@/components/money/CategoryIcon";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { toast } from "@/components/ui/Toast";
 import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
@@ -125,17 +126,21 @@ export function Pulse() {
 	const [shown, setShown] = useState(PAGE);
 	return (
 		<section aria-labelledby="pulse-heading" className="space-y-3">
-			<h2
+			<SectionHeader
 				id="pulse-heading"
-				className="flex items-center gap-2 text-[1.6rem] font-bold"
-			>
-				<Activity className="size-6 text-coral" aria-hidden="true" />{" "}
-				{t("Family pulse")}
-				<span className="relative ml-1 flex size-2.5" aria-hidden="true">
-					<span className="absolute inline-flex size-full animate-ping rounded-full bg-coral opacity-60 motion-reduce:hidden" />
-					<span className="relative inline-flex size-2.5 rounded-full bg-coral" />
-				</span>
-			</h2>
+				title={
+					<span className="inline-flex items-center gap-2">
+						{t("Family pulse")}
+						<span className="relative flex size-2.5" aria-hidden="true">
+							<span className="absolute inline-flex size-full animate-ping rounded-full bg-coral opacity-60 motion-reduce:hidden" />
+							<span className="relative inline-flex size-2.5 rounded-full bg-coral" />
+						</span>
+					</span>
+				}
+				icon={Activity}
+				tint="rose"
+				sub={t("What your circle shares, as it happens")}
+			/>
 			{isPending ? (
 				<div className="h-32 animate-pulse rounded-panel bg-surface-2" />
 			) : data.length === 0 ? (
@@ -145,7 +150,11 @@ export function Pulse() {
 					)}
 				</p>
 			) : (
-				<ol className="space-y-2">
+				<ol className="relative rounded-panel border border-line bg-surface p-3 sm:p-4">
+					<span
+						aria-hidden="true"
+						className="absolute top-7 bottom-7 left-[2.35rem] w-0.5 rounded-full bg-line sm:left-[2.6rem]"
+					/>
 					<AnimatePresence initial={false}>
 						{data.slice(0, shown).map((item) => (
 							<motion.li
@@ -154,7 +163,7 @@ export function Pulse() {
 								initial={{ opacity: 0, y: -12 }}
 								animate={{ opacity: 1, y: 0 }}
 								exit={{ opacity: 0 }}
-								className="flex gap-3 rounded-tile border border-line bg-surface p-3"
+								className="relative flex gap-3 py-2.5"
 							>
 								<div className="relative shrink-0">
 									<Avatar name={item.actorName} seed={item.actorId} />
@@ -177,10 +186,13 @@ export function Pulse() {
 									</span>
 								</div>
 								<div className="min-w-0 flex-1">
-									<p data-money className="font-semibold break-words">
+									<p
+										data-money
+										className="leading-snug font-semibold break-words"
+									>
 										{sentence(item)}
 									</p>
-									<p className="text-[0.82rem] text-ink-soft">{ago(item.at)}</p>
+									<p className="text-[0.8rem] text-ink-soft">{ago(item.at)}</p>
 									<Reactions item={item} />
 								</div>
 							</motion.li>
@@ -192,9 +204,9 @@ export function Pulse() {
 				<button
 					type="button"
 					onClick={() => setShown((n) => n + PAGE * 2)}
-					className="w-full rounded-full border-2 border-line py-3 font-semibold hover:bg-surface-2"
+					className="w-full rounded-full border-2 border-line py-2.5 font-semibold hover:bg-surface-2"
 				>
-					Show more ({data.length - shown})
+					{t("Show more")} ({data.length - shown})
 				</button>
 			)}
 		</section>
