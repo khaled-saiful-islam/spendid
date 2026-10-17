@@ -1,11 +1,12 @@
 import { category, type Db, goal, goalDeposit, transaction } from "@spendid/db";
 import {
+	FIXED_COST_SLUGS,
 	type Heatmap,
 	moneyPersonality,
 	type RecurringOverview,
 	type Wrapped,
 } from "@spendid/shared";
-import { and, desc, eq, gt, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, gt, isNull, notInArray, sql } from "drizzle-orm";
 import { badRequest } from "../../http/app-error";
 import { onLocalDays } from "../money/local-days";
 import { monthBounds } from "../money/summary.service";
@@ -155,7 +156,15 @@ export function createInsightsService(db: Db) {
 						minor: total,
 					})
 					.from(transaction)
-					.where(and(now.where, sql`${transaction.merchant} is not null`))
+					.innerJoin(category, eq(category.id, transaction.categoryId))
+					// A favourite place is somewhere you chose to go, not a bill that came to you.
+					.where(
+						and(
+							now.where,
+							sql`${transaction.merchant} is not null`,
+							notInArray(category.slug, [...FIXED_COST_SLUGS]),
+						),
+					)
 					.groupBy(transaction.merchant)
 					.orderBy(desc(sql`count(*)`), desc(total))
 					.limit(1),
