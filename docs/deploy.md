@@ -31,7 +31,8 @@ docker compose -f docker-compose.prod.yml --env-file .env.production up -d --bui
 ```
 
 `migrate` runs first (database migrations + the admin account), then `api`, `worker` and `web`
-start. Check `https://your-domain/api/health`.
+start. Check `https://your-domain/api/health`, and `docker compose -f docker-compose.prod.yml ps`
+should show `api`, `worker` and `web` as `healthy` within a minute.
 
 ## 3. Update
 
@@ -48,5 +49,14 @@ Migrations run again automatically; they only apply what's new.
   together, and keep `RECEIPT_ENCRYPTION_KEY` with the backup.
 - Without a domain, leave `SITE_ADDRESS=:80`. The app works over plain HTTP, but phones block the
   camera, microphone and passkeys until it's on HTTPS.
-- Caddy sends security headers (HSTS, nosniff, camera/mic only for this site) and never buffers
-  `/api` live updates.
+- Caddy sends security headers (HSTS, nosniff, camera/mic only for this site, no framing, and a
+  Content-Security-Policy that allows no inline or third-party scripts) and never buffers `/api`
+  live updates. If you add a third-party script or font, add its origin to the policy in
+  `docker/Caddyfile`.
+- Health checks: `api` asks `/api/health` (database and Redis); `worker` touches
+  `/tmp/worker-alive` every 30 seconds while Redis answers; `web` serves the home page. Docker shows
+  an unhealthy container but doesn't restart it; point your uptime monitor at `/api/health`.
+- Receipt photos are files on one disk (the `receipts` volume), encrypted. That's fine for one
+  server; before running more than one API, move them to object storage (S3 or compatible).
+- Errors go to the container logs (`docker compose logs api worker`). No error-tracking service is
+  wired in; add one (Sentry or similar) if you want alerts.

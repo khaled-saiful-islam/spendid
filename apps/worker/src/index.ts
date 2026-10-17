@@ -1,3 +1,4 @@
+import { writeFile } from "node:fs/promises";
 import { createDb } from "@spendid/db";
 import { EMAIL_QUEUE } from "@spendid/emails";
 import {
@@ -166,6 +167,19 @@ await fxQueue.upsertJobScheduler(
 		name: "refresh",
 		opts: { attempts: 5, backoff: { type: "exponential", delay: 30_000 } },
 	},
+);
+
+// Health: touch a file while Redis answers; the production healthcheck reads its age.
+const ALIVE_FILE = "/tmp/worker-alive";
+const heartbeat = setInterval(() => {
+	connection
+		.ping()
+		.then(() => writeFile(ALIVE_FILE, String(Date.now())))
+		.catch((err: unknown) => logError("health heartbeat failed", err));
+}, 30_000);
+heartbeat.unref();
+void writeFile(ALIVE_FILE, String(Date.now())).catch((err: unknown) =>
+	logError("health heartbeat failed", err),
 );
 
 /** Under Docker's 10-second stop window. A job cut short is retried by the next worker. */
