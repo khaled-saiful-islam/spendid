@@ -43,6 +43,8 @@ export const summaryQuery = queryOptions({
 export interface ActivityFilters {
 	categoryId?: string;
 	q?: string;
+	/** One calendar day ("YYYY-MM-DD") in the app's time zone. */
+	day?: string;
 }
 
 export const transactionsQuery = (filters: ActivityFilters) =>
@@ -54,6 +56,7 @@ export const transactionsQuery = (filters: ActivityFilters) =>
 			if (pageParam) params.set("cursor", pageParam);
 			if (filters.categoryId) params.set("categoryId", filters.categoryId);
 			if (filters.q) params.set("q", filters.q);
+			if (filters.day) params.set("day", filters.day);
 			return api<TransactionPage>(`/api/transactions?${params}`);
 		},
 		getNextPageParam: (last) => last.nextCursor ?? undefined,

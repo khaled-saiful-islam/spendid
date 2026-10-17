@@ -1,4 +1,4 @@
-import { type Db, transaction } from "@spendid/db";
+import { type Db, profile, transaction } from "@spendid/db";
 import type { Transaction, TransactionPage } from "@spendid/shared";
 import {
 	and,
@@ -12,6 +12,7 @@ import {
 	type SQL,
 	sql,
 } from "drizzle-orm";
+import { onLocalDays } from "./local-days";
 
 type Row = typeof transaction.$inferSelect;
 export type NewTransaction = Omit<
@@ -24,6 +25,8 @@ export interface ListOptions {
 	cursor?: string;
 	categoryId?: string;
 	search?: string;
+	/** Only this calendar day ("YYYY-MM-DD") in the person's own time zone. */
+	day?: string;
 }
 
 export function toDto(r: Row): Transaction {
@@ -119,6 +122,21 @@ export function createTransactionRepository(db: Db) {
 			];
 			if (opts.categoryId)
 				filters.push(eq(transaction.categoryId, opts.categoryId));
+			if (opts.day) {
+				const [p] = await db
+					.select({ timeZone: profile.timeZone })
+					.from(profile)
+					.where(eq(profile.userId, userId))
+					.limit(1);
+				filters.push(
+					onLocalDays(
+						transaction.occurredAt,
+						p?.timeZone ?? "UTC",
+						opts.day,
+						sql`(${opts.day}::date + 1)`,
+					),
+				);
+			}
 			if (opts.search) {
 				const term = `%${escapeLike(opts.search)}%`;
 				filters.push(

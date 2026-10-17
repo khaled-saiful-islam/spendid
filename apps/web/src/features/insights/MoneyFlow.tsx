@@ -1,8 +1,12 @@
 import { formatMinor, type Wrapped } from "@spendid/shared";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { useState } from "react";
 import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
+import { categoriesQuery } from "@/lib/money-api";
 
 type GroupKey = "need" | "want" | "saved" | "free";
 
@@ -13,67 +17,14 @@ const GROUP: Record<GroupKey, { label: string; color: string }> = {
 	free: { label: "Not spent yet", color: "var(--color-plum-300)" },
 };
 
-const MAX_CATEGORIES = 6;
-const GAP = 6;
-const MIN_GROUP = 30;
-const MIN_LEAF = 34;
+const KIND_GROUP = { need: "need", want: "want", saving: "saved" } as const;
 
-interface Node {
-	key: string;
-	label: string;
-	minor: number;
-	color: string;
-	y: number;
-	h: number;
-	group?: GroupKey;
-}
-
-/** Heights proportional to value, with a minimum so every label fits, filling `total` px. */
-function stack<T extends { minor: number }>(
-	items: T[],
-	total: number,
-	min: number,
-): (T & { y: number; h: number })[] {
-	const room = total - GAP * Math.max(0, items.length - 1);
-	const sum = items.reduce((n, i) => n + i.minor, 0) || 1;
-	let heights = items.map((i) => (i.minor / sum) * room);
-	const small = heights.filter((h) => h < min).length;
-	if (small) {
-		const bigSum =
-			items.reduce(
-				(n, i, k) => n + ((heights[k] ?? 0) >= min ? i.minor : 0),
-				0,
-			) || 1;
-		const left = room - small * min;
-		heights = items.map((i, k) =>
-			(heights[k] ?? 0) < min ? min : (i.minor / bigSum) * left,
-		);
-	}
-	let y = 0;
-	return items.map((i, k) => {
-		const h = heights[k] ?? min;
-		const out = { ...i, y, h };
-		y += h + GAP;
-		return out;
-	});
-}
-
-/** A ribbon from a slice of one node to a slice of another (x in 0–100, y in px). */
-function ribbon(
-	x1: number,
-	a1: number,
-	b1: number,
-	x2: number,
-	a2: number,
-	b2: number,
-): string {
-	const m = (x1 + x2) / 2;
-	return `M${x1} ${a1} C${m} ${a1} ${m} ${a2} ${x2} ${a2} L${x2} ${b2} C${m} ${b2} ${m} ${b1} ${x1} ${b1} Z`;
-}
+/** Categories shown before "Show all". */
+const TOP = 6;
 
 /**
- * Where the month's money went, as a flow: income into needs, wants, savings kept aside and
- * what's not spent yet, then into the categories. Tap any part for its numbers.
+ * Where the month's money went: one bar for what came in (needs, wants, savings kept aside,
+ * not spent yet), then every category ranked biggest first. Tap a category for its expenses.
  */
 export function MoneyFlow({
 	data,
@@ -85,260 +36,165 @@ export function MoneyFlow({
 	reservedMinor: number;
 }) {
 	const reduce = useReducedMotion();
-	const [active, setActive] = useState<string | null>(null);
+	const { data: categories = [] } = useQuery(categoriesQuery);
+	const [showAll, setShowAll] = useState(false);
 	const money = (m: number) => formatMinor(m, data.currency);
 
-	const byKind = (k: "need" | "want" | "saving") =>
-		data.flow.filter((c) => c.kind === k);
-	const sum = (xs: { minor: number }[]) => xs.reduce((n, x) => n + x.minor, 0);
-	const needs = byKind("need");
-	const wants = byKind("want");
-	const savedSpend = sum(byKind("saving"));
-	const savedMinor = reservedMinor + savedSpend;
-	const spent = sum(needs) + sum(wants);
-	const income = Math.max(incomeMinor ?? 0, spent + savedMinor);
-	const free = Math.max(0, income - spent - savedMinor);
+	const sumOf = (k: "need" | "want" | "saving") =>
+		data.flow.filter((c) => c.kind === k).reduce((n, c) => n + c.minor, 0);
+	const needs = sumOf("need");
+	const wants = sumOf("want");
+	const savedMinor = reservedMinor + sumOf("saving");
+	const spent = data.flow.reduce((n, c) => n + c.minor, 0);
+	const income = Math.max(incomeMinor ?? 0, needs + wants + savedMinor);
+	const free = Math.max(0, income - needs - wants - savedMinor);
 	if (data.flow.length === 0 || income <= 0) return null;
 
 	const groups = (
 		[
-			{ key: "need", minor: sum(needs) },
-			{ key: "want", minor: sum(wants) },
+			{ key: "need", minor: needs },
+			{ key: "want", minor: wants },
 			{ key: "saved", minor: savedMinor },
 			{ key: "free", minor: free },
 		] as { key: GroupKey; minor: number }[]
 	).filter((g) => g.minor > 0);
-
-	// Categories under needs and wants; the smallest fold into "Everything else" per group.
-	const leaves: {
-		key: string;
-		label: string;
-		minor: number;
-		group: GroupKey;
-	}[] = [];
-	for (const [group, cats] of [
-		["need", needs],
-		["want", wants],
-	] as const) {
-		const share = Math.max(
-			1,
-			Math.round((MAX_CATEGORIES * sum(cats)) / Math.max(1, spent)),
-		);
-		const shown = cats.slice(0, share);
-		const rest = sum(cats.slice(share));
-		for (const c of shown)
-			leaves.push({
-				key: `${group}:${c.name}`,
-				label: c.name,
-				minor: c.minor,
-				group,
-			});
-		if (rest > 0)
-			leaves.push({
-				key: `${group}:rest`,
-				label: t("Everything else"),
-				minor: rest,
-				group,
-			});
-	}
-
-	const H = Math.max(300, leaves.length * (MIN_LEAF + GAP));
-	const mid = stack(groups, H, MIN_GROUP).map(
-		(g): Node => ({
-			key: g.key,
-			label: t(GROUP[g.key].label),
-			minor: g.minor,
-			color: GROUP[g.key].color,
-			y: g.y,
-			h: g.h,
-			group: g.key,
-		}),
-	);
-	const right = stack(leaves, H, MIN_LEAF).map(
-		(l): Node => ({
-			key: l.key,
-			label: t(l.label),
-			minor: l.minor,
-			color: GROUP[l.group].color,
-			y: l.y,
-			h: l.h,
-			group: l.group,
-		}),
-	);
-
-	// Income slices line up with the middle nodes, in order.
-	let inY = 0;
-	const inRibbons = mid.map((g) => {
-		const h = (g.minor / income) * H;
-		const r: { key: string; d: string; color: string; group?: string } = {
-			key: g.key,
-			d: ribbon(4, inY, inY + h, 40, g.y, g.y + g.h),
-			color: g.color,
-		};
-		inY += h;
-		return r;
-	});
-	// Each group's slices line up with its categories.
-	const outRibbons = mid.flatMap((g) => {
-		let y = g.y;
-		return right
-			.filter((l) => l.group === g.group)
-			.map((l) => {
-				const h = (l.minor / Math.max(1, g.minor)) * g.h;
-				const r = {
-					key: l.key,
-					d: ribbon(44, y, y + h, 62, l.y, l.y + l.h),
-					color: l.color,
-					group: g.key,
-				};
-				y += h;
-				return r;
-			});
-	});
-
-	const picked = [...mid, ...right].find((n) => n.key === active);
-	const pct = (m: number) => Math.round((m / income) * 100);
-	const dim = (key: string, group?: string) =>
-		active !== null && active !== key && active !== group;
+	const pct = (m: number, of: number) =>
+		Math.round((m / Math.max(1, of)) * 100);
+	const ranked = [...data.flow].sort((a, b) => b.minor - a.minor);
+	const shown = showAll ? ranked : ranked.slice(0, TOP);
+	const biggest = ranked[0]?.minor ?? 1;
+	const idOf = new Map(categories.map((c) => [c.name, c.id]));
 
 	return (
 		<section
 			aria-labelledby="flow-title"
-			className="rounded-panel border border-line bg-surface p-4 sm:p-6"
+			className="rounded-panel border border-line bg-surface p-4 sm:p-5"
 		>
-			<h2 id="flow-title" className="text-[1.6rem] font-bold">
+			<h2 id="flow-title" className="text-[1.1rem] font-bold">
 				{t("Where your money flowed")}
 			</h2>
-			<p data-money className="mt-1 text-ink-soft">
-				{t("{amount} came in. Tap any part to see it.", {
-					amount: money(income),
-				})}
+			<p data-money className="text-[0.9rem] text-ink-soft">
+				{t("{amount} came in this month.", { amount: money(income) })}
 			</p>
 
-			<div className="relative mt-5" style={{ height: H }} aria-hidden="true">
-				<svg
-					viewBox={`0 0 100 ${H}`}
-					aria-hidden="true"
-					preserveAspectRatio="none"
-					className="absolute inset-0 size-full overflow-visible"
-				>
-					<rect
-						x="0"
-						y="0"
-						width="4"
-						height={H}
-						rx="1"
-						fill="var(--color-plum-500)"
-					/>
-					{[...inRibbons, ...outRibbons].map((r, i) => (
-						<motion.path
-							key={r.key + (i < inRibbons.length ? "-in" : "-out")}
-							d={r.d}
-							fill={r.color}
-							initial={reduce ? false : { opacity: 0 }}
-							animate={{
-								opacity: dim(r.key, r.group) ? 0.12 : 0.42,
-							}}
-							transition={{ delay: reduce ? 0 : 0.05 * i, duration: 0.5 }}
-							onPointerEnter={() => setActive(r.key)}
-							onPointerLeave={() => setActive(null)}
-							onClick={() => setActive(r.key)}
-						/>
-					))}
-					{mid.map((g) => (
-						<rect
-							key={g.key}
-							x="40"
-							y={g.y}
-							width="4"
-							height={g.h}
-							rx="1"
-							fill={g.color}
-						/>
-					))}
-					{right.map((l) => (
-						<rect
-							key={l.key}
-							x="62"
-							y={l.y}
-							width="2.5"
-							height={l.h}
-							rx="1"
-							fill={l.color}
-							opacity={dim(l.key, l.group) ? 0.3 : 1}
-						/>
-					))}
-				</svg>
-				{/* Labels are HTML so they wrap instead of being cut off. */}
-				{mid.map((g) => (
-					<span
+			<div
+				className="mt-3 flex h-4 gap-[2px] overflow-hidden rounded-full"
+				role="img"
+				aria-label={groups
+					.map(
+						(g) =>
+							`${t(GROUP[g.key].label)}: ${money(g.minor)} (${pct(g.minor, income)}%)`,
+					)
+					.join(", ")}
+			>
+				{groups.map((g, i) => (
+					<motion.span
 						key={g.key}
-						data-money
-						className="absolute right-[57%] left-[5%] flex flex-col items-end justify-center pr-2 text-right leading-tight"
-						style={{ top: g.y, height: g.h }}
-					>
-						<span className="rounded bg-surface/85 px-1 text-[0.78rem] font-bold">
-							{g.label}
-						</span>
-						<span className="num rounded bg-surface/85 px-1 text-[0.74rem] text-ink-soft">
-							{pct(g.minor)}%
-						</span>
-					</span>
-				))}
-				{right.map((l) => (
-					<span
-						key={l.key}
-						data-money
-						className={cn(
-							"absolute right-0 left-[calc(64.5%+6px)] flex flex-col justify-center leading-tight",
-							dim(l.key, l.group) && "opacity-40",
-						)}
-						style={{ top: l.y, height: l.h }}
-					>
-						<span className="text-[0.8rem] font-semibold break-words">
-							{l.label}
-						</span>
-						<span className="num text-[0.74rem] text-ink-soft">
-							{money(l.minor)}
-						</span>
-					</span>
+						title={`${t(GROUP[g.key].label)}: ${money(g.minor)}`}
+						className="h-full first:rounded-l-full last:rounded-r-full"
+						style={{ background: GROUP[g.key].color }}
+						initial={reduce ? false : { flexGrow: 0 }}
+						animate={{ flexGrow: g.minor }}
+						transition={{ delay: reduce ? 0 : i * 0.08, duration: 0.6 }}
+					/>
 				))}
 			</div>
-
-			<p data-money className="mt-4 min-h-6 font-semibold" aria-live="polite">
-				{picked
-					? t("{name}: {amount}, {pct}% of what came in.", {
-							name: picked.label,
-							amount: money(picked.minor),
-							pct: pct(picked.minor),
-						})
-					: t(
-							"Needs {needs}, wants {wants}, savings {saved}, not spent yet {free}.",
-							{
-								needs: money(sum(needs)),
-								wants: money(sum(wants)),
-								saved: money(savedMinor),
-								free: money(free),
-							},
-						)}
-			</p>
-
-			<ul className="sr-only">
-				{mid.map((g) => (
-					<li key={g.key}>
-						{g.label}: {money(g.minor)} ({pct(g.minor)}%)
-						<ul>
-							{right
-								.filter((l) => l.group === g.group)
-								.map((l) => (
-									<li key={l.key}>
-										{l.label}: {money(l.minor)}
-									</li>
-								))}
-						</ul>
+			<ul className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">
+				{groups.map((g) => (
+					<li key={g.key} className="min-w-0">
+						<span className="flex items-center gap-1.5 text-[0.82rem] text-ink-soft">
+							<span
+								className="size-2.5 shrink-0 rounded-full"
+								style={{ background: GROUP[g.key].color }}
+								aria-hidden="true"
+							/>
+							{t(GROUP[g.key].label)}
+						</span>
+						<span data-money className="num block text-[0.92rem] font-semibold">
+							{money(g.minor)}{" "}
+							<span className="font-normal text-ink-soft">
+								{pct(g.minor, income)}%
+							</span>
+						</span>
 					</li>
 				))}
 			</ul>
+
+			<div className="mt-5 flex flex-wrap items-baseline justify-between gap-x-3 border-t border-line pt-4">
+				<h3 className="font-sans text-[0.95rem] font-semibold">
+					{t("By category")}
+				</h3>
+				<p data-money className="num text-[0.85rem] text-ink-soft">
+					{t("{amount} spent", { amount: money(spent) })}
+				</p>
+			</div>
+			<ol className="mt-1">
+				{shown.map((c, i) => {
+					const id = idOf.get(c.name);
+					const row = (
+						<>
+							<span className="flex items-baseline justify-between gap-3">
+								<span className="min-w-0 font-medium break-words">
+									<span className="num mr-1.5 text-ink-soft">{i + 1}</span>
+									{t(c.name)}
+								</span>
+								<span data-money className="num shrink-0 text-[0.92rem]">
+									<strong>{money(c.minor)}</strong>{" "}
+									<span className="text-ink-soft">{pct(c.minor, spent)}%</span>
+								</span>
+							</span>
+							<span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-surface-2">
+								<motion.span
+									className="block h-full rounded-full"
+									style={{ background: GROUP[KIND_GROUP[c.kind]].color }}
+									initial={reduce ? false : { width: 0 }}
+									animate={{ width: `${(c.minor / biggest) * 100}%` }}
+									transition={{ delay: reduce ? 0 : 0.04 * i, duration: 0.5 }}
+								/>
+							</span>
+						</>
+					);
+					return (
+						<li key={c.name}>
+							{id ? (
+								<Link
+									to="/app/activity"
+									search={{ category: id }}
+									className="group flex items-center gap-2 rounded-tile px-2 py-2 hover:bg-surface-2"
+								>
+									<span className="min-w-0 flex-1">{row}</span>
+									<span className="sr-only">{t("See these expenses")}</span>
+									<ChevronRight
+										className="size-4 shrink-0 text-ink-soft transition-transform group-hover:translate-x-0.5"
+										aria-hidden="true"
+									/>
+								</Link>
+							) : (
+								<div className="px-2 py-2">{row}</div>
+							)}
+						</li>
+					);
+				})}
+			</ol>
+			{ranked.length > TOP && (
+				<button
+					type="button"
+					aria-expanded={showAll}
+					onClick={() => setShowAll((v) => !v)}
+					className="mt-1 inline-flex min-h-10 items-center gap-1.5 rounded-full px-3 text-[0.9rem] font-semibold text-ink-soft hover:bg-surface-2 hover:text-ink"
+				>
+					<ChevronDown
+						className={cn(
+							"size-4 transition-transform",
+							showAll && "rotate-180",
+						)}
+						aria-hidden="true"
+					/>
+					{showAll
+						? t("Show fewer")
+						: t("Show all {n} categories", { n: ranked.length })}
+				</button>
+			)}
 		</section>
 	);
 }

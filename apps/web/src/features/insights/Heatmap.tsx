@@ -5,6 +5,7 @@ import { useState } from "react";
 import { dateLocale, t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { formatDay } from "@/lib/time";
+import { DayExpenses } from "./DayExpenses";
 
 const LEVELS = 5;
 /** Monday-first short weekday names in the app language (1 Jan 2024 was a Monday). */
@@ -34,7 +35,7 @@ const longDay = (day: string) =>
 		month: "long",
 	});
 
-/** A month as a calendar where darker days cost more. Tap a day for its total; a list view is one tap away. */
+/** A month as a calendar where darker days cost more. Tap a day for its expenses; a list view is one tap away. */
 export function Heatmap({ data }: { data: HeatmapData }) {
 	const reduce = useReducedMotion();
 	const [picked, setPicked] = useState<string | null>(null);
@@ -75,15 +76,26 @@ export function Heatmap({ data }: { data: HeatmapData }) {
 					{[...data.days]
 						.sort((a, b) => a.day.localeCompare(b.day))
 						.map((d) => (
-							<li
-								key={d.day}
-								className="flex flex-wrap justify-between gap-x-4 px-3 py-2"
-							>
-								<span>{longDay(d.day)}</span>
-								<span className="num font-semibold">
-									{money(d.minor)},{" "}
-									{d.count === 1 ? "1 expense" : `${d.count} expenses`}
-								</span>
+							<li key={d.day}>
+								<button
+									type="button"
+									aria-pressed={d.day === picked}
+									onClick={() => setPicked(d.day === picked ? null : d.day)}
+									className={cn(
+										"flex w-full flex-wrap justify-between gap-x-4 px-3 py-2 text-left hover:bg-surface-2",
+										d.day === picked && "bg-plum-500/10",
+									)}
+								>
+									<span>{longDay(d.day)}</span>
+									<span className="num font-semibold">
+										{t(
+											d.count === 1
+												? "{amount}, 1 expense"
+												: "{amount}, {n} expenses",
+											{ amount: money(d.minor), n: d.count },
+										)}
+									</span>
+								</button>
 							</li>
 						))}
 				</ul>
@@ -137,10 +149,13 @@ export function Heatmap({ data }: { data: HeatmapData }) {
 						})}
 					</div>
 					<div className="flex flex-wrap items-center justify-between gap-3 text-[0.85rem] text-ink-soft">
-						<p aria-live="polite" className="font-semibold text-ink">
+						<p
+							aria-live="polite"
+							className={picked ? "sr-only" : "font-semibold text-ink"}
+						>
 							{picked
 								? `${longDay(picked)}: ${chosen ? t(chosen.count === 1 ? "{amount}, 1 expense" : "{amount}, {n} expenses", { amount: money(chosen.minor), n: chosen.count }) : t("no spending")}`
-								: t("Tap a day to see its total.")}
+								: t("Tap a day to see its expenses.")}
 						</p>
 						<span className="flex items-center gap-1.5" aria-hidden="true">
 							{t("Less")}
@@ -157,6 +172,7 @@ export function Heatmap({ data }: { data: HeatmapData }) {
 					</div>
 				</>
 			)}
+			{picked && <DayExpenses day={picked} currency={data.currency} />}
 		</figure>
 	);
 }

@@ -175,6 +175,36 @@ describe.skipIf(!url)("money API (real database)", () => {
 		);
 	});
 
+	it("lists one day's expenses by the person's own calendar day", async () => {
+		const ana = await createPerson(db);
+		const at = (iso: string) =>
+			call<Transaction>(ana, "POST", "/transactions", {
+				amountMinor: 1_000,
+				currency: "MYR",
+				categoryId: food.id,
+				merchant: iso,
+				occurredAt: iso,
+			});
+		// Kuala Lumpur is UTC+8: 16:30 UTC on the 2nd is already the 3rd there.
+		await at("2026-09-02T01:00:00.000Z");
+		await at("2026-09-02T15:59:00.000Z");
+		await at("2026-09-02T16:30:00.000Z");
+		await at("2026-09-01T15:30:00.000Z");
+
+		const day = await call<TransactionPage>(
+			ana,
+			"GET",
+			"/transactions?day=2026-09-02",
+		);
+		expect(day.status).toBe(200);
+		expect(day.body.data.items.map((t) => t.merchant).sort()).toEqual([
+			"2026-09-02T01:00:00.000Z",
+			"2026-09-02T15:59:00.000Z",
+		]);
+		const bad = await call(ana, "GET", "/transactions?day=2026-9-2");
+		expect(bad.status).toBe(400);
+	});
+
 	it("deletes softly so Undo can restore", async () => {
 		const { body } = await call<Transaction>(sam, "POST", "/transactions", {
 			amountMinor: 999,

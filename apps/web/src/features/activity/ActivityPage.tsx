@@ -55,7 +55,13 @@ const TABS = [
 ] as const;
 
 /** Expenses list or Insights, switched by `?view=` so other screens can link straight to either. */
-export function ActivityPage({ view }: { view: "expenses" | "insights" }) {
+export function ActivityPage({
+	view,
+	initialCategory,
+}: {
+	view: "expenses" | "insights";
+	initialCategory?: string;
+}) {
 	return (
 		<div className="space-y-5">
 			<h1 className="text-[clamp(2rem,7vw,2.8rem)] font-bold">
@@ -89,14 +95,18 @@ export function ActivityPage({ view }: { view: "expenses" | "insights" }) {
 					</Link>
 				))}
 			</nav>
-			{view === "insights" ? <InsightsView /> : <ExpensesView />}
+			{view === "insights" ? (
+				<InsightsView />
+			) : (
+				<ExpensesView key={initialCategory} initialCategory={initialCategory} />
+			)}
 		</div>
 	);
 }
 
-function ExpensesView() {
+function ExpensesView({ initialCategory }: { initialCategory?: string }) {
 	const [search, setSearch] = useState("");
-	const [categoryId, setCategoryId] = useState("");
+	const [categoryId, setCategoryId] = useState(initialCategory ?? "");
 	const q = useDeferredValue(search.trim());
 	const { data: categories = [] } = useQuery(categoriesQuery);
 	const categoryMap = useCategoryMap();

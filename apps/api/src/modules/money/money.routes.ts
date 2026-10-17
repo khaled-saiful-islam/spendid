@@ -34,6 +34,7 @@ const ListQuery = z.object({
 	cursor: z.string().max(200).optional(),
 	categoryId: z.uuid().optional(),
 	q: z.string().trim().max(80).optional(),
+	day: z.iso.date().optional(),
 });
 
 const MerchantQuery = z.object({ q: z.string().trim().min(1).max(60) });
@@ -74,6 +75,7 @@ export async function moneyRoutes(
 			cursor: q.cursor,
 			categoryId: q.categoryId,
 			search: q.q || undefined,
+			day: q.day,
 		});
 		return { success: true, data: page };
 	});

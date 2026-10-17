@@ -140,6 +140,19 @@ test("month pace shows where the month is heading and a what-if", async ({ page 
 	await expect(card.getByText(/You'd (finish|be)/)).toBeVisible();
 });
 
+test("insights: tap a day for its expenses, tap a category for its list", async ({ page }) => {
+	await page.goto("/app/activity?view=insights");
+	const flow = page.getByRole("region", { name: "Where your money flowed" });
+	await expect(flow.getByRole("img")).toBeVisible();
+	const days = page.getByRole("button", { name: /expenses$/ });
+	await days.first().click();
+	const list = page.getByRole("region", { name: /^Expenses on / });
+	await expect(list.getByRole("listitem").first()).toBeVisible();
+	await flow.getByRole("link", { name: /See these expenses$/ }).first().click();
+	await expect(page).toHaveURL(/\/app\/activity\?category=/);
+	await expect(page.getByRole("combobox").first()).not.toHaveValue("");
+});
+
 test("a deleted chat stays deleted after a reload", async ({ page, isMobile }) => {
 	const id = crypto.randomUUID();
 	await page.request.put(`/api/ask/threads/${id}`, {
