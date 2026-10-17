@@ -76,6 +76,11 @@ async function upload(wav: Blob, earlier = ""): Promise<VoiceResult> {
 }
 
 function micMessage(error: unknown): string {
+	// Browsers only allow the mic on https (or localhost); a phone on a Wi-Fi test address is neither.
+	if (!window.isSecureContext)
+		return t(
+			"Voice needs a secure (https) address, and this one isn't. Type it for now, or open Spendid from its https address.",
+		);
 	const name = error instanceof DOMException ? error.name : "";
 	if (name === "NotAllowedError")
 		return t(

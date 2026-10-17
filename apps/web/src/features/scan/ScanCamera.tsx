@@ -183,18 +183,24 @@ export function ScanCamera({
 					<div className="absolute inset-0 grid place-items-center p-8 text-center">
 						<div className="max-w-xs space-y-4">
 							<p className="font-display text-[1.4rem] font-bold">
-								{status === "denied"
-									? t("Spendid needs your camera")
-									: t("No camera found")}
+								{!window.isSecureContext
+									? t("The camera needs a secure address")
+									: status === "denied"
+										? t("Spendid needs your camera")
+										: t("No camera found")}
 							</p>
 							<p className="text-plum-200">
-								{status === "denied"
+								{!window.isSecureContext
 									? t(
-											"Allow the camera in your browser's site settings, or pick a photo or PDF instead.",
+											"Browsers only open the camera on https addresses. Pick a photo, screenshot or PDF instead; your phone can still take a photo from here.",
 										)
-									: t(
-											"Pick a photo, screenshot or PDF of your receipt instead.",
-										)}
+									: status === "denied"
+										? t(
+												"Allow the camera in your browser's site settings, or pick a photo or PDF instead.",
+											)
+										: t(
+												"Pick a photo, screenshot or PDF of your receipt instead.",
+											)}
 							</p>
 							<button
 								type="button"

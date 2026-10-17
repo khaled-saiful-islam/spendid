@@ -273,4 +273,9 @@ export const msE: Record<string, string> = {
 	"Log every day": "Catat setiap hari",
 	"Log something, or check in, every day for 7 days.":
 		"Catat sesuatu, atau daftar masuk, setiap hari selama 7 hari.",
+	"Voice needs a secure (https) address, and this one isn't. Type it for now, or open Spendid from its https address.":
+		"Suara memerlukan alamat selamat (https), dan alamat ini bukan. Taip dahulu, atau buka Spendid dari alamat https.",
+	"The camera needs a secure address": "Kamera memerlukan alamat selamat",
+	"Browsers only open the camera on https addresses. Pick a photo, screenshot or PDF instead; your phone can still take a photo from here.":
+		"Pelayar hanya membuka kamera pada alamat https. Pilih foto, tangkapan skrin atau PDF; telefon anda masih boleh mengambil foto dari sini.",
 };
