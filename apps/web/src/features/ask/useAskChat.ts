@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { t } from "@/i18n";
 import { askThreadsApi, streamAsk, THREADS_KEY } from "@/lib/ask-api";
+import { ApiError } from "@/lib/http";
 import { uuid } from "@/lib/uuid";
 import type { ActionItem, ActionStatus } from "./ActionCards";
 
@@ -56,6 +57,14 @@ function readCurrentId(key: string): string {
 		// Storage blocked: a fresh id still works for this visit.
 	}
 	return uuid();
+}
+
+function hasStoredId(key: string): boolean {
+	try {
+		return localStorage.getItem(key) !== null;
+	} catch {
+		return true;
+	}
 }
 
 function writeCurrentId(key: string, id: string): void {
@@ -135,19 +144,43 @@ export function useAskChat(userId: string) {
 	const key = `spendid-ask:${userId}`;
 	const currentKey = `spendid-ask-current:${userId}`;
 	const queryClient = useQueryClient();
+	// Whether this device already knew its open chat (if not, its cache predates saved chats).
+	const hadThreadId = useRef(hasStoredId(currentKey));
 	const [threadId, setThreadId] = useState(() => readCurrentId(currentKey));
 	const [messages, setMessages] = useState<ChatMessage[]>(() => load(key));
 	const [saveFailed, setSaveFailed] = useState(false);
 	const controller = useRef<AbortController | null>(null);
+	// Only changes made here are saved: opening or deleting a chat must never re-save it.
+	const dirty = useRef(false);
 	const busy = messages.at(-1)?.status === "streaming";
 
 	useEffect(() => save(key, messages), [key, messages]);
 	useEffect(() => writeCurrentId(currentKey, threadId), [currentKey, threadId]);
 
+	// On load: a chat cached before chats were saved to the account is kept, once. A chat
+	// that's gone from the account (deleted here or on another device) is let go, not revived.
+	// biome-ignore lint/correctness/useExhaustiveDependencies: only on first mount
+	useEffect(() => {
+		if (messages.length === 0) return;
+		askThreadsApi.get(threadId).catch((error: unknown) => {
+			if (!(error instanceof ApiError && error.status === 404)) return;
+			if (hadThreadId.current) {
+				dirty.current = false;
+				setMessages([]);
+				setThreadId(uuid());
+			} else {
+				dirty.current = true;
+				setMessages((ms) => [...ms]);
+			}
+		});
+	}, []);
+
 	// Save finished chats to the account, shortly after the last change.
 	useEffect(() => {
-		if (busy || messages.length === 0) return;
+		if (busy || messages.length === 0 || !dirty.current) return;
 		const timer = setTimeout(() => {
+			if (!dirty.current) return;
+			dirty.current = false;
 			askThreadsApi
 				.save(threadId, toStored(messages))
 				.then(() => {
@@ -163,11 +196,10 @@ export function useAskChat(userId: string) {
 	// No abort on unmount: React may mount twice in development, and leaving mid-answer
 	// should simply let it finish. The Stop button cancels on purpose.
 
-	const patchLast = useCallback(
-		(fn: (m: ChatMessage) => ChatMessage) =>
-			setMessages((ms) => [...ms.slice(0, -1), fn(ms.at(-1) as ChatMessage)]),
-		[],
-	);
+	const patchLast = useCallback((fn: (m: ChatMessage) => ChatMessage) => {
+		dirty.current = true;
+		setMessages((ms) => [...ms.slice(0, -1), fn(ms.at(-1) as ChatMessage)]);
+	}, []);
 
 	const send = useCallback(
 		async (question: string, tone?: "roast" | "hype") => {
@@ -177,6 +209,7 @@ export function useAskChat(userId: string) {
 				.slice(-HISTORY_SENT)
 				.map((m) => ({ role: m.role, text: historyText(m) }));
 			const now = Date.now();
+			dirty.current = true;
 			setMessages((ms) => [
 				...ms,
 				{
@@ -259,6 +292,7 @@ export function useAskChat(userId: string) {
 	/** Starts a new chat; the current one stays in History. */
 	const clear = useCallback(() => {
 		controller.current?.abort();
+		dirty.current = false;
 		setMessages([]);
 		setThreadId(uuid());
 	}, []);
@@ -266,31 +300,35 @@ export function useAskChat(userId: string) {
 	const open = useCallback(async (id: string) => {
 		controller.current?.abort();
 		const thread = await askThreadsApi.get(id);
+		dirty.current = false;
 		setThreadId(thread.id);
 		setMessages(thread.messages as ChatMessage[]);
 	}, []);
 	/** Deletes a saved chat; deleting the open one starts a new chat. */
 	const remove = useCallback(
 		async (id: string) => {
-			await askThreadsApi.remove(id);
-			await queryClient.invalidateQueries({ queryKey: THREADS_KEY });
 			if (id === threadId) {
+				// Leave the chat first, so nothing can save it again while it's deleted.
+				controller.current?.abort();
+				dirty.current = false;
 				setMessages([]);
 				setThreadId(uuid());
 			}
+			await askThreadsApi.remove(id);
+			await queryClient.invalidateQueries({ queryKey: THREADS_KEY });
 		},
 		[queryClient, threadId],
 	);
-	const markDraftsSaved = useCallback(
-		(id: string) =>
-			setMessages((ms) =>
-				ms.map((m) => (m.id === id ? { ...m, drafts: [] } : m)),
-			),
-		[],
-	);
+	const markDraftsSaved = useCallback((id: string) => {
+		dirty.current = true;
+		setMessages((ms) =>
+			ms.map((m) => (m.id === id ? { ...m, drafts: [] } : m)),
+		);
+	}, []);
 
 	const resolveAction = useCallback(
-		(id: string, index: number, status: ActionStatus) =>
+		(id: string, index: number, status: ActionStatus) => {
+			dirty.current = true;
 			setMessages((ms) =>
 				ms.map((m) =>
 					m.id === id && m.actions
@@ -302,7 +340,8 @@ export function useAskChat(userId: string) {
 							}
 						: m,
 				),
-			),
+			);
+		},
 		[],
 	);
 

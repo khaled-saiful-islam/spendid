@@ -17,7 +17,7 @@ import { ActionCards, type ActionStatus } from "./ActionCards";
 import { AiAllowance } from "./AiAllowance";
 import { AnswerText } from "./AnswerText";
 import { AskWelcome } from "./AskWelcome";
-import { ChatsDrawerButton, ChatsPanel, RecentChats } from "./ChatsPanel";
+import { ChatsDrawerButton, ChatsPanel } from "./ChatsPanel";
 import { ChartView } from "./charts/ChartView";
 import { type CoinState, SpendidCoin } from "./SpendidCoin";
 import { ThinkingTrail } from "./ThinkingTrail";
@@ -294,21 +294,18 @@ export function AskPage({ initialQuestion }: { initialQuestion?: string }) {
 
 				<div className="flex-1 space-y-5 py-6">
 					{chat.messages.length === 0 ? (
-						<>
-							<AskWelcome
-								name={firstName}
-								onAsk={(q) => void chat.send(q)}
-								onTone={(tone) =>
-									void chat.send(
-										tone === "roast"
-											? t("Roast my spending this month.")
-											: t("Hype me up about my money this month."),
-										tone,
-									)
-								}
-							/>
-							<RecentChats onOpen={chat.open} />
-						</>
+						<AskWelcome
+							name={firstName}
+							onAsk={(q) => void chat.send(q)}
+							onTone={(tone) =>
+								void chat.send(
+									tone === "roast"
+										? t("Roast my spending this month.")
+										: t("Hype me up about my money this month."),
+									tone,
+								)
+							}
+						/>
 					) : (
 						<AnimatePresence initial={false}>
 							{chat.messages.map((m, i) => (

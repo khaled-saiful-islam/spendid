@@ -102,7 +102,6 @@ export function ChatsPanel({
 	const [search, setSearch] = useState("");
 	const term = useDeferredValue(search.trim());
 	const { data: threads = [], isFetching } = useQuery(threadsQuery(term));
-	const [confirming, setConfirming] = useState<string | null>(null);
 
 	async function open(id: string) {
 		try {
@@ -114,7 +113,6 @@ export function ChatsPanel({
 	}
 
 	async function remove(th: AskThreadSummary) {
-		setConfirming(null);
 		try {
 			// Keep a copy so Undo can put it back exactly.
 			const copy = await askThreadsApi.get(th.id);
@@ -242,27 +240,16 @@ export function ChatsPanel({
 													)}
 												</span>
 											</button>
-											{confirming === th.id ? (
-												<button
-													type="button"
-													onClick={() => void remove(th)}
-													onBlur={() => setConfirming(null)}
-													className="m-1.5 h-9 shrink-0 rounded-full bg-over px-3 text-[0.85rem] font-semibold text-white"
-												>
-													{t("Delete")}
-												</button>
-											) : (
-												<button
-													type="button"
-													onClick={() => setConfirming(th.id)}
-													aria-label={t("Delete chat: {title}", {
-														title: th.title,
-													})}
-													className="m-1.5 grid size-9 shrink-0 place-items-center rounded-full text-ink-soft opacity-100 hover:bg-coral/12 hover:text-over focus-visible:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100"
-												>
-													<Trash2 className="size-4" aria-hidden="true" />
-												</button>
-											)}
+											<button
+												type="button"
+												onClick={() => void remove(th)}
+												aria-label={t("Delete chat: {title}", {
+													title: th.title,
+												})}
+												className="m-1.5 grid size-9 shrink-0 place-items-center rounded-full text-ink-soft opacity-100 hover:bg-coral/12 hover:text-over focus-visible:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100"
+											>
+												<Trash2 className="size-4" aria-hidden="true" />
+											</button>
 										</motion.li>
 									);
 								})}
@@ -326,53 +313,5 @@ export function ChatsDrawerButton(props: Omit<PanelProps, "onOpened">) {
 				<ChatsPanel {...props} onOpened={() => setOpen(false)} />
 			</Drawer>
 		</>
-	);
-}
-
-/** On the welcome screen: pick up a recent chat in one tap. */
-export function RecentChats({
-	onOpen,
-}: {
-	onOpen: (id: string) => Promise<void>;
-}) {
-	const { data: threads = [] } = useQuery(threadsQuery());
-	const recent = threads.slice(0, 3);
-	if (recent.length === 0) return null;
-	return (
-		<section aria-labelledby="recent-chats" className="space-y-3">
-			<h2 id="recent-chats" className="font-display text-[1.2rem] font-bold">
-				{t("Pick up where you left off")}
-			</h2>
-			<ul className="grid gap-3 sm:grid-cols-3">
-				{recent.map((th, i) => (
-					<motion.li
-						key={th.id}
-						initial={{ opacity: 0, y: 12 }}
-						animate={{ opacity: 1, y: 0 }}
-						transition={{ delay: 0.15 + i * 0.07 }}
-					>
-						<button
-							type="button"
-							onClick={() =>
-								void onOpen(th.id).catch(() =>
-									toast(t("Couldn't open that chat. Try again.")),
-								)
-							}
-							className="flex h-full w-full flex-col gap-2 rounded-panel border border-line bg-surface p-4 text-left shadow-sm transition-transform hover:-translate-y-0.5 hover:shadow-lift"
-						>
-							<span className="font-semibold break-words">{th.title}</span>
-							{th.preview && (
-								<span className="text-[0.9rem] break-words text-ink-soft">
-									{th.preview}
-								</span>
-							)}
-							<span className="mt-auto text-[0.8rem] text-ink-soft">
-								{ago(th.updatedAt)}
-							</span>
-						</button>
-					</motion.li>
-				))}
-			</ul>
-		</section>
 	);
 }
