@@ -44,8 +44,8 @@ function dayLabel(day: string): string {
 		today.getMonth(),
 		today.getDate() - 1,
 	);
-	if (day === localDate(today)) return "Today";
-	if (day === localDate(yesterday)) return "Yesterday";
+	if (day === localDate(today)) return t("Today");
+	if (day === localDate(yesterday)) return t("Yesterday");
 	return new Date(`${day}T12:00`).toLocaleDateString(dateLocale(), {
 		weekday: "long",
 		day: "numeric",

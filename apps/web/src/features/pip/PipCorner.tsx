@@ -197,7 +197,6 @@ export function PipCorner({ summary }: { summary: Summary | undefined }) {
 			<button
 				type="button"
 				onClick={() => setOpen(true)}
-				aria-label={t("Open Pip: today's briefing and wardrobe")}
 				className="group relative shrink-0 rounded-[2rem] transition-transform hover:scale-[1.04] active:scale-95"
 			>
 				<Pip
@@ -206,6 +205,9 @@ export function PipCorner({ summary }: { summary: Summary | undefined }) {
 					outfit={look.outfit}
 					className="w-32 sm:w-40"
 				/>
+				<span className="sr-only">
+					{t("Open Pip: today's briefing and wardrobe")}
+				</span>
 				<span
 					aria-hidden="true"
 					className="absolute top-0 left-0 rounded-full bg-plum-900 px-2 py-0.5 text-[0.72rem] font-bold text-marigold shadow-sm dark:bg-plum-50 dark:text-plum-900"

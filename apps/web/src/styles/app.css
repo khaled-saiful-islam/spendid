@@ -36,6 +36,7 @@
   --color-line: var(--line);
   --color-safe: var(--safe);
   --color-over: var(--over);
+  --color-warn: var(--warn);
 
   --radius-coin: 9999px;
   --radius-panel: 1.75rem;
@@ -55,6 +56,7 @@
   --ink-soft: #5b4d72;
   --line: #ddd3ee;
   --safe: #077a57;
+  --warn: #8a4600;
   --over: #d6334f;
   --scale-stroke: rgb(75 42 123 / 0.07);
   /* Chart mark colour, validated for contrast and chroma on each surface. */
@@ -78,6 +80,7 @@
   --ink-soft: #bfb0d8;
   --line: #3d2760;
   --safe: #3ddba8;
+  --warn: #ffcf70;
   --over: #ff7d95;
   --scale-stroke: rgb(185 163 227 / 0.07);
   --chart-1: #9d7bf5;

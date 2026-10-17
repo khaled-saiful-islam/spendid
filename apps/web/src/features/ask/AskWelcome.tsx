@@ -145,7 +145,10 @@ export function AskWelcome({
 	onAsk,
 	onTone,
 	name,
+	composer,
 }: {
+	/** The question box, shown right under the greeting. */
+	composer?: ReactNode;
 	onAsk: (q: string) => void;
 	/** A roast of the month's spending, or a hype-up of its wins. */
 	onTone: (tone: "roast" | "hype") => void;
@@ -218,6 +221,7 @@ export function AskWelcome({
 					<RotatingExample />
 				</div>
 			</div>
+			{composer && <div className="mt-5">{composer}</div>}
 
 			{summary && (
 				<ul className="mt-7 grid gap-3 sm:grid-cols-3">

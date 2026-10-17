@@ -87,7 +87,7 @@ export const TONE_CLASS: Record<DueTone, string> = {
 	paid: "bg-jade/12 text-safe",
 	overdue: "bg-coral/14 text-over",
 	today: "bg-coral/14 text-over",
-	soon: "bg-marigold/22 text-marigold-deep",
+	soon: "bg-marigold/22 text-warn",
 	later: "bg-surface-2 text-ink-soft",
 };
 

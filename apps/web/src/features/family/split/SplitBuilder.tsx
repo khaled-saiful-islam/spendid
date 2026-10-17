@@ -323,7 +323,7 @@ export function SplitBuilder({
 			<div className="sticky bottom-[calc(6rem+env(safe-area-inset-bottom))] z-30 rounded-panel border border-line bg-surface/95 p-3 shadow-lift backdrop-blur md:bottom-4">
 				<div className="space-y-2">
 					{result.unassignedMinor > 0 && (
-						<p className="text-center text-[0.92rem] font-semibold text-marigold-deep">
+						<p className="text-center text-[0.92rem] font-semibold text-warn">
 							{t("{amount} still needs someone.", {
 								amount: formatMinor(result.unassignedMinor, cur),
 							})}

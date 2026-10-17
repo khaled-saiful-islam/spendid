@@ -22,6 +22,9 @@ async function expectNoSeriousIssues(page: Page, label: string): Promise<void> {
 	expect(serious, `${label} has accessibility problems`).toEqual([]);
 }
 
+// Judge the settled screen, not a frame in the middle of an animation.
+test.use({ reducedMotion: "reduce" });
+
 test.describe("signed out", () => {
 	for (const path of ["/", "/signin", "/signup", "/forgot"]) {
 		test(`axe: ${path}`, async ({ page }) => {
@@ -33,7 +36,17 @@ test.describe("signed out", () => {
 
 test.describe("member", () => {
 	test.use({ storageState: stateFile("maya") });
-	for (const path of ["/app", "/app/activity", "/app/plan", "/app/ask", "/app/family", "/app/me", "/app/wrapped"]) {
+	for (const path of [
+		"/app",
+		"/app/activity",
+		"/app/activity?view=insights",
+		"/app/plan",
+		"/app/subscriptions",
+		"/app/ask",
+		"/app/family",
+		"/app/me",
+		"/app/wrapped",
+	]) {
 		test(`axe: ${path}`, async ({ page }) => {
 			await page.goto(path);
 			await expectNoSeriousIssues(page, path);

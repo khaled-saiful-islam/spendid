@@ -33,6 +33,8 @@ test("sign up, confirm email, set up, then delete the account", async ({ page })
 	await page.getByLabel("Take-home pay each month").fill("5000");
 	await page.getByRole("button", { name: "Continue" }).click();
 	await page.getByRole("button", { name: "Show my safe-to-spend" }).click();
+	// The reveal: today's number, then into the app.
+	await page.getByRole("button", { name: "Let's go" }).click();
 	await expect(page).toHaveURL(/\/app$/);
 	await expect(page.getByText("Safe to spend today").first()).toBeVisible();
 

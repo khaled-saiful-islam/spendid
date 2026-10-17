@@ -95,7 +95,6 @@ export function AddButton({ wide }: { wide?: boolean }) {
 				onClick={capture.openMenu}
 				whileHover={{ scale: 1.03, y: -1 }}
 				whileTap={{ scale: 0.94, rotate: -2 }}
-				aria-label={t("Add spending")}
 				className="relative flex h-13 w-full items-center gap-3 overflow-hidden rounded-full bg-[radial-gradient(circle_at_30%_25%,#FFD27A,#FFB224_55%,#F59300)] pr-5 pl-1.5 font-semibold text-plum-900 shadow-coin"
 			>
 				<span
@@ -112,7 +111,12 @@ export function AddButton({ wide }: { wide?: boolean }) {
 						</motion.span>
 					</AnimatePresence>
 				</span>
+				<span className="sr-only">
+					{t("Add spending: say it, snap it or type it")}
+				</span>
+				{/* The cycling word is a flourish; the name above is what assistive tech reads. */}
 				<span
+					aria-hidden="true"
 					className="relative h-6 flex-1 overflow-hidden text-left"
 					style={{ perspective: 400 }}
 				>

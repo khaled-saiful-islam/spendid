@@ -45,18 +45,32 @@ test("add an expense by typing, see it in Activity, then remove it", async ({ pa
 	await expect(page.getByText(shop)).toHaveCount(0);
 });
 
-test("hide amounts blurs every number until shown again", async ({ page }) => {
+test("hide amounts blurs every number until shown again", async ({ page, isMobile }) => {
 	await page.goto("/app");
-	await page.getByRole("button", { name: "Hide amounts" }).click();
-	await expect(page.locator("html")).toHaveAttribute("data-hide-money", /.*/);
-	await page.getByRole("button", { name: "Show amounts" }).click();
-	await expect(page.locator("html")).not.toHaveAttribute("data-hide-money", /.*/);
+	const html = page.locator("html");
+	if (isMobile) {
+		await page.getByRole("button", { name: "Hide amounts" }).click();
+		await expect(html).toHaveAttribute("data-hide-money", /.*/);
+		await page.getByRole("button", { name: "Show amounts" }).click();
+	} else {
+		// On desktop it lives in the account menu, as a labelled switch.
+		await page.getByRole("button", { name: /Profile & settings/ }).click();
+		const toggle = page.getByRole("switch", { name: "Hide amounts" });
+		await toggle.click();
+		await expect(html).toHaveAttribute("data-hide-money", /.*/);
+		await toggle.click();
+	}
+	await expect(html).not.toHaveAttribute("data-hide-money", /.*/);
 });
 
-test("Ask Spendid opens with real numbers and example questions", async ({ page }) => {
+test("Ask Spendid opens with real numbers, playful modes and the question box", async ({ page }) => {
 	await page.goto("/app/ask");
-	await expect(page.getByRole("textbox").first()).toBeVisible();
-	await expect(page.getByText(/this month|today/i).first()).toBeVisible();
+	const fresh = page.getByRole("button", { name: /New chat/ });
+	if (await fresh.count()) await fresh.first().click();
+	await expect(page.getByRole("textbox", { name: "Your question" })).toBeVisible();
+	await expect(page.getByText("Safe to spend today").first()).toBeVisible();
+	await expect(page.getByRole("button", { name: /^Roast my month/ })).toBeVisible();
+	await expect(page.getByRole("button", { name: /^Hype me up\s*Your real wins/ })).toBeVisible();
 });
 
 test("Family shows the circle and what each side shares", async ({ page }) => {
@@ -74,4 +88,76 @@ test("no page scrolls sideways on this screen size", async ({ page }) => {
 		);
 		expect(wide, `${path} scrolls sideways`).toBe(false);
 	}
+});
+
+test("subscriptions: add one, see it coming up, then remove it", async ({ page }) => {
+	const name = "Playwright Prime";
+	await page.goto("/app/subscriptions");
+	await page.getByRole("main").getByRole("button", { name: /^Add( your first)?$/ }).first().click();
+	const sheet = page.getByRole("dialog", { name: "Add a subscription" });
+	await sheet.getByRole("button", { name: /Something else/ }).click();
+	await sheet.getByLabel("Name").fill(name);
+	await sheet.getByRole("textbox", { name: "Amount" }).fill("19.90");
+	const inAWeek = new Date(Date.now() + 7 * 86_400_000);
+	await sheet.getByLabel("Next payment").fill(inAWeek.toISOString().slice(0, 10));
+	await sheet.getByRole("button", { name: "Add subscription" }).click();
+	await expect(sheet).toBeHidden();
+	await expect(page.getByRole("region", { name: "Coming up" }).getByText(name)).toBeVisible();
+
+	const res = await page.request.get("/api/subscriptions");
+	const sub = ((await res.json()).data.active as { id: string; name: string }[]).find((s) => s.name === name);
+	expect(sub).toBeTruthy();
+	await page.request.delete(`/api/subscriptions/${sub?.id}`, { headers: { "content-type": "application/json" }, data: {} });
+});
+
+test("challenges: start one, see its days, then stop it", async ({ page }) => {
+	// At most two run at once: stop any left over so this one can start.
+	const board = await (await page.request.get("/api/challenges")).json();
+	for (const c of board.data.active as { id: string }[])
+		await page.request.post(`/api/challenges/${c.id}/give-up`, { data: {} });
+	await page.goto("/app/plan");
+	const section = page.getByRole("region", { name: "Challenges" });
+	await section.getByRole("button", { name: /Start one/ }).click();
+	await page.getByRole("dialog", { name: "Pick a challenge" }).getByRole("button", { name: /Shopping pause/ }).click();
+	const card = section.getByRole("article").filter({ hasText: "Shopping pause" });
+	await expect(card.getByRole("list", { name: "Days" }).getByRole("listitem")).toHaveCount(7);
+	await card.getByRole("button", { name: "Stop this challenge" }).click();
+	await expect(card).toBeHidden();
+});
+
+test("Pip opens a briefing with the wardrobe", async ({ page }) => {
+	await page.goto("/app");
+	await page.getByRole("button", { name: /Open Pip/ }).click();
+	const sheet = page.getByRole("dialog");
+	await expect(sheet.getByRole("heading", { name: "Today, from Pip" })).toBeVisible();
+	await expect(sheet.getByRole("heading", { name: "Pip's wardrobe" })).toBeVisible();
+});
+
+test("month pace shows where the month is heading and a what-if", async ({ page }) => {
+	await page.goto("/app");
+	const card = page.getByRole("region", { name: "Where your month is heading" });
+	await expect(card.getByText(/At this pace/)).toBeVisible();
+	await card.getByRole("slider").fill("20");
+	await expect(card.getByText(/You'd (finish|be)/)).toBeVisible();
+});
+
+test("a deleted chat stays deleted after a reload", async ({ page, isMobile }) => {
+	const id = crypto.randomUUID();
+	await page.request.put(`/api/ask/threads/${id}`, {
+		data: {
+			messages: [
+				{ id: "u1", role: "user", text: "Playwright chat to delete", steps: [], charts: [], drafts: null, status: "done" },
+				{ id: "a1", role: "assistant", text: "ok", steps: [], charts: [], drafts: null, status: "done" },
+			],
+		},
+	});
+	await page.goto("/app/ask");
+	if (isMobile) await page.getByRole("button", { name: /^Chats/ }).click();
+	const row = page.getByRole("listitem").filter({ hasText: "Playwright chat to delete" }).first();
+	await row.hover();
+	await row.getByRole("button", { name: /Delete chat/ }).click();
+	await expect(page.getByText("Chat deleted.")).toBeVisible();
+	await page.reload();
+	const list = await (await page.request.get("/api/ask/threads")).json();
+	expect((list.data as { title: string }[]).map((t) => t.title)).not.toContain("Playwright chat to delete");
 });

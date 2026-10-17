@@ -73,7 +73,7 @@ function LevelAvatar({
 				{initials || "?"}
 			</span>
 			{streak > 0 && (
-				<span className="absolute -right-1 -bottom-1 inline-flex items-center gap-0.5 rounded-full bg-coral px-1.5 py-0.5 text-[0.68rem] font-bold text-white ring-2 ring-plum-900">
+				<span className="absolute -right-1 -bottom-1 inline-flex items-center gap-0.5 rounded-full bg-coral px-1.5 py-0.5 text-[0.68rem] font-bold text-plum-950 ring-2 ring-plum-900">
 					<Flame className="size-3" />
 					{streak}
 				</span>
