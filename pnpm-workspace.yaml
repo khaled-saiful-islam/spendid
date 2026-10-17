@@ -4,3 +4,8 @@ packages:
 
 onlyBuiltDependencies:
   - esbuild
+
+# drizzle-kit (pulled in by better-auth) still brings the old esbuild-kit loader;
+# its esbuild <=0.24 has a dev-server advisory (GHSA-67mh-4wv8-2f99).
+overrides:
+  "@esbuild-kit/core-utils>esbuild": 0.25.12

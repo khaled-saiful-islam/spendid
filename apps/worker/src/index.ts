@@ -135,6 +135,20 @@ const workers = [
 	),
 ];
 
+for (const w of workers) {
+	w.on("ready", () =>
+		process.stdout.write(`[worker] listening on "${w.name}"\n`),
+	);
+	w.on("completed", (job) =>
+		process.stdout.write(`[worker] ${w.name}: ${job.name} done\n`),
+	);
+	w.on("failed", (job, err) =>
+		process.stderr.write(
+			`[worker] ${w.name}: ${job?.name ?? "?"} failed (try ${job?.attemptsMade}): ${err.message}\n`,
+		),
+	);
+}
+
 // People who logged spending before shops were remembered: learn from their history once.
 void backfillMerchants(database.db, merchants, merchantQueue)
 	.then((n) => n && process.stdout.write(`[worker] remembered ${n} shops\n`))
@@ -153,20 +167,6 @@ await fxQueue.upsertJobScheduler(
 		opts: { attempts: 5, backoff: { type: "exponential", delay: 30_000 } },
 	},
 );
-
-for (const w of workers) {
-	w.on("ready", () =>
-		process.stdout.write(`[worker] listening on "${w.name}"\n`),
-	);
-	w.on("completed", (job) =>
-		process.stdout.write(`[worker] ${w.name}: ${job.name} done\n`),
-	);
-	w.on("failed", (job, err) =>
-		process.stderr.write(
-			`[worker] ${w.name}: ${job?.name ?? "?"} failed (try ${job?.attemptsMade}): ${err.message}\n`,
-		),
-	);
-}
 
 /** Under Docker's 10-second stop window. A job cut short is retried by the next worker. */
 const SHUTDOWN_GRACE_MS = 8_000;

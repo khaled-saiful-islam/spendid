@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Lint, types and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+      - run: pnpm typecheck
+      - run: pnpm --filter @spendid/web build
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level high
+
+  test:
+    name: Unit and API tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      db:
+        image: pgvector/pgvector:pg18
+        env:
+          POSTGRES_USER: spendid
+          POSTGRES_PASSWORD: spendid
+          POSTGRES_DB: spendid
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U spendid -d spendid"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+      redis:
+        image: redis:8-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      # The API tests create and migrate `spendid_test` next to this database.
+      DATABASE_URL: postgres://spendid:spendid@localhost:5432/spendid
+      REDIS_URL: redis://localhost:6379
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
