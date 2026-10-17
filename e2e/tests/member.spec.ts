@@ -134,6 +134,8 @@ test("month pace shows where the month is heading and a what-if", async ({ page 
 	await page.goto("/app");
 	const card = page.getByRole("region", { name: "Where your month is heading" });
 	await expect(card.getByText(/At this pace/)).toBeVisible();
+	await expect(card.getByText(/^(On track|Above pace|Runs out early)$/)).toBeVisible();
+	await card.getByRole("button", { name: "What if I spent less each day?" }).click();
 	await card.getByRole("slider").fill("20");
 	await expect(card.getByText(/You'd (finish|be)/)).toBeVisible();
 });

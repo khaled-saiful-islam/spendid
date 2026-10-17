@@ -5,6 +5,8 @@ import { cn } from "@/lib/cn";
 interface SafeDialProps {
 	remainingMinor: number;
 	allowanceMinor: number;
+	/** Small sizes: just the percentage and "left", so the words stay readable. */
+	compact?: boolean;
 	className?: string;
 }
 
@@ -22,6 +24,7 @@ function tone(ratio: number): string {
 export function SafeDial({
 	remainingMinor,
 	allowanceMinor,
+	compact = false,
 	className,
 }: SafeDialProps) {
 	const ratio =
@@ -74,11 +77,23 @@ export function SafeDial({
 				/>
 			</svg>
 			<div className="absolute inset-0 grid place-content-center text-center text-plum-900">
-				<span className="num text-[17cqw] font-extrabold leading-none">
+				<span
+					className={cn(
+						"num leading-none font-extrabold",
+						compact ? "text-[20cqw]" : "text-[17cqw]",
+					)}
+				>
 					{percent}%
 				</span>
-				<span className="mt-1 text-[max(0.7rem,6.5cqw)] leading-tight font-semibold">
-					{t("of today left")}
+				<span
+					className={cn(
+						"leading-tight font-semibold",
+						compact
+							? "mt-0.5 text-[max(0.68rem,11cqw)]"
+							: "mt-1 text-[max(0.7rem,6.5cqw)]",
+					)}
+				>
+					{compact ? t("left") : t("of today left")}
 				</span>
 			</div>
 			<span className="sr-only">

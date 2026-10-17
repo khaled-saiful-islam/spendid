@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ChevronRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { t } from "@/i18n";
 
 const QUICK = [
@@ -7,35 +7,38 @@ const QUICK = [
 	"Am I on track for my goals?",
 ];
 
-/** A doorway to Ask Spendid with two one-tap questions. */
+/** A doorway to Ask Spendid: one tap to ask, or one of two ready questions. */
 export function AskCard() {
 	return (
 		<section
 			aria-labelledby="ask-title"
-			className="rounded-panel border border-line bg-surface p-5"
+			className="rounded-panel border border-line bg-surface p-2.5"
 		>
-			<div className="flex items-center gap-3">
-				<span className="grid size-11 shrink-0 place-items-center rounded-full bg-marigold text-plum-900">
-					<Sparkles className="size-5" aria-hidden="true" />
+			<h2 id="ask-title" className="sr-only">
+				{t("Ask about your money")}
+			</h2>
+			<Link
+				to="/app/ask"
+				className="flex items-center gap-3 rounded-tile bg-surface-2 px-3 py-2.5 hover:bg-plum-500/10"
+			>
+				<span className="grid size-9 shrink-0 place-items-center rounded-full bg-marigold text-plum-900">
+					<Sparkles className="size-[1.1rem]" aria-hidden="true" />
 				</span>
-				<h2 id="ask-title" className="min-w-0 flex-1 text-[1.3rem] font-bold">
-					{t("Ask about your money")}
-				</h2>
-				<Link
-					to="/app/ask"
-					aria-label={t("Open Ask Spendid")}
-					className="grid size-10 shrink-0 place-items-center rounded-full text-ink-soft hover:bg-surface-2"
-				>
-					<ChevronRight className="size-5" />
-				</Link>
-			</div>
-			<div className="mt-3 flex flex-wrap gap-2">
+				<span className="min-w-0 flex-1 font-semibold">
+					{t("Ask anything about your money")}
+				</span>
+				<ArrowRight
+					className="size-4 shrink-0 text-ink-soft"
+					aria-hidden="true"
+				/>
+			</Link>
+			<div className="mt-2 flex flex-wrap gap-1.5 px-0.5">
 				{QUICK.map((q) => (
 					<Link
 						key={q}
 						to="/app/ask"
 						search={{ q: t(q) }}
-						className="rounded-full bg-surface-2 px-3.5 py-2 text-[0.9rem] font-medium hover:bg-plum-500/12"
+						className="rounded-full border border-line px-3 py-1.5 text-[0.85rem] font-medium text-ink-soft hover:border-plum-500/50 hover:text-ink"
 					>
 						{t(q)}
 					</Link>

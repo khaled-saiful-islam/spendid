@@ -19,10 +19,10 @@ export function MonthCard({ summary }: { summary: Summary }) {
 	return (
 		<section
 			aria-labelledby="month-title"
-			className="rounded-panel border border-line bg-surface p-5 sm:p-6"
+			className="rounded-panel border border-line bg-surface p-4 sm:p-5"
 		>
 			<div className="flex items-center justify-between gap-3">
-				<h2 id="month-title" className="text-[1.4rem] font-bold">
+				<h2 id="month-title" className="text-[1.1rem] font-bold">
 					{t("This month")}
 				</h2>
 				<Link

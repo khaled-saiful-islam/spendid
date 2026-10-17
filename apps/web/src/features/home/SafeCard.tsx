@@ -20,15 +20,17 @@ export function SafeCard({ summary }: { summary: Summary }) {
 
 	if (safe.status === "no-income") {
 		return (
-			<section className="bg-scales rounded-panel bg-plum-900 p-6 text-plum-50 sm:p-8 dark:bg-plum-800">
-				<p className="text-plum-200">{t("Safe to spend today")}</p>
-				<h2 className="mt-2 max-w-[22ch] text-[1.8rem] font-extrabold">
+			<section className="bg-scales rounded-panel bg-plum-900 p-5 text-plum-50 sm:p-6 dark:bg-plum-800">
+				<p className="text-[0.9rem] text-plum-200">
+					{t("Safe to spend today")}
+				</p>
+				<h2 className="mt-1 max-w-[26ch] text-[1.35rem] leading-snug font-bold">
 					{t("Add your monthly income to see your daily number.")}
 				</h2>
 				<Link
 					to="/onboarding"
 					search={{ edit: true }}
-					className={buttonClass("coin", "md", "mt-5")}
+					className={buttonClass("coin", "md", "mt-4")}
 				>
 					{t("Add income")}
 				</Link>
@@ -45,11 +47,34 @@ export function SafeCard({ summary }: { summary: Summary }) {
 		Math.floor(safe.leftThisMonthMinor / tomorrowDays),
 	);
 
+	const reason = monthOver
+		? t("Keep today to the essentials. The 1st brings a fresh month.")
+		: over
+			? t("No stress — tomorrow starts fresh at about {amount}.", {
+					amount: money(tomorrow),
+				})
+			: `${t(daysLeft === 1 ? "{amount} a day for the next day" : "{amount} a day for the next {n} days", { amount: money(safe.dailyAllowanceMinor), n: daysLeft })}${keptAside(
+					reservedMinor > 0
+						? t("{amount} for savings", { amount: money(reservedMinor) })
+						: null,
+					summary.bills.minor > 0
+						? t(
+								summary.bills.items.length === 1
+									? "{amount} for a bill still due"
+									: "{amount} for {n} bills still due",
+								{
+									amount: money(summary.bills.minor),
+									n: summary.bills.items.length,
+								},
+							)
+						: null,
+				)}.`;
+
 	return (
-		<section className="bg-scales relative overflow-hidden rounded-panel bg-plum-900 p-6 text-plum-50 sm:p-8 dark:bg-plum-800">
-			<div className="grid items-center gap-6 sm:grid-cols-[1fr_auto]">
-				<div>
-					<p className="text-plum-200">
+		<section className="bg-scales relative overflow-hidden rounded-panel bg-plum-900 p-5 text-plum-50 sm:p-6 dark:bg-plum-800">
+			<div className="flex items-center gap-4">
+				<div className="min-w-0 flex-1">
+					<p className="text-[0.9rem] font-medium text-plum-200">
 						{monthOver
 							? t("This month is over budget by")
 							: over
@@ -61,41 +86,22 @@ export function SafeCard({ summary }: { summary: Summary }) {
 							monthOver ? safe.leftThisMonthMinor : safe.safeTodayMinor,
 						)}
 						currency={cur}
-						className={`num mt-1 block text-[clamp(3rem,13vw,4.5rem)] leading-none font-extrabold ${over ? "text-coral" : "text-marigold"}`}
+						className={`num mt-0.5 block text-[clamp(1.9rem,8vw,2.6rem)] leading-tight font-extrabold ${over ? "text-coral" : "text-marigold"}`}
 					/>
-					<p data-money className="mt-3 max-w-[38ch] text-plum-200">
-						{monthOver
-							? t("Keep today to the essentials. The 1st brings a fresh month.")
-							: over
-								? t("No stress — tomorrow starts fresh at about {amount}.", {
-										amount: money(tomorrow),
-									})
-								: `${t(daysLeft === 1 ? "{amount} a day for the next day" : "{amount} a day for the next {n} days", { amount: money(safe.dailyAllowanceMinor), n: daysLeft })}${keptAside(
-										reservedMinor > 0
-											? t("{amount} for savings", {
-													amount: money(reservedMinor),
-												})
-											: null,
-										summary.bills.minor > 0
-											? t(
-													summary.bills.items.length === 1
-														? "{amount} for a bill still due"
-														: "{amount} for {n} bills still due",
-													{
-														amount: money(summary.bills.minor),
-														n: summary.bills.items.length,
-													},
-												)
-											: null,
-									)}.`}
-					</p>
 				</div>
 				<SafeDial
 					remainingMinor={Math.max(0, safe.safeTodayMinor)}
 					allowanceMinor={safe.dailyAllowanceMinor}
-					className="mx-auto w-44"
+					compact
+					className="w-[5.5rem] shrink-0 sm:w-24"
 				/>
 			</div>
+			<p
+				data-money
+				className="mt-3 border-t border-plum-50/10 pt-3 text-[0.9rem] leading-snug text-plum-200"
+			>
+				{reason}
+			</p>
 		</section>
 	);
 }

@@ -37,28 +37,29 @@ export function HomePage() {
 		summary?.today.reduce((s, t) => s + t.homeAmountMinor, 0) ?? 0;
 
 	return (
-		<div className="space-y-6">
-			<div>
-				<p className="text-ink-soft">
-					{formatMoment(now, {
-						weekday: "long",
-						day: "numeric",
-						month: "long",
-					})}
-				</p>
-				<h1 className="mt-1 text-[clamp(2rem,7vw,2.8rem)] font-bold">
+		<div className="space-y-4 sm:space-y-5">
+			<header className="flex flex-wrap items-baseline justify-between gap-x-3">
+				<h1 className="text-[1.45rem] font-bold sm:text-[1.7rem]">
 					{greeting(now)}, {firstName}
 				</h1>
-			</div>
+				<p className="text-[0.9rem] text-ink-soft">
+					{formatMoment(now, {
+						weekday: "short",
+						day: "numeric",
+						month: "short",
+					})}
+				</p>
+			</header>
 
 			<PendingReceipts />
 
 			{summary ? (
 				<SafeCard summary={summary} />
 			) : (
-				<div className="h-56 animate-pulse rounded-panel bg-surface-2" />
+				<div className="h-40 animate-pulse rounded-panel bg-surface-2" />
 			)}
 
+			<AskCard />
 			<DueSoonCard />
 			{summary && <MonthPace summary={summary} />}
 
@@ -67,7 +68,7 @@ export function HomePage() {
 				className="rounded-panel border border-line bg-surface p-3 sm:p-4"
 			>
 				<div className="flex items-center justify-between gap-3 px-2 pt-2">
-					<h2 id="today-title" className="text-[1.4rem] font-bold">
+					<h2 id="today-title" className="text-[1.1rem] font-bold">
 						{t("Today")}
 					</h2>
 					{summary && todayTotal > 0 && (
@@ -108,8 +109,6 @@ export function HomePage() {
 				)}
 			</section>
 
-			<AskCard />
-
 			{summary && summary.monthSpentMinor > 0 && (
 				<MonthCard summary={summary} />
 			)}
@@ -117,7 +116,7 @@ export function HomePage() {
 			{goals.length > 0 && summary && (
 				<section aria-labelledby="goals-title">
 					<div className="flex items-center justify-between">
-						<h2 id="goals-title" className="text-[1.4rem] font-bold">
+						<h2 id="goals-title" className="text-[1.1rem] font-bold">
 							{t("Saving for")}
 						</h2>
 						<Link
@@ -127,16 +126,16 @@ export function HomePage() {
 							{t("All goals")}
 						</Link>
 					</div>
-					<ul className="mt-3 grid grid-cols-2 gap-3">
+					<ul className="mt-2.5 grid grid-cols-2 gap-3">
 						{goals.slice(0, 2).map((g) => (
 							<li
 								key={g.id}
-								className="rounded-panel border border-line bg-surface p-4"
+								className="rounded-panel border border-line bg-surface p-3"
 							>
 								<GoalJar
 									ratio={g.savedMinor / g.targetMinor}
 									emoji={g.emoji}
-									className="mx-auto h-24"
+									className="mx-auto h-16"
 								/>
 								<p className="mt-2 text-center font-semibold break-words">
 									{g.name}
