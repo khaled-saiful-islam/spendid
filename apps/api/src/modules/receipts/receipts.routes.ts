@@ -3,6 +3,7 @@ import type { ReceiptSave } from "@spendid/shared";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireMember, type SessionLookup } from "../../auth/guards";
+import { openStream } from "../../http/sse";
 import { MAX_RECEIPT_BYTES, type ReceiptService } from "./receipts.service";
 
 export interface ReceiptDeps {
@@ -79,25 +80,17 @@ export async function receiptRoutes(
 
 	/** Server-sent events: live updates (receipt read, later family pulse) for this person only. */
 	app.get("/events", (req, reply) => {
-		reply.hijack();
-		reply.raw.writeHead(200, {
-			"Content-Type": "text/event-stream",
-			"Cache-Control": "no-cache, no-transform",
-			Connection: "keep-alive",
-			"X-Accel-Buffering": "no",
-		});
-		reply.raw.write("retry: 4000\n\n");
-		const unsubscribe = deps.events.subscribe(uid(req), (event) => {
-			const type = (event as { type?: string }).type ?? "message";
-			reply.raw.write(`event: ${type}\ndata: ${JSON.stringify(event)}\n\n`);
-		});
-		const heartbeat = setInterval(
-			() => reply.raw.write(": keep-alive\n\n"),
-			HEARTBEAT_MS,
-		);
-		req.raw.on("close", () => {
+		let heartbeat: NodeJS.Timeout | undefined;
+		let unsubscribe = () => {};
+		const send = openStream(reply, () => {
 			clearInterval(heartbeat);
 			unsubscribe();
 		});
+		send("retry: 4000\n\n");
+		unsubscribe = deps.events.subscribe(uid(req), (event) => {
+			const type = (event as { type?: string }).type ?? "message";
+			send(`event: ${type}\ndata: ${JSON.stringify(event)}\n\n`);
+		});
+		heartbeat = setInterval(() => send(": keep-alive\n\n"), HEARTBEAT_MS);
 	});
 }

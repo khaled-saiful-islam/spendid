@@ -8,7 +8,11 @@ import {
 	createMerchantMemory,
 	createPublisher,
 	createTranscriber,
+	type ErrorLog,
+	guardProcess,
+	logErrors,
 	MERCHANT_QUEUE,
+	stderrLog,
 } from "@spendid/server";
 import { Queue } from "bullmq";
 import { buildApp } from "./app";
@@ -53,9 +57,14 @@ if (!env.RECEIPT_ENCRYPTION_KEY) {
 		"RECEIPT_ENCRYPTION_KEY is missing. Run `make env` or set it in .env (openssl rand -base64 32).",
 	);
 }
+// stderr until the app's logger exists, then pino.
+let log: ErrorLog = stderrLog("api");
+const logError: ErrorLog = (message, err) => log(message, err);
+guardProcess(logError);
+
 const database = createDb(env.DATABASE_URL);
-const cache = createRedis(env.REDIS_URL);
-const outbox = createOutbox(database.db, cache.redis);
+const cache = createRedis(env.REDIS_URL, logError);
+const outbox = createOutbox(database.db, cache.redis, logError);
 const summary = createSummaryService(database.db);
 const insights = createInsightsService(database.db);
 const notifications = createNotifications({
@@ -68,6 +77,7 @@ const notifications = createNotifications({
 	insights,
 	// Built further down (it needs expenses, which need these notifications).
 	subscriptions: () => subscriptionService,
+	logError,
 });
 const auth = createAuth({
 	env,
@@ -120,10 +130,11 @@ const subscriptionService = createSubscriptionService({
 	categories,
 	addExpense: (userId, input) => transactionService.create(userId, input),
 });
-const events = createEventHub(env.REDIS_URL);
+const events = createEventHub(env.REDIS_URL, logError);
 const receiptQueue = new Queue<{ receiptId: string }>(RECEIPT_QUEUE, {
 	connection: cache.redis,
 });
+logErrors("queues", logError, merchantQueue, receiptQueue);
 const fileStore = createFileStore({
 	root: env.RECEIPTS_DIR,
 	keyBase64: env.RECEIPT_ENCRYPTION_KEY,
@@ -268,8 +279,17 @@ const app = await buildApp({
 			: { level: env.LOG_LEVEL },
 });
 
+log = (message, err) => app.log.error({ err }, message);
+
+/** Under Docker's 10-second stop window, so a stuck close still exits on our terms. */
+const SHUTDOWN_GRACE_MS = 8_000;
+
 async function shutdown(signal: string): Promise<void> {
 	app.log.info({ signal }, "shutting down");
+	setTimeout(() => {
+		app.log.error("shutdown took too long; exiting");
+		process.exit(1);
+	}, SHUTDOWN_GRACE_MS).unref();
 	await app.close();
 	await Promise.allSettled([
 		outbox.close(),

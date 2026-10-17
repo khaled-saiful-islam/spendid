@@ -11,6 +11,8 @@ import { buildArchive } from "./archive";
 
 const EXPORT_HOURS = 24;
 const EXPORT_COOLDOWN_MS = 5 * 60_000;
+/** Longer than any real build: one still "building" after this was cut short by a restart. */
+const STALE_BUILD_MS = 15 * 60_000;
 
 export interface ExportInfo {
 	id: string;
@@ -48,8 +50,18 @@ export function createPrivacyService(deps: {
 }) {
 	const { db, store } = deps;
 
-	/** Drops expired archives (rows and files). Called on every request; cheap. */
+	/** Drops expired archives (rows and files) and fails builds a restart cut short. Cheap. */
 	async function sweep(userId: string): Promise<void> {
+		await db
+			.update(dataExport)
+			.set({ status: "failed" })
+			.where(
+				and(
+					eq(dataExport.userId, userId),
+					eq(dataExport.status, "building"),
+					lt(dataExport.createdAt, new Date(Date.now() - STALE_BUILD_MS)),
+				),
+			);
 		const old = await db
 			.delete(dataExport)
 			.where(

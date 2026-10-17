@@ -1,4 +1,5 @@
 import { createDb, profile, user } from "@spendid/db";
+import { stderrLog } from "@spendid/server";
 import type { ProfileInput } from "@spendid/shared";
 import { eq } from "drizzle-orm";
 import { createAuth } from "../auth/auth";
@@ -22,7 +23,7 @@ export interface SeedAccount {
 export async function seedAccounts(accounts: SeedAccount[]): Promise<void> {
 	const env = loadEnv();
 	const database = createDb(env.DATABASE_URL, 2);
-	const cache = createRedis(env.REDIS_URL);
+	const cache = createRedis(env.REDIS_URL, stderrLog("accounts"));
 	const auth = createAuth({
 		env,
 		db: database.db,

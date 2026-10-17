@@ -1,4 +1,5 @@
 import { createDb, user } from "@spendid/db";
+import { stderrLog } from "@spendid/server";
 import { eq } from "drizzle-orm";
 import { loadEnv } from "../config/env";
 import { createOutbox } from "../email/outbox";
@@ -15,8 +16,9 @@ const username = process.argv[2];
 if (!username) throw new Error("Usage: send-digests <username>");
 const env = loadEnv();
 const database = createDb(env.DATABASE_URL, 2);
-const cache = createRedis(env.REDIS_URL);
-const outbox = createOutbox(database.db, cache.redis);
+const logError = stderrLog("digests");
+const cache = createRedis(env.REDIS_URL, logError);
+const outbox = createOutbox(database.db, cache.redis, logError);
 // Digests only read subscriptions; nothing here logs a payment.
 const subscriptions = createSubscriptionService({
 	db: database.db,
@@ -27,6 +29,7 @@ const notifications = createNotifications({
 	db: database.db,
 	redisUrl: env.REDIS_URL,
 	sendEmail: outbox.send,
+	logError,
 	secret: env.BETTER_AUTH_SECRET,
 	appUrl: env.APP_URL,
 	summary: createSummaryService(database.db),

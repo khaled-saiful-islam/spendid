@@ -1,5 +1,6 @@
 import { type Db, emailLog } from "@spendid/db";
 import { EMAIL_QUEUE, type EmailJob, EmailJobSchema } from "@spendid/emails";
+import { type ErrorLog, logErrors } from "@spendid/server";
 import { Queue } from "bullmq";
 import type { Redis } from "ioredis";
 
@@ -17,8 +18,9 @@ export type SendEmail = (
  * Records the email as queued (type + status only) and hands it to the worker.
  * Retries with backoff live in the worker, so a mail outage never blocks a request.
  */
-export function createOutbox(db: Db, redis: Redis) {
+export function createOutbox(db: Db, redis: Redis, logError: ErrorLog) {
 	const queue = new Queue<EmailQueueData>(EMAIL_QUEUE, { connection: redis });
+	logErrors("email queue", logError, queue);
 
 	const send: SendEmail = async (input, opts = {}) => {
 		const job = EmailJobSchema.parse(input);

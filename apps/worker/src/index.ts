@@ -9,9 +9,12 @@ import {
 	createMerchantMemory,
 	createPublisher,
 	createReceiptReader,
+	guardProcess,
+	logErrors,
 	MERCHANT_QUEUE,
 	NOTIFY_QUEUE,
 	type NotifyJob,
+	stderrLog,
 } from "@spendid/server";
 import { Queue, Worker } from "bullmq";
 import { Redis } from "ioredis";
@@ -42,6 +45,9 @@ const env = z
 	})
 	.parse(process.env);
 
+const logError = stderrLog("worker");
+guardProcess(logError);
+
 // BullMQ requires maxRetriesPerRequest: null for blocking worker connections.
 const connection = new Redis(env.REDIS_URL, { maxRetriesPerRequest: null });
 const database = createDb(env.DATABASE_URL, 4);
@@ -49,6 +55,7 @@ const database = createDb(env.DATABASE_URL, 4);
 const publisher = new Redis(env.REDIS_URL);
 // The API owns emails about people; the worker only hands it events.
 const notifyQueue = new Queue<NotifyJob>(NOTIFY_QUEUE, { connection });
+logErrors("redis", logError, connection, publisher);
 const guard = createAiGuard({
 	settings: createAppSettings({
 		db: database.db,
@@ -137,6 +144,7 @@ void backfillMerchants(database.db, merchants, merchantQueue)
 
 // Exchange rates: once at startup, then every 6 hours (ECB publishes once per working day).
 const fxQueue = new Queue(FX_QUEUE, { connection });
+logErrors("queues", logError, notifyQueue, merchantQueue, fxQueue, ...workers);
 await fxQueue.upsertJobScheduler(
 	"fx-refresh",
 	{ every: 6 * 60 * 60 * 1000, immediately: true },
@@ -160,7 +168,14 @@ for (const w of workers) {
 	);
 }
 
+/** Under Docker's 10-second stop window. A job cut short is retried by the next worker. */
+const SHUTDOWN_GRACE_MS = 8_000;
+
 async function shutdown(): Promise<void> {
+	setTimeout(() => {
+		process.stderr.write("[worker] shutdown took too long; exiting\n");
+		process.exit(1);
+	}, SHUTDOWN_GRACE_MS).unref();
 	await Promise.allSettled([
 		...workers.map((w) => w.close()),
 		fxQueue.close(),

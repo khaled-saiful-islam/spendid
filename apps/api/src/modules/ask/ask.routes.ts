@@ -3,6 +3,7 @@ import type { FastifyInstance } from "fastify";
 import { ZodError, z } from "zod";
 import { requireMember, type SessionLookup } from "../../auth/guards";
 import { notFound } from "../../http/app-error";
+import { openStream } from "../../http/sse";
 import type { AskAgent } from "./ask.agent";
 import type { ThreadRepository } from "./threads.repository";
 
@@ -33,17 +34,11 @@ export async function askRoutes(
 	app.addHook("preHandler", requireMember(deps.session));
 
 	app.post("/ask", (req, reply) => {
-		reply.hijack();
-		reply.raw.writeHead(200, {
-			"Content-Type": "text/event-stream",
-			"Cache-Control": "no-cache, no-transform",
-			Connection: "keep-alive",
-			"X-Accel-Buffering": "no",
-		});
-		const send = (event: AskEvent) =>
-			reply.raw.write(`data: ${JSON.stringify(event)}\n\n`);
 		const controller = new AbortController();
-		req.raw.on("close", () => controller.abort());
+		// Leaving the page (or a server shutdown) stops the model, so no tokens go to nobody.
+		const write = openStream(reply, () => controller.abort());
+		const send = (event: AskEvent) =>
+			write(`data: ${JSON.stringify(event)}\n\n`);
 
 		void (async () => {
 			try {

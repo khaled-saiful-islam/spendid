@@ -1,5 +1,10 @@
 import { type Db, user } from "@spendid/db";
-import { NOTIFY_QUEUE, type NotifyJob } from "@spendid/server";
+import {
+	type ErrorLog,
+	logErrors,
+	NOTIFY_QUEUE,
+	type NotifyJob,
+} from "@spendid/server";
 import { Queue, Worker } from "bullmq";
 import { and, eq, sql } from "drizzle-orm";
 import { Redis } from "ioredis";
@@ -47,6 +52,7 @@ export function createNotifications(deps: {
 	summary: SummaryService;
 	insights: InsightsService;
 	subscriptions?: () => SubscriptionService | undefined;
+	logError: ErrorLog;
 }) {
 	const links = createUnsubscribeLinks(deps.secret, deps.appUrl);
 	const notifier = createNotifier({
@@ -65,6 +71,7 @@ export function createNotifications(deps: {
 	// BullMQ workers need their own blocking connection.
 	const connection = new Redis(deps.redisUrl, { maxRetriesPerRequest: null });
 	const queue = new Queue<NotifyJob>(NOTIFY_QUEUE, { connection });
+	logErrors("notifications", deps.logError, connection, queue);
 	let worker: Worker<NotifyJob> | null = null;
 
 	return {
@@ -127,6 +134,7 @@ export function createNotifications(deps: {
 				},
 				{ connection, concurrency: 1 },
 			);
+			logErrors("notifications worker", deps.logError, worker);
 		},
 
 		async close(): Promise<void> {

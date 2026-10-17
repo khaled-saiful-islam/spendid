@@ -7,6 +7,7 @@ import type { Auth } from "./auth/auth";
 import type { SessionLookup } from "./auth/guards";
 import { authRoutes } from "./auth/routes";
 import { registerErrorHandler } from "./http/errors";
+import { registerStreams } from "./http/sse";
 import { type AdminDeps, adminRoutes } from "./modules/admin/admin.routes";
 import { type AskDeps, askRoutes } from "./modules/ask/ask.routes";
 import {
@@ -75,6 +76,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 	});
 	app.decorateRequest("user", null);
 	registerErrorHandler(app);
+	registerStreams(app);
 
 	await app.register(
 		async (api) => {

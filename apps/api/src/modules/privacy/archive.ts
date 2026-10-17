@@ -23,7 +23,7 @@ import {
 import type { FileStore } from "@spendid/server";
 import { minorDigits } from "@spendid/shared";
 import { asc, eq, or, sql } from "drizzle-orm";
-import { strToU8, zipSync } from "fflate";
+import { strToU8, type Zippable, zip } from "fflate";
 
 const EXT: Record<string, string> = {
 	"image/jpeg": "jpg",
@@ -135,12 +135,14 @@ export async function buildArchive(
 		.select()
 		.from(receipt)
 		.where(eq(receipt.userId, userId));
-	const files: Record<string, Uint8Array> = {};
+	// Photos are already compressed: store them as they are instead of spending CPU on them.
+	const files: Zippable = {};
 	for (const r of receipts) {
 		try {
-			files[`receipts/${r.id}.${EXT[r.mime] ?? "bin"}`] = new Uint8Array(
-				await store.get(r.fileKey),
-			);
+			files[`receipts/${r.id}.${EXT[r.mime] ?? "bin"}`] = [
+				new Uint8Array(await store.get(r.fileKey)),
+				{ level: 0 },
+			];
 		} catch {
 			// A missing file shouldn't stop the rest of the export.
 		}
@@ -182,7 +184,7 @@ export async function buildArchive(
 		.where(eq(aiUsage.userId, userId))
 		.groupBy(sql`1`, aiUsage.feature);
 
-	const entries: Record<string, Uint8Array> = {
+	const entries: Zippable = {
 		"README.txt": strToU8(README),
 		"account.json": json({
 			...account,
@@ -286,5 +288,10 @@ export async function buildArchive(
 		"ai-usage.json": json(usage),
 		...files,
 	};
-	return zipSync(entries, { level: 6 });
+	// The async zip compresses big files on worker threads, so a large export doesn't stall the API.
+	return new Promise((resolve, reject) =>
+		zip(entries, { level: 6 }, (err, data) =>
+			err ? reject(err) : resolve(data),
+		),
+	);
 }
