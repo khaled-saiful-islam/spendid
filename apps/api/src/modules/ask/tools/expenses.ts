@@ -71,12 +71,27 @@ export function expenseTools(
 				.where(and(...where))
 				.orderBy(desc(transaction.occurredAt))
 				.limit(20);
-			const byAmount =
-				input.amount === null || input.amount === undefined
+			let { amount, newAmount } = input;
+			let byAmount =
+				amount === null || amount === undefined
 					? rows
 					: rows.filter(
-							(r) => r.amountMinor === toMinor(input.amount ?? 0, r.currency),
+							(r) => r.amountMinor === toMinor(amount ?? 0, r.currency),
 						);
+			// "change my Grab to 15": the model sometimes puts the new amount in `amount`.
+			const noOtherChange =
+				!input.remove && !input.newCategory && !input.newShop && !input.newDay;
+			if (
+				byAmount.length === 0 &&
+				rows.length > 0 &&
+				amount &&
+				!newAmount &&
+				noOtherChange
+			) {
+				newAmount = amount;
+				amount = null;
+				byAmount = rows;
+			}
 			const candidates = input.latest ? byAmount.slice(0, 1) : byAmount;
 			if (candidates.length === 0)
 				return "No matching expense in the last two months. Ask which one (shop, day or amount).";
@@ -111,8 +126,8 @@ export function expenseTools(
 			const patch: TransactionPatch = {};
 			const undo: TransactionPatch = {};
 			const after: ExpenseLook = { ...look };
-			if (input.newAmount !== null && input.newAmount !== undefined) {
-				const minor = toMinor(input.newAmount, row.currency);
+			if (newAmount !== null && newAmount !== undefined) {
+				const minor = toMinor(newAmount, row.currency);
 				if (minor <= 0) return "The new amount must be above zero.";
 				patch.amountMinor = minor;
 				undo.amountMinor = row.amountMinor;

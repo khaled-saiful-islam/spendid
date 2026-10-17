@@ -184,6 +184,20 @@ describe.skipIf(!url)("ask change tools (real database)", () => {
 		).toContain("18");
 	});
 
+	it("reads 'change X to 4' as the new amount when 4 isn't its current amount", async () => {
+		const { call, actions } = run(maya);
+		await call("propose_expense_change", {
+			shop: "grab",
+			amount: 16,
+			latest: true,
+		});
+		expect(actions[0]).toMatchObject({
+			kind: "expense-edit",
+			before: { amountMinor: 1800 },
+			after: { amountMinor: 1600 },
+		});
+	});
+
 	it("asks which one when several match, or takes the latest when told", async () => {
 		const { call, actions } = run(maya);
 		const out = JSON.parse(
