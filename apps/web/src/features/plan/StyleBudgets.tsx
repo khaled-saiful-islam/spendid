@@ -7,6 +7,7 @@ import {
 	toMinor,
 } from "@spendid/shared";
 import { useQueryClient } from "@tanstack/react-query";
+import { PiggyBank } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
 import { CategoryIcon } from "@/components/money/CategoryIcon";
@@ -25,7 +26,7 @@ function Bar({
 }) {
 	const ratio = target > 0 ? spent / target : 0;
 	return (
-		<div className="mt-2 h-3 overflow-hidden rounded-full bg-surface-2">
+		<div className="mt-1.5 h-2 overflow-hidden rounded-full bg-surface-2">
 			<motion.div
 				className={cn("h-full rounded-full", ratio > 1 ? "bg-coral" : tone)}
 				initial={{ width: 0 }}
@@ -68,33 +69,30 @@ export function FiftyThirtyTwenty({
 	];
 
 	return (
-		<div className="space-y-5">
+		<div className="space-y-3.5">
 			{rows.map((r) => (
-				<div key={r.label}>
+				<div key={r.label} title={r.hint}>
 					<div className="flex flex-wrap items-baseline justify-between gap-x-3">
-						<span className="font-display text-[1.2rem] font-bold">
-							{r.label}
-						</span>
-						<span className="num text-ink-soft">
+						<span className="font-semibold">{r.label}</span>
+						<span className="num text-[0.92rem] text-ink-soft">
 							<strong className="text-ink">{money(r.spent)}</strong>{" "}
 							{t("of {amount}", { amount: money(r.target) })}
 						</span>
 					</div>
-					<p className="text-[0.88rem] text-ink-soft">{r.hint}</p>
 					<Bar spent={r.spent} target={r.target} tone={r.tone} />
 				</div>
 			))}
-			<div className="rounded-tile bg-marigold/15 p-4">
-				<span className="font-display text-[1.2rem] font-bold">
-					{t("Savings")}
-				</span>
-				<p className="mt-1 text-ink-soft">
+			<div className="flex items-center gap-2.5 border-t border-line pt-3 text-[0.92rem]">
+				<PiggyBank
+					className="size-[1.1rem] shrink-0 text-marigold-deep"
+					aria-hidden="true"
+				/>
+				<p className="text-ink-soft">
+					<span className="font-semibold text-ink">{t("Savings")}</span>{" "}
 					<strong className="num text-ink">
 						{money(summary.reservedMinor)}
 					</strong>{" "}
-					{t(
-						"is kept aside first this month, before your daily number is worked out.",
-					)}
+					{t("kept aside first")}
 				</p>
 			</div>
 		</div>
@@ -141,11 +139,11 @@ export function CategoryBudgets({
 	}
 
 	return (
-		<div className="space-y-4">
+		<div className="space-y-3">
 			{zeroBased && summary.incomeMinor !== null && (
 				<p
 					className={cn(
-						"rounded-tile p-4 font-medium",
+						"rounded-tile px-3.5 py-2.5 text-[0.92rem] font-medium",
 						unassigned === 0 ? "bg-jade/12 text-safe" : "bg-marigold/15",
 					)}
 				>
@@ -166,13 +164,13 @@ export function CategoryBudgets({
 					const spent = spentOf.get(c.id) ?? 0;
 					const open = editing === c.id;
 					return (
-						<li key={c.id} className="py-3">
+						<li key={c.id} className="py-2.5">
 							<div className="flex items-center gap-3">
 								<CategoryIcon
 									icon={c.icon}
 									tint={c.tint}
 									size="sm"
-									className="size-9"
+									className="size-8"
 								/>
 								<span className="min-w-0 flex-1 font-medium break-words">
 									{c.name}

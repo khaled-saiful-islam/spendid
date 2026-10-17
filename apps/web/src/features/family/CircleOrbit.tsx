@@ -1,6 +1,7 @@
 import type { FamilyPerson } from "@spendid/shared";
 import { Plus } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
+import { cn } from "@/lib/cn";
 import { Avatar } from "./parts";
 
 const SPIN_S = 70;
@@ -13,10 +14,13 @@ export function CircleOrbit({
 	me,
 	people,
 	openSeats,
+	compact = false,
 }: {
 	me: { name: string; id: string };
 	people: FamilyPerson[];
 	openSeats: number;
+	/** A small badge-sized circle for page headers. */
+	compact?: boolean;
 }) {
 	const reduce = useReducedMotion();
 	const seats = [
@@ -41,7 +45,10 @@ export function CircleOrbit({
 
 	return (
 		<div
-			className="relative mx-auto aspect-square w-full max-w-[18rem]"
+			className={cn(
+				"relative mx-auto aspect-square w-full",
+				!compact && "max-w-[18rem]",
+			)}
 			aria-hidden="true"
 		>
 			<div className="absolute inset-[8%] rounded-full bg-[radial-gradient(circle_at_30%_30%,var(--color-marigold)_0,transparent_45%),radial-gradient(circle_at_75%_70%,var(--color-jade)_0,transparent_45%),radial-gradient(circle_at_50%_50%,var(--color-plum-500)_0,transparent_70%)] opacity-30 blur-2xl" />
@@ -72,12 +79,17 @@ export function CircleOrbit({
 									<Avatar
 										name={seat.person.name}
 										seed={seat.person.userId}
-										size="md"
+										size={compact ? "xs" : "md"}
 										className="shadow-lift"
 									/>
 								) : (
-									<span className="grid size-12 place-items-center rounded-full border-2 border-dashed border-plum-300 bg-surface/70 text-plum-500">
-										<Plus className="size-5" />
+									<span
+										className={cn(
+											"grid place-items-center rounded-full border-2 border-dashed border-plum-300 bg-surface/70 text-plum-500",
+											compact ? "size-7" : "size-12",
+										)}
+									>
+										<Plus className={compact ? "size-3.5" : "size-5"} />
 									</span>
 								)}
 							</motion.div>
@@ -97,8 +109,8 @@ export function CircleOrbit({
 					<Avatar
 						name={me.name}
 						seed={me.id}
-						size="lg"
-						className="shadow-coin ring-4"
+						size={compact ? "sm" : "lg"}
+						className={compact ? "shadow-coin ring-2" : "shadow-coin ring-4"}
 					/>
 				</motion.div>
 			</div>

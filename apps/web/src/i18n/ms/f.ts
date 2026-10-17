@@ -6,4 +6,5 @@ export const msF: Record<string, string> = {
 	"Spend less by": "Kurangkan belanja sebanyak",
 	left: "baki",
 	"Ask anything about your money": "Tanya apa sahaja tentang wang anda",
+	"kept aside first": "diketepikan dahulu",
 };

@@ -35,6 +35,7 @@ const initials = (name: string) =>
 		.join("") || "?";
 
 const AVATAR_SIZES = {
+	xs: "size-7 text-[0.65rem] ring-1",
 	sm: "size-9 text-[0.8rem]",
 	md: "size-12 text-[1rem]",
 	lg: "size-20 text-[1.6rem]",

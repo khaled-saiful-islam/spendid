@@ -73,7 +73,8 @@
 }
 
 /*
- * Dark is Graphite: near-black neutrals with a gold accent, no purple. The plum scale is
+ * Dark is Graphite: near-black neutrals with a gold accent, no purple. Cards sit two clear
+ * steps above the page (and carry a visible border), so they never melt into it. The plum scale is
  * remapped step for step (same light/dark role, no hue), so every bg-/text-plum-* class
  * follows without its own dark: variant; plum-500, the accent, becomes gold.
  */
@@ -83,20 +84,20 @@
   --color-plum-200: #c4c8cf;
   --color-plum-300: #9ba1aa;
   --color-plum-500: #f5b83d;
-  --color-plum-700: #2c3036;
-  --color-plum-800: #202328;
-  --color-plum-900: #17191c;
-  --color-plum-950: #0e0f11;
+  --color-plum-700: #343a42;
+  --color-plum-800: #252a30;
+  --color-plum-900: #1b1e23;
+  --color-plum-950: #0a0b0d;
   --color-marigold: #f5b83d;
   --color-jade: #3dd68c;
   --color-coral: #ff6b5e;
 
-  --bg: #0e0f11;
-  --surface: #17191c;
-  --surface-2: #202328;
+  --bg: #0a0b0d;
+  --surface: #1b1e23;
+  --surface-2: #252a30;
   --ink: #f2f3f5;
   --ink-soft: #9ba1aa;
-  --line: #2c3036;
+  --line: #343a42;
   --safe: #3dd68c;
   --warn: #ffcf70;
   --over: #ff6b5e;
@@ -109,8 +110,10 @@
   --heat-4: #e3a838;
   --heat-5: #f8cf72;
   --heat-ink-low: #ffffff;
-  --heat-ink-high: #0e0f11;
-  --shadow-lift: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 18px 40px -18px rgb(0 0 0 / 0.7);
+  --heat-ink-high: #0a0b0d;
+  --shadow-lift: 0 1px 0 rgb(255 255 255 / 0.06) inset, 0 18px 40px -18px rgb(0 0 0 / 0.8);
+  /* A faint warm light from the top, so the page has depth and cards sit on it. */
+  --bg-glow: radial-gradient(120% 60% at 50% -10%, rgb(245 184 61 / 0.07), transparent 60%);
   color-scheme: dark;
 }
 
@@ -120,7 +123,7 @@
     text-rendering: optimizeLegibility;
   }
   body {
-    background: var(--bg);
+    background: var(--bg-glow, none) fixed, var(--bg);
     color: var(--ink);
     font-family: var(--font-sans);
     font-size: 1rem;

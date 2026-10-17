@@ -35,24 +35,21 @@ export function PlanPage() {
 
 			<section
 				aria-labelledby="style-heading"
-				className="rounded-panel border border-line bg-surface p-5 sm:p-6"
+				className="rounded-panel border border-line bg-surface p-4 sm:p-5"
 			>
-				<div className="flex flex-wrap items-start justify-between gap-3">
-					<div>
-						<h2 id="style-heading" className="text-[1.6rem] font-bold">
-							{method?.title ?? t("Budget")}
-						</h2>
-						<p className="mt-1 max-w-[50ch] text-ink-soft">{method?.body}</p>
-					</div>
+				<div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+					<h2 id="style-heading" className="text-[1.1rem] font-bold">
+						{method?.title ?? t("Budget")}
+					</h2>
 					<Link
 						to="/onboarding"
 						search={{ edit: true }}
-						className="font-medium text-ink-soft underline-offset-4 hover:text-ink hover:underline"
+						className="text-[0.9rem] font-medium text-ink-soft underline-offset-4 hover:text-ink hover:underline"
 					>
 						{t("Change style")}
 					</Link>
 				</div>
-				<div className="mt-6">
+				<div className="mt-3">
 					{summary.incomeMinor === null ? (
 						<p className="text-ink-soft">
 							{t("Add your monthly income to plan your budget.")}
