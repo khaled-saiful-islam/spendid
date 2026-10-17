@@ -7,7 +7,7 @@ import {
 	toMinor,
 } from "@spendid/shared";
 import { useQueryClient } from "@tanstack/react-query";
-import { PiggyBank } from "lucide-react";
+import { Lock } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
 import { CategoryIcon } from "@/components/money/CategoryIcon";
@@ -83,7 +83,7 @@ export function FiftyThirtyTwenty({
 				</div>
 			))}
 			<div className="flex items-center gap-2.5 border-t border-line pt-3 text-[0.92rem]">
-				<PiggyBank
+				<Lock
 					className="size-[1.1rem] shrink-0 text-marigold-deep"
 					aria-hidden="true"
 				/>
