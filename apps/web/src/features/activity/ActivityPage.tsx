@@ -5,6 +5,7 @@ import { LoaderCircle, Search } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useDeferredValue, useEffect, useRef, useState } from "react";
 import { buttonClass } from "@/components/ui/Button";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { categoriesQuery, transactionsQuery } from "@/lib/money-api";
@@ -64,9 +65,7 @@ export function ActivityPage({
 }) {
 	return (
 		<div className="space-y-5">
-			<h1 className="text-[clamp(2rem,7vw,2.8rem)] font-bold">
-				{t("Activity")}
-			</h1>
+			<PageHeader title={t("Activity")} />
 			<nav
 				aria-label={t("Activity views")}
 				className="grid grid-cols-2 rounded-full bg-surface-2 p-1"

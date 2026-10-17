@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { ChevronRight, Link2, ReceiptText, UserPlus, X } from "lucide-react";
 import { useState } from "react";
 import { buttonClass } from "@/components/ui/Button";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { toast } from "@/components/ui/Toast";
 import { t } from "@/i18n";
 import { familyApi, familyQuery, refreshFamily } from "@/lib/family-api";
@@ -74,33 +75,27 @@ export function FamilyPage() {
 	const openSeats = Math.max(invites.length, people.length === 0 ? 3 : 0);
 
 	return (
-		<div className="space-y-7">
-			<section className="relative overflow-hidden rounded-panel border border-line bg-surface p-4 sm:p-5">
-				<div
-					className="bg-scales pointer-events-none absolute inset-0 opacity-40"
-					aria-hidden="true"
-				/>
-				<div className="relative flex items-center gap-4">
-					<div className="min-w-0 flex-1">
-						<h1 className="text-[1.45rem] leading-tight font-bold sm:text-[1.7rem]">
-							{people.length === 0
-								? t("Bring your people in")
-								: t("Your family circle")}
-						</h1>
-						<p className="mt-1 max-w-[52ch] text-[0.92rem] text-ink-soft">
-							{people.length === 0
-								? t(
-										"Invite your partner, parents or kids. You each choose what to share, from just a monthly total to every receipt.",
-									)
-								: t(
-										people.length === 1
-											? "1 person in your circle. Both sides always see what's shared."
-											: "{n} people in your circle. Both sides always see what's shared.",
-										{ n: people.length },
-									)}
-						</p>
-					</div>
-					<div className="w-28 shrink-0 sm:w-32">
+		<div className="space-y-5">
+			<PageHeader
+				title={
+					people.length === 0
+						? t("Bring your people in")
+						: t("Your family circle")
+				}
+				sub={
+					people.length === 0
+						? t(
+								"Invite your partner, parents or kids. You each choose what to share, from just a monthly total to every receipt.",
+							)
+						: t(
+								people.length === 1
+									? "1 person in your circle. Both sides always see what's shared."
+									: "{n} people in your circle. Both sides always see what's shared.",
+								{ n: people.length },
+							)
+				}
+				aside={
+					<div className="w-24 shrink-0 sm:w-28">
 						<CircleOrbit
 							me={{ name: me.user.name, id: me.user.id }}
 							people={people}
@@ -108,25 +103,25 @@ export function FamilyPage() {
 							compact
 						/>
 					</div>
-				</div>
-				<div className="relative mt-3 flex flex-wrap gap-2">
-					<button
-						type="button"
-						onClick={() => setInviting(true)}
-						className={buttonClass("coin", "md")}
-					>
-						<UserPlus className="size-[1.1rem]" aria-hidden="true" />{" "}
-						{t("Invite someone")}
-					</button>
-					<Link
-						to="/app/family/split"
-						className={buttonClass("ghost", "md", "border-2 border-line")}
-					>
-						<ReceiptText className="size-[1.1rem]" aria-hidden="true" />{" "}
-						{t("Split a bill")}
-					</Link>
-				</div>
-			</section>
+				}
+			/>
+			<div className="flex flex-wrap gap-2">
+				<button
+					type="button"
+					onClick={() => setInviting(true)}
+					className={buttonClass("coin", "md")}
+				>
+					<UserPlus className="size-[1.1rem]" aria-hidden="true" />{" "}
+					{t("Invite someone")}
+				</button>
+				<Link
+					to="/app/family/split"
+					className={buttonClass("ghost", "md", "border-2 border-line")}
+				>
+					<ReceiptText className="size-[1.1rem]" aria-hidden="true" />{" "}
+					{t("Split a bill")}
+				</Link>
+			</div>
 
 			{(people.length > 0 || invites.length > 0) && (
 				<section aria-labelledby="people-heading" className="space-y-3">

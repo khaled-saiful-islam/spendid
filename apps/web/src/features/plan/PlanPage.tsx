@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { t } from "@/i18n";
 import {
 	budgetsQuery,
@@ -28,10 +29,8 @@ export function PlanPage() {
 	const method = METHODS.find((m) => m.id === summary.method);
 
 	return (
-		<div className="space-y-8">
-			<h1 className="text-[clamp(2rem,7vw,2.8rem)] font-bold">
-				{t("Your plan")}
-			</h1>
+		<div className="space-y-5">
+			<PageHeader title={t("Your plan")} />
 
 			<section
 				aria-labelledby="style-heading"

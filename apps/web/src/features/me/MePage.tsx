@@ -4,6 +4,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { LogOut } from "lucide-react";
 import { LanguageSwitch } from "@/components/system/LanguageSwitch";
 import { buttonClass } from "@/components/ui/Button";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { dateLocale, t } from "@/i18n";
 import { authClient } from "@/lib/auth-client";
 import { METHODS } from "../onboarding/options";
@@ -50,18 +51,16 @@ export function MePage({ me }: { me: Me }) {
 	];
 
 	return (
-		<div className="space-y-6">
-			<section className="bg-scales flex flex-wrap items-center gap-4 rounded-panel bg-plum-900 p-6 text-plum-50 dark:bg-plum-800">
-				<span className="grid size-16 shrink-0 place-items-center rounded-full bg-marigold font-display text-[1.5rem] font-extrabold text-plum-900">
-					{initials(user.name)}
-				</span>
-				<div className="min-w-0 flex-1">
-					<h1 className="text-[1.9rem] font-extrabold break-words">
-						{user.name}
-					</h1>
-					<p className="break-all text-plum-200">{user.email}</p>
-				</div>
-			</section>
+		<div className="space-y-5">
+			<PageHeader
+				lead={
+					<span className="grid size-12 shrink-0 place-items-center rounded-full bg-marigold font-display text-[1.15rem] font-extrabold text-plum-900">
+						{initials(user.name)}
+					</span>
+				}
+				title={user.name}
+				sub={<span className="break-all">{user.email}</span>}
+			/>
 
 			<section
 				aria-labelledby="money-heading"

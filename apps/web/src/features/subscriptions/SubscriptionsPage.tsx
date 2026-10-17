@@ -14,6 +14,7 @@ import { MaybeAlert } from "@/components/form/Alert";
 import { Field } from "@/components/form/Field";
 import { SubmitButton } from "@/components/form/SubmitButton";
 import { buttonClass } from "@/components/ui/Button";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Sheet } from "@/components/ui/Sheet";
 import { toast } from "@/components/ui/Toast";
 import { t } from "@/i18n";
@@ -48,26 +49,22 @@ export function SubscriptionsPage() {
 		return <div className="h-64 animate-pulse rounded-panel bg-surface-2" />;
 
 	return (
-		<div className="space-y-8">
-			<div className="flex flex-wrap items-end justify-between gap-3">
-				<div>
-					<h1 className="text-[clamp(2rem,7vw,2.8rem)] leading-tight font-bold">
-						{t("Subscriptions & bills")}
-					</h1>
-					<p className="mt-1 max-w-[52ch] text-ink-soft">
-						{t(
-							"Add what you pay regularly. Spendid keeps it aside each month and reminds you before it's due.",
-						)}
-					</p>
-				</div>
-				<button
-					type="button"
-					onClick={() => setAdding({})}
-					className={buttonClass("coin", "md")}
-				>
-					<Plus className="size-5" aria-hidden="true" /> {t("Add")}
-				</button>
-			</div>
+		<div className="space-y-5">
+			<PageHeader
+				title={t("Subscriptions & bills")}
+				sub={t(
+					"Add what you pay regularly. Spendid keeps it aside each month and reminds you before it's due.",
+				)}
+				aside={
+					<button
+						type="button"
+						onClick={() => setAdding({})}
+						className={buttonClass("coin", "md")}
+					>
+						<Plus className="size-5" aria-hidden="true" /> {t("Add")}
+					</button>
+				}
+			/>
 
 			{data.active.length === 0 ? (
 				<EmptyStart onAdd={() => setAdding({})} />

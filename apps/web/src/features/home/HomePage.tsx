@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { AnimatePresence } from "motion/react";
 import { buttonClass } from "@/components/ui/Button";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { t } from "@/i18n";
 import { meQuery } from "@/lib/me";
 import { goalsQuery, summaryQuery } from "@/lib/money-api";
@@ -37,19 +38,15 @@ export function HomePage() {
 		summary?.today.reduce((s, t) => s + t.homeAmountMinor, 0) ?? 0;
 
 	return (
-		<div className="space-y-4 sm:space-y-5">
-			<header className="flex flex-wrap items-baseline justify-between gap-x-3">
-				<h1 className="text-[1.45rem] font-bold sm:text-[1.7rem]">
-					{greeting(now)}, {firstName}
-				</h1>
-				<p className="text-[0.9rem] text-ink-soft">
-					{formatMoment(now, {
-						weekday: "short",
-						day: "numeric",
-						month: "short",
-					})}
-				</p>
-			</header>
+		<div className="space-y-5">
+			<PageHeader
+				title={`${greeting(now)}, ${firstName}`}
+				sub={formatMoment(now, {
+					weekday: "long",
+					day: "numeric",
+					month: "long",
+				})}
+			/>
 
 			<PendingReceipts />
 

@@ -17,6 +17,7 @@ import { useState } from "react";
 import { MaybeAlert } from "@/components/form/Alert";
 import { SubmitButton } from "@/components/form/SubmitButton";
 import { buttonClass } from "@/components/ui/Button";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { Sheet } from "@/components/ui/Sheet";
 import { toast } from "@/components/ui/Toast";
 import { t as tr } from "@/i18n";
@@ -225,20 +226,14 @@ export function PersonPage({ userId }: { userId: string }) {
 			>
 				<ArrowLeft className="size-5" aria-hidden="true" /> {tr("Family")}
 			</Link>
-			<header className="flex items-center gap-4">
-				<Avatar name={person.name} seed={person.userId} size="lg" />
-				<div className="min-w-0">
-					<h1 className="text-[clamp(1.8rem,6vw,2.4rem)] leading-tight font-bold break-words">
-						{person.name}
-					</h1>
-					<p className="text-ink-soft">
-						{tr("Your {relation}, in your circle since {date}", {
-							relation: relationLabel(person.relation).toLowerCase(),
-							date: sinceLabel(person.since),
-						})}
-					</p>
-				</div>
-			</header>
+			<PageHeader
+				lead={<Avatar name={person.name} seed={person.userId} size="md" />}
+				title={person.name}
+				sub={tr("Your {relation}, in your circle since {date}", {
+					relation: relationLabel(person.relation).toLowerCase(),
+					date: sinceLabel(person.since),
+				})}
+			/>
 			<div
 				role="tablist"
 				aria-label={tr("Sharing")}

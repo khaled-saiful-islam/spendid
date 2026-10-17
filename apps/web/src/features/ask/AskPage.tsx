@@ -2,6 +2,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { Check, Copy, MessageSquarePlus, Sparkles } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { meQuery } from "@/lib/me";
@@ -191,11 +192,6 @@ export function AskPage({ initialQuestion }: { initialQuestion?: string }) {
 	const endRef = useRef<HTMLDivElement>(null);
 	const asked = useRef(false);
 	const lastMsg = chat.messages.at(-1);
-	const coinState: CoinState = chat.busy
-		? lastMsg?.text
-			? "answering"
-			: "thinking"
-		: "idle";
 
 	useEffect(() => {
 		if (initialQuestion && !asked.current) {
@@ -241,20 +237,19 @@ export function AskPage({ initialQuestion }: { initialQuestion?: string }) {
 				<ChatsPanel {...threads} />
 			</aside>
 			<div className="relative flex min-h-[calc(100dvh-10rem)] flex-col">
-				<div className="sticky top-0 z-20 -mx-4 flex items-center justify-between gap-3 bg-bg/80 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6">
-					<div className="flex min-w-0 items-center gap-3">
-						<SpendidCoin size="md" state={coinState} />
-						<div className="min-w-0">
-							<h1 className="text-[1.25rem] leading-tight font-extrabold">
-								{t("Ask Spendid")}
-							</h1>
-							<AiAllowance />
-						</div>
-					</div>
-					<div className="flex flex-wrap items-center justify-end gap-2">
-						<ChatsDrawerButton {...threads} />
-						{chat.messages.length > 0 && <NewChatButton onClick={chat.clear} />}
-					</div>
+				<div className="sticky top-0 z-20 -mx-4 -mt-3 bg-bg/85 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6">
+					<PageHeader
+						title={t("Ask Spendid")}
+						sub={<AiAllowance />}
+						aside={
+							<div className="flex items-center gap-2">
+								<ChatsDrawerButton {...threads} />
+								{chat.messages.length > 0 && (
+									<NewChatButton onClick={chat.clear} />
+								)}
+							</div>
+						}
+					/>
 				</div>
 
 				<div className="flex-1 space-y-5 py-4">

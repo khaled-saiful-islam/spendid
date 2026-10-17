@@ -5,6 +5,7 @@ import { ArrowLeft, Sparkles } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { MaybeAlert } from "@/components/form/Alert";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { t } from "@/i18n";
 import {
 	familyApi,
@@ -151,9 +152,9 @@ export function SplitPage() {
 			>
 				<ArrowLeft className="size-5" aria-hidden="true" /> {t("Family")}
 			</Link>
-			<h1 className="text-[clamp(2rem,7vw,2.8rem)] leading-tight font-bold">
-				{stage.kind === "done" ? stage.split.title : t("Split a bill")}
-			</h1>
+			<PageHeader
+				title={stage.kind === "done" ? stage.split.title : t("Split a bill")}
+			/>
 			<MaybeAlert tone="info" message={notice} />
 			{stage.kind === "source" && (
 				<SourcePicker
