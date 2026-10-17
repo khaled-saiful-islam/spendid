@@ -13,6 +13,7 @@ import { meQuery } from "@/lib/me";
 import { CaptureHost } from "../capture/CaptureHost";
 import { useResumeInvite } from "../family/useResumeInvite";
 import { useLiveEvents } from "../live/useLiveEvents";
+import { AccountCard } from "./AccountCard";
 import { AddButton } from "./AddButton";
 import { ASK_ITEM, NAV_ITEMS, type NavItem } from "./nav";
 
@@ -41,8 +42,8 @@ function NavLink({ item, compact }: { item: NavItem; compact?: boolean }) {
 	);
 }
 
-/** Initials avatar that opens the Me page. */
-function MeLink({ withName }: { withName?: boolean }) {
+/** Initials avatar that opens the Me page (phone header). */
+function MeLink() {
 	const { data: me } = useQuery(meQuery);
 	const name = me?.user.name ?? "";
 	const initials = name
@@ -54,10 +55,7 @@ function MeLink({ withName }: { withName?: boolean }) {
 	return (
 		<Link
 			to="/app/me"
-			className={cn(
-				"flex min-w-0 items-center gap-3 hover:bg-surface-2 data-[status=active]:bg-surface-2",
-				withName ? "w-full rounded-tile p-2" : "rounded-full p-1",
-			)}
+			className="flex items-center rounded-full p-1 hover:bg-surface-2 data-[status=active]:bg-surface-2"
 		>
 			<span
 				aria-hidden="true"
@@ -65,22 +63,8 @@ function MeLink({ withName }: { withName?: boolean }) {
 			>
 				{initials || "?"}
 			</span>
-			{withName ? (
-				<span className="min-w-0 flex-1">
-					<span className="block leading-snug font-semibold [overflow-wrap:anywhere]">
-						{name}
-					</span>
-					<span className="block text-[0.8rem] text-ink-soft">
-						<span className="sr-only">, </span>
-						{t("Profile and settings")}
-					</span>
-				</span>
-			) : (
-				<>
-					<span className="sr-only">{name}</span>
-					<span className="sr-only">, {t("profile and settings")}</span>
-				</>
-			)}
+			<span className="sr-only">{name}</span>
+			<span className="sr-only">, {t("profile and settings")}</span>
 		</Link>
 	);
 }
@@ -118,12 +102,8 @@ export function AppShell() {
 					))}
 					<NavLink item={ASK_ITEM} />
 				</nav>
-				<div className="mt-auto rounded-panel border border-line bg-surface p-1.5">
-					<MeLink withName />
-					<div className="mt-1 flex items-center justify-end gap-1 border-t border-line px-1 pt-1.5">
-						<HideMoneyToggle />
-						<ThemeToggle />
-					</div>
+				<div className="mt-auto">
+					<AccountCard />
 				</div>
 			</aside>
 

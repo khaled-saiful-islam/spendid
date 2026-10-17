@@ -193,4 +193,13 @@ export const msE: Record<string, string> = {
 		"{amount} melebihi kadar sekata setakat ini, kira-kira {daily} sehari.",
 	"{amount} under an even pace so far, about {daily} a day.":
 		"{amount} di bawah kadar sekata setakat ini, kira-kira {daily} sehari.",
+	Account: "Akaun",
+	"Dark theme": "Tema gelap",
+	"Allow the camera in your browser's site settings, or pick a photo or PDF instead.":
+		"Benarkan kamera dalam tetapan laman pelayar anda, atau pilih foto atau PDF.",
+	"Choose a photo or PDF": "Pilih foto atau PDF",
+	"Couldn't open that PDF. Try a photo or screenshot of the receipt instead.":
+		"Tidak dapat membuka PDF itu. Cuba foto atau tangkapan skrin resit.",
+	"Pick a photo, screenshot or PDF of your receipt instead.":
+		"Pilih foto, tangkapan skrin atau PDF resit anda.",
 };

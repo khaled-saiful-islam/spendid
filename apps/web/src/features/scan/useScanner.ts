@@ -127,6 +127,21 @@ export function useScanner() {
 		[cropIn, cvReady],
 	);
 
+	/** An image that needs no straightening (a rendered PDF page): use it as it is. */
+	const fromReadyImage = useCallback(async (file: File) => {
+		running.current = false;
+		setStatus("processing");
+		const bitmap = await createImageBitmap(file);
+		setPhoto({
+			blob: file,
+			url: URL.createObjectURL(file),
+			width: bitmap.width,
+			height: bitmap.height,
+		});
+		bitmap.close();
+		setStatus("captured");
+	}, []);
+
 	const retake = useCallback(() => {
 		if (photo) URL.revokeObjectURL(photo.url);
 		setPhoto(null);
@@ -268,6 +283,7 @@ export function useScanner() {
 		setAutoCapture,
 		capture,
 		fromFile,
+		fromReadyImage,
 		retake,
 		toggleTorch,
 	};

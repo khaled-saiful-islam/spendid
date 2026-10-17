@@ -13,6 +13,7 @@ import { MaybeAlert } from "@/components/form/Alert";
 import { buttonClass } from "@/components/ui/Button";
 import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
+import { isPdf, pdfToImage } from "@/lib/pdf-to-image";
 import { receiptsApi } from "@/lib/receipts-api";
 import { capture } from "../capture/capture-store";
 import { coverTransform } from "./geometry";
@@ -160,9 +161,11 @@ export function ScanCamera({
 							<p className="text-plum-200">
 								{status === "denied"
 									? t(
-											"Allow the camera in your browser's site settings, or pick a photo instead.",
+											"Allow the camera in your browser's site settings, or pick a photo or PDF instead.",
 										)
-									: t("Pick a photo of your receipt instead.")}
+									: t(
+											"Pick a photo, screenshot or PDF of your receipt instead.",
+										)}
 							</p>
 							<button
 								type="button"
@@ -170,7 +173,7 @@ export function ScanCamera({
 								className={buttonClass("coin", "md")}
 							>
 								<ImageUp className="size-5" aria-hidden="true" />{" "}
-								{t("Choose a photo")}
+								{t("Choose a photo or PDF")}
 							</button>
 						</div>
 					</div>
@@ -215,6 +218,11 @@ export function ScanCamera({
 			</div>
 
 			<div className="bg-plum-950 px-6 pt-4 pb-[max(env(safe-area-inset-bottom),1.25rem)]">
+				{!photo && error && (
+					<div className="mx-auto mb-3 max-w-md">
+						<MaybeAlert tone="error" message={error} />
+					</div>
+				)}
 				{photo ? (
 					<div className="mx-auto max-w-md space-y-3">
 						<MaybeAlert tone="error" message={error} />
@@ -240,7 +248,7 @@ export function ScanCamera({
 						<button
 							type="button"
 							onClick={() => fileRef.current?.click()}
-							aria-label={t("Choose a photo")}
+							aria-label={t("Choose a photo or PDF")}
 							className="grid size-14 place-items-center rounded-full bg-white/10"
 						>
 							<ImageUp className="size-6" />
@@ -300,12 +308,23 @@ export function ScanCamera({
 			<input
 				ref={fileRef}
 				type="file"
-				accept="image/*"
+				accept="image/*,application/pdf"
 				className="sr-only"
 				onChange={(e) => {
 					const file = e.target.files?.[0];
-					if (file) void scanner.fromFile(file);
 					e.target.value = "";
+					if (!file) return;
+					if (!isPdf(file)) return void scanner.fromFile(file);
+					setError(null);
+					void pdfToImage(file)
+						.then((image) => scanner.fromReadyImage(image))
+						.catch(() =>
+							setError(
+								t(
+									"Couldn't open that PDF. Try a photo or screenshot of the receipt instead.",
+								),
+							),
+						);
 				}}
 			/>
 		</div>
