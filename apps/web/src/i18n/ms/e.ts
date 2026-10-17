@@ -289,5 +289,6 @@ export const msE: Record<string, string> = {
 		"Anda telah dilog keluar. Log masuk semula untuk teruskan.",
 	"This invite was sent to a different email. Sign in with that email, or ask them for a new link.":
 		"Jemputan ini dihantar ke e-mel lain. Log masuk dengan e-mel itu, atau minta pautan baharu.",
-	"Links stop working after 60 days, or when the split is deleted. Ask the person who sent it for the amounts.": "Pautan berhenti berfungsi selepas 60 hari, atau apabila pembahagian dipadam. Tanya orang yang menghantarnya untuk jumlahnya.",
+	"Links stop working after 60 days, or when the split is deleted. Ask the person who sent it for the amounts.":
+		"Pautan berhenti berfungsi selepas 60 hari, atau apabila pembahagian dipadam. Tanya orang yang menghantarnya untuk jumlahnya.",
 };
