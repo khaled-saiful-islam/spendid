@@ -7,7 +7,6 @@
 Log spending by voice, photo or a quick chat, and always see one honest number.
 Share money life with family, only with consent.
 
-[![CI](https://github.com/khaled-saiful-islam/spendid/actions/workflows/ci.yml/badge.svg)](https://github.com/khaled-saiful-islam/spendid/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-7c3aed.svg)](LICENSE)
 ![Node 24](https://img.shields.io/badge/node-24-3c873a.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6.svg)
