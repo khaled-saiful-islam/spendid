@@ -6,6 +6,7 @@ import {
 	user,
 	warranty,
 } from "@spendid/db";
+import { type ErrorLog, stderrLog } from "@spendid/server";
 import { daysUntil } from "@spendid/shared";
 import {
 	and,
@@ -40,6 +41,30 @@ const prettyDay = (day: string) =>
 		timeZone: "UTC",
 	});
 
+/** Hours after the usual time that a missed tick still sends (each email goes once anyway). */
+const CATCH_UP_HOURS = 3;
+/** People handled at once in a tick. */
+const PARALLEL = 8;
+
+export type DigestKind = "weekly" | "daily" | "subscription-month" | "wrapped";
+
+const within = (hour: number, from: number) =>
+	hour >= from && hour < from + CATCH_UP_HOURS;
+
+/** Which digests are due at this local time. */
+export function dueDigests(local: {
+	weekday: number;
+	day: number;
+	hour: number;
+}): DigestKind[] {
+	const due: DigestKind[] = [];
+	if (local.weekday === 1 && within(local.hour, 8)) due.push("weekly");
+	if (within(local.hour, 9)) due.push("daily");
+	if (local.day === 1 && within(local.hour, 8)) due.push("subscription-month");
+	if (local.day === 1 && within(local.hour, 9)) due.push("wrapped");
+	return due;
+}
+
 /**
  * Hourly: for each person whose local time matches, send the digests that are due —
  * Monday 8am weekly summary; 9am bills, price rises and warranties; the 1st at 9am Wrapped.
@@ -55,8 +80,10 @@ export function createDigests(deps: {
 	 * A getter, because the subscription service is built after notifications.
 	 */
 	subscriptions?: () => SubscriptionService | undefined;
+	logError?: ErrorLog;
 }) {
 	const { db } = deps;
+	const logError = deps.logError ?? stderrLog("digests");
 	let sendNow = false;
 	/** Same notifier, but "send now" (for `make digests`) skips quiet hours. */
 	const notifier: Notifier = {
@@ -311,26 +338,28 @@ export function createDigests(deps: {
 						sql`coalesce(${user.banned}, false) = false`,
 					),
 				);
-			let ran = 0;
-			for (const p of people) {
+			const run = async (p: (typeof people)[number]): Promise<boolean> => {
 				const local = localParts(p.timeZone, at);
-				const jobs: Promise<void>[] = [];
-				if (local.weekday === 1 && local.hour === 8)
-					jobs.push(weekly(p.id, p.timeZone, local.date, p.currency));
-				if (local.hour === 9)
-					jobs.push(
+				const start: Record<DigestKind, () => Promise<void>[]> = {
+					weekly: () => [weekly(p.id, p.timeZone, local.date, p.currency)],
+					daily: () => [
 						bills(p.id, local.date, p.currency),
 						subscriptionReminders(p.id, local.date),
 						warranties(p.id, local.date),
-					);
-				if (local.day === 1 && local.hour === 8)
-					jobs.push(subscriptionMonth(p.id, local.date));
-				if (local.day === 1 && local.hour === 9)
-					jobs.push(wrapped(p.id, local.date));
-				if (jobs.length) {
-					ran += 1;
-					await Promise.allSettled(jobs);
-				}
+					],
+					"subscription-month": () => [subscriptionMonth(p.id, local.date)],
+					wrapped: () => [wrapped(p.id, local.date)],
+				};
+				const jobs = dueDigests(local).flatMap((kind) => start[kind]());
+				for (const r of await Promise.allSettled(jobs))
+					if (r.status === "rejected")
+						logError(`digest for ${p.id} failed`, r.reason);
+				return jobs.length > 0;
+			};
+			let ran = 0;
+			for (let i = 0; i < people.length; i += PARALLEL) {
+				const done = await Promise.all(people.slice(i, i + PARALLEL).map(run));
+				ran += done.filter(Boolean).length;
 			}
 			return ran;
 		},

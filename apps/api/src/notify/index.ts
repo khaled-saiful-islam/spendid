@@ -67,6 +67,7 @@ export function createNotifications(deps: {
 		summary: deps.summary,
 		insights: deps.insights,
 		subscriptions: deps.subscriptions,
+		logError: deps.logError,
 	});
 	// BullMQ workers need their own blocking connection.
 	const connection = new Redis(deps.redisUrl, { maxRetriesPerRequest: null });
