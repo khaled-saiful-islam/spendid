@@ -26,6 +26,15 @@ const EnvSchema = z
 					.filter(Boolean),
 			)
 			.pipe(z.array(z.url())),
+		/**
+		 * The request header that carries the visitor's IP, for per-IP sign-in limits.
+		 * Behind Cloudflare use "cf-connecting-ip" (Cloudflare sets it; visitors can't fake it).
+		 */
+		CLIENT_IP_HEADER: z
+			.string()
+			.min(1)
+			.toLowerCase()
+			.default("x-forwarded-for"),
 		DATABASE_URL: z.string().startsWith("postgres"),
 		REDIS_URL: z.string().startsWith("redis"),
 		BETTER_AUTH_SECRET: z.string().min(32),

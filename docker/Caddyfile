@@ -1,4 +1,13 @@
 # SITE_ADDRESS is your domain (Caddy gets HTTPS certificates automatically) or ":80".
+
+{
+	servers {
+		# Behind a proxy on the private Docker network (a Cloudflare Tunnel, say), keep the
+		# visitor's own address in X-Forwarded-For instead of the proxy's.
+		trusted_proxies static private_ranges
+	}
+}
+
 {$SITE_ADDRESS::80} {
 	encode zstd gzip
 

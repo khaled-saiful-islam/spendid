@@ -155,6 +155,7 @@ export function createAuth({ env, db, redis, sendEmail, events }: AuthDeps) {
 		advanced: {
 			cookiePrefix: "spendid",
 			useSecureCookies: env.APP_URL.startsWith("https"),
+			ipAddress: { ipAddressHeaders: [env.CLIENT_IP_HEADER] },
 		},
 	});
 }

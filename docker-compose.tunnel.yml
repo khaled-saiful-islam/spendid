@@ -1,0 +1,22 @@
+# Spendid on a server that already has a website on ports 80/443 (for example next to Mentora).
+# Spendid opens no ports at all: a Cloudflare Tunnel carries https://<your host> to the web
+# container, and Cloudflare provides HTTPS (so phones allow the microphone, camera and passkeys).
+#
+#   docker compose -f docker-compose.prod.yml -f docker-compose.tunnel.yml \
+#     --env-file .env.production up -d
+#
+# .env.tunnel holds TUNNEL_TOKEN (from Cloudflare → Zero Trust → Networks → Tunnels).
+# Needs Docker Compose 2.24.4+ for !reset.
+
+services:
+  web:
+    ports: !reset []
+
+  tunnel:
+    image: cloudflare/cloudflared:2026.9.3
+    command: tunnel --no-autoupdate run
+    env_file: .env.tunnel
+    mem_limit: 64m
+    depends_on:
+      web: { condition: service_healthy }
+    restart: unless-stopped
