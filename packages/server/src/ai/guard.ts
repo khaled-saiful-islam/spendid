@@ -1,9 +1,9 @@
 import { aiLimit, aiUsage, type Db } from "@spendid/db";
+import { type AiUsage, summariseAiUsage } from "@spendid/shared";
 import { and, eq, gte, sql } from "drizzle-orm";
 import type { Redis } from "ioredis";
 import { ServiceError as AppError } from "../errors";
 import type { AppSettingsStore } from "../settings";
-import { type AiUsage, summariseAiUsage } from "@spendid/shared";
 
 /** Spoken seconds are billed as tokens so one allowance covers every AI feature. */
 export const AUDIO_TOKENS_PER_SECOND = 25;
@@ -69,7 +69,9 @@ export function createAiGuard(deps: {
 			.from(aiLimit)
 			.where(eq(aiLimit.userId, userId))
 			.limit(1);
-		const app = deps.settings ? await deps.settings.get() : { aiEnabled: true, defaultMonthlyTokens: deps.defaultMonthlyTokens };
+		const app = deps.settings
+			? await deps.settings.get()
+			: { aiEnabled: true, defaultMonthlyTokens: deps.defaultMonthlyTokens };
 		return {
 			enabled: deps.configured && app.aiEnabled && (limit?.enabled ?? true),
 			pausedForEveryone: !app.aiEnabled,
@@ -82,8 +84,12 @@ export function createAiGuard(deps: {
 	async function usage(userId: string): Promise<AiUsage> {
 		const s = await status(userId);
 		const now = new Date();
-		const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-		const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+		const start = new Date(
+			Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
+		);
+		const next = new Date(
+			Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1),
+		);
 		const rows = await db
 			.select({
 				feature: aiUsage.feature,
@@ -108,7 +114,10 @@ export function createAiGuard(deps: {
 		async assertAllowed(userId: string): Promise<void> {
 			const s = await status(userId);
 			if (s.pausedForEveryone)
-				throw new AppError(403, "AI features are paused for a moment. You can still type expenses.");
+				throw new AppError(
+					403,
+					"AI features are paused for a moment. You can still type expenses.",
+				);
 			if (!s.enabled)
 				throw new AppError(
 					403,

@@ -30,9 +30,7 @@ export const billingCycle = pgEnum("billing_cycle", [
 export const subscription = pgTable(
 	"subscription",
 	{
-		id: uuid()
-			.primaryKey()
-			.default(sql`uuidv7()`),
+		id: uuid().primaryKey().default(sql`uuidv7()`),
 		userId: text()
 			.notNull()
 			.references(() => user.id, { onDelete: "cascade" }),

@@ -1,5 +1,10 @@
 import { ChatOpenAI } from "@langchain/openai";
-import { type ReceiptDraft, SYSTEM_CATEGORIES, splitQuantity, toMinor } from "@spendid/shared";
+import {
+	type ReceiptDraft,
+	SYSTEM_CATEGORIES,
+	splitQuantity,
+	toMinor,
+} from "@spendid/shared";
 import { z } from "zod";
 import { hedged } from "./hedge";
 
@@ -8,11 +13,22 @@ const KNOWN = new Set(Intl.supportedValuesOf("currency"));
 
 const ReadSchema = z.object({
 	merchant: z.string().describe("Shop name as printed"),
-	date: z.string().nullable().describe("Purchase date YYYY-MM-DD, null if not visible"),
-	currency: z.string().nullable().describe("ISO code, e.g. RM = MYR; null if unclear"),
-	total: z.number().min(0).describe("Final amount paid, after tax and discounts"),
+	date: z
+		.string()
+		.nullable()
+		.describe("Purchase date YYYY-MM-DD, null if not visible"),
+	currency: z
+		.string()
+		.nullable()
+		.describe("ISO code, e.g. RM = MYR; null if unclear"),
+	total: z
+		.number()
+		.min(0)
+		.describe("Final amount paid, after tax and discounts"),
 	tax: z.number().min(0).nullable(),
-	category: z.enum(SLUGS).describe("Best single category for the whole receipt"),
+	category: z
+		.enum(SLUGS)
+		.describe("Best single category for the whole receipt"),
 	items: z
 		.array(
 			z.object({
@@ -40,21 +56,31 @@ export interface ReceiptReading {
 	model: string;
 }
 
-export type ReceiptReader = (image: Buffer, mime: string, homeCurrency: string) => Promise<ReceiptReading>;
+export type ReceiptReader = (
+	image: Buffer,
+	mime: string,
+	homeCurrency: string,
+) => Promise<ReceiptReading>;
 
 /** "XIAOMI POWER BANK 20K" → "Xiaomi Power Bank 20K": words with digits (sizes, models) keep their case. */
 const titleCase = (s: string) =>
 	s
 		.trim()
 		.split(/\s+/)
-		.map((w) => (/\d/.test(w) ? w : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()))
+		.map((w) =>
+			/\d/.test(w) ? w : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase(),
+		)
 		.join(" ");
 
 /** Raw model output (major units) → a draft in minor units. */
-export function toDraft(read: z.infer<typeof ReadSchema>, homeCurrency: string): ReceiptDraft {
+export function toDraft(
+	read: z.infer<typeof ReadSchema>,
+	homeCurrency: string,
+): ReceiptDraft {
 	const upper = read.currency?.toUpperCase();
 	const currency = upper && KNOWN.has(upper) ? upper : homeCurrency;
-	const date = read.date && /^\d{4}-\d{2}-\d{2}$/.test(read.date) ? read.date : null;
+	const date =
+		read.date && /^\d{4}-\d{2}-\d{2}$/.test(read.date) ? read.date : null;
 	return {
 		merchant: titleCase(read.merchant) || "Receipt",
 		date,
@@ -65,7 +91,12 @@ export function toDraft(read: z.infer<typeof ReadSchema>, homeCurrency: string):
 		items: read.items.map((item) => {
 			const split = splitQuantity(item.name);
 			// A multiplier printed in the name ("x2") beats the model's default of 1.
-			const quantity = split.quantity > 1 ? split.quantity : item.quantity && item.quantity > 0 ? item.quantity : 1;
+			const quantity =
+				split.quantity > 1
+					? split.quantity
+					: item.quantity && item.quantity > 0
+						? item.quantity
+						: 1;
 			const totalMinor = toMinor(item.lineTotal, currency);
 			return {
 				name: titleCase(split.name),
@@ -78,7 +109,11 @@ export function toDraft(read: z.infer<typeof ReadSchema>, homeCurrency: string):
 	};
 }
 
-export function createReceiptReader(cfg: { baseUrl: string; apiKey: string; model: string }): ReceiptReader {
+export function createReceiptReader(cfg: {
+	baseUrl: string;
+	apiKey: string;
+	model: string;
+}): ReceiptReader {
 	const llm = new ChatOpenAI({
 		model: cfg.model,
 		apiKey: cfg.apiKey,
@@ -86,7 +121,11 @@ export function createReceiptReader(cfg: { baseUrl: string; apiKey: string; mode
 		maxRetries: 0,
 		configuration: { baseURL: cfg.baseUrl },
 	});
-	const structured = llm.withStructuredOutput(ReadSchema, { name: "record_receipt", method: "functionCalling", includeRaw: true });
+	const structured = llm.withStructuredOutput(ReadSchema, {
+		name: "record_receipt",
+		method: "functionCalling",
+		includeRaw: true,
+	});
 
 	return async (image, mime, homeCurrency) => {
 		const messages = [
@@ -94,16 +133,31 @@ export function createReceiptReader(cfg: { baseUrl: string; apiKey: string; mode
 			{
 				role: "user",
 				content: [
-					{ type: "text", text: `Home currency: ${homeCurrency}. Read this receipt.` },
-					{ type: "image_url", image_url: { url: `data:${mime};base64,${image.toString("base64")}` } },
+					{
+						type: "text",
+						text: `Home currency: ${homeCurrency}. Read this receipt.`,
+					},
+					{
+						type: "image_url",
+						image_url: {
+							url: `data:${mime};base64,${image.toString("base64")}`,
+						},
+					},
 				],
 			},
 		];
-		const { raw, parsed } = await hedged((signal) => structured.invoke(messages, { signal }), {
-			hedgeAfterMs: 5_000,
-			deadlineMs: 30_000,
-		});
-		const usage = (raw as { usage_metadata?: { input_tokens?: number; output_tokens?: number } }).usage_metadata;
+		const { raw, parsed } = await hedged(
+			(signal) => structured.invoke(messages, { signal }),
+			{
+				hedgeAfterMs: 5_000,
+				deadlineMs: 30_000,
+			},
+		);
+		const usage = (
+			raw as {
+				usage_metadata?: { input_tokens?: number; output_tokens?: number };
+			}
+		).usage_metadata;
 		return {
 			draft: toDraft(parsed, homeCurrency),
 			inputTokens: usage?.input_tokens ?? 0,

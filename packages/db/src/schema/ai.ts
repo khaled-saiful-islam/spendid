@@ -1,5 +1,13 @@
 import { sql } from "drizzle-orm";
-import { boolean, index, integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+	boolean,
+	index,
+	integer,
+	pgTable,
+	text,
+	timestamp,
+	uuid,
+} from "drizzle-orm/pg-core";
 import { user } from "./auth";
 
 /**
@@ -9,9 +17,7 @@ import { user } from "./auth";
 export const aiUsage = pgTable(
 	"ai_usage",
 	{
-		id: uuid()
-			.primaryKey()
-			.default(sql`uuidv7()`),
+		id: uuid().primaryKey().default(sql`uuidv7()`),
 		userId: text()
 			.notNull()
 			.references(() => user.id, { onDelete: "cascade" }),

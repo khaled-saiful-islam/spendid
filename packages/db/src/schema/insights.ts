@@ -25,9 +25,7 @@ export const MERCHANT_EMBEDDING_DIMS = 1024;
 export const merchant = pgTable(
 	"merchant",
 	{
-		id: uuid()
-			.primaryKey()
-			.default(sql`uuidv7()`),
+		id: uuid().primaryKey().default(sql`uuidv7()`),
 		userId: text()
 			.notNull()
 			.references(() => user.id, { onDelete: "cascade" }),
@@ -43,7 +41,10 @@ export const merchant = pgTable(
 	},
 	(t) => [
 		uniqueIndex("merchant_user_key_idx").on(t.userId, t.key),
-		index("merchant_embedding_idx").using("hnsw", t.embedding.op("vector_cosine_ops")),
+		index("merchant_embedding_idx").using(
+			"hnsw",
+			t.embedding.op("vector_cosine_ops"),
+		),
 	],
 );
 
@@ -76,9 +77,7 @@ export const notificationPref = pgTable("notification_pref", {
 export const notificationLog = pgTable(
 	"notification_log",
 	{
-		id: uuid()
-			.primaryKey()
-			.default(sql`uuidv7()`),
+		id: uuid().primaryKey().default(sql`uuidv7()`),
 		userId: text()
 			.notNull()
 			.references(() => user.id, { onDelete: "cascade" }),
@@ -86,7 +85,9 @@ export const notificationLog = pgTable(
 		dedupeKey: text().notNull(),
 		createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
 	},
-	(t) => [uniqueIndex("notification_once_idx").on(t.userId, t.kind, t.dedupeKey)],
+	(t) => [
+		uniqueIndex("notification_once_idx").on(t.userId, t.kind, t.dedupeKey),
+	],
 );
 
 /** Browsers someone has signed in from (hashed), for "new sign-in" emails. */
@@ -106,9 +107,7 @@ export const knownDevice = pgTable(
 
 /** Product news an admin sent. Never contains anyone's data. */
 export const announcement = pgTable("announcement", {
-	id: uuid()
-		.primaryKey()
-		.default(sql`uuidv7()`),
+	id: uuid().primaryKey().default(sql`uuidv7()`),
 	subject: text().notNull(),
 	body: text().notNull(),
 	createdBy: text().references(() => user.id, { onDelete: "set null" }),

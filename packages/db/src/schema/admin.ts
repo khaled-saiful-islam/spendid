@@ -1,5 +1,12 @@
 import { sql } from "drizzle-orm";
-import { index, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+	index,
+	jsonb,
+	pgTable,
+	text,
+	timestamp,
+	uuid,
+} from "drizzle-orm/pg-core";
 import { user } from "./auth";
 
 /** App-wide switches an admin can change (e.g. AI on/off for everyone). */
@@ -20,9 +27,7 @@ export const appSetting = pgTable("app_setting", {
 export const auditLog = pgTable(
 	"audit_log",
 	{
-		id: uuid()
-			.primaryKey()
-			.default(sql`uuidv7()`),
+		id: uuid().primaryKey().default(sql`uuidv7()`),
 		actorId: text().references(() => user.id, { onDelete: "set null" }),
 		action: text().notNull(),
 		targetUserId: text().references(() => user.id, { onDelete: "set null" }),

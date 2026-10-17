@@ -1,4 +1,11 @@
-import { bigint, char, pgEnum, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import {
+	bigint,
+	char,
+	pgEnum,
+	pgTable,
+	text,
+	timestamp,
+} from "drizzle-orm/pg-core";
 import { user } from "./auth";
 
 export const budgetMethod = pgEnum("budget_method", [

@@ -34,10 +34,14 @@ describe("encrypted file store", () => {
 	});
 
 	it("rejects keys that try to leave the folder", async () => {
-		await expect(store.get("../../etc/passwd")).rejects.toThrow(/invalid file key/);
+		await expect(store.get("../../etc/passwd")).rejects.toThrow(
+			/invalid file key/,
+		);
 	});
 
 	it("needs a 32-byte key", () => {
-		expect(() => createFileStore({ root, keyBase64: "c2hvcnQ=" })).toThrow(/32 bytes/);
+		expect(() => createFileStore({ root, keyBase64: "c2hvcnQ=" })).toThrow(
+			/32 bytes/,
+		);
 	});
 });

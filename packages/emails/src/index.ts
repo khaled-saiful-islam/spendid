@@ -72,7 +72,8 @@ function content(job: EmailJob): { subject: string; props: ActionEmailProps } {
 					body: `Hi ${job.name}, ${job.inviterName} added you as their ${job.relation.toLowerCase()} and invited you to their family circle on Spendid. You choose what you share with them, and you can pause or stop at any time.`,
 					action: "See the invite",
 					url: job.url,
-					footnote: "This invite works once and ends after 7 days. If you don't know them, you can ignore this email.",
+					footnote:
+						"This invite works once and ends after 7 days. If you don't know them, you can ignore this email.",
 				},
 			};
 		case "family-joined":
@@ -96,7 +97,8 @@ function content(job: EmailJob): { subject: string; props: ActionEmailProps } {
 					body: `Hi ${job.name}, ${job.change}`,
 					action: "Open Family",
 					url: job.url,
-					footnote: "Everyone in a circle always sees what they share and can change it.",
+					footnote:
+						"Everyone in a circle always sees what they share and can change it.",
 				},
 			};
 		case "reset-password":
@@ -108,7 +110,8 @@ function content(job: EmailJob): { subject: string; props: ActionEmailProps } {
 					body: `Hi ${job.name}, someone asked to reset the password for your account. If it was you, choose a new one below.`,
 					action: "Reset password",
 					url: job.url,
-					footnote: "This link works for 1 hour. If you didn't ask for it, you can ignore this email.",
+					footnote:
+						"This link works for 1 hour. If you didn't ask for it, you can ignore this email.",
 				},
 			};
 	}
@@ -117,7 +120,8 @@ function content(job: EmailJob): { subject: string; props: ActionEmailProps } {
 /** Renders any email job to subject + HTML + plain text. */
 export async function renderEmail(job: EmailJob): Promise<RenderedEmail> {
 	const { subject, props } = content(job);
-	if (job.unsubscribeUrl && !props.unsubscribeUrl) props.unsubscribeUrl = job.unsubscribeUrl;
+	if (job.unsubscribeUrl && !props.unsubscribeUrl)
+		props.unsubscribeUrl = job.unsubscribeUrl;
 	const element = createElement(ActionEmail, props);
 	const [html, text] = await Promise.all([
 		render(element),

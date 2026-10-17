@@ -16,11 +16,9 @@ import {
 } from "drizzle-orm/pg-core";
 import { user } from "./auth";
 
-const id = () =>
-	uuid()
-		.primaryKey()
-		.default(sql`uuidv7()`);
-const createdAt = () => timestamp({ withTimezone: true }).notNull().defaultNow();
+const id = () => uuid().primaryKey().default(sql`uuidv7()`);
+const createdAt = () =>
+	timestamp({ withTimezone: true }).notNull().defaultNow();
 const updatedAt = () =>
 	timestamp({ withTimezone: true })
 		.notNull()
@@ -29,7 +27,12 @@ const updatedAt = () =>
 
 /** need / want / saving drive the 50-30-20 view. */
 export const categoryKind = pgEnum("category_kind", ["need", "want", "saving"]);
-export const entrySource = pgEnum("entry_source", ["manual", "voice", "photo", "chat"]);
+export const entrySource = pgEnum("entry_source", [
+	"manual",
+	"voice",
+	"photo",
+	"chat",
+]);
 
 /** System categories have no owner; people can add their own later. */
 export const category = pgTable(
@@ -45,7 +48,12 @@ export const category = pgTable(
 		sort: integer().notNull().default(100),
 		createdAt: createdAt(),
 	},
-	(t) => [uniqueIndex("category_owner_slug_idx").on(sql`coalesce(${t.userId}, '')`, t.slug)],
+	(t) => [
+		uniqueIndex("category_owner_slug_idx").on(
+			sql`coalesce(${t.userId}, '')`,
+			t.slug,
+		),
+	],
 );
 
 /**
@@ -77,7 +85,11 @@ export const transaction = pgTable(
 		deletedAt: timestamp({ withTimezone: true }),
 	},
 	(t) => [
-		index("transaction_user_time_idx").on(t.userId, t.occurredAt.desc(), t.id.desc()),
+		index("transaction_user_time_idx").on(
+			t.userId,
+			t.occurredAt.desc(),
+			t.id.desc(),
+		),
 		index("transaction_user_category_idx").on(t.userId, t.categoryId),
 	],
 );

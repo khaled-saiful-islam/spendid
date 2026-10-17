@@ -17,30 +17,75 @@ export interface ActionEmailProps {
 }
 
 /** One heading, one paragraph, one big coin button — used by verify and reset emails. */
-export function ActionEmail({ preview, heading, body, action, url, footnote, rows = [], unsubscribeUrl }: ActionEmailProps) {
+export function ActionEmail({
+	preview,
+	heading,
+	body,
+	action,
+	url,
+	footnote,
+	rows = [],
+	unsubscribeUrl,
+}: ActionEmailProps) {
 	return (
 		<Layout preview={preview}>
 			<Heading
 				as="h1"
-				style={{ fontSize: 28, lineHeight: "32px", color: colors.plum, margin: "0 0 12px", fontWeight: 800 }}
+				style={{
+					fontSize: 28,
+					lineHeight: "32px",
+					color: colors.plum,
+					margin: "0 0 12px",
+					fontWeight: 800,
+				}}
 			>
 				{heading}
 			</Heading>
 			{body.split("\n").map((para) => (
-				<Text key={para} style={{ fontSize: 16, lineHeight: "24px", color: colors.plumSoft, margin: "0 0 16px" }}>
+				<Text
+					key={para}
+					style={{
+						fontSize: 16,
+						lineHeight: "24px",
+						color: colors.plumSoft,
+						margin: "0 0 16px",
+					}}
+				>
 					{para}
 				</Text>
 			))}
 			{rows.length > 0 && (
 				<table
 					role="presentation"
-					style={{ width: "100%", borderCollapse: "collapse", margin: "4px 0 24px", background: colors.paper, borderRadius: 16 }}
+					style={{
+						width: "100%",
+						borderCollapse: "collapse",
+						margin: "4px 0 24px",
+						background: colors.paper,
+						borderRadius: 16,
+					}}
 				>
 					<tbody>
 						{rows.map((r) => (
 							<tr key={r.label}>
-								<td style={{ padding: "10px 16px", fontSize: 15, color: colors.plumSoft }}>{r.label}</td>
-								<td style={{ padding: "10px 16px", fontSize: 15, color: colors.plum, fontWeight: 700, textAlign: "right" }}>
+								<td
+									style={{
+										padding: "10px 16px",
+										fontSize: 15,
+										color: colors.plumSoft,
+									}}
+								>
+									{r.label}
+								</td>
+								<td
+									style={{
+										padding: "10px 16px",
+										fontSize: 15,
+										color: colors.plum,
+										fontWeight: 700,
+										textAlign: "right",
+									}}
+								>
 									{r.value}
 								</td>
 							</tr>
@@ -61,14 +106,28 @@ export function ActionEmail({ preview, heading, body, action, url, footnote, row
 			>
 				{action}
 			</Button>
-			<Text style={{ fontSize: 13, lineHeight: "20px", color: colors.plumSoft, margin: "24px 0 0" }}>
+			<Text
+				style={{
+					fontSize: 13,
+					lineHeight: "20px",
+					color: colors.plumSoft,
+					margin: "24px 0 0",
+				}}
+			>
 				{footnote} If the button doesn't work, open this link:{" "}
 				<Link href={url} style={{ color: colors.plum, wordBreak: "break-all" }}>
 					{url}
 				</Link>
 			</Text>
 			{unsubscribeUrl && (
-				<Text style={{ fontSize: 13, lineHeight: "20px", color: colors.plumSoft, margin: "16px 0 0" }}>
+				<Text
+					style={{
+						fontSize: 13,
+						lineHeight: "20px",
+						color: colors.plumSoft,
+						margin: "16px 0 0",
+					}}
+				>
 					Don't want these?{" "}
 					<Link href={unsubscribeUrl} style={{ color: colors.plum }}>
 						Turn them off

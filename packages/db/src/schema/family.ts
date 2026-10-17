@@ -15,11 +15,9 @@ import {
 import { user } from "./auth";
 import { goal } from "./money";
 
-const id = () =>
-	uuid()
-		.primaryKey()
-		.default(sql`uuidv7()`);
-const createdAt = () => timestamp({ withTimezone: true }).notNull().defaultNow();
+const id = () => uuid().primaryKey().default(sql`uuidv7()`);
+const createdAt = () =>
+	timestamp({ withTimezone: true }).notNull().defaultNow();
 
 export const familyRelation = pgEnum("family_relation", [
 	"spouse",
@@ -31,7 +29,12 @@ export const familyRelation = pgEnum("family_relation", [
 ]);
 
 /** Each level includes everything before it. */
-export const shareLevel = pgEnum("share_level", ["totals", "categories", "transactions", "receipts"]);
+export const shareLevel = pgEnum("share_level", [
+	"totals",
+	"categories",
+	"transactions",
+	"receipts",
+]);
 
 /**
  * A single-use invite link. Only the token's SHA-256 is stored. `relation` is how the
@@ -74,7 +77,10 @@ export const connection = pgTable(
 	},
 	(t) => [
 		uniqueIndex("connection_active_pair_idx")
-			.on(sql`least(${t.requesterId}, ${t.addresseeId})`, sql`greatest(${t.requesterId}, ${t.addresseeId})`)
+			.on(
+				sql`least(${t.requesterId}, ${t.addresseeId})`,
+				sql`greatest(${t.requesterId}, ${t.addresseeId})`,
+			)
 			.where(sql`${t.endedAt} is null`),
 		index("connection_addressee_idx").on(t.addresseeId),
 	],
@@ -97,7 +103,10 @@ export const shareGrant = pgTable(
 			.defaultNow()
 			.$onUpdate(() => new Date()),
 	},
-	(t) => [primaryKey({ columns: [t.ownerId, t.viewerId] }), index("share_grant_viewer_idx").on(t.viewerId)],
+	(t) => [
+		primaryKey({ columns: [t.ownerId, t.viewerId] }),
+		index("share_grant_viewer_idx").on(t.viewerId),
+	],
 );
 
 export const reactionTarget = pgEnum("reaction_target", ["expense", "deposit"]);
@@ -133,7 +142,10 @@ export const goalMember = pgTable(
 			.references(() => user.id, { onDelete: "cascade" }),
 		joinedAt: createdAt(),
 	},
-	(t) => [primaryKey({ columns: [t.goalId, t.userId] }), index("goal_member_user_idx").on(t.userId)],
+	(t) => [
+		primaryKey({ columns: [t.goalId, t.userId] }),
+		index("goal_member_user_idx").on(t.userId),
+	],
 );
 
 /** Money put into (or taken out of) a jar, in the goal's currency. */

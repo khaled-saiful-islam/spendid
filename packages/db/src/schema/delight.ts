@@ -1,5 +1,16 @@
 import { sql } from "drizzle-orm";
-import { bigint, char, date, index, pgEnum, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+	bigint,
+	char,
+	date,
+	index,
+	pgEnum,
+	pgTable,
+	primaryKey,
+	text,
+	timestamp,
+	uuid,
+} from "drizzle-orm/pg-core";
 import { user } from "./auth";
 
 export const checkInKind = pgEnum("check_in_kind", ["all-logged", "nothing"]);
@@ -24,9 +35,7 @@ export const wishDecision = pgEnum("wish_decision", ["bought", "skipped"]);
 export const wish = pgTable(
 	"wish",
 	{
-		id: uuid()
-			.primaryKey()
-			.default(sql`uuidv7()`),
+		id: uuid().primaryKey().default(sql`uuidv7()`),
 		userId: text()
 			.notNull()
 			.references(() => user.id, { onDelete: "cascade" }),

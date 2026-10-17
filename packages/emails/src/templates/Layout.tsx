@@ -35,9 +35,23 @@ export function Layout({ preview, children }: LayoutProps) {
 				<meta name="color-scheme" content="light only" />
 			</Head>
 			<Preview>{preview}</Preview>
-			<Body style={{ background: colors.paper, fontFamily: font, margin: 0, padding: "32px 12px" }}>
+			<Body
+				style={{
+					background: colors.paper,
+					fontFamily: font,
+					margin: 0,
+					padding: "32px 12px",
+				}}
+			>
 				<Container style={{ maxWidth: 520, margin: "0 auto" }}>
-					<Text style={{ fontSize: 22, fontWeight: 800, color: colors.plum, margin: "0 0 20px" }}>
+					<Text
+						style={{
+							fontSize: 22,
+							fontWeight: 800,
+							color: colors.plum,
+							margin: "0 0 20px",
+						}}
+					>
 						<span
 							style={{
 								display: "inline-block",
@@ -67,8 +81,16 @@ export function Layout({ preview, children }: LayoutProps) {
 					>
 						{children}
 					</Section>
-					<Text style={{ fontSize: 13, color: colors.plumSoft, margin: "20px 4px 0", lineHeight: "20px" }}>
-						Spendid never asks for your password by email. If something looks off, ignore this message.
+					<Text
+						style={{
+							fontSize: 13,
+							color: colors.plumSoft,
+							margin: "20px 4px 0",
+							lineHeight: "20px",
+						}}
+					>
+						Spendid never asks for your password by email. If something looks
+						off, ignore this message.
 					</Text>
 				</Container>
 			</Body>

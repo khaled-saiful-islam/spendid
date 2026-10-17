@@ -1,6 +1,16 @@
 import { type Db, merchant, transaction } from "@spendid/db";
 import { cleanMerchant, merchantKey } from "@spendid/shared";
-import { and, cosineDistance, desc, eq, ilike, isNotNull, ne, or, sql } from "drizzle-orm";
+import {
+	and,
+	cosineDistance,
+	desc,
+	eq,
+	ilike,
+	isNotNull,
+	ne,
+	or,
+	sql,
+} from "drizzle-orm";
 import type { Embedder } from "./ai/embed";
 import type { AiGuard } from "./ai/guard";
 
@@ -60,7 +70,13 @@ export function createMerchantMemory(db: Db) {
 			if (!key) return null;
 			const [row] = await db
 				.insert(merchant)
-				.values({ userId, key, name: cleanMerchant(raw), categoryId, uses: Math.max(1, uses) })
+				.values({
+					userId,
+					key,
+					name: cleanMerchant(raw),
+					categoryId,
+					uses: Math.max(1, uses),
+				})
 				.onConflictDoUpdate({
 					target: [merchant.userId, merchant.key],
 					set: { categoryId, uses: sql`${merchant.uses} + ${uses}` },
@@ -72,7 +88,11 @@ export function createMerchantMemory(db: Db) {
 		},
 
 		/** Shops starting with (or containing) what's typed, most used first. */
-		async suggest(userId: string, q: string, limit = 8): Promise<KnownMerchant[]> {
+		async suggest(
+			userId: string,
+			q: string,
+			limit = 8,
+		): Promise<KnownMerchant[]> {
 			const key = merchantKey(q);
 			if (!key) return [];
 			const rows = await db
@@ -81,14 +101,19 @@ export function createMerchantMemory(db: Db) {
 				.where(
 					and(
 						eq(merchant.userId, userId),
-						or(ilike(merchant.key, `${key}%`), ilike(merchant.name, `%${q.trim()}%`)),
+						or(
+							ilike(merchant.key, `${key}%`),
+							ilike(merchant.name, `%${q.trim()}%`),
+						),
 					),
 				)
 				.orderBy(desc(merchant.uses))
 				.limit(limit * 2);
 			// Aliases share their main shop's name: show each name once.
 			const seen = new Set<string>();
-			return rows.filter((r) => !seen.has(r.name) && seen.add(r.name)).slice(0, limit);
+			return rows
+				.filter((r) => !seen.has(r.name) && seen.add(r.name))
+				.slice(0, limit);
 		},
 	};
 }
@@ -100,10 +125,18 @@ export type MerchantMemory = ReturnType<typeof createMerchantMemory>;
  * person already has ("TEALIVE KLCC" vs "Tealive"), merge it into that one — the alias
  * keeps its key, takes the main name, and past expenses are renamed.
  */
-export function createMerchantMatcher(deps: { db: Db; embed: Embedder; guard: AiGuard }) {
+export function createMerchantMatcher(deps: {
+	db: Db;
+	embed: Embedder;
+	guard: AiGuard;
+}) {
 	const { db } = deps;
 	return async (merchantId: string): Promise<"merged" | "kept" | "skipped"> => {
-		const [row] = await db.select().from(merchant).where(eq(merchant.id, merchantId)).limit(1);
+		const [row] = await db
+			.select()
+			.from(merchant)
+			.where(eq(merchant.id, merchantId))
+			.limit(1);
 		if (!row || row.embedding) return "skipped";
 		// Background work skips the per-minute burst limit (that's for taps), not the allowance.
 		const ai = await deps.guard.status(row.userId);
@@ -111,30 +144,56 @@ export function createMerchantMatcher(deps: { db: Db; embed: Embedder; guard: Ai
 		const { vectors, tokens, model } = await deps.embed([row.key]);
 		const vector = vectors[0];
 		if (!vector) return "skipped";
-		await deps.guard.record(row.userId, { feature: "merchant-match", model, inputTokens: tokens });
+		await deps.guard.record(row.userId, {
+			feature: "merchant-match",
+			model,
+			inputTokens: tokens,
+		});
 
 		const distance = cosineDistance(merchant.embedding, vector);
 		const [nearest] = await db
-			.select({ id: merchant.id, name: merchant.name, categoryId: merchant.categoryId, distance })
+			.select({
+				id: merchant.id,
+				name: merchant.name,
+				categoryId: merchant.categoryId,
+				distance,
+			})
 			.from(merchant)
-			.where(and(eq(merchant.userId, row.userId), ne(merchant.id, row.id), isNotNull(merchant.embedding)))
+			.where(
+				and(
+					eq(merchant.userId, row.userId),
+					ne(merchant.id, row.id),
+					isNotNull(merchant.embedding),
+				),
+			)
 			.orderBy(distance)
 			.limit(1);
 
-		const same = nearest && Number(nearest.distance) < SAME_SHOP_DISTANCE && nearest.name !== row.name;
+		const same =
+			nearest &&
+			Number(nearest.distance) < SAME_SHOP_DISTANCE &&
+			nearest.name !== row.name;
 		await db.transaction(async (tx) => {
 			await tx
 				.update(merchant)
 				.set({
 					embedding: vector,
-					...(same && { name: nearest.name, categoryId: row.categoryId ?? nearest.categoryId }),
+					...(same && {
+						name: nearest.name,
+						categoryId: row.categoryId ?? nearest.categoryId,
+					}),
 				})
 				.where(eq(merchant.id, row.id));
 			if (same)
 				await tx
 					.update(transaction)
 					.set({ merchant: nearest.name })
-					.where(and(eq(transaction.userId, row.userId), eq(transaction.merchant, row.name)));
+					.where(
+						and(
+							eq(transaction.userId, row.userId),
+							eq(transaction.merchant, row.name),
+						),
+					);
 		});
 		return same ? "merged" : "kept";
 	};

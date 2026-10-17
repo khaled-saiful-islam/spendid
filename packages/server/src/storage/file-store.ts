@@ -1,4 +1,9 @@
-import { createCipheriv, createDecipheriv, randomBytes, randomUUID } from "node:crypto";
+import {
+	createCipheriv,
+	createDecipheriv,
+	randomBytes,
+	randomUUID,
+} from "node:crypto";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
@@ -17,9 +22,13 @@ const KEY_PATTERN = /^[A-Za-z0-9_-]{1,64}\/[0-9a-f-]{36}\.bin$/;
  * Receipt photos at rest: AES-256-GCM, one random IV per file, layout = IV | tag | ciphertext.
  * Swappable for S3 later behind the same interface.
  */
-export function createFileStore(opts: { root: string; keyBase64: string }): FileStore {
+export function createFileStore(opts: {
+	root: string;
+	keyBase64: string;
+}): FileStore {
 	const key = Buffer.from(opts.keyBase64, "base64");
-	if (key.length !== 32) throw new Error("RECEIPT_ENCRYPTION_KEY must be 32 bytes (base64)");
+	if (key.length !== 32)
+		throw new Error("RECEIPT_ENCRYPTION_KEY must be 32 bytes (base64)");
 
 	const pathOf = (fileKey: string) => {
 		if (!KEY_PATTERN.test(fileKey)) throw new Error("invalid file key");
@@ -34,7 +43,11 @@ export function createFileStore(opts: { root: string; keyBase64: string }): File
 			const cipher = createCipheriv("aes-256-gcm", key, iv);
 			const sealed = Buffer.concat([cipher.update(bytes), cipher.final()]);
 			await mkdir(join(opts.root, owner), { recursive: true });
-			await writeFile(pathOf(fileKey), Buffer.concat([iv, cipher.getAuthTag(), sealed]), { mode: 0o600 });
+			await writeFile(
+				pathOf(fileKey),
+				Buffer.concat([iv, cipher.getAuthTag(), sealed]),
+				{ mode: 0o600 },
+			);
 			return fileKey;
 		},
 
@@ -44,7 +57,10 @@ export function createFileStore(opts: { root: string; keyBase64: string }): File
 			const tag = raw.subarray(IV_BYTES, IV_BYTES + TAG_BYTES);
 			const decipher = createDecipheriv("aes-256-gcm", key, iv);
 			decipher.setAuthTag(tag);
-			return Buffer.concat([decipher.update(raw.subarray(IV_BYTES + TAG_BYTES)), decipher.final()]);
+			return Buffer.concat([
+				decipher.update(raw.subarray(IV_BYTES + TAG_BYTES)),
+				decipher.final(),
+			]);
 		},
 
 		async remove(fileKey) {

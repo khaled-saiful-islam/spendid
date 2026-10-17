@@ -16,12 +16,14 @@ import {
 import { user } from "./auth";
 import { transaction } from "./money";
 
-const id = () =>
-	uuid()
-		.primaryKey()
-		.default(sql`uuidv7()`);
+const id = () => uuid().primaryKey().default(sql`uuidv7()`);
 
-export const receiptStatus = pgEnum("receipt_status", ["reading", "ready", "failed", "saved"]);
+export const receiptStatus = pgEnum("receipt_status", [
+	"reading",
+	"ready",
+	"failed",
+	"saved",
+]);
 
 /**
  * A photographed receipt. The image lives encrypted on disk (`fileKey`); `draft` is what the
@@ -40,7 +42,9 @@ export const receipt = pgTable(
 		bytes: integer().notNull(),
 		draft: jsonb(),
 		error: text(),
-		transactionId: uuid().references(() => transaction.id, { onDelete: "set null" }),
+		transactionId: uuid().references(() => transaction.id, {
+			onDelete: "set null",
+		}),
 		createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
 		updatedAt: timestamp({ withTimezone: true })
 			.notNull()

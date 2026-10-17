@@ -37,7 +37,11 @@ export type NoticeKind = (typeof NOTICE_KINDS)[number];
 export const EmailJobSchema = z.discriminatedUnion("type", [
 	z.object({ type: z.literal("verify-email"), ...base, url: z.url() }),
 	z.object({ type: z.literal("reset-password"), ...base, url: z.url() }),
-	z.object({ type: z.literal("account-paused"), ...base, reason: z.string().max(300).nullable() }),
+	z.object({
+		type: z.literal("account-paused"),
+		...base,
+		reason: z.string().max(300).nullable(),
+	}),
 	z.object({ type: z.literal("account-restored"), ...base, url: z.url() }),
 	z.object({
 		type: z.literal("family-invite"),
@@ -46,8 +50,18 @@ export const EmailJobSchema = z.discriminatedUnion("type", [
 		relation: z.string().min(1).max(40),
 		url: z.url(),
 	}),
-	z.object({ type: z.literal("family-joined"), ...base, joinerName: z.string().min(1).max(120), url: z.url() }),
-	z.object({ type: z.literal("family-share-changed"), ...base, change: z.string().min(1).max(200), url: z.url() }),
+	z.object({
+		type: z.literal("family-joined"),
+		...base,
+		joinerName: z.string().min(1).max(120),
+		url: z.url(),
+	}),
+	z.object({
+		type: z.literal("family-share-changed"),
+		...base,
+		change: z.string().min(1).max(200),
+		url: z.url(),
+	}),
 	z.object({
 		type: z.literal("notice"),
 		...base,
@@ -57,7 +71,10 @@ export const EmailJobSchema = z.discriminatedUnion("type", [
 		heading: z.string().min(1).max(120),
 		body: z.string().min(1).max(2000),
 		/** Small fact table, e.g. "Spent this week" → "RM 412.00". */
-		rows: z.array(z.object({ label: z.string().max(60), value: z.string().max(80) })).max(8).default([]),
+		rows: z
+			.array(z.object({ label: z.string().max(60), value: z.string().max(80) }))
+			.max(8)
+			.default([]),
 		action: z.string().min(1).max(40),
 		url: z.url(),
 		footnote: z.string().max(300).default(""),

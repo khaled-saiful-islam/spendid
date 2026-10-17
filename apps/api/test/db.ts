@@ -13,7 +13,11 @@ export function testDbUrl(): string | null {
 /** Inserts a person with an onboarded profile and returns their id. */
 export async function createPerson(
 	db: Db,
-	opts: { role?: "user" | "admin"; incomeMinor?: number | null; currency?: string } = {},
+	opts: {
+		role?: "user" | "admin";
+		incomeMinor?: number | null;
+		currency?: string;
+	} = {},
 ): Promise<string> {
 	const id = randomUUID();
 	await db.insert(user).values({
@@ -27,7 +31,8 @@ export async function createPerson(
 		userId: id,
 		homeCurrency: opts.currency ?? "MYR",
 		timeZone: "Asia/Kuala_Lumpur",
-		monthlyIncomeMinor: opts.incomeMinor === undefined ? 600_000 : opts.incomeMinor,
+		monthlyIncomeMinor:
+			opts.incomeMinor === undefined ? 600_000 : opts.incomeMinor,
 		budgetMethod: "envelope",
 		onboardedAt: new Date(),
 	});

@@ -7,7 +7,8 @@ const channel = (userId: string) => `user:${userId}`;
 
 /** Publishes a live update to every app the person has open. */
 export function createPublisher(redis: Redis) {
-	return (userId: string, event: unknown): Promise<number> => redis.publish(channel(userId), JSON.stringify(event));
+	return (userId: string, event: unknown): Promise<number> =>
+		redis.publish(channel(userId), JSON.stringify(event));
 }
 
 /**

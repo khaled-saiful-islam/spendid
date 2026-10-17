@@ -1,5 +1,12 @@
 import { sql } from "drizzle-orm";
-import { index, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+	index,
+	pgEnum,
+	pgTable,
+	text,
+	timestamp,
+	uuid,
+} from "drizzle-orm/pg-core";
 import { user } from "./auth";
 
 export const emailStatus = pgEnum("email_status", ["queued", "sent", "failed"]);
@@ -11,9 +18,7 @@ export const emailStatus = pgEnum("email_status", ["queued", "sent", "failed"]);
 export const emailLog = pgTable(
 	"email_log",
 	{
-		id: uuid()
-			.primaryKey()
-			.default(sql`uuidv7()`),
+		id: uuid().primaryKey().default(sql`uuidv7()`),
 		userId: text().references(() => user.id, { onDelete: "set null" }),
 		type: text().notNull(),
 		status: emailStatus().notNull().default("queued"),
