@@ -10,6 +10,7 @@ export * from "./merchants";
 export * from "./money";
 export * from "./notifications";
 export * from "./number-words";
+export * from "./pace";
 export * from "./profile";
 export * from "./quick-entry";
 export * from "./receipts";

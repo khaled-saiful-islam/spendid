@@ -16,6 +16,7 @@ import { PendingReceipts } from "../scan/PendingReceipts";
 import { DueSoonCard } from "../subscriptions/DueSoonCard";
 import { AskCard } from "./AskCard";
 import { MonthCard } from "./MonthCard";
+import { MonthPace } from "./MonthPace";
 import { SafeCard } from "./SafeCard";
 
 function greeting(date: Date): string {
@@ -64,6 +65,7 @@ export function HomePage() {
 			)}
 
 			<DueSoonCard />
+			{summary && <MonthPace summary={summary} />}
 
 			<section
 				aria-labelledby="today-title"

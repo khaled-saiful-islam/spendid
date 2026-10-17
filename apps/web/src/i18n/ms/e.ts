@@ -165,4 +165,32 @@ export const msE: Record<string, string> = {
 	Sunglasses: "Cermin mata hitam",
 	"Little crown": "Mahkota kecil",
 	"Gold coin medal": "Pingat syiling emas",
+	"(forecast)": "(ramalan)",
+	"At this pace, the money runs out around {date}.":
+		"Pada kadar ini, wang akan habis sekitar {date}.",
+	"At this pace, you'll finish {month} with {amount} to spare.":
+		"Pada kadar ini, anda akan menamatkan {month} dengan baki {amount}.",
+	"Day {d}: {amount}": "Hari {d}: {amount}",
+	"Even pace": "Kadar sekata",
+	"Heading to": "Menuju ke",
+	"Put it in {goal} and it arrives about {n} weeks sooner.":
+		"Masukkan ke dalam {goal} dan ia tercapai kira-kira {n} minggu lebih awal.",
+	"Same as now": "Sama seperti sekarang",
+	"Slide to see how a small change adds up by the end of the month.":
+		"Luncurkan untuk melihat bagaimana perubahan kecil bertambah menjelang hujung bulan.",
+	"Spending so far this month compared with an even pace, and where it's heading.":
+		"Perbelanjaan setakat ini bulan ini berbanding kadar sekata, dan ke mana arahnya.",
+	Spent: "Dibelanjakan",
+	"What if I spent less each day?":
+		"Bagaimana jika saya berbelanja kurang setiap hari?",
+	"Where your month is heading": "Ke mana arah bulan anda",
+	"You'd be {amount} short, {extra} better than now.":
+		"Anda akan kurang {amount}, {extra} lebih baik daripada sekarang.",
+	"You'd finish with {amount} to spare, {extra} more than now.":
+		"Anda akan berbaki {amount}, {extra} lebih daripada sekarang.",
+	"{amount} less a day": "{amount} kurang sehari",
+	"{amount} over an even pace so far, about {daily} a day.":
+		"{amount} melebihi kadar sekata setakat ini, kira-kira {daily} sehari.",
+	"{amount} under an even pace so far, about {daily} a day.":
+		"{amount} di bawah kadar sekata setakat ini, kira-kira {daily} sehari.",
 };

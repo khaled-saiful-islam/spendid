@@ -158,27 +158,31 @@ export function PipCorner({ summary }: { summary: Summary | undefined }) {
 					</motion.p>
 				</AnimatePresence>
 				{streak && (
-					<p
-						className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-marigold/20 px-3 py-1 text-[0.88rem] font-semibold"
-						title={t("Best: {n} days", { n: streak.best })}
-					>
-						<Flame
-							className={
-								streak.doneToday ? "size-4 text-coral" : "size-4 text-ink-soft"
-							}
-							aria-hidden="true"
-						/>
-						{streak.current === 0
-							? t("Log something to start a streak")
-							: t(
+					<div className="mt-2 flex flex-wrap gap-2">
+						<p
+							className="inline-flex items-center gap-1.5 rounded-full bg-marigold/20 px-3 py-1 text-[0.88rem] font-semibold"
+							title={t("Best: {n} days", { n: streak.best })}
+						>
+							<Flame
+								className={
 									streak.doneToday
-										? "{n}-day streak"
-										: "{n}-day streak, log today to keep it",
-									{ n: streak.current },
-								)}
-						{streak && streak.shields > 0 && (
+										? "size-4 text-coral"
+										: "size-4 text-ink-soft"
+								}
+								aria-hidden="true"
+							/>
+							{streak.current === 0
+								? t("Log something to start a streak")
+								: t(
+										streak.doneToday
+											? "{n}-day streak"
+											: "{n}-day streak, log today to keep it",
+										{ n: streak.current },
+									)}
+						</p>
+						{streak.shields > 0 && (
 							<p
-								className="mt-2 ml-2 inline-flex items-center gap-1.5 rounded-full bg-plum-500/12 px-3 py-1 text-[0.88rem] font-semibold"
+								className="inline-flex items-center gap-1.5 rounded-full bg-plum-500/12 px-3 py-1 text-[0.88rem] font-semibold"
 								title={t("Shields cover a missed day")}
 							>
 								<Shield className="size-4 text-plum-500" aria-hidden="true" />
@@ -187,7 +191,7 @@ export function PipCorner({ summary }: { summary: Summary | undefined }) {
 									: t("{n} shields", { n: streak.shields })}
 							</p>
 						)}
-					</p>
+					</div>
 				)}
 			</div>
 			<button
