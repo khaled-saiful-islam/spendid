@@ -30,8 +30,10 @@ Spendid works the other way round:
 - **Logging takes seconds.** Say "nasi lemak 8.50, grab 12 and 40 for dinner with Sam" and each
   item is caught as you pause. Snap a receipt (or share a PDF or a payment screenshot from your bank
   app) and the lines, totals and warranty are read for you. Or just type.
-- **An assistant that does things.** Ask Spendid answers from your real numbers and can set up goals,
-  budgets, subscriptions and expenses, always as a card you confirm, never behind your back.
+- **An assistant that does things.** Ask Spendid answers from your real numbers and can do almost
+  anything the app can: log or fix an expense, mark a bill paid, change a goal or your income, start
+  a challenge, split a bill (or a receipt photo you attach) with family, change a setting. Always as
+  a card you confirm, with Undo, never behind your back.
 - **Family without surveillance.** Both people agree before anything is shared, each picks how much
   (totals, categories, each expense, or receipts too), and either can pause at any time. Shared savings jars and
   bill splits with a link that needs no account.
