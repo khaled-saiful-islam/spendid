@@ -7,7 +7,6 @@ export const msF: Record<string, string> = {
 	left: "baki",
 	"Ask anything about your money": "Tanya apa sahaja tentang wang anda",
 	"kept aside first": "diketepikan dahulu",
-	"Expenses on {day}": "Perbelanjaan pada {day}",
 	"Couldn't load this day. Try again.":
 		"Tidak dapat memuatkan hari ini. Cuba lagi.",
 	"No spending on this day.": "Tiada perbelanjaan pada hari ini.",
@@ -17,8 +16,14 @@ export const msF: Record<string, string> = {
 	"{amount} came in this month.": "{amount} masuk bulan ini.",
 	"By category": "Mengikut kategori",
 	"{amount} spent": "{amount} dibelanjakan",
-	"{name}: {amount}. See these expenses":
-		"{name}: {amount}. Lihat perbelanjaan ini",
+	"See these expenses": "Lihat perbelanjaan ini",
 	"Show fewer": "Tunjuk kurang",
 	"Show all {n} categories": "Tunjuk semua {n} kategori",
+	"Log spending in plain words": "Catat perbelanjaan dengan kata-kata biasa",
+	Grab: "Grab",
+	"Next: {name}, {date}": "Seterusnya: {name}, {date}",
+	"{pct}% saved": "{pct}% disimpan",
+	"Questions about your month": "Soalan tentang bulan anda",
+	"1 bill still due": "1 bil belum dibayar",
+	"{n} bills still due": "{n} bil belum dibayar",
 };

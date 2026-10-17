@@ -45,12 +45,9 @@ export function Composer({ busy, floating, onSend, onStop }: ComposerProps) {
 	return (
 		<form
 			onSubmit={submit}
-			className={cn(
-				"z-20",
-				floating ? "sticky bottom-24 md:bottom-4" : "mb-24 md:mb-4",
-			)}
+			className={cn("z-20", floating && "sticky bottom-24 md:bottom-4")}
 		>
-			<div className="rounded-[1.75rem] bg-linear-to-r from-plum-500 via-coral to-marigold p-[2px] shadow-lift transition-shadow focus-within:shadow-[0_0_0_6px_rgb(122_79_196/0.18),0_18px_40px_-18px_rgb(42_20_70/0.45)]">
+			<div className="rounded-[1.75rem] bg-linear-to-r from-plum-500 via-coral to-marigold p-[2px] shadow-lift transition-shadow focus-within:shadow-[0_0_0_5px_color-mix(in_srgb,var(--color-marigold)_22%,transparent),0_18px_40px_-18px_rgb(0_0_0/0.45)]">
 				<div className="rounded-[calc(1.75rem-2px)] bg-surface p-1.5 pl-3">
 					{file && (
 						<div className="mb-1.5 flex items-center gap-3 rounded-[1.2rem] bg-surface-2 p-2 pr-1">

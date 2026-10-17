@@ -1,6 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Check, Copy, MessageSquarePlus, Sparkles } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
@@ -24,16 +24,16 @@ const FOLLOW_UPS = [
 	t("Where could I spend less?"),
 ];
 
-/** Starts a fresh conversation: a gradient coin icon that spins on hover, with a clear label. */
+/** Starts a fresh conversation: a coin icon that spins on hover, with a clear label. */
 function NewChatButton({ onClick }: { onClick: () => void }) {
 	return (
 		<motion.button
 			type="button"
 			onClick={onClick}
 			whileTap={{ scale: 0.94 }}
-			className="group inline-flex h-11 shrink-0 items-center gap-2 rounded-full border border-line bg-surface py-1 pr-4 pl-1 font-semibold shadow-sm transition-[box-shadow,border-color] hover:border-plum-300 hover:shadow-lift"
+			className="group inline-flex h-11 shrink-0 items-center gap-2 rounded-full border border-line bg-surface py-1 pr-4 pl-1 font-semibold hover:bg-surface-2"
 		>
-			<span className="grid size-9 place-items-center rounded-full bg-linear-to-br from-marigold via-coral to-plum-500 text-white shadow-coin dark:text-plum-950 transition-transform duration-500 group-hover:rotate-[360deg]">
+			<span className="grid size-9 place-items-center rounded-full bg-marigold text-plum-900 transition-transform duration-500 group-hover:rotate-[360deg]">
 				<MessageSquarePlus className="size-4.5" aria-hidden="true" />
 			</span>
 			{t("New chat")}
@@ -88,7 +88,7 @@ function Message({
 				layout
 				initial={{ opacity: 0, y: 12, scale: 0.96 }}
 				animate={{ opacity: 1, y: 0, scale: 1 }}
-				className="ml-auto max-w-[85%] rounded-[1.4rem] rounded-br-md bg-linear-to-br from-plum-500 to-plum-800 px-4 py-3 text-white shadow-lift dark:bg-none dark:bg-plum-800 dark:text-ink"
+				className="ml-auto max-w-[85%] rounded-[1.4rem] rounded-br-md bg-plum-900 px-4 py-3 text-plum-50 dark:bg-marigold/15 dark:text-ink dark:ring-1 dark:ring-marigold/30"
 			>
 				{m.receiptId && (
 					<img
@@ -122,7 +122,7 @@ function Message({
 							? "bg-coral/50"
 							: live
 								? "animate-[ask-shimmer_2.4s_linear_infinite] bg-[length:200%_100%] bg-linear-to-r from-plum-300 via-marigold to-plum-300"
-								: "bg-linear-to-br from-plum-300/70 via-line to-marigold/50",
+								: "bg-line",
 					)}
 				>
 					<div
@@ -168,7 +168,7 @@ function Message({
 									animate={{ opacity: 1, scale: 1 }}
 									transition={{ delay: 0.15 + i * 0.06 }}
 									onClick={() => onAsk(f)}
-									className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-line bg-surface px-3 text-[0.85rem] font-semibold hover:border-plum-300 hover:text-plum-700 dark:hover:text-plum-200"
+									className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-surface-2 px-3 text-[0.85rem] font-semibold hover:bg-plum-500/12"
 								>
 									<Sparkles
 										className="size-3.5 text-marigold-deep"
@@ -184,48 +184,12 @@ function Message({
 	);
 }
 
-/** Soft colour light behind the page; still with reduced motion. */
-function Aurora() {
-	const reduce = useReducedMotion();
-	const drift = (x: number[], y: number[], duration: number) =>
-		reduce
-			? undefined
-			: {
-					animate: { x, y },
-					transition: {
-						repeat: Number.POSITIVE_INFINITY,
-						repeatType: "mirror" as const,
-						duration,
-					},
-				};
-	return (
-		<div
-			className="pointer-events-none fixed inset-0 -z-10 overflow-hidden md:left-64"
-			aria-hidden="true"
-		>
-			<motion.div
-				className="absolute -top-32 -left-24 size-[28rem] rounded-full bg-plum-500/25 blur-3xl"
-				{...drift([0, 60], [0, 40], 14)}
-			/>
-			<motion.div
-				className="absolute top-1/3 -right-32 size-[26rem] rounded-full bg-marigold/25 blur-3xl"
-				{...drift([0, -50], [0, 60], 17)}
-			/>
-			<motion.div
-				className="absolute -bottom-40 left-1/4 size-[24rem] rounded-full bg-jade/20 blur-3xl"
-				{...drift([0, 40], [0, -50], 19)}
-			/>
-		</div>
-	);
-}
-
 /** "Ask your money": questions in plain words, answers with numbers from your own data. */
 export function AskPage({ initialQuestion }: { initialQuestion?: string }) {
 	const { data: me } = useSuspenseQuery(meQuery);
 	const chat = useAskChat(me?.user.id ?? "anon");
 	const endRef = useRef<HTMLDivElement>(null);
 	const asked = useRef(false);
-	const firstName = (me?.user.name ?? "there").split(/\s+/)[0] ?? "there";
 	const lastMsg = chat.messages.at(-1);
 	const coinState: CoinState = chat.busy
 		? lastMsg?.text
@@ -277,31 +241,25 @@ export function AskPage({ initialQuestion }: { initialQuestion?: string }) {
 				<ChatsPanel {...threads} />
 			</aside>
 			<div className="relative flex min-h-[calc(100dvh-10rem)] flex-col">
-				<Aurora />
-				<div className="sticky top-0 z-20 -mx-4 flex flex-wrap items-center justify-between gap-3 bg-bg/80 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6">
-					{chat.messages.length > 0 ? (
-						<div className="flex min-w-0 items-center gap-3">
-							<SpendidCoin size="md" state={coinState} />
-							<div className="min-w-0">
-								<h1 className="text-[1.25rem] leading-tight font-extrabold">
-									{t("Ask Spendid")}
-								</h1>
-								<AiAllowance />
-							</div>
+				<div className="sticky top-0 z-20 -mx-4 flex items-center justify-between gap-3 bg-bg/80 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6">
+					<div className="flex min-w-0 items-center gap-3">
+						<SpendidCoin size="md" state={coinState} />
+						<div className="min-w-0">
+							<h1 className="text-[1.25rem] leading-tight font-extrabold">
+								{t("Ask Spendid")}
+							</h1>
+							<AiAllowance />
 						</div>
-					) : (
-						<AiAllowance />
-					)}
+					</div>
 					<div className="flex flex-wrap items-center justify-end gap-2">
 						<ChatsDrawerButton {...threads} />
 						{chat.messages.length > 0 && <NewChatButton onClick={chat.clear} />}
 					</div>
 				</div>
 
-				<div className="flex-1 space-y-5 py-6">
+				<div className="flex-1 space-y-5 py-4">
 					{chat.messages.length === 0 ? (
 						<AskWelcome
-							name={firstName}
 							composer={composer}
 							onAsk={(q) => void chat.send(q)}
 							onTone={(tone) =>

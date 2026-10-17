@@ -293,10 +293,10 @@ export function ChatsDrawerButton(props: Omit<PanelProps, "onOpened">) {
 			<button
 				type="button"
 				onClick={() => setOpen(true)}
-				className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full border border-line bg-surface px-3.5 font-semibold shadow-sm hover:bg-surface-2 lg:hidden"
+				className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full border border-line bg-surface px-3 font-semibold shadow-sm hover:bg-surface-2 sm:px-3.5 lg:hidden"
 			>
 				<MessagesSquare className="size-5 text-plum-500" aria-hidden="true" />
-				{t("Chats")}
+				<span className="max-sm:sr-only">{t("Chats")}</span>
 				{threads.length > 0 && (
 					<span className="num min-w-6 rounded-full bg-plum-500 px-1.5 text-center text-[0.8rem] text-white dark:text-plum-950">
 						{threads.length}

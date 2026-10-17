@@ -8,58 +8,18 @@ import {
 	PartyPopper,
 	PenLine,
 	Target,
-	Wallet,
+	TrendingUp,
 } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { type ReactNode, useEffect, useState } from "react";
 import { CategoryIcon, TINTS } from "@/components/money/CategoryIcon";
-import { CountUp } from "@/components/money/CountUp";
 import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { heatmapQuery, recurringQuery, thisMonth } from "@/lib/insights-api";
 import { categoriesQuery, goalsQuery, summaryQuery } from "@/lib/money-api";
 import { appToday, formatDay } from "@/lib/time";
-import { SpendidCoin } from "./SpendidCoin";
 
-const EXAMPLES = [
-	"Where did my money go this week?",
-	"Did I spend more on food than last month?",
-	"How much is left for fun this month?",
-	"Coffee 9 and parking 6 today",
-];
-
-/** Typewriter-style rotating example under the headline. */
-function RotatingExample() {
-	const reduce = useReducedMotion();
-	const [i, setI] = useState(0);
-	useEffect(() => {
-		if (reduce) return;
-		const t = setInterval(() => setI((n) => (n + 1) % EXAMPLES.length), 3200);
-		return () => clearInterval(t);
-	}, [reduce]);
-	return (
-		<p
-			className="mt-2 min-h-14 text-[1.02rem] text-ink-soft sm:min-h-7"
-			aria-hidden="true"
-		>
-			{t("Try")}{" "}
-			<AnimatePresence mode="wait">
-				<motion.span
-					key={i}
-					initial={{ opacity: 0, y: 8, filter: "blur(4px)" }}
-					animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-					exit={{ opacity: 0, y: -8, filter: "blur(4px)" }}
-					transition={{ duration: 0.3 }}
-					className="font-semibold text-ink"
-				>
-					“{t(EXAMPLES[i] ?? "")}”
-				</motion.span>
-			</AnimatePresence>
-		</p>
-	);
-}
-
-/** A tiny line of this month's daily spending, so the card shows the shape, not just a total. */
+/** A tiny line of this month's daily spending: the shape, not just a total. */
 function Sparkline({ values }: { values: number[] }) {
 	if (values.length < 2) return null;
 	const max = Math.max(...values, 1);
@@ -73,7 +33,7 @@ function Sparkline({ values }: { values: number[] }) {
 		<svg
 			viewBox="0 0 100 30"
 			preserveAspectRatio="none"
-			className="mt-3 h-8 w-full"
+			className="mt-2 h-8 w-full text-orange-500 dark:text-marigold"
 			aria-hidden="true"
 		>
 			<motion.polyline
@@ -86,51 +46,86 @@ function Sparkline({ values }: { values: number[] }) {
 				vectorEffect="non-scaling-stroke"
 				initial={{ pathLength: 0 }}
 				animate={{ pathLength: 1 }}
-				transition={{ duration: 1.2, delay: 0.4 }}
+				transition={{ duration: 1.1, delay: 0.3 }}
 			/>
 		</svg>
 	);
 }
 
-function StatCard({
+/** A share of something, as a short filled bar. */
+function ShareBar({ pct, tint }: { pct: number; tint: string }) {
+	return (
+		<span className="mt-2.5 block h-2 overflow-hidden rounded-full bg-ink/10">
+			<motion.span
+				className={cn("block h-full rounded-full bg-linear-to-r", tint)}
+				initial={{ width: 0 }}
+				animate={{ width: `${Math.min(100, pct)}%` }}
+				transition={{ duration: 0.8, delay: 0.3 }}
+			/>
+		</span>
+	);
+}
+
+/**
+ * A question with a preview of the real number behind it. The colour wash says which part
+ * of your money it's about; tapping asks the question.
+ */
+function IdeaTile({
+	tint,
+	icon,
 	label,
-	children,
+	value,
+	visual,
 	question,
 	onAsk,
-	className,
-	delay,
+	index,
 }: {
-	label: ReactNode;
-	children: ReactNode;
+	tint: string;
+	icon: ReactNode;
+	label: string;
+	value: ReactNode;
+	visual?: ReactNode;
 	question: string;
 	onAsk: (q: string) => void;
-	className: string;
-	delay: number;
+	index: number;
 }) {
+	const reduce = useReducedMotion();
 	return (
 		<motion.li
-			initial={{ opacity: 0, y: 24, rotate: -1.5 }}
-			animate={{ opacity: 1, y: 0, rotate: 0 }}
-			transition={{ delay, type: "spring", stiffness: 150, damping: 16 }}
+			initial={reduce ? false : { opacity: 0, y: 14 }}
+			animate={{ opacity: 1, y: 0 }}
+			transition={{
+				delay: reduce ? 0 : 0.06 * index,
+				type: "spring",
+				stiffness: 220,
+				damping: 22,
+			}}
 		>
 			<button
 				type="button"
 				onClick={() => onAsk(question)}
-				className={cn(
-					"group relative flex h-full w-full flex-col overflow-hidden rounded-panel p-4 text-left shadow-lift transition-transform hover:-translate-y-1",
-					className,
-				)}
+				className="group relative flex h-full w-full flex-col overflow-hidden rounded-panel border border-line bg-surface p-4 text-left transition-transform hover:-translate-y-0.5"
 			>
 				<span
-					className="bg-scales pointer-events-none absolute inset-0 opacity-20"
 					aria-hidden="true"
+					className={cn(
+						"pointer-events-none absolute inset-0 bg-linear-to-br opacity-[0.16] transition-opacity group-hover:opacity-[0.24] dark:opacity-[0.13]",
+						tint,
+					)}
 				/>
-				<span className="relative text-[0.9rem] font-semibold opacity-90">
-					{label}
+				<span className="relative flex items-center gap-2 text-[0.82rem] font-semibold text-ink-soft">
+					{icon}
+					<span className="min-w-0 break-words">{label}</span>
 				</span>
-				<span className="relative">{children}</span>
-				<span className="relative mt-auto inline-flex items-center gap-1 pt-3 text-[0.88rem] font-semibold opacity-90 group-hover:opacity-100">
-					{question}
+				<span
+					data-money
+					className="num relative mt-2 block text-[1.35rem] leading-tight font-extrabold break-words"
+				>
+					{value}
+				</span>
+				{visual && <span className="relative block">{visual}</span>}
+				<span className="relative mt-auto flex items-end justify-between gap-2 pt-3 text-[0.92rem] leading-snug font-semibold">
+					<span className="min-w-0 break-words">{question}</span>
 					<ArrowUpRight
 						className="size-4 shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
 						aria-hidden="true"
@@ -141,19 +136,120 @@ function StatCard({
 	);
 }
 
-/** First screen: the person's month as three tappable cards, plus quick ideas. */
+/** A round badge for a tile's icon, filled with the tile's colour. */
+function Badge({ tint, children }: { tint: string; children: ReactNode }) {
+	return (
+		<span
+			className={cn(
+				"grid size-7 shrink-0 place-items-center rounded-full bg-linear-to-br text-white shadow-sm",
+				tint,
+			)}
+		>
+			{children}
+		</span>
+	);
+}
+
+const LOG_EXAMPLE = "Lunch 12 and grab 9 yesterday";
+
+/**
+ * Shows logging in plain words: the sentence types itself out, then turns into the two
+ * expenses it means. Tap to send it as a real example.
+ */
+function LogTile({
+	onAsk,
+	index,
+}: {
+	onAsk: (q: string) => void;
+	index: number;
+}) {
+	const reduce = useReducedMotion();
+	const text = t(LOG_EXAMPLE);
+	const [shown, setShown] = useState(reduce ? text.length : 0);
+
+	useEffect(() => {
+		if (reduce) return;
+		const tick = setInterval(
+			() => setShown((n) => (n >= text.length + 28 ? 0 : n + 1)),
+			70,
+		);
+		return () => clearInterval(tick);
+	}, [reduce, text.length]);
+	const done = shown >= text.length;
+
+	return (
+		<motion.li
+			className="col-span-full"
+			initial={reduce ? false : { opacity: 0, y: 14 }}
+			animate={{ opacity: 1, y: 0 }}
+			transition={{ delay: reduce ? 0 : 0.06 * index }}
+		>
+			<button
+				type="button"
+				onClick={() => onAsk(text)}
+				className="group relative flex w-full flex-col gap-3 overflow-hidden rounded-panel border border-line bg-surface p-4 text-left sm:flex-row sm:items-center"
+			>
+				<span
+					aria-hidden="true"
+					className={cn(
+						"pointer-events-none absolute inset-0 bg-linear-to-br opacity-[0.16] dark:opacity-[0.13]",
+						TINTS.teal,
+					)}
+				/>
+				<span className="relative min-w-0 flex-1">
+					<span className="flex items-center gap-2 text-[0.82rem] font-semibold text-ink-soft">
+						<Badge tint={TINTS.teal ?? ""}>
+							<PenLine className="size-3.5" aria-hidden="true" />
+						</Badge>
+						{t("Log spending in plain words")}
+					</span>
+					<span className="mt-2 block min-h-7 text-[1.05rem] font-semibold">
+						<span aria-hidden="true">
+							“{text.slice(0, shown)}
+							{!done && (
+								<span className="ml-0.5 inline-block h-5 w-0.5 translate-y-1 animate-pulse bg-ink" />
+							)}
+							{done && "”"}
+						</span>
+						<span className="sr-only">{text}</span>
+					</span>
+				</span>
+				<span className="relative flex flex-wrap gap-2" aria-hidden="true">
+					<AnimatePresence>
+						{done &&
+							[
+								{ name: t("Lunch"), amount: "12.00" },
+								{ name: t("Grab"), amount: "9.00" },
+							].map((d, i) => (
+								<motion.span
+									key={d.name}
+									initial={{ opacity: 0, scale: 0.7, y: 6 }}
+									animate={{ opacity: 1, scale: 1, y: 0 }}
+									exit={{ opacity: 0 }}
+									transition={{ delay: i * 0.12, type: "spring" }}
+									className="num inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-[0.85rem] font-semibold shadow-sm ring-1 ring-line"
+								>
+									{d.name} <span className="text-ink-soft">RM {d.amount}</span>
+								</motion.span>
+							))}
+					</AnimatePresence>
+				</span>
+			</button>
+		</motion.li>
+	);
+}
+
+/** First screen: the question box, questions previewing this month's real numbers, two modes. */
 export function AskWelcome({
 	onAsk,
 	onTone,
-	name,
 	composer,
 }: {
-	/** The question box, shown right under the greeting. */
+	/** The question box, shown first. */
 	composer?: ReactNode;
 	onAsk: (q: string) => void;
 	/** A roast of the month's spending, or a hype-up of its wins. */
 	onTone: (tone: "roast" | "hype") => void;
-	name: string;
 }) {
 	const { data: summary } = useQuery(summaryQuery);
 	const { data: categories = [] } = useQuery(categoriesQuery);
@@ -162,6 +258,7 @@ export function AskWelcome({
 	const { data: heat } = useQuery(heatmapQuery(thisMonth()));
 
 	const cur = summary?.homeCurrency ?? "MYR";
+	const money = (m: number) => formatMinor(m, cur);
 	const top = [...(summary?.byCategory ?? [])].sort(
 		(a, b) => b.spentMinor - a.spentMinor,
 	)[0];
@@ -171,6 +268,11 @@ export function AskWelcome({
 			? Math.round((top.spentMinor / summary.monthSpentMinor) * 100)
 			: 0;
 	const goal = goals.find((g) => g.savedMinor < g.targetMinor);
+	const goalPct = goal
+		? Math.round((goal.savedMinor / goal.targetMinor) * 100)
+		: 0;
+	const bills = recurring?.billsDue;
+	const nextBill = bills?.items[0];
 	const dayValues = heat
 		? Array.from({ length: Number(heat.today.slice(8, 10)) }, (_, i) => {
 				const day = `${heat.month}-${String(i + 1).padStart(2, "0")}`;
@@ -179,136 +281,128 @@ export function AskWelcome({
 		: [];
 	const monthLabel = formatDay(appToday(), { month: "long" });
 
-	const ideas = [
-		{
-			text: recurring?.billsDue.items.length
-				? t("Which bills are still due this month?")
-				: t("What subscriptions am I paying for?"),
-			icon: <CalendarClock className="size-4" />,
-		},
-		{
-			text: goal
-				? t("Am I on track for {goal}?", { goal: goal.name })
-				: t("How much could I save this month?"),
-			icon: <Target className="size-4" />,
-		},
-		{
-			text: t("Lunch 12 and grab 9 yesterday"),
-			icon: <PenLine className="size-4" />,
-		},
-	];
+	const tiles: ReactNode[] = [];
+	if (summary && summary.monthSpentMinor > 0)
+		tiles.push(
+			<IdeaTile
+				key="spent"
+				index={tiles.length}
+				onAsk={onAsk}
+				tint={TINTS.amber ?? ""}
+				icon={
+					<Badge tint={TINTS.amber ?? ""}>
+						<TrendingUp className="size-3.5" aria-hidden="true" />
+					</Badge>
+				}
+				label={t("Spent in {month}", { month: monthLabel })}
+				value={money(summary.monthSpentMinor)}
+				visual={<Sparkline values={dayValues} />}
+				question={t("Where did my {amount} go?", {
+					amount: money(summary.monthSpentMinor),
+				})}
+			/>,
+		);
+	if (topCat && top)
+		tiles.push(
+			<IdeaTile
+				key="top"
+				index={tiles.length}
+				onAsk={onAsk}
+				tint={TINTS[topCat.tint] ?? TINTS.slate ?? ""}
+				icon={
+					<CategoryIcon
+						icon={topCat.icon}
+						tint={topCat.tint}
+						size="sm"
+						className="size-7"
+					/>
+				}
+				label={t("Biggest category")}
+				value={`${t(topCat.name)} ${topShare}%`}
+				visual={
+					<ShareBar
+						pct={topShare}
+						tint={TINTS[topCat.tint] ?? TINTS.slate ?? ""}
+					/>
+				}
+				question={t("Why so much on {category}?", {
+					category: t(topCat.name).toLowerCase(),
+				})}
+			/>,
+		);
+	if (bills && bills.items.length > 0 && nextBill)
+		tiles.push(
+			<IdeaTile
+				key="bills"
+				index={tiles.length}
+				onAsk={onAsk}
+				tint={TINTS.sky ?? ""}
+				icon={
+					<Badge tint={TINTS.sky ?? ""}>
+						<CalendarClock className="size-3.5" aria-hidden="true" />
+					</Badge>
+				}
+				label={t(
+					bills.items.length === 1 ? "1 bill still due" : "{n} bills still due",
+					{ n: bills.items.length },
+				)}
+				value={money(bills.minor)}
+				visual={
+					<span className="mt-1 block text-[0.85rem] text-ink-soft">
+						{t("Next: {name}, {date}", {
+							name: nextBill.merchant,
+							date: formatDay(nextBill.day, { day: "numeric", month: "short" }),
+						})}
+					</span>
+				}
+				question={t("Which bills are still due this month?")}
+			/>,
+		);
+	if (goal)
+		tiles.push(
+			<IdeaTile
+				key="goal"
+				index={tiles.length}
+				onAsk={onAsk}
+				tint={TINTS.lime ?? ""}
+				icon={
+					<Badge tint={TINTS.lime ?? ""}>
+						<Target className="size-3.5" aria-hidden="true" />
+					</Badge>
+				}
+				label={`${goal.emoji} ${goal.name}`}
+				value={t("{pct}% saved", { pct: goalPct })}
+				visual={<ShareBar pct={goalPct} tint={TINTS.lime ?? ""} />}
+				question={t("Am I on track for {goal}?", { goal: goal.name })}
+			/>,
+		);
 
 	return (
-		<div className="pt-2 sm:pt-6">
-			<div className="flex items-start gap-4">
-				<motion.div
-					initial={{ scale: 0, rotate: -90 }}
-					animate={{ scale: 1, rotate: 0 }}
-					transition={{ type: "spring", stiffness: 180, damping: 12 }}
-				>
-					<SpendidCoin size="lg" />
-				</motion.div>
-				<div className="min-w-0">
-					<motion.h1
-						initial={{ opacity: 0, y: 12 }}
-						animate={{ opacity: 1, y: 0 }}
-						transition={{ delay: 0.1 }}
-						className="text-[clamp(2rem,8vw,3.2rem)] leading-[1.04] font-extrabold"
-					>
-						{t("Hi {name}, ask me anything about your money.", { name })}
-					</motion.h1>
-					<RotatingExample />
-				</div>
-			</div>
-			{composer && <div className="mt-5">{composer}</div>}
+		<div className="space-y-4">
+			{composer}
 
-			{summary && (
-				<ul className="mt-7 grid gap-3 sm:grid-cols-3">
-					<StatCard
-						delay={0.15}
-						onAsk={onAsk}
-						label={
-							<span className="inline-flex items-center gap-1.5">
-								<Wallet className="size-4" aria-hidden="true" />{" "}
-								{t("Safe to spend today")}
-							</span>
-						}
-						question={t("How is today's amount worked out?")}
-						className="bg-linear-to-br from-plum-800 to-plum-500 text-white dark:bg-none dark:bg-plum-800"
-					>
-						<CountUp
-							minor={Math.max(0, summary.safe.safeTodayMinor)}
-							currency={cur}
-							className="num mt-1 block text-[2rem] leading-tight font-extrabold text-marigold"
-						/>
-					</StatCard>
-					<StatCard
-						delay={0.23}
-						onAsk={onAsk}
-						label={t("Spent in {month}", { month: monthLabel })}
-						question={t("Where did my {amount} go?", {
-							amount: formatMinor(summary.monthSpentMinor, cur),
-						})}
-						className="bg-linear-to-br from-coral to-marigold-deep text-white"
-					>
-						<CountUp
-							minor={summary.monthSpentMinor}
-							currency={cur}
-							className="num mt-1 block text-[2rem] leading-tight font-extrabold"
-						/>
-						<Sparkline values={dayValues} />
-					</StatCard>
-					{topCat && top && (
-						<StatCard
-							delay={0.31}
-							onAsk={onAsk}
-							label={
-								<span className="inline-flex items-center gap-2">
-									<CategoryIcon
-										icon={topCat.icon}
-										tint={topCat.tint}
-										size="sm"
-										className="ring-2 ring-white/60"
-									/>{" "}
-									{t("Biggest category")}
-								</span>
-							}
-							question={t("Why so much on {category}?", {
-								category: t(topCat.name).toLowerCase(),
-							})}
-							className={cn(
-								"bg-linear-to-br text-plum-950",
-								TINTS[topCat.tint] ?? TINTS.slate,
-							)}
-						>
-							<span className="mt-1 block text-[1.6rem] leading-tight font-extrabold break-words">
-								{t(topCat.name)}
-							</span>
-							<span className="num block font-semibold">
-								{t("{amount}, {pct}% of the month", {
-									amount: formatMinor(top.spentMinor, cur),
-									pct: topShare,
-								})}
-							</span>
-						</StatCard>
-					)}
+			<section aria-labelledby="ask-ideas">
+				<h2 id="ask-ideas" className="sr-only">
+					{t("Questions about your month")}
+				</h2>
+				<ul className="grid grid-cols-2 gap-3">
+					{tiles}
+					<LogTile onAsk={onAsk} index={tiles.length} />
 				</ul>
-			)}
+			</section>
 
-			<div className="mt-5 grid gap-3 sm:grid-cols-2">
+			<div className="grid grid-cols-2 gap-3">
 				<motion.button
 					type="button"
 					whileHover={{ y: -2 }}
 					whileTap={{ scale: 0.97 }}
 					onClick={() => onTone("roast")}
-					className="flex items-center gap-3 rounded-panel bg-linear-to-br from-coral to-[#ff8a3d] p-4 text-left text-white shadow-lift"
+					className="flex items-center gap-3 rounded-panel bg-linear-to-br from-coral to-[#ff8a3d] p-3.5 text-left text-plum-950 shadow-lift sm:p-4"
 				>
-					<Flame className="size-7 shrink-0" aria-hidden="true" />
-					<span>
-						<span className="block text-[1.1rem] font-extrabold">
-							{t("Roast my month")}
-						</span>
-						<span className="block text-[0.88rem] text-white/90">
+					<Flame className="size-6 shrink-0" aria-hidden="true" />
+					<span className="min-w-0">
+						<span className="block font-extrabold">{t("Roast my month")}</span>
+						<span className="block text-[0.82rem] leading-snug opacity-80">
 							{t("Honest, funny, and with one tip")}
 						</span>
 					</span>
@@ -318,44 +412,20 @@ export function AskWelcome({
 					whileHover={{ y: -2 }}
 					whileTap={{ scale: 0.97 }}
 					onClick={() => onTone("hype")}
-					className="flex items-center gap-3 rounded-panel bg-linear-to-br from-plum-700 to-plum-500 p-4 text-left text-white shadow-lift dark:bg-none dark:bg-plum-800"
+					className="flex items-center gap-3 rounded-panel bg-linear-to-br from-marigold to-[#ffd27a] p-3.5 text-left text-plum-950 shadow-lift sm:p-4"
 				>
-					<PartyPopper
-						className="size-7 shrink-0 text-marigold"
-						aria-hidden="true"
-					/>
-					<span>
-						<span className="block text-[1.1rem] font-extrabold">
-							{t("Hype me up")}
-						</span>
-						<span className="block text-[0.88rem] text-white/90">
+					<PartyPopper className="size-6 shrink-0" aria-hidden="true" />
+					<span className="min-w-0">
+						<span className="block font-extrabold">{t("Hype me up")}</span>
+						<span className="block text-[0.82rem] leading-snug opacity-80">
 							{t("Your real wins this month, cheered")}
 						</span>
 					</span>
 				</motion.button>
 			</div>
 
-			<div className="mt-4 flex flex-wrap gap-2">
-				{ideas.map((idea, i) => (
-					<motion.button
-						key={idea.text}
-						type="button"
-						initial={{ opacity: 0, y: 8 }}
-						animate={{ opacity: 1, y: 0 }}
-						transition={{ delay: 0.45 + i * 0.06 }}
-						onClick={() => onAsk(idea.text)}
-						className="inline-flex min-h-11 items-center gap-2 rounded-full border border-line bg-surface px-4 text-left text-[0.92rem] font-semibold shadow-sm hover:border-plum-300 hover:shadow-lift"
-					>
-						<span className="text-plum-500" aria-hidden="true">
-							{idea.icon}
-						</span>
-						{idea.text}
-					</motion.button>
-				))}
-			</div>
-
-			<p className="mt-6 inline-flex items-center gap-2 text-[0.9rem] text-ink-soft">
-				<Lock className="size-4 shrink-0" aria-hidden="true" />{" "}
+			<p className="flex items-start gap-2 px-1 text-[0.85rem] text-ink-soft">
+				<Lock className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
 				{t(
 					"Answers use only your own data. Chats are saved to your account, and only you can see them.",
 				)}

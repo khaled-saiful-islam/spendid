@@ -73,7 +73,8 @@ test("Ask Spendid opens with real numbers, playful modes and the question box", 
 	const fresh = page.getByRole("button", { name: /New chat/ });
 	if (await fresh.count()) await fresh.first().click();
 	await expect(page.getByRole("textbox", { name: "Your question" })).toBeVisible();
-	await expect(page.getByText("Safe to spend today").first()).toBeVisible();
+	await expect(page.getByRole("button", { name: /Where did my RM [\d,.]+ go\?/ })).toBeVisible();
+	await expect(page.getByRole("button", { name: /Log spending in plain words/ })).toBeVisible();
 	await expect(page.getByRole("button", { name: /^Roast my month/ })).toBeVisible();
 	await expect(page.getByRole("button", { name: /^Hype me up\s*Your real wins/ })).toBeVisible();
 });
@@ -146,8 +147,10 @@ test("insights: tap a day for its expenses, tap a category for its list", async 
 	await expect(flow.getByRole("img")).toBeVisible();
 	const days = page.getByRole("button", { name: /expenses$/ });
 	await days.first().click();
-	const list = page.getByRole("region", { name: /^Expenses on / });
-	await expect(list.getByRole("listitem").first()).toBeVisible();
+	const sheet = page.getByRole("dialog");
+	await expect(sheet.getByRole("listitem").first()).toBeVisible();
+	await page.keyboard.press("Escape");
+	await expect(sheet).toBeHidden();
 	await flow.getByRole("link", { name: /See these expenses$/ }).first().click();
 	await expect(page).toHaveURL(/\/app\/activity\?category=/);
 	await expect(page.getByRole("combobox").first()).not.toHaveValue("");
