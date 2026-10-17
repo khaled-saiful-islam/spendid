@@ -10,6 +10,7 @@ import {
 import { useCategoryMap } from "../money/TransactionRow";
 import { METHODS } from "../onboarding/options";
 import { SubscriptionsDoorway } from "../subscriptions/DueSoonCard";
+import { Challenges } from "./Challenges";
 import { GoalsSection } from "./GoalsSection";
 import { ImpulsePause } from "./ImpulsePause";
 import { CategoryBudgets, FiftyThirtyTwenty } from "./StyleBudgets";
@@ -71,6 +72,7 @@ export function PlanPage() {
 
 			<SubscriptionsDoorway />
 			<GoalsSection goals={goals} cur={summary.homeCurrency} />
+			<Challenges />
 			<ImpulsePause />
 			<WarrantyVault />
 		</div>

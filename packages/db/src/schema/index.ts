@@ -2,6 +2,7 @@ export * from "./admin";
 export * from "./ai";
 export * from "./ask";
 export * from "./auth";
+export * from "./challenges";
 export * from "./delight";
 export * from "./email";
 export * from "./family";

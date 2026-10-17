@@ -21,6 +21,7 @@ import { createAdminService } from "./modules/admin/admin.service";
 import { createAskAgent } from "./modules/ask/ask.agent";
 import { createThreadRepository } from "./modules/ask/threads.repository";
 import { createVoiceService } from "./modules/capture/voice.service";
+import { createChallengeService } from "./modules/delight/challenges.service";
 import { createDelightService } from "./modules/delight/delight.service";
 import { createFamilyRepository } from "./modules/family/family.repository";
 import {
@@ -185,7 +186,11 @@ const app = await buildApp({
 		}),
 	},
 	insights: { session, insights },
-	delight: { session, delight: createDelightService(database.db) },
+	delight: {
+		session,
+		delight: createDelightService(database.db),
+		challenges: createChallengeService(database.db),
+	},
 	subscriptions: { session, subscriptions: subscriptionService },
 	privacy: {
 		session,

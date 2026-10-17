@@ -22,6 +22,7 @@ const MONEY_TABLES = [
 	"checkIn",
 	"askThread",
 	"subscription",
+	"challenge",
 	"dataExport",
 ];
 const dir = __dirname;

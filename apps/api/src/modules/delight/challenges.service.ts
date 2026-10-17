@@ -1,0 +1,243 @@
+import {
+	category,
+	challenge,
+	checkIn,
+	type Db,
+	profile,
+	transaction,
+} from "@spendid/db";
+import {
+	type ChallengeBoard,
+	type ChallengeDay,
+	type ChallengeKind,
+	type ChallengeView,
+	challengeWindow,
+	FIXED_COST_SLUGS,
+	judgeChallenge,
+	StartChallengeSchema,
+} from "@spendid/shared";
+import { and, desc, eq, gte, isNull, lte, or, sql } from "drizzle-orm";
+import { badRequest, notFound } from "../../http/app-error";
+import { localParts } from "../../notify/notifier";
+
+const MAX_ACTIVE = 2;
+const roundTo = (minor: number, step: number) =>
+	Math.max(step, Math.round(minor / step) * step);
+
+type Row = typeof challenge.$inferSelect;
+
+/** Challenges people start; each is judged from their own spending in its window. */
+export function createChallengeService(db: Db) {
+	async function home(userId: string) {
+		const [p] = await db
+			.select({ timeZone: profile.timeZone, currency: profile.homeCurrency })
+			.from(profile)
+			.where(eq(profile.userId, userId))
+			.limit(1);
+		const timeZone = p?.timeZone ?? "UTC";
+		return {
+			timeZone,
+			currency: p?.currency ?? "MYR",
+			today: localParts(timeZone).date,
+		};
+	}
+
+	/** Per-day spending that counts (fixed costs left out), by category, plus check-ins. */
+	async function daysFor(
+		userId: string,
+		timeZone: string,
+		start: string,
+		end: string,
+	): Promise<ChallengeDay[]> {
+		const localDay = sql<string>`(${transaction.occurredAt} at time zone ${timeZone})::date::text`;
+		const [rows, checks] = await Promise.all([
+			db
+				.select({
+					day: localDay,
+					slug: category.slug,
+					minor: sql<string>`sum(${transaction.homeAmountMinor})`,
+					count: sql<number>`count(*)::int`,
+				})
+				.from(transaction)
+				.innerJoin(category, eq(category.id, transaction.categoryId))
+				.where(
+					and(
+						eq(transaction.userId, userId),
+						isNull(transaction.deletedAt),
+						sql`${localDay} >= ${start}`,
+						sql`${localDay} <= ${end}`,
+					),
+				)
+				// By position: the day expression carries its own time-zone parameter.
+				.groupBy(sql`1`, sql`2`),
+			db
+				.select({ day: checkIn.day })
+				.from(checkIn)
+				.where(
+					and(
+						eq(checkIn.userId, userId),
+						gte(checkIn.day, start),
+						lte(checkIn.day, end),
+					),
+				),
+		]);
+		const fixed = new Set<string>(FIXED_COST_SLUGS);
+		const byDay = new Map<string, ChallengeDay>();
+		const get = (day: string) => {
+			const d = byDay.get(day) ?? { day, minor: 0, bySlug: {}, active: false };
+			byDay.set(day, d);
+			return d;
+		};
+		for (const r of rows) {
+			const d = get(r.day);
+			d.active = true;
+			if (fixed.has(r.slug)) continue;
+			d.minor += Number(r.minor);
+			d.bySlug[r.slug] = { minor: Number(r.minor), count: r.count };
+		}
+		for (const c of checks) get(c.day).active = true;
+		return [...byDay.values()];
+	}
+
+	async function view(
+		row: Row,
+		timeZone: string,
+		today: string,
+		currency: string,
+	): Promise<ChallengeView> {
+		const days = await daysFor(
+			row.userId,
+			timeZone,
+			row.startDay,
+			row.endDay < today ? row.endDay : today,
+		);
+		return {
+			id: row.id,
+			kind: row.kind as ChallengeKind,
+			targetMinor: row.targetMinor,
+			currency,
+			start: row.startDay,
+			end: row.endDay,
+			gaveUp: row.outcome === "gave-up",
+			result: judgeChallenge({
+				kind: row.kind as ChallengeKind,
+				targetMinor: row.targetMinor,
+				start: row.startDay,
+				end: row.endDay,
+				today,
+				days,
+			}),
+		};
+	}
+
+	/** Suggested caps from the last four weeks: a little under the usual. */
+	async function suggestions(userId: string, timeZone: string, today: string) {
+		const from = new Date(Date.parse(`${today}T00:00:00Z`) - 28 * 86_400_000)
+			.toISOString()
+			.slice(0, 10);
+		const days = await daysFor(userId, timeZone, from, today);
+		const food = days.reduce((n, d) => n + (d.bySlug.food?.minor ?? 0), 0);
+		const flexible = days.reduce((n, d) => n + d.minor, 0);
+		return {
+			eatOutWeekMinor: roundTo((food / 4) * 0.8, 1_000),
+			dailyMinor: roundTo((flexible / 28) * 0.85, 500),
+		};
+	}
+
+	return {
+		async board(userId: string): Promise<ChallengeBoard> {
+			const { timeZone, currency, today } = await home(userId);
+			const rows = await db
+				.select()
+				.from(challenge)
+				.where(
+					and(
+						eq(challenge.userId, userId),
+						or(isNull(challenge.outcome), eq(challenge.outcome, "won")),
+					),
+				)
+				.orderBy(desc(challenge.createdAt))
+				.limit(30);
+			const active: ChallengeView[] = [];
+			const won: ChallengeView[] = [];
+			for (const row of rows) {
+				const v = await view(row, timeZone, today, currency);
+				if (row.outcome === null && v.result.status !== "active") {
+					// Decided now: remember it, so it isn't judged again.
+					await db
+						.update(challenge)
+						.set({ outcome: v.result.status, endedAt: new Date() })
+						.where(eq(challenge.id, row.id));
+				}
+				if (row.outcome === null && v.result.status === "active")
+					active.push(v);
+				else if (row.outcome === "won" || v.result.status === "won")
+					won.push(v);
+				else if (row.outcome === null && v.result.status === "lost")
+					active.push(v);
+			}
+			return {
+				today,
+				active,
+				won: won.slice(0, 12),
+				suggested: await suggestions(userId, timeZone, today),
+			};
+		},
+
+		async start(userId: string, raw: unknown): Promise<ChallengeView> {
+			const input = StartChallengeSchema.parse(raw);
+			const { timeZone, currency, today } = await home(userId);
+			const running = await db
+				.select({ kind: challenge.kind })
+				.from(challenge)
+				.where(and(eq(challenge.userId, userId), isNull(challenge.outcome)));
+			if (running.some((r) => r.kind === input.kind))
+				throw badRequest("That challenge is already running.");
+			if (running.length >= MAX_ACTIVE)
+				throw badRequest(
+					"Two challenges at a time is plenty. Finish one first.",
+				);
+			const capped = input.kind === "eat-out-cap" || input.kind === "daily-cap";
+			const s =
+				capped && !input.targetMinor
+					? await suggestions(userId, timeZone, today)
+					: null;
+			const window = challengeWindow(input.kind, today);
+			const [row] = await db
+				.insert(challenge)
+				.values({
+					userId,
+					kind: input.kind,
+					targetMinor: capped
+						? (input.targetMinor ??
+							(input.kind === "eat-out-cap"
+								? s?.eatOutWeekMinor
+								: s?.dailyMinor) ??
+							null)
+						: null,
+					startDay: window.start,
+					endDay: window.end,
+				})
+				.returning();
+			if (!row) throw new Error("challenge insert returned nothing");
+			return view(row, timeZone, today, currency);
+		},
+
+		async giveUp(userId: string, id: string): Promise<void> {
+			const done = await db
+				.update(challenge)
+				.set({ outcome: "gave-up", endedAt: new Date() })
+				.where(
+					and(
+						eq(challenge.userId, userId),
+						eq(challenge.id, id),
+						isNull(challenge.outcome),
+					),
+				)
+				.returning({ id: challenge.id });
+			if (done.length === 0) throw notFound("Challenge");
+		},
+	};
+}
+
+export type ChallengeService = ReturnType<typeof createChallengeService>;

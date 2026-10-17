@@ -230,4 +230,47 @@ export const msE: Record<string, string> = {
 		"{name}: {amount}, {pct}% daripada yang masuk.",
 	"Needs {needs}, wants {wants}, savings {saved}, not spent yet {free}.":
 		"Keperluan {needs}, kehendak {wants}, simpanan {saved}, belum dibelanjakan {free}.",
+	"A small challenge makes a habit stick.":
+		"Cabaran kecil menjadikan tabiat kekal.",
+	Challenges: "Cabaran",
+	Days: "Hari",
+	"Done! Well played.": "Selesai! Syabas.",
+	"Pick a challenge": "Pilih cabaran",
+	"Running now": "Sedang berjalan",
+	"Start one": "Mulakan satu",
+	"Starts {date}.": "Bermula {date}.",
+	"Stop this challenge": "Hentikan cabaran ini",
+	"Target: under {amount} a day.": "Sasaran: bawah {amount} sehari.",
+	"This one slipped. Start it again whenever you like.":
+		"Yang ini terlepas. Mulakan semula bila-bila masa.",
+	"Try a no-spend weekend or a cook-at-home week. Spendid checks it from your spending, so there's nothing to tick off.":
+		"Cuba hujung minggu tanpa belanja atau minggu masak di rumah. Spendid menyemaknya daripada perbelanjaan anda, jadi tiada apa yang perlu ditanda.",
+	Won: "Menang",
+	"Your target: under {amount} a day.": "Sasaran anda: bawah {amount} sehari.",
+	"Your target: {amount} this week.": "Sasaran anda: {amount} minggu ini.",
+	broken: "terputus",
+	kept: "dikekalkan",
+	"still to come": "akan datang",
+	"{passed} of {total} days done.": "{passed} daripada {total} hari selesai.",
+	"{title} started. Spendid will keep track.":
+		"{title} dimulakan. Spendid akan menjejakinya.",
+	"{used} of {target} used.": "{used} daripada {target} digunakan.",
+	"No-spend weekend": "Hujung minggu tanpa belanja",
+	"Spend nothing on Saturday and Sunday. Bills don't count.":
+		"Jangan berbelanja pada Sabtu dan Ahad. Bil tidak dikira.",
+	"Cook-at-home week": "Minggu masak di rumah",
+	"Eat out at most twice in 7 days.":
+		"Makan di luar paling banyak dua kali dalam 7 hari.",
+	"Eating-out cap": "Had makan di luar",
+	"Keep eating out under your target for 7 days.":
+		"Kekalkan makan di luar di bawah sasaran selama 7 hari.",
+	"Shopping pause": "Jeda membeli-belah",
+	"No shopping for 7 days. Groceries are fine.":
+		"Tiada membeli-belah selama 7 hari. Barang dapur dibenarkan.",
+	"Under the line": "Di bawah garisan",
+	"Stay under your daily target every day for 7 days. Bills don't count.":
+		"Kekal di bawah sasaran harian setiap hari selama 7 hari. Bil tidak dikira.",
+	"Log every day": "Catat setiap hari",
+	"Log something, or check in, every day for 7 days.":
+		"Catat sesuatu, atau daftar masuk, setiap hari selama 7 hari.",
 };

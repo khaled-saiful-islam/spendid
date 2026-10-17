@@ -1,6 +1,7 @@
 export * from "./ai-usage";
 export * from "./ask";
 export * from "./categories";
+export * from "./challenges";
 export * from "./delight";
 export * from "./family";
 export * from "./fx";
