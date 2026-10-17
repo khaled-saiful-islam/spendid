@@ -74,7 +74,7 @@ test("Ask Spendid opens with real numbers, playful modes and the question box", 
 	if (await fresh.count()) await fresh.first().click();
 	await expect(page.getByRole("textbox", { name: "Your question" })).toBeVisible();
 	await expect(page.getByRole("button", { name: /Where did my RM [\d,.]+ go\?/ })).toBeVisible();
-	await expect(page.getByRole("button", { name: /^Try logging by message/ })).toBeVisible();
+	await expect(page.getByRole("figure", { name: /type expenses like a text message/ })).toBeVisible();
 	await expect(page.getByRole("button", { name: /^Roast my month/ })).toBeVisible();
 	await expect(page.getByRole("button", { name: /^Hype me up\s*Your real wins/ })).toBeVisible();
 });

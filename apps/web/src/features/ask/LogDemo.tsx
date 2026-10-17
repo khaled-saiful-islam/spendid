@@ -60,16 +60,10 @@ const HOLD_TICKS = 34;
 
 /**
  * Logging, shown instead of told: a message types itself, the coin spins, and a little
- * receipt prints the expenses it understood. Cycles through English and Malay examples;
- * tapping tries the one on screen.
+ * receipt prints the expenses it understood. Cycles through English and Malay examples.
+ * A showcase only: nothing to tap.
  */
-export function LogDemo({
-	currency,
-	onTry,
-}: {
-	currency: string;
-	onTry: (text: string) => void;
-}) {
+export function LogDemo({ currency }: { currency: string }) {
 	const reduce = useReducedMotion();
 	const [index, setIndex] = useState(0);
 	const [tick, setTick] = useState(0);
@@ -96,11 +90,7 @@ export function LogDemo({
 	const money = (m: number) => formatMinor(m, currency);
 
 	return (
-		<button
-			type="button"
-			onClick={() => onTry(example.text)}
-			className="group relative grid w-full gap-4 overflow-hidden rounded-panel border border-line bg-surface p-4 text-left sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,15rem)] sm:items-center"
-		>
+		<figure className="relative grid w-full gap-4 overflow-hidden rounded-panel border border-line bg-surface p-4 text-left sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,15rem)] sm:items-center">
 			<span
 				aria-hidden="true"
 				className={cn(
@@ -108,9 +98,11 @@ export function LogDemo({
 					TINTS.teal,
 				)}
 			/>
-			<span className="sr-only">
-				{t("Try logging by message: {text}", { text: example.text })}
-			</span>
+			<figcaption className="sr-only">
+				{t(
+					"You can type expenses like a text message, in English or Malay, and Spendid turns them into expenses.",
+				)}
+			</figcaption>
 
 			<span className="relative" aria-hidden="true">
 				<span className="flex flex-wrap items-center gap-2 text-[0.82rem] font-semibold text-ink-soft">
@@ -126,9 +118,6 @@ export function LogDemo({
 							<span className="ml-0.5 inline-block h-4 w-0.5 translate-y-0.5 animate-pulse bg-current" />
 						)}
 					</span>
-				</span>
-				<span className="mt-2 block text-[0.82rem] font-semibold text-ink-soft group-hover:text-ink">
-					{t("Tap to try this one")}
 				</span>
 			</span>
 
@@ -229,6 +218,6 @@ export function LogDemo({
 					)}
 				</AnimatePresence>
 			</span>
-		</button>
+		</figure>
 	);
 }

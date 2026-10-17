@@ -19,9 +19,9 @@ export const msF: Record<string, string> = {
 	"See these expenses": "Lihat perbelanjaan ini",
 	"Show fewer": "Tunjuk kurang",
 	"Show all {n} categories": "Tunjuk semua {n} kategori",
-	"Try logging by message: {text}": "Cuba catat melalui mesej: {text}",
+	"You can type expenses like a text message, in English or Malay, and Spendid turns them into expenses.":
+		"Anda boleh menaip perbelanjaan seperti mesej, dalam Bahasa Inggeris atau Melayu, dan Spendid menukarnya menjadi perbelanjaan.",
 	"Type it like a text": "Taip macam hantar mesej",
-	"Tap to try this one": "Ketik untuk cuba yang ini",
 	Ready: "Sedia",
 	Monday: "Isnin",
 	"Next: {name}, {date}": "Seterusnya: {name}, {date}",

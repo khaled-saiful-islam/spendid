@@ -299,7 +299,7 @@ export function AskWelcome({
 				<ul className="grid grid-cols-2 gap-3">
 					{tiles}
 					<li className="col-span-full">
-						<LogDemo currency={cur} onTry={onAsk} />
+						<LogDemo currency={cur} />
 					</li>
 				</ul>
 			</section>
