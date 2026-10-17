@@ -1,10 +1,11 @@
 import { formatMinor, type Me } from "@spendid/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { LogOut } from "lucide-react";
+import { Languages, LogOut, Wallet } from "lucide-react";
 import { LanguageSwitch } from "@/components/system/LanguageSwitch";
 import { buttonClass } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { dateLocale, t } from "@/i18n";
 import { authClient } from "@/lib/auth-client";
 import { METHODS } from "../onboarding/options";
@@ -66,19 +67,22 @@ export function MePage({ me }: { me: Me }) {
 				aria-labelledby="money-heading"
 				className="rounded-panel border border-line bg-surface p-5 sm:p-6"
 			>
-				<div className="flex items-center justify-between gap-3">
-					<h2 id="money-heading" className="text-[1.4rem] font-bold">
-						{t("Money settings")}
-					</h2>
-					<Link
-						to="/onboarding"
-						search={{ edit: true }}
-						className={buttonClass("ghost", "md", "border-2 border-line")}
-					>
-						{t("Change")}
-					</Link>
-				</div>
-				<dl className="mt-4 divide-y divide-line">
+				<SectionHeader
+					id="money-heading"
+					title={t("Money settings")}
+					icon={Wallet}
+					tint="lime"
+					action={
+						<Link
+							to="/onboarding"
+							search={{ edit: true }}
+							className={buttonClass("ghost", "md", "border-2 border-line")}
+						>
+							{t("Change")}
+						</Link>
+					}
+				/>
+				<dl className="mt-3 divide-y divide-line">
 					{rows.map(([label, value]) => (
 						<div
 							key={label}
@@ -95,9 +99,12 @@ export function MePage({ me }: { me: Me }) {
 				aria-labelledby="language-heading"
 				className="flex flex-wrap items-center justify-between gap-3 rounded-panel border border-line bg-surface p-5 sm:p-6"
 			>
-				<h2 id="language-heading" className="text-[1.4rem] font-bold">
-					{t("Language")}
-				</h2>
+				<SectionHeader
+					id="language-heading"
+					title={t("Language")}
+					icon={Languages}
+					tint="sky"
+				/>
 				<LanguageSwitch signedIn />
 			</section>
 

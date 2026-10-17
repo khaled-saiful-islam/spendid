@@ -6,6 +6,7 @@ import {
 import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EyeOff, Mail, Moon } from "lucide-react";
 import type { ReactNode } from "react";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { toast } from "@/components/ui/Toast";
 import { dateLocale, t } from "@/i18n";
 import { api } from "@/lib/http";
@@ -86,18 +87,15 @@ export function EmailSettings() {
 			aria-labelledby="email-heading"
 			className="rounded-panel border border-line bg-surface p-5 sm:p-6"
 		>
-			<h2
+			<SectionHeader
 				id="email-heading"
-				className="flex items-center gap-2 text-[1.4rem] font-bold"
-			>
-				<Mail className="size-6 text-plum-500" aria-hidden="true" />{" "}
-				{t("Emails")}
-			</h2>
-			<p className="mt-1 text-ink-soft">
-				{t(
+				title={t("Emails")}
+				icon={Mail}
+				tint="rose"
+				sub={t(
 					"Sign-in, security and account emails always come. Choose the rest.",
 				)}
-			</p>
+			/>
 			<div className="mt-3 divide-y divide-line">
 				{EMAIL_GROUPS.map((g) => (
 					<Toggle

@@ -3,6 +3,7 @@ import { Fingerprint, KeyRound, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { MaybeAlert } from "@/components/form/Alert";
 import { buttonClass } from "@/components/ui/Button";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { t } from "@/i18n";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/cn";
@@ -74,23 +75,17 @@ export function PasskeyPanel() {
 			aria-labelledby="lock-heading"
 			className="rounded-panel border border-line bg-surface p-5 sm:p-6"
 		>
-			<div className="flex items-start gap-4">
-				<span className="grid size-12 shrink-0 place-items-center rounded-full bg-plum-500/12 text-plum-500">
-					<Fingerprint className="size-6" aria-hidden="true" />
-				</span>
-				<div className="min-w-0 flex-1">
-					<h2 id="lock-heading" className="text-[1.4rem] font-bold">
-						{t("App lock")}
-					</h2>
-					<p className="mt-1 text-ink-soft">
-						{t(
-							"Open Spendid with your fingerprint, face or device PIN, so nobody can glance at your money.",
-						)}
-					</p>
-				</div>
-			</div>
+			<SectionHeader
+				id="lock-heading"
+				title={t("App lock")}
+				icon={Fingerprint}
+				tint="teal"
+				sub={t(
+					"Open Spendid with your fingerprint, face or device PIN, so nobody can glance at your money.",
+				)}
+			/>
 
-			<div className="mt-5 space-y-3">
+			<div className="mt-4 space-y-3">
 				<MaybeAlert tone={message?.tone ?? "success"} message={message?.text} />
 				{!isPending && passkeys.length > 0 && (
 					<ul className="space-y-2">

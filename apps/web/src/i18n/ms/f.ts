@@ -92,4 +92,8 @@ export const msF: Record<string, string> = {
 	"Saved as a PDF.": "Disimpan sebagai PDF.",
 	"Couldn't make the PDF. Try again.": "Tidak dapat membuat PDF. Cuba lagi.",
 	"Download PDF": "Muat turun PDF",
+	"Soonest first. Mark one paid when it goes out.":
+		"Paling hampir dahulu. Tandakan dibayar apabila ia keluar.",
+	"Tap one to change its amount, day or reminder.":
+		"Ketik satu untuk mengubah jumlah, hari atau peringatannya.",
 };

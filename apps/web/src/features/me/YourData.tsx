@@ -2,7 +2,7 @@ import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
 	Download,
-	FileArchive,
+	FileText,
 	LoaderCircle,
 	ShieldCheck,
 	Trash2,
@@ -11,6 +11,7 @@ import { type FormEvent, useState } from "react";
 import { MaybeAlert } from "@/components/form/Alert";
 import { Field } from "@/components/form/Field";
 import { buttonClass } from "@/components/ui/Button";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Sheet } from "@/components/ui/Sheet";
 import { t } from "@/i18n";
 import { ApiError, api } from "@/lib/http";
@@ -136,23 +137,20 @@ export function YourData() {
 			aria-labelledby="data-heading"
 			className="rounded-panel border border-line bg-surface p-5 sm:p-6"
 		>
-			<h2
+			<SectionHeader
 				id="data-heading"
-				className="flex items-center gap-2 text-[1.4rem] font-bold"
-			>
-				<ShieldCheck className="size-6 text-safe" aria-hidden="true" />{" "}
-				{t("Your data")}
-			</h2>
-			<p className="mt-1 text-ink-soft">
-				{t("It's yours. Take a full copy any time, or delete everything.")}
-			</p>
+				title={t("Your data")}
+				icon={ShieldCheck}
+				tint="amber"
+				sub={t("It's yours. Take a full copy any time, or delete everything.")}
+			/>
 
 			<div className="mt-4 flex flex-wrap items-center gap-3 rounded-tile bg-bg p-4">
-				<FileArchive
+				<FileText
 					className="size-8 shrink-0 text-plum-500"
 					aria-hidden="true"
 				/>
-				<div className="min-w-0 flex-1">
+				<div className="min-w-[12rem] flex-1">
 					<p className="font-semibold">{t("Download everything")}</p>
 					<p className="text-[0.9rem] text-ink-soft">
 						{latest?.status === "building"

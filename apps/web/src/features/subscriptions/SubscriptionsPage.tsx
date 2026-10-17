@@ -7,7 +7,17 @@ import {
 	toMinor,
 } from "@spendid/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { BellRing, Check, Plus, RotateCcw, Sparkles } from "lucide-react";
+import {
+	Archive,
+	BellRing,
+	CalendarClock,
+	Check,
+	ChevronRight,
+	Plus,
+	Repeat,
+	RotateCcw,
+	Sparkles,
+} from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { type FormEvent, useState } from "react";
 import { MaybeAlert } from "@/components/form/Alert";
@@ -15,6 +25,7 @@ import { Field } from "@/components/form/Field";
 import { SubmitButton } from "@/components/form/SubmitButton";
 import { buttonClass } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Sheet } from "@/components/ui/Sheet";
 import { toast } from "@/components/ui/Toast";
 import { t } from "@/i18n";
@@ -133,9 +144,13 @@ function ComingUp({
 
 	return (
 		<section aria-labelledby="coming-up" className="space-y-3">
-			<h2 id="coming-up" className="text-[1.6rem] font-bold">
-				{t("Coming up")}
-			</h2>
+			<SectionHeader
+				id="coming-up"
+				title={t("Coming up")}
+				icon={CalendarClock}
+				tint="amber"
+				sub={t("Soonest first. Mark one paid when it goes out.")}
+			/>
 			<ol className="space-y-2">
 				<AnimatePresence initial={false}>
 					{soonest.map((s, i) => {
@@ -225,32 +240,27 @@ function AllSubscriptions({
 }) {
 	return (
 		<section aria-labelledby="all-subs" className="space-y-3">
-			<h2 id="all-subs" className="text-[1.6rem] font-bold">
-				{t("All of them")}
-			</h2>
-			<ul className="grid gap-3 sm:grid-cols-2">
+			<SectionHeader
+				id="all-subs"
+				title={t("All of them")}
+				icon={Repeat}
+				tint="sky"
+				sub={t("Tap one to change its amount, day or reminder.")}
+			/>
+			<ul className="rounded-panel border border-line bg-surface p-2">
 				{data.active.map((s) => (
 					<li key={s.id}>
 						<button
 							type="button"
 							onClick={() => onEdit(s)}
-							className="flex h-full w-full items-start gap-3 rounded-panel border border-line bg-surface p-4 text-left transition-shadow hover:shadow-lift"
+							className="flex w-full items-center gap-3 rounded-tile px-2 py-2.5 text-left hover:bg-surface-2"
 						>
-							<BrandTile sub={s} />
-							<span className="min-w-0 flex-1 space-y-0.5">
+							<BrandTile sub={s} size="sm" />
+							<span className="min-w-0 flex-1">
 								<span className="block font-semibold break-words">
 									{s.name}
 								</span>
-								<span className="num block">
-									{t("{amount} {cycle}", {
-										amount: formatMinor(s.amountMinor, s.currency),
-										cycle: t(CYCLE_LABEL[s.cycle]),
-									})}
-								</span>
-								<span className="block text-[0.88rem] text-ink-soft">
-									{t("Next: {date}", { date: shortDay(s.nextDue) })}
-								</span>
-								<span className="block text-[0.88rem] text-ink-soft">
+								<span className="block text-[0.85rem] text-ink-soft">
 									{s.remindDays === 0
 										? t("Reminder on the day")
 										: s.remindDays === 1
@@ -258,6 +268,21 @@ function AllSubscriptions({
 											: t("Reminder {n} days before", { n: s.remindDays })}
 								</span>
 							</span>
+							<span
+								data-money
+								className="num shrink-0 text-right text-[0.92rem]"
+							>
+								<strong className="block">
+									{formatMinor(s.amountMinor, s.currency)}
+								</strong>
+								<span className="block text-[0.8rem] text-ink-soft">
+									{t(CYCLE_LABEL[s.cycle])}
+								</span>
+							</span>
+							<ChevronRight
+								className="size-4 shrink-0 text-ink-soft"
+								aria-hidden="true"
+							/>
 						</button>
 					</li>
 				))}
@@ -281,13 +306,12 @@ function Suggestions({
 			aria-labelledby="noticed"
 			className="space-y-3 rounded-panel border border-dashed border-plum-300 p-4 sm:p-5"
 		>
-			<h2
+			<SectionHeader
 				id="noticed"
-				className="flex items-center gap-2 text-[1.3rem] font-bold"
-			>
-				<Sparkles className="size-5 text-plum-500" aria-hidden="true" />{" "}
-				{t("Spendid noticed these repeat")}
-			</h2>
+				title={t("Spendid noticed these repeat")}
+				icon={Sparkles}
+				tint="teal"
+			/>
 			<ul className="space-y-2">
 				{data.suggestions.map((s) => (
 					<li key={s.merchant} className="flex flex-wrap items-center gap-3">
@@ -341,9 +365,12 @@ function Cancelled({ data }: { data: SubscriptionOverview }) {
 	);
 	return (
 		<section aria-labelledby="cancelled" className="space-y-3">
-			<h2 id="cancelled" className="text-[1.3rem] font-bold">
-				{t("Cancelled")}
-			</h2>
+			<SectionHeader
+				id="cancelled"
+				title={t("Cancelled")}
+				icon={Archive}
+				tint="slate"
+			/>
 			<p className="text-safe font-semibold">
 				{t("You're saving {amount} a month by cancelling these.", {
 					amount: formatMinor(saved, data.currency),
