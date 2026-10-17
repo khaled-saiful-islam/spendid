@@ -15,7 +15,12 @@ test.use({ storageState: stateFile("maya") });
 
 test("home shows today's safe-to-spend and Pip", async ({ page }) => {
 	await page.goto("/app");
-	await expect(page.getByText("Safe to spend today").first()).toBeVisible();
+	// The card has three states, depending on how today and the month are going.
+	await expect(
+		page
+			.getByText(/^(Safe to spend today|Over today's amount by|This month is over budget by)$/)
+			.first(),
+	).toBeVisible();
 	await expect(page.getByRole("img", { name: /Pip the pangolin/ }).first()).toBeVisible();
 });
 
