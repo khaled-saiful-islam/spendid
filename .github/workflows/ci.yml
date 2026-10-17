@@ -64,4 +64,5 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm test
+      # Same tests as `pnpm test`, with a coverage summary per package in the log.
+      - run: pnpm coverage

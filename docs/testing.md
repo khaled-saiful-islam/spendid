@@ -3,6 +3,7 @@
 | Command | What it runs | Where |
 |---|---|---|
 | `make test` | Unit + API tests (Vitest), against the dev database | Docker |
+| `make coverage` | The same tests with a coverage summary per package (CI runs this) | Docker |
 | `make typecheck` | TypeScript across every package | Docker |
 | `make check` | Biome lint + format check | Docker |
 | `make e2e` | Browser + accessibility tests at 390 px (phone) and 1280 px (desktop) | Host |

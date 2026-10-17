@@ -2,7 +2,7 @@
 COMPOSE := docker compose
 NODE_RUN := $(COMPOSE) run --rm --no-deps deps
 
-.PHONY: help env up down restart logs ps sh-api install check fix typecheck test e2e phone-url demo digests db-generate reset
+.PHONY: help env up down restart logs ps sh-api install check fix typecheck test coverage e2e phone-url demo digests db-generate reset
 
 help: ## Show commands
 	@grep -E '^[a-z0-9-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-10s %s\n", $$1, $$2}'
@@ -48,6 +48,9 @@ typecheck: ## Type-check every package
 
 test: ## Run unit + API tests
 	$(NODE_RUN) pnpm test
+
+coverage: ## Unit + API tests with a coverage summary per package
+	$(NODE_RUN) pnpm coverage
 
 phone-url: ## The address to open Spendid on a phone on the same Wi-Fi
 	@ip=$$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || hostname -I 2>/dev/null | awk '{print $$1}'); \
