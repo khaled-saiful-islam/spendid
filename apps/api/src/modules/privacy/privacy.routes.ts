@@ -37,10 +37,10 @@ export async function privacyRoutes(
 		const bytes = await deps.privacy.download(uid(req), id);
 		const day = new Date().toISOString().slice(0, 10);
 		return reply
-			.header("Content-Type", "application/zip")
+			.header("Content-Type", "application/pdf")
 			.header(
 				"Content-Disposition",
-				`attachment; filename="spendid-${day}.zip"`,
+				`attachment; filename="spendid-${day}.pdf"`,
 			)
 			.header("Cache-Control", "private, no-store")
 			.send(bytes);

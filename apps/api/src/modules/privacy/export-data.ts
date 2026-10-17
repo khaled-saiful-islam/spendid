@@ -23,7 +23,6 @@ import {
 import type { FileStore } from "@spendid/server";
 import { minorDigits } from "@spendid/shared";
 import { asc, eq, or, sql } from "drizzle-orm";
-import { strToU8, type Zippable, zip } from "fflate";
 
 const EXT: Record<string, string> = {
 	"image/jpeg": "jpg",
@@ -57,41 +56,18 @@ export function toCsv(rows: (string | number | null)[][]): string {
 	return rows.map((r) => r.map(cell).join(",")).join("\r\n");
 }
 
-const json = (value: unknown) => strToU8(JSON.stringify(value, null, 2));
-
-const README = `Your Spendid data
-=================
-
-account.json         Your account, settings and email choices
-transactions.csv     Every expense (open in Excel, Numbers or Google Sheets)
-transactions.json    The same, with every field
-categories.json      Categories you made
-budgets.json         Monthly limits
-goals.json           Savings goals and every deposit
-receipts.json        What was read from each receipt
-receipts/            Your receipt photos
-warranties.json      Warranty reminders
-wishlist.json        Impulse-pause items and what you decided
-check-ins.json       Nightly check-ins
-ask-chats.json       Your saved Ask Spendid chats
-subscriptions.json   Subscriptions and regular bills you added
-family.json          Your family circle: who, how you're related, what each side shares
-splits.json          Bills you split
-shops.json           Shop names Spendid learned and their usual category
-ai-usage.json        How much AI you used per month (counts only)
-
-Amounts are in each expense's own currency and in your home currency.
-`;
+export interface ReceiptPhoto {
+	id: string;
+	mime: string;
+	ext: string;
+	bytes: Uint8Array;
+}
 
 /**
- * Builds the "download everything" zip for one person. Only their own rows are read; for
- * family links, the other person appears by name and relation only.
+ * Everything one person has put into Spendid, for "download everything". Only their own
+ * rows are read; for family links, the other person appears by name and relation only.
  */
-export async function buildArchive(
-	db: Db,
-	store: FileStore,
-	userId: string,
-): Promise<Uint8Array> {
+export async function gatherExport(db: Db, store: FileStore, userId: string) {
 	const [account] = await db
 		.select({
 			name: user.name,
@@ -135,14 +111,15 @@ export async function buildArchive(
 		.select()
 		.from(receipt)
 		.where(eq(receipt.userId, userId));
-	// Photos are already compressed: store them as they are instead of spending CPU on them.
-	const files: Zippable = {};
+	const photos: ReceiptPhoto[] = [];
 	for (const r of receipts) {
 		try {
-			files[`receipts/${r.id}.${EXT[r.mime] ?? "bin"}`] = [
-				new Uint8Array(await store.get(r.fileKey)),
-				{ level: 0 },
-			];
+			photos.push({
+				id: r.id,
+				mime: r.mime,
+				ext: EXT[r.mime] ?? "bin",
+				bytes: new Uint8Array(await store.get(r.fileKey)),
+			});
 		} catch {
 			// A missing file shouldn't stop the rest of the export.
 		}
@@ -184,81 +161,75 @@ export async function buildArchive(
 		.where(eq(aiUsage.userId, userId))
 		.groupBy(sql`1`, aiUsage.feature);
 
-	const entries: Zippable = {
-		"README.txt": strToU8(README),
-		"account.json": json({
-			...account,
-			profile: settings ?? null,
-			emails: emails ?? null,
-			exportedAt: new Date().toISOString(),
-		}),
-		"transactions.csv": strToU8(
-			toCsv([
-				[
-					"Date",
-					"Shop",
-					"Category",
-					"Amount",
-					"Currency",
-					"Home amount",
-					"Home currency",
-					"Note",
-					"Added by",
-				],
-				...live.map((t) => [
-					t.occurredAt.toISOString(),
-					t.merchant,
-					t.category,
-					major(t.amountMinor, t.currency),
-					t.currency,
-					major(t.homeAmountMinor, t.homeCurrency),
-					t.homeCurrency,
-					t.note,
-					t.source,
-				]),
+	return {
+		exportedAt: new Date(),
+		account: account ?? null,
+		settings: settings ?? null,
+		emails: emails ?? null,
+		transactions: txs,
+		live,
+		csv: toCsv([
+			[
+				"Date",
+				"Shop",
+				"Category",
+				"Amount",
+				"Currency",
+				"Home amount",
+				"Home currency",
+				"Note",
+				"Added by",
+			],
+			...live.map((t) => [
+				t.occurredAt.toISOString(),
+				t.merchant,
+				t.category,
+				major(t.amountMinor, t.currency),
+				t.currency,
+				major(t.homeAmountMinor, t.homeCurrency),
+				t.homeCurrency,
+				t.note,
+				t.source,
 			]),
-		),
-		"transactions.json": json(txs),
-		"categories.json": json(
-			await db.select().from(category).where(eq(category.userId, userId)),
-		),
-		"budgets.json": json(
-			await db.select().from(budget).where(eq(budget.userId, userId)),
-		),
-		"goals.json": json(
-			goals.map((g) => ({
-				...g,
-				deposits: deposits.filter((d) => d.goalId === g.id),
-			})),
-		),
-		"receipts.json": json(receipts.map(({ fileKey: _f, ...r }) => r)),
-		"warranties.json": json(
-			await db.select().from(warranty).where(eq(warranty.userId, userId)),
-		),
-		"wishlist.json": json(
-			await db.select().from(wish).where(eq(wish.userId, userId)),
-		),
-		"check-ins.json": json(
-			await db.select().from(checkIn).where(eq(checkIn.userId, userId)),
-		),
-		"subscriptions.json": json(
-			await db
-				.select()
-				.from(subscription)
-				.where(eq(subscription.userId, userId)),
-		),
-		"ask-chats.json": json(
-			await db
-				.select({
-					title: askThread.title,
-					messages: askThread.messages,
-					createdAt: askThread.createdAt,
-					updatedAt: askThread.updatedAt,
-				})
-				.from(askThread)
-				.where(eq(askThread.userId, userId)),
-		),
-		"family.json": json({
+		]),
+		categories: await db
+			.select()
+			.from(category)
+			.where(eq(category.userId, userId)),
+		budgets: await db
+			.select({
+				category: category.name,
+				monthlyLimitMinor: budget.monthlyLimitMinor,
+			})
+			.from(budget)
+			.innerJoin(category, eq(category.id, budget.categoryId))
+			.where(eq(budget.userId, userId)),
+		goals: goals.map((g) => ({
+			...g,
+			deposits: deposits.filter((d) => d.goalId === g.id),
+		})),
+		receipts: receipts.map(({ fileKey: _f, ...r }) => r),
+		photos,
+		warranties: await db
+			.select()
+			.from(warranty)
+			.where(eq(warranty.userId, userId)),
+		wishes: await db.select().from(wish).where(eq(wish.userId, userId)),
+		checkIns: await db.select().from(checkIn).where(eq(checkIn.userId, userId)),
+		subscriptions: await db
+			.select()
+			.from(subscription)
+			.where(eq(subscription.userId, userId)),
+		chats: await db
+			.select({
+				title: askThread.title,
+				messages: askThread.messages,
+				createdAt: askThread.createdAt,
+				updatedAt: askThread.updatedAt,
+			})
+			.from(askThread)
+			.where(eq(askThread.userId, userId)),
+		family: {
 			connections: connections.map((c) => ({
 				with: c.otherName,
 				relation: c.relation,
@@ -271,27 +242,18 @@ export async function buildArchive(
 				level: g.level,
 				paused: g.pausedAt !== null,
 			})),
-		}),
-		"splits.json": json(
-			await db.select().from(split).where(eq(split.ownerId, userId)),
-		),
-		"shops.json": json(
-			await db
-				.select({
-					name: merchant.name,
-					categoryId: merchant.categoryId,
-					uses: merchant.uses,
-				})
-				.from(merchant)
-				.where(eq(merchant.userId, userId)),
-		),
-		"ai-usage.json": json(usage),
-		...files,
+		},
+		splits: await db.select().from(split).where(eq(split.ownerId, userId)),
+		shops: await db
+			.select({
+				name: merchant.name,
+				categoryId: merchant.categoryId,
+				uses: merchant.uses,
+			})
+			.from(merchant)
+			.where(eq(merchant.userId, userId)),
+		aiUsage: usage,
 	};
-	// The async zip compresses big files on worker threads, so a large export doesn't stall the API.
-	return new Promise((resolve, reject) =>
-		zip(entries, { level: 6 }, (err, data) =>
-			err ? reject(err) : resolve(data),
-		),
-	);
 }
+
+export type ExportData = Awaited<ReturnType<typeof gatherExport>>;

@@ -158,8 +158,8 @@ export const msA: Record<string, string> = {
 	Expense: "Perbelanjaan",
 	"Expense removed.": "Perbelanjaan dibuang.",
 	Expenses: "Perbelanjaan",
-	"Expenses as a spreadsheet, receipt photos, goals, family and settings, in one zip.":
-		"Perbelanjaan dalam hamparan, gambar resit, matlamat, keluarga dan tetapan, dalam satu fail zip.",
+	"Expenses, receipt photos, goals, family and settings in one PDF, with a spreadsheet and the full data attached inside.":
+		"Perbelanjaan, gambar resit, matlamat, keluarga dan tetapan dalam satu PDF, dengan hamparan dan data penuh dilampirkan di dalamnya.",
 	"Expenses heard": "Perbelanjaan yang didengar",
 	Family: "Keluarga",
 	"Family pulse": "Denyut keluarga",

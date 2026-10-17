@@ -7,7 +7,6 @@ import { type FormEvent, useState } from "react";
 import { MaybeAlert } from "@/components/form/Alert";
 import { Field } from "@/components/form/Field";
 import { SubmitButton } from "@/components/form/SubmitButton";
-import { TINTS } from "@/components/money/CategoryIcon";
 import { buttonClass } from "@/components/ui/Button";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Sheet } from "@/components/ui/Sheet";

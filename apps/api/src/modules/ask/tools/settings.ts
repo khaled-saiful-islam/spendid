@@ -128,7 +128,7 @@ export function settingsTools(
 		{
 			name: "propose_export",
 			description:
-				"The person wants a copy of all their data (expenses as a spreadsheet, receipts, goals, family, settings). Prepares the download; an email says when it's ready.",
+				"The person wants a copy of all their data (one PDF of expenses, receipts, goals, family and settings, with a spreadsheet attached). Prepares the download; an email says when it's ready.",
 			schema: z.object({}),
 		},
 	);

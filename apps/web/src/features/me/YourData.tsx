@@ -167,7 +167,7 @@ export function YourData() {
 										}),
 									})
 								: t(
-										"Expenses as a spreadsheet, receipt photos, goals, family and settings, in one zip.",
+										"Expenses, receipt photos, goals, family and settings in one PDF, with a spreadsheet and the full data attached inside.",
 									)}
 					</p>
 				</div>

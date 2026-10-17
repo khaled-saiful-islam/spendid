@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "@/components/ui/Toast";
 import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
+import { pngToPdf, saveFile } from "@/lib/image-pdf";
 import { monthName, wrappedQuery } from "@/lib/insights-api";
 import { drawShareCard } from "./shareCard";
 import { buildSlides } from "./slides";
@@ -31,24 +32,31 @@ function ShareSlide({ month, onDone }: { month: string; onDone: () => void }) {
 		};
 	}, [data, hide]);
 
-	const fileName = `spendid-${month}.png`;
+	const fileName = `spendid-${month}`;
+	const title = t("My {month} on Spendid", { month: monthName(month) });
+	const canShareFile =
+		blob !== null &&
+		typeof navigator.canShare === "function" &&
+		navigator.canShare({
+			files: [new File([blob], `${fileName}.png`, { type: "image/png" })],
+		});
+
+	/** Sharing to other apps sends the picture: that's what they accept. */
 	async function share() {
 		if (!blob) return;
-		const file = new File([blob], fileName, { type: "image/png" });
-		if (navigator.canShare?.({ files: [file] })) {
-			await navigator
-				.share({
-					files: [file],
-					title: t("My {month} on Spendid", { month: monthName(month) }),
-				})
-				.catch(() => undefined);
-			return;
+		const file = new File([blob], `${fileName}.png`, { type: "image/png" });
+		await navigator.share({ files: [file], title }).catch(() => undefined);
+	}
+
+	/** Downloads are PDFs. */
+	async function download() {
+		if (!blob) return;
+		try {
+			saveFile(await pngToPdf(blob, title), `${fileName}.pdf`);
+			toast(t("Saved as a PDF."));
+		} catch {
+			toast(t("Couldn't make the PDF. Try again."));
 		}
-		const a = document.createElement("a");
-		a.href = url ?? "";
-		a.download = fileName;
-		a.click();
-		toast(t("Saved the image."));
 	}
 
 	return (
@@ -73,18 +81,26 @@ function ShareSlide({ month, onDone }: { month: string; onDone: () => void }) {
 				<EyeOff className="size-5" aria-hidden="true" /> {t("Hide amounts")}
 			</label>
 			<div className="flex flex-wrap justify-center gap-2">
+				{canShareFile && (
+					<button
+						type="button"
+						onClick={() => void share()}
+						className="inline-flex h-12 items-center gap-2 rounded-full bg-marigold px-6 font-semibold text-plum-900 shadow-coin"
+					>
+						<Share2 className="size-5" aria-hidden="true" /> {t("Share")}
+					</button>
+				)}
 				<button
 					type="button"
-					onClick={() => void share()}
+					onClick={() => void download()}
 					disabled={!blob}
-					className="inline-flex h-12 items-center gap-2 rounded-full bg-marigold px-6 font-semibold text-plum-900 shadow-coin disabled:opacity-50"
+					className={
+						canShareFile
+							? "inline-flex h-12 items-center gap-2 rounded-full border-2 border-white/40 px-5 font-semibold disabled:opacity-50"
+							: "inline-flex h-12 items-center gap-2 rounded-full bg-marigold px-6 font-semibold text-plum-900 shadow-coin disabled:opacity-50"
+					}
 				>
-					{"share" in navigator ? (
-						<Share2 className="size-5" aria-hidden="true" />
-					) : (
-						<Download className="size-5" aria-hidden="true" />
-					)}
-					{"share" in navigator ? t("Share") : t("Save image")}
+					<Download className="size-5" aria-hidden="true" /> {t("Download PDF")}
 				</button>
 				<button
 					type="button"

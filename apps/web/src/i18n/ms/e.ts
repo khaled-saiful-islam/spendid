@@ -274,8 +274,8 @@ export const msE: Record<string, string> = {
 		"E-mel yang tiba pada waktu itu menunggu sehingga ia tamat.",
 	"Expense deleted.": "Perbelanjaan dipadam.",
 	"Expense updated.": "Perbelanjaan dikemas kini.",
-	"Expenses as a spreadsheet, receipts, goals, family and settings, in one file. An email says when it's ready.":
-		"Perbelanjaan dalam hamparan, resit, matlamat, keluarga dan tetapan, dalam satu fail. E-mel akan memberitahu apabila sedia.",
+	"Expenses, receipts, goals, family and settings in one PDF, with a spreadsheet attached. An email says when it's ready.":
+		"Perbelanjaan, resit, matlamat, keluarga dan tetapan dalam satu PDF, dengan hamparan dilampirkan. E-mel akan memberitahu apabila sedia.",
 	"Fix an expense": "Betulkan perbelanjaan",
 	"From {day}.": "Dari {day}.",
 	"Invite ready. Send the link.": "Jemputan sedia. Hantar pautannya.",

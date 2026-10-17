@@ -89,4 +89,7 @@ export const msF: Record<string, string> = {
 	"1 bill this month": "1 bil bulan ini",
 	"{n} bills this month": "{n} bil bulan ini",
 	"Earlier date": "Tarikh lebih awal",
+	"Saved as a PDF.": "Disimpan sebagai PDF.",
+	"Couldn't make the PDF. Try again.": "Tidak dapat membuat PDF. Cuba lagi.",
+	"Download PDF": "Muat turun PDF",
 };

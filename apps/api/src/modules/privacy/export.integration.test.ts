@@ -4,11 +4,11 @@ import { join } from "node:path";
 import { category, createDb, transaction } from "@spendid/db";
 import { createFileStore } from "@spendid/server";
 import { and, eq, isNull } from "drizzle-orm";
-import { strFromU8, unzipSync } from "fflate";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createPerson, testDbUrl } from "../../../test/db";
 import { seedCategories } from "../../scripts/categories";
-import { buildArchive, toCsv } from "./archive";
+import { gatherExport, toCsv } from "./export-data";
+import { pdfText, renderReport } from "./report";
 
 const url = testDbUrl();
 
@@ -19,7 +19,15 @@ describe("toCsv", () => {
 	});
 });
 
-describe.skipIf(!url)("data export archive (real database)", () => {
+describe("pdfText", () => {
+	it("keeps accents and money symbols, drops emoji, marks other scripts", () => {
+		expect(pdfText("Café “Kopi” €3")).toBe("Café “Kopi” €3");
+		expect(pdfText("🏝️ Bali trip")).toBe("Bali trip");
+		expect(pdfText("面包 shop")).toBe("?? shop");
+	});
+});
+
+describe.skipIf(!url)("data export PDF (real database)", () => {
 	const database = createDb(url ?? "postgres://unused", 2);
 	const db = database.db;
 	let root: string;
@@ -60,27 +68,22 @@ describe.skipIf(!url)("data export archive (real database)", () => {
 		await database.close();
 	});
 
-	it("holds every file, only the owner's spending, and a CSV that survives commas and quotes", async () => {
+	it("is a PDF with the owner's spending attached as a spreadsheet, and nobody else's", async () => {
 		const store = createFileStore({
 			root,
 			keyBase64: Buffer.alloc(32, 7).toString("base64"),
 		});
-		const files = unzipSync(await buildArchive(db, store, maya));
+		const pdf = await renderReport(await gatherExport(db, store, maya), {
+			compress: false,
+		});
+		const text = pdf.toString("latin1");
 
-		expect(Object.keys(files)).toEqual(
-			expect.arrayContaining([
-				"README.txt",
-				"account.json",
-				"transactions.csv",
-				"transactions.json",
-				"goals.json",
-				"family.json",
-			]),
-		);
-		const csv = strFromU8(files["transactions.csv"] ?? new Uint8Array());
-		const json = strFromU8(files["transactions.json"] ?? new Uint8Array());
-		expect(csv).toContain('"Mamak, ""corner"" stall"');
-		expect(csv).toContain("12.50");
-		expect(`${csv}${json}`).not.toContain("Sam's secret shop");
+		expect(text.startsWith("%PDF-")).toBe(true);
+		expect(text).toContain("/EmbeddedFile");
+		expect(text).toContain("spendid-expenses-");
+		expect(text).toContain("spendid-data-");
+		expect(text).toContain('"Mamak, ""corner"" stall"');
+		expect(text).toContain("12.50");
+		expect(text).not.toContain("Sam's secret shop");
 	});
 });

@@ -24,14 +24,15 @@
 		"bullmq": "6.3.15",
 		"drizzle-orm": "0.45.4",
 		"fastify": "5.12.7",
-		"fflate": "0.8.3",
 		"ioredis": "6.0.0",
 		"jsonrepair": "3.13.3",
 		"langchain": "1.5.18",
+		"pdfkit": "0.20.2",
 		"zod": "4.6.7"
 	},
 	"devDependencies": {
 		"@types/node": "26.6.5",
+		"@types/pdfkit": "0.17.6",
 		"pino-pretty": "13.2.0",
 		"postgres": "3.4.9",
 		"tsx": "4.23.15",

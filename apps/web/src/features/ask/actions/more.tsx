@@ -211,7 +211,7 @@ function ExportBody() {
 			<Title>{t("All your data")}</Title>
 			<Note>
 				{t(
-					"Expenses as a spreadsheet, receipts, goals, family and settings, in one file. An email says when it's ready.",
+					"Expenses, receipts, goals, family and settings in one PDF, with a spreadsheet attached. An email says when it's ready.",
 				)}
 			</Note>
 		</Row>

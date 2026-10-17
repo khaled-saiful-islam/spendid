@@ -7,7 +7,8 @@ import type { Auth } from "../../auth/auth";
 import type { SendEmail } from "../../email/outbox";
 import { AppError, badRequest, notFound } from "../../http/app-error";
 import type { Notifier } from "../../notify/notifier";
-import { buildArchive } from "./archive";
+import { gatherExport } from "./export-data";
+import { renderReport } from "./report";
 
 const EXPORT_HOURS = 24;
 const EXPORT_COOLDOWN_MS = 5 * 60_000;
@@ -82,11 +83,11 @@ export function createPrivacyService(deps: {
 		log: FastifyBaseLogger,
 	): Promise<void> {
 		try {
-			const zip = await buildArchive(db, store, userId);
-			const fileKey = await store.put(userId, Buffer.from(zip));
+			const pdf = await renderReport(await gatherExport(db, store, userId));
+			const fileKey = await store.put(userId, pdf);
 			await db
 				.update(dataExport)
-				.set({ status: "ready", fileKey, bytes: zip.byteLength })
+				.set({ status: "ready", fileKey, bytes: pdf.byteLength })
 				.where(eq(dataExport.id, id));
 			await deps
 				.publish(userId, { type: "export", id, status: "ready" })
@@ -102,7 +103,7 @@ export function createPrivacyService(deps: {
 					subject: "Your Spendid data is ready",
 					preview: `Download it within ${EXPORT_HOURS} hours.`,
 					heading: "Your export is ready",
-					body: `Everything you've put into Spendid is in one file: expenses as a spreadsheet, receipts, goals, family and settings. Sign in to download it. The file is deleted after ${EXPORT_HOURS} hours.`,
+					body: `Everything you've put into Spendid is in one PDF: expenses, receipts, goals, family and settings, with a spreadsheet and the full data attached inside. Sign in to download it. The file is deleted after ${EXPORT_HOURS} hours.`,
 					action: "Download my data",
 					url: `${appUrl}/app/me`,
 					footnote: "If you didn't ask for this, change your password.",

@@ -159,6 +159,20 @@ test("insights: tap a day for its expenses, tap a category for its list", async 
 	await expect(page.getByRole("combobox").first()).not.toHaveValue("");
 });
 
+test("Money Wrapped downloads its card as a PDF", async ({ page }) => {
+	await page.goto("/app/wrapped");
+	const next = page.getByRole("button", { name: "Next" });
+	const download = page.getByRole("button", { name: "Download PDF" });
+	for (let i = 0; i < 15 && !(await download.isVisible()); i++) await next.click();
+	const saved = page.waitForEvent("download");
+	await download.click();
+	const file = await saved;
+	expect(file.suggestedFilename()).toMatch(/^spendid-\d{4}-\d{2}\.pdf$/);
+	const path = await file.path();
+	const { readFile } = await import("node:fs/promises");
+	expect((await readFile(path)).subarray(0, 5).toString()).toBe("%PDF-");
+});
+
 test("a deleted chat stays deleted after a reload", async ({ page, isMobile }) => {
 	const id = crypto.randomUUID();
 	await page.request.put(`/api/ask/threads/${id}`, {
