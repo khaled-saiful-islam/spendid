@@ -5,6 +5,7 @@ import {
 	type ChartSpec,
 	formatMinor,
 	minorDigits,
+	SUBSCRIPTION_BRANDS,
 	SYSTEM_CATEGORIES,
 	toMinor,
 	type VoiceDraft,
@@ -112,6 +113,24 @@ export function closestWord(
 }
 
 const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+const CYCLE_WORDS = ["weekly", "monthly", "quarterly", "yearly"] as const;
+
+/** Today in the person's time zone, YYYY-MM-DD. */
+function localToday(timeZone: string): string {
+	return new Intl.DateTimeFormat("en-CA", { timeZone }).format(new Date());
+}
+
+/** The next date with this day of the month, today included (31st → last day in short months). */
+export function nextDayOfMonth(today: string, day: number): string {
+	const [y, m, d] = today.split("-").map(Number) as [number, number, number];
+	const pick = (yy: number, mm: number) => {
+		const last = new Date(Date.UTC(yy, mm, 0)).getUTCDate();
+		return `${yy}-${String(mm).padStart(2, "0")}-${String(Math.min(day, last)).padStart(2, "0")}`;
+	};
+	const thisMonth = pick(y, m);
+	if (Number(thisMonth.slice(8)) >= d) return thisMonth;
+	return m === 12 ? pick(y + 1, 1) : pick(y, m + 1);
+}
 
 /** A category word the model may garble; described with every allowed slug. */
 const CategoryWord = z.string().describe(`One of: ${SLUGS.join(", ")}`);
@@ -538,6 +557,58 @@ export function createAskTools(
 		},
 	);
 
+	const proposeSubscription = tool(
+		async (input) => {
+			const amountMinor = toMinor(input.amount, cur);
+			if (amountMinor <= 0) return "The amount must be above zero. Ask for it.";
+			const brand = SUBSCRIPTION_BRANDS.find(
+				(b) =>
+					b.key ===
+					closestWord(
+						input.name.replace(/\s+/g, ""),
+						SUBSCRIPTION_BRANDS.map((x) => x.key),
+					),
+			);
+			const slug =
+				brand?.slug ?? closestWord(input.category, SLUGS) ?? "subscriptions";
+			const category =
+				ctx.categories.find((c) => c.slug === slug) ??
+				ctx.categories.find((c) => c.slug === "subscriptions");
+			if (!category) return unknownCategory();
+			const today = localToday(ctx.timeZone);
+			const nextDue = input.dayOfMonth
+				? nextDayOfMonth(today, input.dayOfMonth)
+				: today;
+			return (
+				offer({
+					kind: "subscription",
+					name: capitalise(input.name.trim().slice(0, 60)),
+					brand: brand?.key ?? null,
+					amountMinor,
+					currency: cur,
+					cycle:
+						(closestWord(
+							input.cycle,
+							CYCLE_WORDS,
+						) as (typeof CYCLE_WORDS)[number]) ?? "monthly",
+					nextDue,
+					categoryId: category.id,
+				}) ?? NOT_SAVED
+			);
+		},
+		{
+			name: "propose_subscription",
+			description: `Prepare a subscription or regular bill to track (e.g. "Netflix 54.90 every month on the 5th", "gym 35 weekly"). Amount in ${cur}. cycle: weekly, monthly, quarterly or yearly. dayOfMonth (1-31) is the next payment day if known. Spendid keeps it aside and reminds the person before each payment.`,
+			schema: z.object({
+				name: z.string().min(1).max(60),
+				amount: z.number().positive(),
+				cycle: z.string().describe("weekly, monthly, quarterly or yearly"),
+				dayOfMonth: z.number().int().min(1).max(31).nullish(),
+				category: CategoryWord.nullish(),
+			}),
+		},
+	);
+
 	const proposeWish = tool(
 		async (input) => {
 			const priceMinor = toMinor(input.price, cur);
@@ -573,6 +644,7 @@ export function createAskTools(
 		proposeGoalDeposit,
 		proposeBudget,
 		proposeWish,
+		proposeSubscription,
 	];
 }
 
@@ -589,4 +661,5 @@ export const STEP_LABELS: Record<string, string> = {
 	propose_goal_deposit: "Finding your goal…",
 	propose_budget: "Preparing your limit…",
 	propose_wish: "Preparing the impulse pause…",
+	propose_subscription: "Preparing your subscription…",
 };

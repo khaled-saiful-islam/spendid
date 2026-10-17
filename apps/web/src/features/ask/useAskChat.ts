@@ -20,7 +20,7 @@ export interface ChatMessage {
 }
 
 const MAX_KEPT = ASK_THREAD_MAX_MESSAGES;
-const HISTORY_SENT = 8;
+const HISTORY_SENT = 6;
 const SAVE_DELAY_MS = 600;
 
 function load(key: string): ChatMessage[] {
@@ -84,6 +84,50 @@ function toStored(messages: ChatMessage[]): StoredAskMessage[] {
 }
 
 /**
+ * What an earlier answer looked like to the model. Answers that came with cards say which tool
+ * made them, so the model learns that a card needs a tool call, not just the words.
+ */
+const CLAIMS_A_CARD =
+	/\b(i'?ve prepared|i have prepared|prepared (a|your|the)|ready to confirm|tap (the|a) card|saya (telah )?sediakan)\b/i;
+
+/**
+ * Finished turns worth sending back. An answer that claimed a card but made none (and the
+ * question before it) is left out, so the model can't learn to talk instead of act.
+ */
+function usefulHistory(messages: ChatMessage[]): ChatMessage[] {
+	const done = messages.filter((m) => m.status === "done" && m.text);
+	const keep: ChatMessage[] = [];
+	for (const [i, m] of done.entries()) {
+		const next = done[i + 1];
+		const fake = (x: ChatMessage | undefined) =>
+			x?.role === "assistant" &&
+			!x.drafts?.length &&
+			!x.actions?.length &&
+			CLAIMS_A_CARD.test(x.text);
+		if (fake(m) || (m.role === "user" && fake(next))) continue;
+		keep.push(m);
+	}
+	return keep;
+}
+
+function historyText(m: ChatMessage): string {
+	const kinds = [
+		...(m.drafts?.length ? ["propose_expenses"] : []),
+		...(m.actions ?? []).map((a) =>
+			a.action.kind === "deposit"
+				? "propose_goal_deposit"
+				: `propose_${a.action.kind}`,
+		),
+	];
+	if (kinds.length)
+		return `${m.text}\n(This answer's card came from calling ${[...new Set(kinds)].join(", ")}.)`.slice(
+			0,
+			4000,
+		);
+	return m.text.slice(0, 1500);
+}
+
+/**
  * One Ask Spendid conversation. It's cached on this device for an instant start and saved to
  * the person's account, so New chat keeps earlier chats in History on every device.
  */
@@ -129,10 +173,9 @@ export function useAskChat(userId: string) {
 		async (question: string) => {
 			const q = question.trim();
 			if (!q || busy) return;
-			const history = messages
-				.filter((m) => m.status === "done" && m.text)
+			const history = usefulHistory(messages)
 				.slice(-HISTORY_SENT)
-				.map((m) => ({ role: m.role, text: m.text }));
+				.map((m) => ({ role: m.role, text: historyText(m) }));
 			const now = Date.now();
 			setMessages((ms) => [
 				...ms,

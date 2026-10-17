@@ -10,6 +10,7 @@ import {
 	createMiddleware,
 	HumanMessage,
 	modelCallLimitMiddleware,
+	SystemMessage,
 } from "langchain";
 import type { CategoryRepository } from "../money/categories.repository";
 import type { PlanRepository } from "../money/plan.repository";
@@ -40,7 +41,7 @@ How to answer:
 - "This month" means from the 1st of this month to today; "last week" means the previous Monday to Sunday.
 - When a comparison or trend helps, call show_chart once with numbers you already fetched.
 - If the person describes purchases to log ("lunch 12 and grab 9"), call propose_expenses.
-- To create things, use the propose tools: a new savings goal (propose_goal), money into or out of a goal (propose_goal_deposit), a monthly limit for a category (propose_budget), or parking a tempting purchase for 48 hours (propose_wish). Each shows a card the person confirms. Nothing is saved until they tap it, so never say it's created or saved; say it's ready to confirm.
+- To create things, use the propose tools: a new savings goal (propose_goal), money into or out of a goal (propose_goal_deposit), a monthly limit for a category (propose_budget), parking a tempting purchase for 48 hours (propose_wish), or a subscription or regular bill to track and be reminded about (propose_subscription). Each shows a card the person confirms. Nothing is saved until they tap it, so never say it's created or saved; say it's ready to confirm.
 - If something needed is missing (like a goal's target amount), ask one short question instead of guessing.
 - When the person wonders whether to buy something ("should I buy…", "I want…"), give a short honest view using their numbers, then call propose_wish so they can park it for 48 hours.
 - Call each propose tool once per item. After it returns, answer in words; don't call it again.
@@ -51,6 +52,10 @@ How to answer:
 			: ""
 	}`;
 }
+
+/** An answer that talks about a card or something prepared (it should come with a tool call). */
+const CLAIMS_A_CARD =
+	/\b(i'?ve prepared|i have prepared|prepared (a|your|the)|ready to confirm|tap (the|a) card|confirm (it )?below|saya (telah )?sediakan|sedia untuk disahkan)\b/i;
 
 /**
  * One agent run per question. Tools and limits are built per request, so the person's id
@@ -120,16 +125,17 @@ export function createAskAgent(deps: AgentDeps) {
 			},
 		});
 
+		const prompt = systemPrompt(
+			today,
+			weekday,
+			timeZone,
+			homeCurrency,
+			p?.locale ?? "en",
+		);
 		const agent = createAgent({
 			model: llm,
 			tools,
-			systemPrompt: systemPrompt(
-				today,
-				weekday,
-				timeZone,
-				homeCurrency,
-				p?.locale ?? "en",
-			),
+			systemPrompt: prompt,
 			middleware: [
 				tokenGuard,
 				modelCallLimitMiddleware({ runLimit: 6, exitBehavior: "end" }),
@@ -146,54 +152,110 @@ export function createAskAgent(deps: AgentDeps) {
 		let answer = "";
 		// Update events can replay earlier messages; show each tool step once.
 		const seenCalls = new Set<string>();
-		// Each model call is several graph steps; the model-call limit (6) is the real cap.
-		const stream = await agent
-			.withConfig({ recursionLimit: 40 })
-			.stream(
-				{ messages },
-				{ streamMode: "updates", signal, recursionLimit: 40 },
-			);
-		try {
-			for await (const update of stream) {
-				for (const [, value] of Object.entries(
-					update as Record<string, { messages?: unknown[] }>,
-				)) {
-					for (const m of value?.messages ?? []) {
-						if (!(m instanceof AIMessage)) continue;
-						for (const call of m.tool_calls ?? []) {
-							const key =
-								call.id ?? `${call.name}:${JSON.stringify(call.args)}`;
-							if (seenCalls.has(key)) continue;
-							seenCalls.add(key);
-							yield {
-								type: "step",
-								label: STEP_LABELS[call.name] ?? "Thinking…",
-							};
+
+		/** One agent run; streams steps and charts, and leaves the final words in `answer`. */
+		async function* run(
+			msgs: (HumanMessage | AIMessage)[],
+		): AsyncGenerator<AskEvent> {
+			// Each model call is several graph steps; the model-call limit (6) is the real cap.
+			const stream = await agent
+				.withConfig({ recursionLimit: 40 })
+				.stream(
+					{ messages: msgs },
+					{ streamMode: "updates", signal, recursionLimit: 40 },
+				);
+			try {
+				for await (const update of stream) {
+					for (const [, value] of Object.entries(
+						update as Record<string, { messages?: unknown[] }>,
+					)) {
+						for (const m of value?.messages ?? []) {
+							if (!(m instanceof AIMessage)) continue;
+							for (const call of m.tool_calls ?? []) {
+								const key =
+									call.id ?? `${call.name}:${JSON.stringify(call.args)}`;
+								if (seenCalls.has(key)) continue;
+								seenCalls.add(key);
+								yield {
+									type: "step",
+									label: STEP_LABELS[call.name] ?? "Thinking…",
+								};
+							}
+							if (
+								!m.tool_calls?.length &&
+								typeof m.content === "string" &&
+								m.content.trim()
+							)
+								answer = m.content.trim();
 						}
-						if (
-							!m.tool_calls?.length &&
-							typeof m.content === "string" &&
-							m.content.trim()
-						)
-							answer = m.content.trim();
+					}
+					while (side.charts.length) {
+						const chart = side.charts.shift();
+						if (chart) yield { type: "chart", chart };
 					}
 				}
-				while (side.charts.length) {
-					const chart = side.charts.shift();
-					if (chart) yield { type: "chart", chart };
-				}
+			} catch (error) {
+				// Hitting the model-call cap ends the run early; keep whatever was prepared.
+				if (!(error instanceof Error && /call limit/i.test(error.message)))
+					throw error;
 			}
-		} catch (error) {
-			// Hitting the model-call cap ends the run early; keep whatever was prepared.
-			if (!(error instanceof Error && /call limit/i.test(error.message)))
-				throw error;
-			answer ||=
-				side.actions.length || side.drafts.length
-					? p?.locale === "ms"
-						? "Ini yang saya sediakan. Semak dan sahkan di bawah."
-						: "Here's what I prepared. Check it and confirm below."
-					: "";
 		}
+
+		yield* run(messages);
+		// Said "prepared" but called no tool, so nothing would appear. One more model call that
+		// must call a tool; only the propose tools may run from it.
+		if (
+			side.actions.length === 0 &&
+			side.drafts.length === 0 &&
+			CLAIMS_A_CARD.test(answer)
+		) {
+			await deps.guard.assertAllowed(userId);
+			const forced = repairToolCalls(
+				(await llm
+					.bindTools(tools, { tool_choice: "required" })
+					.invoke(
+						[
+							new SystemMessage(prompt),
+							...messages,
+							new AIMessage(answer),
+							new HumanMessage(
+								"No card appeared, because no tool was called. Call the right propose tool now with the details.",
+							),
+						],
+						{ signal },
+					)) as AIMessage,
+			);
+			await deps.guard.record(userId, {
+				feature: "ask",
+				model: deps.ilmu.model,
+				inputTokens: forced.usage_metadata?.input_tokens ?? 0,
+				outputTokens: forced.usage_metadata?.output_tokens ?? 0,
+			});
+			for (const call of forced.tool_calls ?? []) {
+				const found = tools.find((t) => t.name === call.name);
+				if (!found || !call.name.startsWith("propose_")) continue;
+				yield { type: "step", label: STEP_LABELS[call.name] ?? "Thinking…" };
+				await (found as unknown as { invoke: (a: unknown) => Promise<unknown> })
+					.invoke(call.args)
+					.catch(() => undefined);
+			}
+			// Never claim a card that isn't there.
+			if (side.actions.length === 0 && side.drafts.length === 0)
+				answer =
+					p?.locale === "ms"
+						? "Maaf, saya belum dapat menyediakannya. Cuba sebut sekali lagi dengan jumlahnya."
+						: "Sorry, I couldn't prepare that one. Try saying it again with the amount.";
+		}
+		// Never echo the bookkeeping notes the app adds to earlier answers.
+		answer = answer
+			.replace(/\(This answer's card came from[^)]*\)/gi, "")
+			.replace(/\(No card appeared[^)]*\)/gi, "")
+			.trim();
+		if (!answer && (side.actions.length || side.drafts.length))
+			answer =
+				p?.locale === "ms"
+					? "Ini yang saya sediakan. Semak dan sahkan di bawah."
+					: "Here's what I prepared. Check it and confirm below.";
 		if (side.drafts.length) yield { type: "drafts", drafts: side.drafts };
 		if (side.actions.length) yield { type: "actions", actions: side.actions };
 		// Words arrive in small pieces so the answer appears to be typed, without waiting for every token.

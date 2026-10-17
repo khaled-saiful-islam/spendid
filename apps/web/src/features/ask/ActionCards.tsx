@@ -23,7 +23,9 @@ import {
 	refreshMoney,
 	summaryQuery,
 } from "@/lib/money-api";
+import { subscriptionsApi } from "@/lib/subscriptions-api";
 import { GoalJar } from "../plan/GoalJar";
+import { BrandTile, CYCLE_LABEL } from "../subscriptions/brand";
 
 export type ActionStatus = "ready" | "done" | "dismissed";
 export interface ActionItem {
@@ -75,6 +77,7 @@ function ActionCard({
 			await run(action);
 			await refreshMoney(queryClient);
 			await queryClient.invalidateQueries({ queryKey: ["wishes"] });
+			await queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
 			buzz("success");
 			toast(doneMessage(action));
 			onResolve("done");
@@ -94,6 +97,8 @@ function ActionCard({
 			<DepositBody action={action} done={done} />
 		) : action.kind === "budget" ? (
 			<BudgetBody action={action} />
+		) : action.kind === "subscription" ? (
+			<SubscriptionBody action={action} />
 		) : (
 			<WishBody action={action} />
 		);
@@ -187,6 +192,17 @@ async function run(action: AskAction): Promise<void> {
 			categoryId: action.categoryId,
 			monthlyLimitMinor: action.limitMinor,
 		});
+	} else if (action.kind === "subscription") {
+		await subscriptionsApi.create({
+			name: action.name,
+			brand: action.brand,
+			amountMinor: action.amountMinor,
+			currency: action.currency,
+			cycle: action.cycle,
+			nextDue: action.nextDue,
+			remindDays: 3,
+			categoryId: action.categoryId,
+		});
 	} else {
 		await delightApi.addWish({
 			name: action.name,
@@ -201,6 +217,7 @@ function cardTitle(a: AskAction): string {
 	if (a.kind === "deposit")
 		return a.amountMinor > 0 ? t("Add to a goal") : t("Take out of a goal");
 	if (a.kind === "budget") return t("Monthly limit");
+	if (a.kind === "subscription") return t("Subscription to track");
 	return t("Impulse pause");
 }
 
@@ -212,6 +229,7 @@ function confirmLabel(a: AskAction): string {
 			? t("Add {amount}", { amount: money(a.amountMinor) })
 			: t("Take out {amount}", { amount: money(a.amountMinor) });
 	if (a.kind === "budget") return t("Set limit");
+	if (a.kind === "subscription") return t("Track it");
 	return t("Start the {n}-hour wait", { n: WISH_COOLDOWN_HOURS });
 }
 
@@ -229,6 +247,10 @@ function doneMessage(a: AskAction): string {
 				});
 	if (a.kind === "budget")
 		return t("Limit set for {name}.", { name: t(a.categoryName) });
+	if (a.kind === "subscription")
+		return t("{name} added. You'll get a reminder before each payment.", {
+			name: a.name,
+		});
 	return t("{name} is waiting. Decide in {n} hours.", {
 		name: a.name,
 		n: WISH_COOLDOWN_HOURS,
@@ -393,6 +415,44 @@ function WishBody({
 							h: WISH_COOLDOWN_HOURS,
 						})
 					: t("Wait {h} hours; most urges pass.", { h: WISH_COOLDOWN_HOURS })}
+			</p>
+		</Row>
+	);
+}
+
+function SubscriptionBody({
+	action,
+}: {
+	action: Extract<AskAction, { kind: "subscription" }>;
+}) {
+	return (
+		<Row
+			visual={
+				<BrandTile sub={{ brand: action.brand, name: action.name }} size="lg" />
+			}
+		>
+			<p className="font-display text-[1.3rem] font-bold break-words">
+				{action.name}
+			</p>
+			<p className="num font-semibold">
+				{t("{amount} {cycle}", {
+					amount: formatMinor(action.amountMinor, action.currency),
+					cycle: t(CYCLE_LABEL[action.cycle]),
+				})}
+			</p>
+			<p className="text-[0.92rem] text-ink-soft">
+				{t(
+					"Next payment {date}. Kept aside each month, with a reminder 3 days before.",
+					{
+						date: new Date(`${action.nextDue}T12:00`).toLocaleDateString(
+							dateLocale(),
+							{
+								day: "numeric",
+								month: "short",
+							},
+						),
+					},
+				)}
 			</p>
 		</Row>
 	);

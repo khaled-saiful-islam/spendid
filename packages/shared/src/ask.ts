@@ -61,6 +61,16 @@ export const AskActionSchema = z.discriminatedUnion("kind", [
 		spentMinor: z.number().int(),
 	}),
 	z.object({
+		kind: z.literal("subscription"),
+		name: z.string().max(60),
+		brand: z.string().nullable(),
+		amountMinor: z.number().int().positive(),
+		currency: z.string().length(3),
+		cycle: z.enum(["weekly", "monthly", "quarterly", "yearly"]),
+		nextDue: z.string(),
+		categoryId: z.uuid(),
+	}),
+	z.object({
 		kind: z.literal("wish"),
 		name: z.string().max(80),
 		priceMinor: z.number().int().positive(),

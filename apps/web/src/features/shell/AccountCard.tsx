@@ -2,12 +2,13 @@ import { PIP_LEVELS } from "@spendid/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
-	ChevronsUpDown,
+	ChevronUp,
 	Eye,
 	EyeOff,
 	Flame,
 	LogOut,
 	Moon,
+	Settings,
 	Sun,
 	UserRound,
 } from "lucide-react";
@@ -141,6 +142,7 @@ export function AccountCard() {
 			<button
 				type="button"
 				onClick={() => setOpen((o) => !o)}
+				title={t("Profile, settings and sign out")}
 				aria-expanded={open}
 				aria-controls={menuId}
 				className="bg-scales group block w-full rounded-panel bg-plum-900 p-3.5 text-left text-plum-50 shadow-lift transition-transform hover:-translate-y-0.5 dark:bg-plum-800"
@@ -151,12 +153,8 @@ export function AccountCard() {
 						progress={progress}
 						streak={streak?.current ?? 0}
 					/>
-					<span className="flex items-center gap-1 rounded-full bg-white/10 px-2 py-1 text-[0.72rem] font-bold text-marigold">
+					<span className="rounded-full bg-white/10 px-2 py-1 text-[0.72rem] font-bold text-marigold">
 						{t("Lv {n}", { n: look.level.level })}
-						<ChevronsUpDown
-							className="size-4 text-plum-200 transition-colors group-hover:text-marigold"
-							aria-hidden="true"
-						/>
 					</span>
 				</span>
 				<span className="mt-2.5 block text-[1.02rem] leading-snug font-bold break-words">
@@ -167,6 +165,21 @@ export function AccountCard() {
 					{streak && streak.current > 0
 						? `, ${t("{n}-day streak", { n: streak.current })}`
 						: ""}
+				</span>
+				<span
+					className={cn(
+						"mt-3 flex items-center gap-2 rounded-tile bg-white/10 px-3 py-2 text-[0.88rem] font-semibold text-plum-50 transition-colors group-hover:bg-white/16",
+					)}
+				>
+					<Settings className="size-4 text-marigold" aria-hidden="true" />
+					<span className="flex-1">{t("Profile & settings")}</span>
+					<ChevronUp
+						className={cn(
+							"size-4 text-plum-200 transition-transform",
+							open ? "rotate-0" : "rotate-180",
+						)}
+						aria-hidden="true"
+					/>
 				</span>
 			</button>
 		</div>

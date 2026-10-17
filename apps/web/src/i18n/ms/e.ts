@@ -202,4 +202,10 @@ export const msE: Record<string, string> = {
 		"Tidak dapat membuka PDF itu. Cuba foto atau tangkapan skrin resit.",
 	"Pick a photo, screenshot or PDF of your receipt instead.":
 		"Pilih foto, tangkapan skrin atau PDF resit anda.",
+	"Next payment {date}. Kept aside each month, with a reminder 3 days before.":
+		"Bayaran seterusnya {date}. Diketepikan setiap bulan, dengan peringatan 3 hari sebelum.",
+	"Profile & settings": "Profil & tetapan",
+	"Profile, settings and sign out": "Profil, tetapan dan log keluar",
+	"Subscription to track": "Langganan untuk dijejak",
+	"Track it": "Jejak",
 };
