@@ -218,4 +218,16 @@ export const msE: Record<string, string> = {
 		"Beri saya semangat tentang wang saya bulan ini.",
 	"Answers use only your own data. Chats are saved to your account, and only you can see them.":
 		"Jawapan hanya menggunakan data anda sendiri. Sembang disimpan dalam akaun anda, dan hanya anda boleh melihatnya.",
+	Needs: "Keperluan",
+	Wants: "Kehendak",
+	"Kept for savings": "Diketepikan untuk simpanan",
+	"Not spent yet": "Belum dibelanjakan",
+	"Everything else": "Lain-lain",
+	"Where your money flowed": "Ke mana wang anda mengalir",
+	"{amount} came in. Tap any part to see it.":
+		"{amount} masuk. Ketik mana-mana bahagian untuk melihatnya.",
+	"{name}: {amount}, {pct}% of what came in.":
+		"{name}: {amount}, {pct}% daripada yang masuk.",
+	"Needs {needs}, wants {wants}, savings {saved}, not spent yet {free}.":
+		"Keperluan {needs}, kehendak {wants}, simpanan {saved}, belum dibelanjakan {free}.",
 };

@@ -202,6 +202,12 @@ export function createInsightsService(db: Db) {
 				count: sum?.count ?? 0,
 				activeDays: daily.length,
 				noSpendDays,
+				flow: cats.map((c) => ({
+					name: c.name,
+					kind: c.kind,
+					tint: c.tint,
+					minor: Number(c.minor),
+				})),
 				categories: cats.slice(0, 5).map((c) => ({
 					name: c.name,
 					icon: c.icon,

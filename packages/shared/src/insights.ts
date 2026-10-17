@@ -56,6 +56,13 @@ export interface Wrapped {
 	activeDays: number;
 	noSpendDays: number;
 	categories: WrappedCategory[];
+	/** Every category spent in this month with its kind, biggest first (the money-flow chart). */
+	flow: {
+		name: string;
+		kind: "need" | "want" | "saving";
+		tint: string;
+		minor: number;
+	}[];
 	biggestDay: { day: string; minor: number; count: number } | null;
 	topMerchant: { name: string; visits: number; minor: number } | null;
 	busiestWeekday: { weekday: number; minor: number } | null;

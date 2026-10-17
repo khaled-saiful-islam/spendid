@@ -13,7 +13,9 @@ import {
 	thisMonth,
 	wrappedQuery,
 } from "@/lib/insights-api";
+import { summaryQuery } from "@/lib/money-api";
 import { Heatmap } from "./Heatmap";
+import { MoneyFlow } from "./MoneyFlow";
 import { Subscriptions } from "./Subscriptions";
 
 function WrappedTeaser({ month }: { month: string }) {
@@ -62,6 +64,20 @@ function WrappedTeaser({ month }: { month: string }) {
 	);
 }
 
+/** The money-flow chart for a month (income and savings from the current plan). */
+function FlowSection({ month }: { month: string }) {
+	const { data } = useQuery(wrappedQuery(month));
+	const { data: summary } = useQuery(summaryQuery);
+	if (!data || !summary) return null;
+	return (
+		<MoneyFlow
+			data={data}
+			incomeMinor={summary.incomeMinor}
+			reservedMinor={summary.reservedMinor}
+		/>
+	);
+}
+
 /** Insights: the month as a heatmap, its Wrapped story, and subscriptions found in spending. */
 export function InsightsView() {
 	const [month, setMonth] = useState(thisMonth());
@@ -94,6 +110,7 @@ export function InsightsView() {
 				</button>
 			</div>
 			<WrappedTeaser month={month} />
+			<FlowSection month={month} />
 			<section className="rounded-panel border border-line bg-surface p-4 sm:p-5">
 				{heat.data ? (
 					<Heatmap data={heat.data} />
