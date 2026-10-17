@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { wordsToDigits } from "./number-words";
 import { parseQuickEntry, type QuickEntry } from "./quick-entry";
 
 /** One expense heard in a voice note, ready to review before saving. */
@@ -63,9 +64,41 @@ export function splitSpokenEntries(text: string): string[] {
 	return merged.filter((p) => /\d/.test(p));
 }
 
+/** Greetings, filler and "today" words people say around items, in English and Malay. */
+const FILLER =
+	/\b(hi|hello|hey|hai|helo|assalamualaikum|salam|good (morning|afternoon|evening)|selamat (pagi|petang|malam)|um+|uh+|erm*|ah+|eh+|hmm+|okay|ok|so|well|like|actually|basically|yeah|right|lah|kan|tu|ni|today|tonight|this (morning|afternoon|evening)|hari ini|tadi)\b/gi;
+/** "I spent", "paid", "saya belanja": how the spending is said, not what it was on. */
+const SPENDING_WORDS =
+	/\b((i|we|saya|aku|kami)\s+)?(spent|spend|paid|pay|bought|buy|got|had|belanja|bayar|beli|habis)\b/gi;
+/** Little words left hanging at either end once the rest is gone ("in grab", "for the gym"). */
+const EDGE_WORDS =
+	"on|in|at|for|from|to|the|a|an|kat|di|untuk|dekat|pada|dari|ke";
+const LEADING = new RegExp(`^((${EDGE_WORDS})\\s+)+`, "i");
+const TRAILING = new RegExp(`(\\s+(${EDGE_WORDS}))+$`, "i");
+
+/** The shop or item from a spoken piece: "hi I spent in grab" → "Grab". */
+export function cleanSpokenDescription(description: string): string {
+	const cleaned = description
+		.replace(FILLER, " ")
+		.replace(SPENDING_WORDS, " ")
+		.replace(/[.,!?]+/g, " ")
+		.replace(/\s+/g, " ")
+		.trim()
+		.replace(LEADING, "")
+		.replace(TRAILING, "")
+		.trim();
+	return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+}
+
+/** Whether a phrase names any amount (in digits or spoken words): no amount, nothing to log. */
+export function hasSpokenAmount(text: string): boolean {
+	return /\d/.test(wordsToDigits(text));
+}
+
 /** Fallback read of a transcript: split, then parse each piece like typed shorthand. */
 export function quickReadSpoken(text: string): QuickEntry[] {
 	return splitSpokenEntries(text)
 		.map(parseQuickEntry)
-		.filter((e) => e.amount !== null && e.amount > 0);
+		.filter((e) => e.amount !== null && e.amount > 0)
+		.map((e) => ({ ...e, description: cleanSpokenDescription(e.description) }));
 }

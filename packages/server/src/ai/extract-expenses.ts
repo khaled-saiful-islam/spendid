@@ -42,6 +42,8 @@ Rules:
 - Split bills: amount is the whole bill, yourShare is what the speaker paid, splitWith is the other person.
 - "yesterday" / "semalam" means daysAgo 1. Otherwise 0.
 - Never invent amounts. Skip anything without an amount. The person may mix English and Malay.
+- Ignore greetings, small talk and filler ("hi", "hello", "um", "so", "okay", "I spent", "saya belanja"). The description is only the shop or item ("Grab", "Lunch"), never "Hi" or "I spent".
+- If nothing was bought, return an empty list.
 Example: "teh tarik 3 and nasi lemak 8 50" -> Teh tarik 3 (food), Nasi lemak 8.50 (food).`;
 
 export interface ExtractionResult {

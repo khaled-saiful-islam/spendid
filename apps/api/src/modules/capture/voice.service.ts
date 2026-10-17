@@ -10,6 +10,7 @@ import {
 import {
 	type Category,
 	formatMinor,
+	hasSpokenAmount,
 	type QuickEntry,
 	quickReadSpoken,
 	toMinor,
@@ -155,6 +156,10 @@ export function createVoiceService(deps: Deps) {
 					"We didn't catch any words. Try again a little closer to the mic.",
 				);
 
+			// No amount anywhere ("Hi.", small talk): nothing to log, so no AI call. The app
+			// carries such a phrase into the next one as context.
+			if (!hasSpokenAmount(heard.text))
+				return { transcript: heard.text, drafts: [], readBy: "ai" };
 			const digits = wordsToDigits(heard.text);
 			try {
 				const result = await deps.extract(digits, home, earlier);
