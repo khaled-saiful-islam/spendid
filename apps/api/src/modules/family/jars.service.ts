@@ -204,15 +204,21 @@ export function createJarsService(deps: {
 				throw badRequest("Only the jar's owner can take money out.");
 
 			const saved = await db.transaction(async (tx) => {
+				// Checked in the update itself, so who-gave-what always adds up to the balance.
 				const [row] = await tx
 					.update(goal)
-					.set({
-						savedMinor: sql`greatest(0, ${goal.savedMinor} + ${amountMinor})`,
-					})
-					.where(eq(goal.id, goalId))
+					.set({ savedMinor: sql`${goal.savedMinor} + ${amountMinor}` })
+					.where(
+						and(
+							eq(goal.id, goalId),
+							sql`${goal.savedMinor} + ${amountMinor} >= 0`,
+						),
+					)
 					.returning({ savedMinor: goal.savedMinor });
+				if (!row)
+					throw badRequest("You can't take out more than the jar holds.");
 				await tx.insert(goalDeposit).values({ goalId, userId, amountMinor });
-				return row?.savedMinor ?? 0;
+				return row.savedMinor;
 			});
 
 			const me = await repo.contact(userId);
@@ -223,7 +229,7 @@ export function createJarsService(deps: {
 			);
 			const reached =
 				saved >= found.goal.targetMinor &&
-				found.goal.savedMinor < found.goal.targetMinor;
+				saved - amountMinor < found.goal.targetMinor;
 			const message = reached
 				? `${jar} is full! 🎉`
 				: amountMinor > 0

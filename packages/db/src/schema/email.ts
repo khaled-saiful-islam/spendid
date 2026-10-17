@@ -26,5 +26,8 @@ export const emailLog = pgTable(
 		createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
 		sentAt: timestamp({ withTimezone: true }),
 	},
-	(t) => [index("email_log_created_idx").on(t.createdAt)],
+	(t) => [
+		index("email_log_created_idx").on(t.createdAt),
+		index("email_log_user_idx").on(t.userId),
+	],
 );

@@ -14,6 +14,7 @@ import { and, desc, eq, ilike, isNull, or, type SQL, sql } from "drizzle-orm";
 import { tool } from "langchain";
 import { z } from "zod";
 import { recurringFor } from "../insights/charges";
+import { onLocalDays } from "../money/local-days";
 import type { PlanRepository } from "../money/plan.repository";
 import type { SummaryService } from "../money/summary.service";
 
@@ -160,8 +161,12 @@ export function createAskTools(
 		const out: SQL[] = [
 			eq(transaction.userId, ctx.userId),
 			isNull(transaction.deletedAt),
-			sql`${localDay} >= ${input.from}::date`,
-			sql`${localDay} <= ${input.to}::date`,
+			onLocalDays(
+				transaction.occurredAt,
+				ctx.timeZone,
+				input.from,
+				sql`${input.to}::date + 1`,
+			),
 		];
 		if (input.category)
 			out.push(

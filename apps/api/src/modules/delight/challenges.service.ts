@@ -19,6 +19,7 @@ import {
 import { and, desc, eq, gte, isNull, lte, or, sql } from "drizzle-orm";
 import { badRequest, notFound } from "../../http/app-error";
 import { localParts } from "../../notify/notifier";
+import { onLocalDays } from "../money/local-days";
 
 const MAX_ACTIVE = 2;
 const roundTo = (minor: number, step: number) =>
@@ -64,8 +65,12 @@ export function createChallengeService(db: Db) {
 					and(
 						eq(transaction.userId, userId),
 						isNull(transaction.deletedAt),
-						sql`${localDay} >= ${start}`,
-						sql`${localDay} <= ${end}`,
+						onLocalDays(
+							transaction.occurredAt,
+							timeZone,
+							start,
+							sql`${end}::date + 1`,
+						),
 					),
 				)
 				// By position: the day expression carries its own time-zone parameter.
@@ -99,18 +104,13 @@ export function createChallengeService(db: Db) {
 		return [...byDay.values()];
 	}
 
-	async function view(
+	/** Judges a challenge from days already read (days outside its window are ignored). */
+	function view(
 		row: Row,
-		timeZone: string,
 		today: string,
 		currency: string,
-	): Promise<ChallengeView> {
-		const days = await daysFor(
-			row.userId,
-			timeZone,
-			row.startDay,
-			row.endDay < today ? row.endDay : today,
-		);
+		days: ChallengeDay[],
+	): ChallengeView {
 		return {
 			id: row.id,
 			kind: row.kind as ChallengeKind,
@@ -130,18 +130,40 @@ export function createChallengeService(db: Db) {
 		};
 	}
 
-	/** Suggested caps from the last four weeks: a little under the usual. */
-	async function suggestions(userId: string, timeZone: string, today: string) {
-		const from = new Date(Date.parse(`${today}T00:00:00Z`) - 28 * 86_400_000)
+	/** A won challenge is settled: show it without reading its days again. */
+	function wonView(row: Row, currency: string): ChallengeView {
+		return {
+			id: row.id,
+			kind: row.kind as ChallengeKind,
+			targetMinor: row.targetMinor,
+			currency,
+			start: row.startDay,
+			end: row.endDay,
+			gaveUp: false,
+			result: { status: "won", days: [], usedMinor: null },
+		};
+	}
+
+	const fourWeeksBefore = (today: string) =>
+		new Date(Date.parse(`${today}T00:00:00Z`) - 28 * 86_400_000)
 			.toISOString()
 			.slice(0, 10);
-		const days = await daysFor(userId, timeZone, from, today);
-		const food = days.reduce((n, d) => n + (d.bySlug.food?.minor ?? 0), 0);
-		const flexible = days.reduce((n, d) => n + d.minor, 0);
+
+	/** Suggested caps from the last four weeks: a little under the usual. */
+	function suggestionsFrom(days: ChallengeDay[], today: string) {
+		const from = fourWeeksBefore(today);
+		const recent = days.filter((d) => d.day >= from && d.day <= today);
+		const food = recent.reduce((n, d) => n + (d.bySlug.food?.minor ?? 0), 0);
+		const flexible = recent.reduce((n, d) => n + d.minor, 0);
 		return {
 			eatOutWeekMinor: roundTo((food / 4) * 0.8, 1_000),
 			dailyMinor: roundTo((flexible / 28) * 0.85, 500),
 		};
+	}
+
+	async function suggestions(userId: string, timeZone: string, today: string) {
+		const days = await daysFor(userId, timeZone, fourWeeksBefore(today), today);
+		return suggestionsFrom(days, today);
 	}
 
 	return {
@@ -158,10 +180,20 @@ export function createChallengeService(db: Db) {
 				)
 				.orderBy(desc(challenge.createdAt))
 				.limit(30);
+			// One read of daily spending covers every open challenge and the suggestions.
+			const open = rows.filter((r) => r.outcome === null);
+			const from = [fourWeeksBefore(today), ...open.map((r) => r.startDay)]
+				.sort()
+				.at(0);
+			const days = await daysFor(userId, timeZone, from ?? today, today);
 			const active: ChallengeView[] = [];
 			const won: ChallengeView[] = [];
 			for (const row of rows) {
-				const v = await view(row, timeZone, today, currency);
+				if (row.outcome === "won") {
+					won.push(wonView(row, currency));
+					continue;
+				}
+				const v = view(row, today, currency, days);
 				if (row.outcome === null && v.result.status !== "active") {
 					// Decided now: remember it, so it isn't judged again.
 					await db
@@ -180,7 +212,7 @@ export function createChallengeService(db: Db) {
 				today,
 				active,
 				won: won.slice(0, 12),
-				suggested: await suggestions(userId, timeZone, today),
+				suggested: suggestionsFrom(days, today),
 			};
 		},
 
@@ -227,7 +259,13 @@ export function createChallengeService(db: Db) {
 				return inserted;
 			});
 			if (!row) throw new Error("challenge insert returned nothing");
-			return view(row, timeZone, today, currency);
+			const days = await daysFor(
+				userId,
+				timeZone,
+				row.startDay,
+				row.endDay < today ? row.endDay : today,
+			);
+			return view(row, today, currency, days);
 		},
 
 		async giveUp(userId: string, id: string): Promise<void> {

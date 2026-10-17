@@ -20,6 +20,7 @@ import {
 } from "drizzle-orm";
 import { recurringFor } from "../modules/insights/charges";
 import type { InsightsService } from "../modules/insights/insights.service";
+import { onLocalDays } from "../modules/money/local-days";
 import type { SummaryService } from "../modules/money/summary.service";
 import type { SubscriptionService } from "../modules/subscriptions/subscriptions.service";
 import { localParts, type Notifier } from "./notifier";
@@ -75,13 +76,11 @@ export function createDigests(deps: {
 	): Promise<void> {
 		const weekStart = addDays(today, -7);
 		const prevStart = addDays(today, -14);
-		const localDay = sql`(${transaction.occurredAt} at time zone ${timeZone})::date`;
 		const range = (from: string, to: string) =>
 			and(
 				eq(transaction.userId, userId),
 				isNull(transaction.deletedAt),
-				sql`${localDay} >= ${from}::date`,
-				sql`${localDay} < ${to}::date`,
+				onLocalDays(transaction.occurredAt, timeZone, from, to),
 			);
 		const total = sql<string>`coalesce(sum(${transaction.homeAmountMinor}), 0)`;
 		const [[week], [prev], [top], summary] = await Promise.all([

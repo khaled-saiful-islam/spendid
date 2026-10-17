@@ -7,6 +7,7 @@ import {
 	transaction,
 } from "@spendid/db";
 import { and, desc, eq, gte, isNull, lt, ne, sql } from "drizzle-orm";
+import { onLocalDays } from "../modules/money/local-days";
 import { monthBounds } from "../modules/money/summary.service";
 import type { Notifier } from "./notifier";
 
@@ -40,7 +41,6 @@ export function createMoneyAlerts(deps: { db: Db; notifier: Notifier }) {
 			.limit(1);
 		if (!limit || limit.minor <= 0) return;
 		const bounds = await monthBounds(db, timeZone);
-		const localDay = sql`(${transaction.occurredAt} at time zone ${timeZone})::date`;
 		const [{ spent } = { spent: "0" }] = await db
 			.select({
 				spent: sql<string>`coalesce(sum(${transaction.homeAmountMinor}), 0)`,
@@ -51,8 +51,12 @@ export function createMoneyAlerts(deps: { db: Db; notifier: Notifier }) {
 					eq(transaction.userId, userId),
 					eq(transaction.categoryId, categoryId),
 					isNull(transaction.deletedAt),
-					sql`${localDay} >= ${bounds.monthStart}::date`,
-					sql`${localDay} < ${bounds.nextMonth}::date`,
+					onLocalDays(
+						transaction.occurredAt,
+						timeZone,
+						bounds.monthStart,
+						bounds.nextMonth,
+					),
 				),
 			);
 		const used = Number(spent) / limit.minor;

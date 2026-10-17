@@ -51,7 +51,10 @@ export const receipt = pgTable(
 			.defaultNow()
 			.$onUpdate(() => new Date()),
 	},
-	(t) => [index("receipt_user_status_idx").on(t.userId, t.status, t.createdAt)],
+	(t) => [
+		index("receipt_user_status_idx").on(t.userId, t.status, t.createdAt),
+		index("receipt_transaction_idx").on(t.transactionId),
+	],
 );
 
 /** One line on a receipt. `itemKey` groups the same product across receipts (price memory). */
@@ -96,5 +99,8 @@ export const warranty = pgTable(
 		endsOn: date({ mode: "string" }).notNull(),
 		createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
 	},
-	(t) => [index("warranty_user_ends_idx").on(t.userId, t.endsOn)],
+	(t) => [
+		index("warranty_user_ends_idx").on(t.userId, t.endsOn),
+		index("warranty_transaction_idx").on(t.transactionId),
+	],
 );

@@ -35,5 +35,9 @@ export const auditLog = pgTable(
 		detail: jsonb(),
 		createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
 	},
-	(t) => [index("audit_created_idx").on(t.createdAt)],
+	(t) => [
+		index("audit_created_idx").on(t.createdAt),
+		index("audit_actor_idx").on(t.actorId),
+		index("audit_target_idx").on(t.targetUserId),
+	],
 );

@@ -57,7 +57,10 @@ export const familyInvite = pgTable(
 		revokedAt: timestamp({ withTimezone: true }),
 		createdAt: createdAt(),
 	},
-	(t) => [index("family_invite_inviter_idx").on(t.inviterId, t.createdAt)],
+	(t) => [
+		index("family_invite_inviter_idx").on(t.inviterId, t.createdAt),
+		index("family_invite_accepted_idx").on(t.acceptedBy),
+	],
 );
 
 /** Two people who both agreed to be in each other's circle. `relation` is the requester's view. */
@@ -82,6 +85,7 @@ export const connection = pgTable(
 				sql`greatest(${t.requesterId}, ${t.addresseeId})`,
 			)
 			.where(sql`${t.endedAt} is null`),
+		index("connection_requester_idx").on(t.requesterId),
 		index("connection_addressee_idx").on(t.addresseeId),
 	],
 );
@@ -162,7 +166,10 @@ export const goalDeposit = pgTable(
 		amountMinor: bigint({ mode: "number" }).notNull(),
 		createdAt: createdAt(),
 	},
-	(t) => [index("goal_deposit_goal_idx").on(t.goalId, t.createdAt)],
+	(t) => [
+		index("goal_deposit_goal_idx").on(t.goalId, t.createdAt),
+		index("goal_deposit_user_idx").on(t.userId),
+	],
 );
 
 /**

@@ -53,6 +53,7 @@ export const category = pgTable(
 			sql`coalesce(${t.userId}, '')`,
 			t.slug,
 		),
+		index("category_user_idx").on(t.userId),
 	],
 );
 
@@ -91,6 +92,8 @@ export const transaction = pgTable(
 			t.id.desc(),
 		),
 		index("transaction_user_category_idx").on(t.userId, t.categoryId),
+		// Deleting a custom category (or an account's categories) finds its expenses fast.
+		index("transaction_category_idx").on(t.categoryId),
 	],
 );
 
@@ -107,7 +110,10 @@ export const budget = pgTable(
 		monthlyLimitMinor: bigint({ mode: "number" }).notNull(),
 		updatedAt: updatedAt(),
 	},
-	(t) => [primaryKey({ columns: [t.userId, t.categoryId] })],
+	(t) => [
+		primaryKey({ columns: [t.userId, t.categoryId] }),
+		index("budget_category_idx").on(t.categoryId),
+	],
 );
 
 /** A savings goal. Amounts are in the owner's home currency. */

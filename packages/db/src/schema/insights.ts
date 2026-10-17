@@ -41,6 +41,7 @@ export const merchant = pgTable(
 	},
 	(t) => [
 		uniqueIndex("merchant_user_key_idx").on(t.userId, t.key),
+		index("merchant_category_idx").on(t.categoryId),
 		index("merchant_embedding_idx").using(
 			"hnsw",
 			t.embedding.op("vector_cosine_ops"),

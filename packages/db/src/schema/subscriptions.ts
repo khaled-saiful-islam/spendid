@@ -55,5 +55,8 @@ export const subscription = pgTable(
 		/** Set when cancelled; kept so "you saved RM X since cancelling" can be shown. */
 		cancelledAt: timestamp({ withTimezone: true }),
 	},
-	(t) => [index("subscription_user_due_idx").on(t.userId, t.nextDue)],
+	(t) => [
+		index("subscription_user_due_idx").on(t.userId, t.nextDue),
+		index("subscription_category_idx").on(t.categoryId),
+	],
 );

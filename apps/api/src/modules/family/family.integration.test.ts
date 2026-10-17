@@ -385,6 +385,21 @@ describe.skipIf(!url)("family circle (real database)", () => {
 			{ userId: maya, name: "Maya", givenMinor: 2000 },
 			{ userId: adam, name: "Adam", givenMinor: 5000 },
 		]);
+
+		// Taking out more than the jar holds is refused, so who-gave-what still adds up.
+		const tooMuch = await call(maya, "POST", `/family/jars/${id}/deposit`, {
+			amountMinor: -9000,
+		});
+		expect(tooMuch.status).toBe(400);
+		const tooMuchGoal = await call(maya, "POST", `/goals/${id}/deposit`, {
+			amountMinor: -9000,
+		});
+		expect(tooMuchGoal.status).toBe(400);
+		const after = (
+			await call<JarsOverview>(adam, "GET", "/family/jars")
+		).body.data.jars.find((j) => j.id === id);
+		expect(after?.savedMinor).toBe(7000);
+		expect(after?.members.reduce((n, m) => n + m.givenMinor, 0)).toBe(7000);
 		const outsider = await call(
 			stranger,
 			"POST",

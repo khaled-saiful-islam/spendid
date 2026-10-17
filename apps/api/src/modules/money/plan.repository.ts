@@ -7,7 +7,7 @@ import {
 	goalMonthlyNeeded,
 } from "@spendid/shared";
 import { and, asc, eq, isNull, sql } from "drizzle-orm";
-import { notFound } from "../../http/app-error";
+import { badRequest, notFound } from "../../http/app-error";
 
 type GoalRow = typeof goal.$inferSelect;
 
@@ -105,19 +105,23 @@ export function createPlanRepository(db: Db) {
 			return goalDto(row);
 		},
 
-		/** Adds (or with a negative amount, takes out) money; never below zero. */
+		/** Adds (or with a negative amount, takes out) money; never more than is saved. */
 		async deposit(
 			userId: string,
 			id: string,
 			amountMinor: number,
 		): Promise<Goal> {
 			const row = await db.transaction(async (tx) => {
+				// Checked in the update itself, so the ledger always matches the balance.
 				const [updated] = await tx
 					.update(goal)
-					.set({
-						savedMinor: sql`greatest(0, ${goal.savedMinor} + ${amountMinor})`,
-					})
-					.where(ownedGoal(userId, id))
+					.set({ savedMinor: sql`${goal.savedMinor} + ${amountMinor}` })
+					.where(
+						and(
+							ownedGoal(userId, id),
+							sql`${goal.savedMinor} + ${amountMinor} >= 0`,
+						),
+					)
 					.returning();
 				// Shared jars show who put in what.
 				if (updated)
@@ -126,7 +130,15 @@ export function createPlanRepository(db: Db) {
 						.values({ goalId: id, userId, amountMinor });
 				return updated;
 			});
-			if (!row) throw notFound("Goal");
+			if (!row) {
+				const [exists] = await db
+					.select({ id: goal.id })
+					.from(goal)
+					.where(ownedGoal(userId, id))
+					.limit(1);
+				if (exists) throw badRequest("You can't take out more than is saved.");
+				throw notFound("Goal");
+			}
 			return goalDto(row);
 		},
 

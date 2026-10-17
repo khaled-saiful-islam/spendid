@@ -7,6 +7,7 @@ import {
 } from "@spendid/shared";
 import { and, desc, eq, gt, isNull, sql } from "drizzle-orm";
 import { badRequest } from "../../http/app-error";
+import { onLocalDays } from "../money/local-days";
 import { monthBounds } from "../money/summary.service";
 import { homeOf, recurringFor } from "./charges";
 
@@ -46,8 +47,7 @@ export function createInsightsService(db: Db) {
 			where: and(
 				eq(transaction.userId, userId),
 				isNull(transaction.deletedAt),
-				sql`${localDay} >= ${start}::date`,
-				sql`${localDay} < ${next}::date`,
+				onLocalDays(transaction.occurredAt, timeZone, start, next),
 			),
 		};
 	}
@@ -179,8 +179,7 @@ export function createInsightsService(db: Db) {
 						and(
 							eq(goalDeposit.userId, userId),
 							gt(goalDeposit.amountMinor, 0),
-							sql`(${goalDeposit.createdAt} at time zone ${timeZone})::date >= ${start}::date`,
-							sql`(${goalDeposit.createdAt} at time zone ${timeZone})::date < ${next}::date`,
+							onLocalDays(goalDeposit.createdAt, timeZone, start, next),
 						),
 					),
 				recurringFor(db, userId),

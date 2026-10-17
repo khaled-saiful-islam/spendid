@@ -8,6 +8,7 @@ import {
 } from "@spendid/shared";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { recurringFor } from "../insights/charges";
+import { onLocalDays } from "./local-days";
 import { toDto } from "./transactions.repository";
 
 export interface MonthBounds {
@@ -63,8 +64,12 @@ export function createSummaryService(db: Db) {
 			const inMonth = and(
 				eq(transaction.userId, userId),
 				isNull(transaction.deletedAt),
-				sql`${localDay} >= ${bounds.monthStart}::date`,
-				sql`${localDay} < ${bounds.nextMonth}::date`,
+				onLocalDays(
+					transaction.occurredAt,
+					timeZone,
+					bounds.monthStart,
+					bounds.nextMonth,
+				),
 			);
 
 			const [totals, byCategory, todayRows, goals, recurring] =
