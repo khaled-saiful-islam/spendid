@@ -61,8 +61,8 @@ Seeded admin: `admin` / `admin` (dev only; prod refuses insecure defaults).
 - ✨ **Photo bill splitter** (SP-23) — drag receipt items onto people, send a split link.
 
 ### Delight
-- ✨ **Pip the pangolin** — animated buddy with coin scales; shines when under budget, curls up when overspent.
-- ✨ **Streaks** (SP-20) and a 10-second **nightly check-in** ("Anything I missed today?").
+- ~~**Pip the pangolin**~~ — removed in October 2026 after user feedback (people didn't want a buddy).
+- ~~**Streaks** (SP-20) and the **nightly check-in**~~ — removed with Pip in October 2026.
 
 ### Trust and baseline
 - **SP-28** home currency + travel currencies (daily FX). **SP-29** English + Bahasa Melayu (i18n-ready).

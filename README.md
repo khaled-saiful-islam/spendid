@@ -15,7 +15,7 @@ Share money life with family, only with consent.
 
 **Live:** [spendid.mentora.stream](https://spendid.mentora.stream) (works best on a phone; add it to your home screen)
 
-<img src="docs/screenshots/home-desktop.png" alt="Spendid home on a laptop: safe to spend today, Pip the pangolin, month pace and today's spending" width="760">
+<img src="docs/screenshots/home-desktop.png" alt="Spendid home on a laptop: safe to spend today with the last 7 days, and colour tiles for today, the month and bills" width="760">
 
 </div>
 
@@ -49,11 +49,11 @@ currency, with automatic exchange rates.
 | | |
 |---|---|
 | <img src="docs/screenshots/home-phone.png" alt="Home on a phone" width="300"> | <img src="docs/screenshots/capture.png" alt="Add spending: say it, scan a receipt or type it" width="300"> |
-| **Home.** Today's safe amount, Pip's mood, your streak, where the month is heading and what's due soon. | **Capture.** Say it, scan a receipt (or share a PDF), or type it. Everything stays editable before it's saved. |
-| <img src="docs/screenshots/pip.png" alt="Pip's daily briefing and wardrobe" width="300"> | <img src="docs/screenshots/plan.png" alt="Plan: subscriptions this month and savings goals as jars" width="300"> |
-| **Pip.** A pangolin who curls up when you overspend, shines when you're on track, and grows (and dresses up) as you keep logging. | **Plan.** Goals with a date, budgets per category, and challenges like a no-spend weekend, checked from your spending. |
-| <img src="docs/screenshots/subscriptions.png" alt="Subscriptions and bills" width="300"> | <img src="docs/screenshots/family.png" alt="Family circle with sharing levels" width="300"> |
-| **Subscriptions.** Netflix, Unifi, the gym: kept aside each month, a reminder before each is due, one tap to mark paid. | **Family.** Two-way consent, a live pulse of what your circle shares, shared jars and bill splits. |
+| **Home.** Today's safe amount with your last 7 days, what's left this month, bills still due and where the month is heading. | **Capture.** Say it, scan a receipt (or share a PDF), or type it ("grab 9 3 days ago" works too). Everything stays editable before it's saved. |
+| <img src="docs/screenshots/ask-phone.png" alt="Ask Spendid on a phone: questions previewing this month's real numbers" width="300"> | <img src="docs/screenshots/plan.png" alt="Plan: monthly income split into needs, wants and savings, and goals" width="300"> |
+| **Ask Spendid.** Questions that preview your real numbers, a live demo of logging by message, and Roast or Hype for your month. | **Plan.** Your income as one bar split by your budget style, goals with a date, challenges checked from your spending. |
+| <img src="docs/screenshots/subscriptions.png" alt="Subscriptions and bills" width="300"> | <img src="docs/screenshots/family.png" alt="Family circle: who sees what, shared jars and the family pulse" width="300"> |
+| **Subscriptions.** Netflix, Unifi, the gym: kept aside each month, a reminder before each is due, one tap to mark paid. | **Family.** A map of who sees what (two-way consent), shared jars, bill splits and a live pulse. |
 
 <img src="docs/screenshots/ask.png" alt="Ask Spendid answering from real numbers" width="760">
 
@@ -62,8 +62,9 @@ currency, with automatic exchange rates.
 
 <img src="docs/screenshots/insights.png" alt="Insights: where the money flowed, heatmap and recurring charges" width="760">
 
-**Insights**: where your money flowed (income into needs, wants, savings and categories), a
-month heatmap, subscriptions found from your spending (with price rises), and a Money Wrapped story.
+**Insights**: where your money flowed (one bar of what came in, then every category ranked; tap one
+for its expenses), a month calendar (tap a day to see its expenses), subscriptions found from your
+spending (with price rises), and a Money Wrapped story you can download as a PDF.
 
 <p align="center">
   <img src="docs/screenshots/home-dark.png" alt="Home in dark mode" width="260">
@@ -179,8 +180,9 @@ maya and adam are already in each other's circle (spouses) and save into maya's 
 
 - **Hide amounts**: the eye button in the header blurs every number on screen.
 - **Bahasa Melayu**: **Me → Language**. Saved to the profile, so it follows you; Ask Spendid answers in Malay too.
-- **Your data**: **Me → Your data** → *Download my data* (zip with a spreadsheet, receipts and everything else;
-  an email says when it's ready) or *Delete my account* (password + type DELETE).
+- **Your data**: **Me → Your data** → *Download my data* (one PDF report, with the spreadsheet, the full data
+  and every receipt photo attached inside; an email says when it's ready) or *Delete my account*
+  (password + type DELETE).
 - **Install**: in the production build Spendid installs to the home screen and opens offline. See [docs/pwa.md](docs/pwa.md).
 - **Production**: [docs/deploy.md](docs/deploy.md) — one command with HTTPS by Caddy.
 
@@ -195,10 +197,12 @@ maya and adam are already in each other's circle (spouses) and save into maya's 
 - **Voice**: talk as long as you like; each phrase is caught as you pause, then edit everything.
 - **Subscriptions & bills** (Plan → Subscriptions, or the due-soon card on Home): add Netflix, Unifi,
   the gym…; due amounts are kept aside each month, a reminder email comes N days before, Mark paid logs it.
-- **Home**: Pip (tap for the briefing and wardrobe; Pip grows as you log), streak shields,
-  **Where your month is heading** with a what-if slider.
+- **Home**: the last 7 days against your daily amount (tap a bar), colour tiles for today, the month
+  and bills, and **Where your month is heading** with a what-if slider.
+- **Earlier days**: chips for the last week and an *Earlier date* button; or type or say
+  "3 days ago", "kelmarin", "on Monday", "3 Oct".
 - **Plan → Challenges**: no-spend weekend, cook-at-home week and more, checked from your spending.
-- **Insights → Where your money flowed**: income into needs, wants, savings and categories.
+- **Insights → Where your money flowed**: one bar of what came in, then categories ranked.
 - **Receipts**: photos, screenshots or PDFs. Installed on Android, Spendid is in the share menu.
 - **Onboarding** (Me → change style, or a new account): watch your pay sorted live, then the reveal.
 

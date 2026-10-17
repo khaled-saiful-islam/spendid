@@ -16,7 +16,7 @@ Dev: `make up` → web http://localhost:8600 · API http://localhost:8601 · Mai
 | M6 | Admin console + AI cockpit | ✅ |
 | M7 | Family Circle: connections, sharing, pulse, goal jars, bill split | ✅ |
 | M8 | Insights + all notification emails + Money Wrapped | ✅ |
-| M9 | Delight: Pip, streaks, nightly check-in, impulse pause | ✅ |
+| M9 | Delight: Pip, streaks, nightly check-in, impulse pause (Pip, streaks and check-in removed Oct 2026) | ✅ |
 | M10 | Trust + polish: export / delete, hide balances, BM, PWA, E2E, phone audit, docs | ✅ |
 
 ---
