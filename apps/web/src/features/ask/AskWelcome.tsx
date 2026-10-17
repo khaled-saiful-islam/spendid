@@ -6,7 +6,6 @@ import {
 	Flame,
 	Lock,
 	PartyPopper,
-	PenLine,
 	Target,
 	TrendingUp,
 } from "lucide-react";
@@ -18,6 +17,7 @@ import { cn } from "@/lib/cn";
 import { heatmapQuery, recurringQuery, thisMonth } from "@/lib/insights-api";
 import { categoriesQuery, goalsQuery, summaryQuery } from "@/lib/money-api";
 import { appToday, formatDay } from "@/lib/time";
+import { LogDemo } from "./LogDemo";
 
 /** A tiny line of this month's daily spending: the shape, not just a total. */
 function Sparkline({ values }: { values: number[] }) {
@@ -147,95 +147,6 @@ function Badge({ tint, children }: { tint: string; children: ReactNode }) {
 		>
 			{children}
 		</span>
-	);
-}
-
-const LOG_EXAMPLE = "Lunch 12 and grab 9 yesterday";
-
-/**
- * Shows logging in plain words: the sentence types itself out, then turns into the two
- * expenses it means. Tap to send it as a real example.
- */
-function LogTile({
-	onAsk,
-	index,
-}: {
-	onAsk: (q: string) => void;
-	index: number;
-}) {
-	const reduce = useReducedMotion();
-	const text = t(LOG_EXAMPLE);
-	const [shown, setShown] = useState(reduce ? text.length : 0);
-
-	useEffect(() => {
-		if (reduce) return;
-		const tick = setInterval(
-			() => setShown((n) => (n >= text.length + 28 ? 0 : n + 1)),
-			70,
-		);
-		return () => clearInterval(tick);
-	}, [reduce, text.length]);
-	const done = shown >= text.length;
-
-	return (
-		<motion.li
-			className="col-span-full"
-			initial={reduce ? false : { opacity: 0, y: 14 }}
-			animate={{ opacity: 1, y: 0 }}
-			transition={{ delay: reduce ? 0 : 0.06 * index }}
-		>
-			<button
-				type="button"
-				onClick={() => onAsk(text)}
-				className="group relative flex w-full flex-col gap-3 overflow-hidden rounded-panel border border-line bg-surface p-4 text-left sm:flex-row sm:items-center"
-			>
-				<span
-					aria-hidden="true"
-					className={cn(
-						"pointer-events-none absolute inset-0 bg-linear-to-br opacity-[0.16] dark:opacity-[0.13]",
-						TINTS.teal,
-					)}
-				/>
-				<span className="relative min-w-0 flex-1">
-					<span className="flex items-center gap-2 text-[0.82rem] font-semibold text-ink-soft">
-						<Badge tint={TINTS.teal ?? ""}>
-							<PenLine className="size-3.5" aria-hidden="true" />
-						</Badge>
-						{t("Log spending in plain words")}
-					</span>
-					<span className="mt-2 block min-h-7 text-[1.05rem] font-semibold">
-						<span aria-hidden="true">
-							“{text.slice(0, shown)}
-							{!done && (
-								<span className="ml-0.5 inline-block h-5 w-0.5 translate-y-1 animate-pulse bg-ink" />
-							)}
-							{done && "”"}
-						</span>
-						<span className="sr-only">{text}</span>
-					</span>
-				</span>
-				<span className="relative flex flex-wrap gap-2" aria-hidden="true">
-					<AnimatePresence>
-						{done &&
-							[
-								{ name: t("Lunch"), amount: "12.00" },
-								{ name: t("Grab"), amount: "9.00" },
-							].map((d, i) => (
-								<motion.span
-									key={d.name}
-									initial={{ opacity: 0, scale: 0.7, y: 6 }}
-									animate={{ opacity: 1, scale: 1, y: 0 }}
-									exit={{ opacity: 0 }}
-									transition={{ delay: i * 0.12, type: "spring" }}
-									className="num inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-[0.85rem] font-semibold shadow-sm ring-1 ring-line"
-								>
-									{d.name} <span className="text-ink-soft">RM {d.amount}</span>
-								</motion.span>
-							))}
-					</AnimatePresence>
-				</span>
-			</button>
-		</motion.li>
 	);
 }
 
@@ -387,7 +298,9 @@ export function AskWelcome({
 				</h2>
 				<ul className="grid grid-cols-2 gap-3">
 					{tiles}
-					<LogTile onAsk={onAsk} index={tiles.length} />
+					<li className="col-span-full">
+						<LogDemo currency={cur} onTry={onAsk} />
+					</li>
 				</ul>
 			</section>
 
