@@ -43,6 +43,7 @@ import { createPlanRepository } from "./modules/money/plan.repository";
 import { createSummaryService } from "./modules/money/summary.service";
 import { createTransactionRepository } from "./modules/money/transactions.repository";
 import { createTransactionService } from "./modules/money/transactions.service";
+import { createAccountFiles } from "./modules/privacy/account-files";
 import { createPrivacyService } from "./modules/privacy/privacy.service";
 import {
 	createReceiptService,
@@ -79,6 +80,15 @@ const notifications = createNotifications({
 	subscriptions: () => subscriptionService,
 	logError,
 });
+const fileStore = createFileStore({
+	root: env.RECEIPTS_DIR,
+	keyBase64: env.RECEIPT_ENCRYPTION_KEY,
+});
+const accountFiles = createAccountFiles({
+	db: database.db,
+	store: fileStore,
+	logError,
+});
 const auth = createAuth({
 	env,
 	db: database.db,
@@ -87,6 +97,8 @@ const auth = createAuth({
 	events: {
 		sessionCreated: notifications.security.sessionCreated,
 		passkeyAdded: notifications.security.passkeyAdded,
+		userDeleting: accountFiles.collect,
+		userDeleted: accountFiles.remove,
 	},
 });
 const session = sessionLookup(auth);
@@ -135,10 +147,6 @@ const receiptQueue = new Queue<{ receiptId: string }>(RECEIPT_QUEUE, {
 	connection: cache.redis,
 });
 logErrors("queues", logError, merchantQueue, receiptQueue);
-const fileStore = createFileStore({
-	root: env.RECEIPTS_DIR,
-	keyBase64: env.RECEIPT_ENCRYPTION_KEY,
-});
 const receiptService = createReceiptService({
 	db: database.db,
 	queue: receiptQueue,

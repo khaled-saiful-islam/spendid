@@ -1,4 +1,4 @@
-import { type Db, dataExport, receipt, user } from "@spendid/db";
+import { type Db, dataExport, user } from "@spendid/db";
 import type { FileStore } from "@spendid/server";
 import { and, desc, eq, gt, lt } from "drizzle-orm";
 import type { FastifyBaseLogger } from "fastify";
@@ -187,22 +187,7 @@ export function createPrivacyService(deps: {
 				.where(eq(user.id, userId))
 				.limit(1);
 			if (!person) throw notFound("Account");
-			const files = [
-				...(
-					await db
-						.select({ key: receipt.fileKey })
-						.from(receipt)
-						.where(eq(receipt.userId, userId))
-				).map((r) => r.key),
-				...(
-					await db
-						.select({ key: dataExport.fileKey })
-						.from(dataExport)
-						.where(eq(dataExport.userId, userId))
-				)
-					.map((r) => r.key)
-					.filter((k): k is string => Boolean(k)),
-			];
+			// Receipt photos and archives are removed by the auth delete hooks (account-files.ts).
 			try {
 				await deps.auth.api.deleteUser({
 					body: { password: input.password },
@@ -217,12 +202,6 @@ export function createPrivacyService(deps: {
 					"We couldn't delete the account. Check your password and try again.",
 				);
 			}
-			const removed = await Promise.allSettled(
-				files.map((k) => store.remove(k)),
-			);
-			const left = removed.filter((r) => r.status === "rejected").length;
-			if (left > 0)
-				log.error({ left }, "account delete: some files could not be removed");
 			await deps
 				.sendEmail({
 					type: "notice",

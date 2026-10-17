@@ -18,6 +18,10 @@ export interface AuthEvents {
 		userAgent?: string | null;
 	}) => Promise<void>;
 	passkeyAdded?: (userId: string) => Promise<void>;
+	/** Runs before an account is deleted; an error stops the delete. */
+	userDeleting?: (userId: string) => Promise<void>;
+	/** Runs after an account is deleted (files on disk). */
+	userDeleted?: (userId: string) => Promise<void>;
 }
 
 interface AuthDeps {
@@ -121,6 +125,15 @@ export function createAuth({ env, db, redis, sendEmail, events }: AuthDeps) {
 							.insert(profile)
 							.values({ userId: user.id })
 							.onConflictDoNothing();
+					},
+				},
+				// Self-delete and the admin's "remove" both come through here.
+				delete: {
+					before: async (user) => {
+						await events?.userDeleting?.(user.id);
+					},
+					after: async (user) => {
+						safely(events?.userDeleted?.(user.id));
 					},
 				},
 			},
