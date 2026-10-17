@@ -50,6 +50,7 @@ describe.skipIf(!url)("receipts API (real database)", () => {
 	let groceries: Category;
 	const queued: string[] = [];
 	let receipts: ReturnType<typeof createReceiptService>;
+	let expenses: ReturnType<typeof createTransactionService>;
 
 	const session: SessionLookup = async (headers) => {
 		const id = headers.get("x-test-user");
@@ -146,6 +147,7 @@ describe.skipIf(!url)("receipts API (real database)", () => {
 			subscribe: () => () => {},
 			close: async () => {},
 		} as unknown as EventHub;
+		expenses = service;
 		receipts = createReceiptService({
 			db,
 			store: memoryStore(),
@@ -256,6 +258,42 @@ describe.skipIf(!url)("receipts API (real database)", () => {
 		expect(
 			(await call(sam, "GET", `/receipts/${mine.body.data.id}/image`)).status,
 		).toBe(404);
+	});
+
+	it("limits how many photos one person can send in an hour", async () => {
+		const zoe = await createPerson(db);
+		await db.insert(receipt).values(
+			Array.from({ length: 60 }, () => ({
+				userId: zoe,
+				fileKey: "x",
+				mime: "image/jpeg",
+				bytes: 1,
+				status: "failed" as const,
+			})),
+		);
+		await expect(receipts.upload(zoe, JPEG)).rejects.toMatchObject({
+			statusCode: 429,
+		});
+	});
+
+	it("doesn't leave a receipt stuck on 'reading' when it can't be queued", async () => {
+		const kai = await createPerson(db);
+		const broken = createReceiptService({
+			db,
+			store: memoryStore(),
+			queue: {
+				add: async () => {
+					throw new Error("redis down");
+				},
+			} as unknown as Queue<{ receiptId: string }>,
+			transactions: expenses,
+		});
+		await expect(broken.upload(kai, JPEG)).rejects.toMatchObject({
+			statusCode: 503,
+		});
+		expect(
+			await db.select().from(receipt).where(eq(receipt.userId, kai)),
+		).toEqual([]);
 	});
 
 	it("discards an unsaved receipt", async () => {

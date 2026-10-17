@@ -7,6 +7,7 @@ import {
 } from "@spendid/shared";
 import { z } from "zod";
 import { hedged } from "./hedge";
+import { structuredResult } from "./structured";
 
 const SLUGS = SYSTEM_CATEGORIES.map((c) => c.slug) as [string, ...string[]];
 const KNOWN = new Set(Intl.supportedValuesOf("currency"));
@@ -146,23 +147,14 @@ export function createReceiptReader(cfg: {
 				],
 			},
 		];
-		const { raw, parsed } = await hedged(
+		const out = await hedged(
 			(signal) => structured.invoke(messages, { signal }),
 			{
 				hedgeAfterMs: 5_000,
 				deadlineMs: 30_000,
 			},
 		);
-		const usage = (
-			raw as {
-				usage_metadata?: { input_tokens?: number; output_tokens?: number };
-			}
-		).usage_metadata;
-		return {
-			draft: toDraft(parsed, homeCurrency),
-			inputTokens: usage?.input_tokens ?? 0,
-			outputTokens: usage?.output_tokens ?? 0,
-			model: cfg.model,
-		};
+		const { parsed, ...usage } = structuredResult(out, cfg.model);
+		return { draft: toDraft(parsed, homeCurrency), ...usage };
 	};
 }

@@ -12,12 +12,14 @@ import {
 	type Transaction,
 } from "@spendid/shared";
 import type { Queue } from "bullmq";
-import { and, desc, eq, inArray, ne } from "drizzle-orm";
+import { and, count, desc, eq, gt, inArray, ne } from "drizzle-orm";
 import { AppError, badRequest, notFound } from "../../http/app-error";
 import type { TransactionService } from "../money/transactions.service";
 
 export const RECEIPT_QUEUE = "receipts";
 export const MAX_RECEIPT_BYTES = 8 * 1024 * 1024;
+/** Photos one person can send in an hour: a shoebox of receipts fits, a script doesn't. */
+const UPLOADS_PER_HOUR = 60;
 
 type Row = typeof receipt.$inferSelect;
 
@@ -141,21 +143,46 @@ export function createReceiptService({ db, store, queue, transactions }: Deps) {
 				throw badRequest(
 					"That file isn't a photo Spendid can read. Use a JPEG, PNG or WebP image.",
 				);
+			const [recent] = await db
+				.select({ n: count() })
+				.from(receipt)
+				.where(
+					and(
+						eq(receipt.userId, userId),
+						gt(receipt.createdAt, new Date(Date.now() - 3_600_000)),
+					),
+				);
+			if ((recent?.n ?? 0) >= UPLOADS_PER_HOUR)
+				throw new AppError(
+					429,
+					"That's a lot of photos for one hour. Add the rest a little later.",
+				);
 			const fileKey = await store.put(userId, bytes);
 			const [row] = await db
 				.insert(receipt)
 				.values({ userId, fileKey, mime, bytes: bytes.byteLength })
 				.returning();
 			if (!row) throw new Error("receipt insert returned nothing");
-			await queue.add(
-				"read",
-				{ receiptId: row.id },
-				{
-					attempts: 3,
-					backoff: { type: "exponential", delay: 4_000 },
-					removeOnComplete: 500,
-				},
-			);
+			try {
+				await queue.add(
+					"read",
+					{ receiptId: row.id },
+					{
+						attempts: 3,
+						backoff: { type: "exponential", delay: 4_000 },
+						removeOnComplete: 500,
+					},
+				);
+			} catch (err) {
+				// Nothing would ever read it: undo, rather than leave it "reading" forever.
+				await db.delete(receipt).where(eq(receipt.id, row.id));
+				await store.remove(fileKey);
+				throw new AppError(
+					503,
+					"Spendid couldn't start reading that photo. Try again in a moment.",
+					{ cause: err },
+				);
+			}
 			return toDto(row, false);
 		},
 

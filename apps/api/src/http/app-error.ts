@@ -3,8 +3,10 @@ export class AppError extends Error {
 	constructor(
 		readonly statusCode: number,
 		message: string,
+		/** `cause` keeps the underlying error for the logs. */
+		options?: ErrorOptions,
 	) {
-		super(message);
+		super(message, options);
 		this.name = "AppError";
 	}
 }

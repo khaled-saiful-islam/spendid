@@ -5,6 +5,7 @@ import {
 	type MerchantMemory,
 	type ReceiptReader,
 	ServiceError,
+	UnreadableAiAnswer,
 } from "@spendid/server";
 import type { ReceiptDraft, ReceiptEvent } from "@spendid/shared";
 import { type Job, UnrecoverableError } from "bullmq";
@@ -107,6 +108,17 @@ export function createReceiptProcessor({
 				status: "ready",
 			});
 		} catch (error) {
+			// An answer that didn't fit: the tokens were spent, and the same photo won't read better.
+			if (error instanceof UnreadableAiAnswer) {
+				await guard.record(row.userId, {
+					feature: "receipt-read",
+					...error.usage,
+				});
+				const message =
+					"We couldn't read this receipt. Fill in the details yourself, or try another photo.";
+				await fail(row.id, row.userId, message);
+				throw new UnrecoverableError(message);
+			}
 			// Allowance or switched-off AI: retrying won't help, say so plainly.
 			if (error instanceof ServiceError) {
 				await fail(row.id, row.userId, error.message);

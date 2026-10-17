@@ -1,10 +1,11 @@
 import { type Db, profile } from "@spendid/db";
-import type {
-	AiGuard,
-	ExpenseExtractor,
-	MerchantMemory,
-	SpokenExpense,
-	Transcriber,
+import {
+	type AiGuard,
+	type ExpenseExtractor,
+	type MerchantMemory,
+	type SpokenExpense,
+	type Transcriber,
+	UnreadableAiAnswer,
 } from "@spendid/server";
 import {
 	type Category,
@@ -179,6 +180,11 @@ export function createVoiceService(deps: Deps) {
 					readBy: "ai",
 				};
 			} catch (error) {
+				if (error instanceof UnreadableAiAnswer)
+					await deps.guard.record(userId, {
+						feature: "voice-understand",
+						...error.usage,
+					});
 				// The note was heard; reading it offline still beats an error.
 				log.warn({ err: error }, "expense extraction failed; using quick read");
 				const drafts = quickReadSpoken(digits).map((q) =>

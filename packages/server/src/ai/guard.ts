@@ -10,6 +10,23 @@ export const AUDIO_TOKENS_PER_SECOND = 25;
 /** Requests per minute. Voice reads a long note phrase by phrase, so this leaves room for that. */
 const BURST_LIMIT = 30;
 const BURST_WINDOW_SECONDS = 60;
+/** What a call is assumed to cost until its real count is recorded. */
+const RESERVE_TOKENS = 2_000;
+/** A call that dies without recording gives its room back after this. */
+const RESERVE_SECONDS = 120;
+
+/** Atomic: refuse when what's used plus what's in flight leaves no room, else hold one call's worth. */
+const RESERVE = `
+local held = tonumber(redis.call('GET', KEYS[1]) or '0')
+if tonumber(ARGV[1]) + held >= tonumber(ARGV[2]) then return 0 end
+redis.call('INCRBY', KEYS[1], ARGV[3])
+redis.call('EXPIRE', KEYS[1], ARGV[4])
+return 1`;
+
+const RELEASE = `
+local left = redis.call('DECRBY', KEYS[1], ARGV[1])
+if left <= 0 then redis.call('DEL', KEYS[1]) end
+return left`;
 
 export interface UsageRecord {
 	feature: string;
@@ -46,6 +63,7 @@ export function createAiGuard(deps: {
 }) {
 	const { db, redis } = deps;
 	const usedKey = (userId: string) => `ai:used:${userId}:${monthKey()}`;
+	const heldKey = (userId: string) => `ai:held:${userId}:${monthKey()}`;
 
 	async function usedThisMonth(userId: string): Promise<number> {
 		const cached = await redis.get(usedKey(userId));
@@ -123,19 +141,33 @@ export function createAiGuard(deps: {
 					403,
 					"AI is turned off for your account. You can still type expenses.",
 				);
-			if (s.usedTokens >= s.limitTokens) {
-				throw new AppError(
-					429,
-					"You've used this month's AI allowance. You can still type expenses.",
-				);
-			}
 			const burstKey = `ai:burst:${userId}`;
-			const burst = await redis.incr(burstKey);
-			if (burst === 1) await redis.expire(burstKey, BURST_WINDOW_SECONDS);
-			if (burst > BURST_LIMIT)
+			// One round trip, and the expiry is set even on a counter that lost it.
+			const [[, burst] = []] =
+				(await redis
+					.multi()
+					.incr(burstKey)
+					.expire(burstKey, BURST_WINDOW_SECONDS, "NX")
+					.exec()) ?? [];
+			if (Number(burst) > BURST_LIMIT)
 				throw new AppError(
 					429,
 					"That's a lot of requests in a minute. Wait a moment and try again.",
+				);
+			// Calls that arrive together each hold room, so they can't all slip past the limit.
+			const held = await redis.eval(
+				RESERVE,
+				1,
+				heldKey(userId),
+				s.usedTokens,
+				s.limitTokens,
+				RESERVE_TOKENS,
+				RESERVE_SECONDS,
+			);
+			if (held !== 1)
+				throw new AppError(
+					429,
+					"You've used this month's AI allowance. You can still type expenses.",
 				);
 		},
 
@@ -157,6 +189,7 @@ export function createAiGuard(deps: {
 				billedTokens,
 			});
 			const after = await redis.incrby(usedKey(userId), billedTokens);
+			await redis.eval(RELEASE, 1, heldKey(userId), RESERVE_TOKENS);
 			if (deps.onLimitReached && billedTokens > 0) {
 				const { limitTokens } = await status(userId);
 				if (after >= limitTokens && after - billedTokens < limitTokens)

@@ -4,6 +4,7 @@ export * from "./ai/guard";
 export * from "./ai/hedge";
 export * from "./ai/read-receipt";
 export * from "./ai/speech";
+export * from "./ai/structured";
 export * from "./errors";
 export * from "./events/hub";
 export * from "./merchants";
