@@ -3,9 +3,10 @@ import { Fingerprint, KeyRound, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { MaybeAlert } from "@/components/form/Alert";
 import { buttonClass } from "@/components/ui/Button";
-import { dateLocale, t } from "@/i18n";
+import { t } from "@/i18n";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/cn";
+import { formatMoment } from "@/lib/time";
 import { lockStorage } from "../lock/policy";
 
 const passkeysQuery = {
@@ -108,7 +109,7 @@ export function PasskeyPanel() {
 									</span>
 									<span className="block text-[0.85rem] text-ink-soft">
 										{t("Added")}{" "}
-										{new Date(p.createdAt).toLocaleDateString(dateLocale(), {
+										{formatMoment(p.createdAt, {
 											day: "numeric",
 											month: "short",
 											year: "numeric",

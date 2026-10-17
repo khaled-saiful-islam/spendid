@@ -5,6 +5,7 @@ import {
 	type Transaction,
 	toMinor,
 } from "@spendid/shared";
+import { addDays, appDayOf, appToday, momentOnDay } from "@/lib/time";
 
 export type Day = "today" | "yesterday" | string;
 
@@ -16,11 +17,9 @@ export interface Draft {
 	day: Day;
 }
 
-const pad = (n: number) => String(n).padStart(2, "0");
-
-/** Local calendar date "YYYY-MM-DD". */
+/** The calendar date "YYYY-MM-DD" of a moment, in the app's time zone. */
 export function localDate(d: Date): string {
-	return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+	return appDayOf(d);
 }
 
 export function emptyDraft(homeCurrency: string): Draft {
@@ -81,14 +80,10 @@ export function draftMinor(draft: Draft): number | null {
 	return toMinor(n, draft.currency);
 }
 
-/** When it happened: now for today, midday for other days (avoids time-zone edge flips). */
+/** When it happened: now for today, midday (app time zone) for other days. */
 export function draftOccurredAt(day: Day): string {
-	const now = new Date();
-	if (day === "today") return now.toISOString();
-	const date =
-		day === "yesterday"
-			? new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1)
-			: new Date(`${day}T00:00`);
-	date.setHours(12, 0, 0, 0);
-	return date.toISOString();
+	const today = appToday();
+	return momentOnDay(
+		day === "today" ? today : day === "yesterday" ? addDays(today, -1) : day,
+	);
 }

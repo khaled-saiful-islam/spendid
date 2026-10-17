@@ -9,10 +9,11 @@ import { SubmitButton } from "@/components/form/SubmitButton";
 import { buttonClass } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
 import { toast } from "@/components/ui/Toast";
-import { dateLocale, t } from "@/i18n";
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { ApiError } from "@/lib/http";
 import { moneyApi, refreshMoney } from "@/lib/money-api";
+import { formatDay } from "@/lib/time";
 import { currencySymbol } from "../onboarding/options";
 import { GoalJar } from "./GoalJar";
 
@@ -31,10 +32,7 @@ function cheer() {
 function untilLabel(goal: Goal, cur: string): string {
 	if (goal.savedMinor >= goal.targetMinor) return t("Done! Time to enjoy it.");
 	if (!goal.targetDate) return t("No deadline. Add whenever you like.");
-	const when = new Date(`${goal.targetDate}T12:00`).toLocaleDateString(
-		dateLocale(),
-		{ month: "short", year: "numeric" },
-	);
+	const when = formatDay(goal.targetDate, { month: "short", year: "numeric" });
 	return t("{amount} a month to make it by {date}.", {
 		amount: formatMinor(goal.monthlyNeededMinor, cur),
 		date: when,

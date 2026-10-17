@@ -20,6 +20,7 @@ import {
 	refreshMoney,
 	summaryQuery,
 } from "@/lib/money-api";
+import { addDays, appToday, momentOnDay } from "@/lib/time";
 import { uuid } from "@/lib/uuid";
 
 const DAYS_BACK = [0, 1, 2, 3, 4, 5, 6, 7];
@@ -29,12 +30,9 @@ interface Row extends VoiceDraft {
 	amountText: string;
 }
 
+/** Today: right now. An earlier day: noon then (no time was said), in the app's time zone. */
 function occurredAt(daysAgo: number): string {
-	if (daysAgo === 0) return new Date().toISOString();
-	const d = new Date();
-	d.setDate(d.getDate() - daysAgo);
-	d.setHours(12, 0, 0, 0);
-	return d.toISOString();
+	return momentOnDay(addDays(appToday(), -daysAgo));
 }
 
 const dayLabel = (n: number) =>

@@ -2,8 +2,9 @@ import { formatMinor } from "@spendid/shared";
 import { useQuery } from "@tanstack/react-query";
 import { Camera, PencilLine, ReceiptText } from "lucide-react";
 import { motion } from "motion/react";
-import { dateLocale, t } from "@/i18n";
+import { t } from "@/i18n";
 import { type ReceiptChoice, splitReceiptsQuery } from "@/lib/family-api";
+import { formatDay } from "@/lib/time";
 
 /** Where the bill comes from: a new photo, a receipt Spendid already read, or typing it. */
 export function SourcePicker({
@@ -82,7 +83,7 @@ export function SourcePicker({
 										<span className="block text-[0.88rem] text-ink-soft">
 											{t("{n} items", { n: r.items.length })}
 											{r.date
-												? `, ${new Date(`${r.date}T12:00`).toLocaleDateString(dateLocale(), { day: "numeric", month: "short" })}`
+												? `, ${formatDay(r.date, { day: "numeric", month: "short" })}`
 												: ""}
 										</span>
 									</span>

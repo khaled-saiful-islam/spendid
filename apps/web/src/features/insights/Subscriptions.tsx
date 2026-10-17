@@ -1,7 +1,8 @@
 import { formatMinor, type RecurringOverview } from "@spendid/shared";
 import { CalendarClock, Repeat, TrendingUp } from "lucide-react";
 import { CategoryIcon } from "@/components/money/CategoryIcon";
-import { dateLocale, t } from "@/i18n";
+import { t } from "@/i18n";
+import { formatDay } from "@/lib/time";
 
 const CADENCE = {
 	weekly: t("Every week"),
@@ -9,7 +10,7 @@ const CADENCE = {
 	yearly: t("Every year"),
 } as const;
 const shortDay = (day: string) =>
-	new Date(`${day}T12:00`).toLocaleDateString(dateLocale(), {
+	formatDay(day, {
 		day: "numeric",
 		month: "short",
 	});

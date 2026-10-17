@@ -12,8 +12,9 @@ import { MaybeAlert } from "@/components/form/Alert";
 import { Field } from "@/components/form/Field";
 import { buttonClass } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
-import { dateLocale, t } from "@/i18n";
+import { t } from "@/i18n";
 import { ApiError, api } from "@/lib/http";
+import { formatMoment } from "@/lib/time";
 
 interface ExportInfo {
 	id: string;
@@ -159,10 +160,11 @@ export function YourData() {
 							: ready
 								? t("Ready, {size}. Available until {date}.", {
 										size: size(latest.bytes ?? 0),
-										date: new Date(latest.expiresAt).toLocaleString(
-											dateLocale(),
-											{ weekday: "short", hour: "numeric", minute: "2-digit" },
-										),
+										date: formatMoment(latest.expiresAt, {
+											weekday: "short",
+											hour: "numeric",
+											minute: "2-digit",
+										}),
 									})
 								: t(
 										"Expenses as a spreadsheet, receipt photos, goals, family and settings, in one zip.",

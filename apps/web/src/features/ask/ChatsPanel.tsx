@@ -15,6 +15,7 @@ import { toast } from "@/components/ui/Toast";
 import { dateLocale, t } from "@/i18n";
 import { askThreadsApi, THREADS_KEY, threadsQuery } from "@/lib/ask-api";
 import { cn } from "@/lib/cn";
+import { appToday, atHourOn } from "@/lib/time";
 
 const DAY = 86_400_000;
 
@@ -36,11 +37,8 @@ export function groupByDay(
 	threads: AskThreadSummary[],
 	now = new Date(),
 ): { label: string; items: AskThreadSummary[] }[] {
-	const startOfToday = new Date(
-		now.getFullYear(),
-		now.getMonth(),
-		now.getDate(),
-	).getTime();
+	// Days start at midnight in the app's time zone.
+	const startOfToday = atHourOn(appToday(now), 0).getTime();
 	const buckets = [
 		{ label: t("Today"), from: startOfToday, items: [] as AskThreadSummary[] },
 		{

@@ -3,12 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { Hourglass } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { CategoryIcon } from "@/components/money/CategoryIcon";
-import { dateLocale, t } from "@/i18n";
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { delightApi } from "@/lib/delight-api";
 import { familyApi } from "@/lib/family-api";
 import { categoriesQuery, moneyApi, summaryQuery } from "@/lib/money-api";
 import { subscriptionsApi } from "@/lib/subscriptions-api";
+import { formatDay } from "@/lib/time";
 import { GoalJar } from "../../plan/GoalJar";
 import { BrandTile, CYCLE_LABEL } from "../../subscriptions/brand";
 import { IconTile, monthsUntil, Note, Row, Title } from "./parts";
@@ -41,13 +42,10 @@ function GoalBody({
 				{action.targetDate && months
 					? t("{amount} a month to make it by {date}.", {
 							amount: money(Math.ceil(action.targetMinor / months)),
-							date: new Date(`${action.targetDate}T12:00`).toLocaleDateString(
-								dateLocale(),
-								{
-									month: "short",
-									year: "numeric",
-								},
-							),
+							date: formatDay(action.targetDate, {
+								month: "short",
+								year: "numeric",
+							}),
 						})
 					: t("No deadline. Add whenever you like.")}
 			</Note>
@@ -187,13 +185,10 @@ function SubscriptionBody({ action }: { action: ActionOf<"subscription"> }) {
 				{t(
 					"Next payment {date}. Kept aside each month, with a reminder 3 days before.",
 					{
-						date: new Date(`${action.nextDue}T12:00`).toLocaleDateString(
-							dateLocale(),
-							{
-								day: "numeric",
-								month: "short",
-							},
-						),
+						date: formatDay(action.nextDue, {
+							day: "numeric",
+							month: "short",
+						}),
 					},
 				)}
 			</Note>

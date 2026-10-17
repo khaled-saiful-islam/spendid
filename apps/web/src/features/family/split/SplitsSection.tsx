@@ -6,7 +6,7 @@ import { useState } from "react";
 import { buttonClass } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
 import { toast } from "@/components/ui/Toast";
-import { dateLocale, t } from "@/i18n";
+import { t } from "@/i18n";
 import {
 	familyApi,
 	refreshFamily,
@@ -14,11 +14,12 @@ import {
 	splitsWithMeQuery,
 } from "@/lib/family-api";
 import { meQuery } from "@/lib/me";
+import { formatMoment } from "@/lib/time";
 import { SplitDone } from "./SplitDone";
 import { SplitSummary } from "./SplitSummary";
 
 const dayOf = (iso: string) =>
-	new Date(iso).toLocaleDateString(dateLocale(), {
+	formatMoment(iso, {
 		day: "numeric",
 		month: "short",
 	});

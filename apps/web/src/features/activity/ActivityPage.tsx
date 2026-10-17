@@ -5,9 +5,10 @@ import { LoaderCircle, Search } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useDeferredValue, useEffect, useRef, useState } from "react";
 import { buttonClass } from "@/components/ui/Button";
-import { dateLocale, t } from "@/i18n";
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { categoriesQuery, transactionsQuery } from "@/lib/money-api";
+import { addDays, appToday, formatDay } from "@/lib/time";
 import { capture } from "../capture/capture-store";
 import { localDate } from "../capture/draft";
 import { InsightsView } from "../insights/InsightsView";
@@ -38,15 +39,10 @@ function groupByDay(items: Transaction[]): DayGroup[] {
 }
 
 function dayLabel(day: string): string {
-	const today = new Date();
-	const yesterday = new Date(
-		today.getFullYear(),
-		today.getMonth(),
-		today.getDate() - 1,
-	);
-	if (day === localDate(today)) return t("Today");
-	if (day === localDate(yesterday)) return t("Yesterday");
-	return new Date(`${day}T12:00`).toLocaleDateString(dateLocale(), {
+	const today = appToday();
+	if (day === today) return t("Today");
+	if (day === addDays(today, -1)) return t("Yesterday");
+	return formatDay(day, {
 		weekday: "long",
 		day: "numeric",
 		month: "long",

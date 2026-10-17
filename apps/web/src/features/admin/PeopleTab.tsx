@@ -18,6 +18,7 @@ import {
 	peopleQuery,
 } from "@/lib/admin-api";
 import { cn } from "@/lib/cn";
+import { formatMoment } from "@/lib/time";
 import {
 	AiLimitForm,
 	DeleteForm,
@@ -27,7 +28,7 @@ import {
 
 const shortDate = (iso: string | null) =>
 	iso
-		? new Date(iso).toLocaleDateString(undefined, {
+		? formatMoment(iso, {
 				day: "numeric",
 				month: "short",
 				year: "numeric",

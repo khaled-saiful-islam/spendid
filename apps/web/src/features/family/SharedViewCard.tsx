@@ -9,12 +9,13 @@ import { motion, useReducedMotion } from "motion/react";
 import { useState } from "react";
 import { CategoryIcon, TINTS } from "@/components/money/CategoryIcon";
 import { Sheet } from "@/components/ui/Sheet";
-import { dateLocale, t } from "@/i18n";
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { receiptImageUrl } from "@/lib/family-api";
+import { formatMoment } from "@/lib/time";
 
 const day = (iso: string) =>
-	new Date(iso).toLocaleDateString(dateLocale(), {
+	formatMoment(iso, {
 		weekday: "short",
 		day: "numeric",
 		month: "short",

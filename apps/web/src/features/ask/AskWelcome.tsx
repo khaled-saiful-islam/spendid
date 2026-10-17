@@ -14,10 +14,11 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { type ReactNode, useEffect, useState } from "react";
 import { CategoryIcon, TINTS } from "@/components/money/CategoryIcon";
 import { CountUp } from "@/components/money/CountUp";
-import { dateLocale, t } from "@/i18n";
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { heatmapQuery, recurringQuery, thisMonth } from "@/lib/insights-api";
 import { categoriesQuery, goalsQuery, summaryQuery } from "@/lib/money-api";
+import { appToday, formatDay } from "@/lib/time";
 import { SpendidCoin } from "./SpendidCoin";
 
 const EXAMPLES = [
@@ -176,9 +177,7 @@ export function AskWelcome({
 				return heat.days.find((d) => d.day === day)?.minor ?? 0;
 			})
 		: [];
-	const monthLabel = new Date().toLocaleDateString(dateLocale(), {
-		month: "long",
-	});
+	const monthLabel = formatDay(appToday(), { month: "long" });
 
 	const ideas = [
 		{

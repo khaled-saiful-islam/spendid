@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { auditQuery } from "@/lib/admin-api";
+import { formatMoment } from "@/lib/time";
 
 const LABELS: Record<string, string> = {
 	"account.paused": "Paused an account",
@@ -47,7 +48,7 @@ export function AuditTab() {
 						className="shrink-0 text-[0.85rem] text-ink-soft"
 						dateTime={e.createdAt}
 					>
-						{new Date(e.createdAt).toLocaleString(undefined, {
+						{formatMoment(e.createdAt, {
 							day: "numeric",
 							month: "short",
 							hour: "numeric",

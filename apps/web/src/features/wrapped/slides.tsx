@@ -3,8 +3,9 @@ import { motion } from "motion/react";
 import type { ReactNode } from "react";
 import { CategoryIcon } from "@/components/money/CategoryIcon";
 import { CountUp } from "@/components/money/CountUp";
-import { dateLocale, t } from "@/i18n";
+import { t } from "@/i18n";
 import { monthName, shiftMonth } from "@/lib/insights-api";
+import { formatDay } from "@/lib/time";
 
 export interface Slide {
 	id: string;
@@ -186,10 +187,11 @@ export function buildSlides(d: Wrapped): Slide[] {
 						<>
 							<Kicker>{t("Your biggest day")}</Kicker>
 							<Big>
-								{new Date(`${d.biggestDay.day}T12:00`).toLocaleDateString(
-									dateLocale(),
-									{ weekday: "long", day: "numeric", month: "long" },
-								)}
+								{formatDay(d.biggestDay.day, {
+									weekday: "long",
+									day: "numeric",
+									month: "long",
+								})}
 							</Big>
 							<Line>
 								{t(

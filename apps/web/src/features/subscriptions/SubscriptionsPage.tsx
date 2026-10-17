@@ -16,7 +16,7 @@ import { SubmitButton } from "@/components/form/SubmitButton";
 import { buttonClass } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
 import { toast } from "@/components/ui/Toast";
-import { dateLocale, t } from "@/i18n";
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { buzz } from "@/lib/haptics";
 import { ApiError } from "@/lib/http";
@@ -25,12 +25,13 @@ import {
 	subscriptionsApi,
 	subscriptionsQuery,
 } from "@/lib/subscriptions-api";
+import { formatDay } from "@/lib/time";
 import { BrandTile, CYCLE_LABEL, dueLabel, TONE_CLASS } from "./brand";
 import { MonthHero } from "./MonthHero";
 import { type SubscriptionDraft, SubscriptionSheet } from "./SubscriptionSheet";
 
 const shortDay = (day: string) =>
-	new Date(`${day}T12:00`).toLocaleDateString(dateLocale(), {
+	formatDay(day, {
 		weekday: "short",
 		day: "numeric",
 		month: "short",
@@ -206,14 +207,13 @@ function ComingUp({
 }
 
 function DateBadge({ day }: { day: string }) {
-	const d = new Date(`${day}T12:00`);
 	return (
 		<span className="grid w-12 shrink-0 place-items-center rounded-tile bg-surface-2 py-1.5 text-center leading-none">
 			<span className="text-[0.7rem] font-semibold text-ink-soft">
-				{d.toLocaleDateString(dateLocale(), { month: "short" })}
+				{formatDay(day, { month: "short" })}
 			</span>
 			<span className="num font-display text-[1.35rem] font-extrabold">
-				{d.getDate()}
+				{Number(day.slice(8, 10))}
 			</span>
 		</span>
 	);

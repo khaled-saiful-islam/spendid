@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { dateLocale, t } from "@/i18n";
+import { t } from "@/i18n";
+import { formatDay } from "@/lib/time";
 
 /** A visual on the left, words on the right; text wraps, never cut. */
 export function Row({
@@ -66,14 +67,14 @@ export function IconTile({
 }
 
 export const dayLabel = (day: string) =>
-	new Date(`${day}T12:00`).toLocaleDateString(dateLocale(), {
+	formatDay(day, {
 		weekday: "short",
 		day: "numeric",
 		month: "short",
 	});
 
 export const monthLabel = (day: string) =>
-	new Date(`${day}T12:00`).toLocaleDateString(dateLocale(), {
+	formatDay(day, {
 		month: "short",
 		year: "numeric",
 	});

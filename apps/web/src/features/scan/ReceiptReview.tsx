@@ -11,11 +11,12 @@ import { type FormEvent, useState } from "react";
 import { MaybeAlert } from "@/components/form/Alert";
 import { SubmitButton } from "@/components/form/SubmitButton";
 import { toast } from "@/components/ui/Toast";
-import { dateLocale, t } from "@/i18n";
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { ApiError } from "@/lib/http";
 import { categoriesQuery, refreshMoney } from "@/lib/money-api";
 import { receiptImageUrl, receiptsApi } from "@/lib/receipts-api";
+import { formatMoment, momentOnDay } from "@/lib/time";
 import { capture } from "../capture/capture-store";
 import { localDate } from "../capture/draft";
 
@@ -34,7 +35,7 @@ const toText = (minor: number, cur: string) =>
 	(minor / 10 ** minorDigits(cur)).toFixed(minorDigits(cur));
 const toNum = (text: string) => Number(text.replace(",", "."));
 const monthYear = (iso: string) =>
-	new Date(iso).toLocaleDateString(dateLocale(), {
+	formatMoment(iso, {
 		day: "numeric",
 		month: "short",
 	});
@@ -115,7 +116,8 @@ export function ReceiptReview({
 				categoryId: chosenCategory,
 				currency: cur,
 				totalMinor,
-				occurredAt: new Date(`${day}T12:00`).toISOString(),
+				// Today's receipt: the time it's saved. Another day: noon then.
+				occurredAt: momentOnDay(day),
 				items,
 				warranties: lines
 					.filter((l) => l.warranty)

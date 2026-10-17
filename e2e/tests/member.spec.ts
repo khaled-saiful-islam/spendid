@@ -232,3 +232,31 @@ test("a card from Ask fixes an expense, and Undo puts it back", async ({ page, i
 	await page.request.delete(`/api/ask/threads/${id}`);
 });
 
+test.describe("on a device set to another time zone", () => {
+	test.use({ timezoneId: "UTC" });
+
+	test("times show in the app's time zone (Kuala Lumpur), not the device's", async ({ page }) => {
+		const shop = "Playwright time zone shop";
+		await removeLeftovers(page.request, shop);
+		const cats = (await (await page.request.get("/api/categories")).json()).data as { id: string; slug: string }[];
+		// 06:30 UTC is 2:30 pm in Kuala Lumpur.
+		const at = new Date();
+		at.setUTCHours(6, 30, 0, 0);
+		if (at.getTime() > Date.now()) at.setUTCDate(at.getUTCDate() - 1);
+		const created = await page.request.post("/api/transactions", {
+			data: {
+				amountMinor: 100,
+				currency: "MYR",
+				categoryId: cats.find((c) => c.slug === "groceries")?.id,
+				merchant: shop,
+				occurredAt: at.toISOString(),
+			},
+		});
+		const tx = (await created.json()).data as { id: string };
+		await page.goto("/app/activity");
+		const row = page.getByRole("button", { name: new RegExp(shop) }).first();
+		await expect(row).toContainText(/2:30\s?PM/i);
+		await page.request.delete(`/api/transactions/${tx.id}`, { headers: { "content-type": "application/json" }, data: {} });
+	});
+});
+

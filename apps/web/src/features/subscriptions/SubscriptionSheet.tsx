@@ -23,6 +23,7 @@ import {
 	refreshSubscriptions,
 	subscriptionsApi,
 } from "@/lib/subscriptions-api";
+import { addDays, appToday } from "@/lib/time";
 import { BrandTile } from "./brand";
 
 export interface SubscriptionDraft {
@@ -44,10 +45,7 @@ const CYCLES: Record<BillingCycle, string> = {
 };
 const REMIND = [0, 1, 3, 5, 7];
 
-const inAWeek = () => {
-	const d = new Date(Date.now() + 7 * 86_400_000);
-	return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-};
+const inAWeek = () => addDays(appToday(), 7);
 
 export function draftFrom(sub: Subscription): SubscriptionDraft {
 	const digits = minorDigits(sub.currency);

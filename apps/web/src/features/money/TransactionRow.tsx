@@ -2,8 +2,9 @@ import { type Category, formatMinor, type Transaction } from "@spendid/shared";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "motion/react";
 import { CategoryIcon } from "@/components/money/CategoryIcon";
-import { dateLocale, t as tr } from "@/i18n";
+import { t as tr } from "@/i18n";
 import { categoriesQuery } from "@/lib/money-api";
+import { formatTime } from "@/lib/time";
 import { capture } from "../capture/capture-store";
 
 /** id → category, for rows and charts. */
@@ -12,11 +13,7 @@ export function useCategoryMap(): Map<string, Category> {
 	return new Map(data.map((c) => [c.id, c]));
 }
 
-const time = (iso: string) =>
-	new Date(iso).toLocaleTimeString(dateLocale(), {
-		hour: "numeric",
-		minute: "2-digit",
-	});
+const time = (iso: string) => formatTime(iso);
 
 /** One expense. Tapping opens it for editing. */
 export function TransactionRow({

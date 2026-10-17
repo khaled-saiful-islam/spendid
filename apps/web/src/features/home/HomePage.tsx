@@ -4,9 +4,10 @@ import { Link } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { AnimatePresence } from "motion/react";
 import { buttonClass } from "@/components/ui/Button";
-import { dateLocale, t } from "@/i18n";
+import { t } from "@/i18n";
 import { meQuery } from "@/lib/me";
 import { goalsQuery, summaryQuery } from "@/lib/money-api";
+import { appHour, formatMoment } from "@/lib/time";
 import { capture } from "../capture/capture-store";
 import { TransactionRow, useCategoryMap } from "../money/TransactionRow";
 import { CheckInCard } from "../pip/CheckInCard";
@@ -20,7 +21,7 @@ import { MonthPace } from "./MonthPace";
 import { SafeCard } from "./SafeCard";
 
 function greeting(date: Date): string {
-	const h = date.getHours();
+	const h = appHour(date);
 	if (h < 5) return t("Up late");
 	if (h < 12) return t("Good morning");
 	if (h < 18) return t("Good afternoon");
@@ -41,7 +42,7 @@ export function HomePage() {
 		<div className="space-y-6">
 			<div>
 				<p className="text-ink-soft">
-					{now.toLocaleDateString(dateLocale(), {
+					{formatMoment(now, {
 						weekday: "long",
 						day: "numeric",
 						month: "long",

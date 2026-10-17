@@ -7,8 +7,9 @@ import {
 	type ShareState,
 } from "@spendid/shared";
 import { Eye, EyeOff } from "lucide-react";
-import { dateLocale, t } from "@/i18n";
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
+import { formatMoment } from "@/lib/time";
 
 const GRADIENTS = [
 	"from-plum-500 to-sky",
@@ -164,7 +165,7 @@ export function LevelPicker({
 }
 
 export const sinceLabel = (iso: string) =>
-	new Date(iso).toLocaleDateString(dateLocale(), {
+	formatMoment(iso, {
 		month: "short",
 		year: "numeric",
 	});
@@ -175,7 +176,7 @@ export const ago = (iso: string): string => {
 	if (mins < 60) return t("{n} min ago", { n: mins });
 	const hours = Math.round(mins / 60);
 	if (hours < 24) return `${hours} h ago`;
-	return new Date(iso).toLocaleDateString(dateLocale(), {
+	return formatMoment(iso, {
 		day: "numeric",
 		month: "short",
 	});

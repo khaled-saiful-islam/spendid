@@ -8,6 +8,7 @@ import { t } from "@/i18n";
 import { streakQuery } from "@/lib/delight-api";
 import { buzz } from "@/lib/haptics";
 import { usePipLook } from "@/lib/pip-wardrobe";
+import { appHour } from "@/lib/time";
 import { Pip, type PipMood } from "./Pip";
 import { PipSheet } from "./PipSheet";
 
@@ -16,7 +17,7 @@ export function pipMood(
 	summary: Summary | undefined,
 	now = new Date(),
 ): PipMood {
-	const h = now.getHours();
+	const h = appHour(now);
 	if (h >= 23 || h < 6) return "sleepy";
 	if (!summary || summary.safe.status === "no-income") return "calm";
 	if (summary.safe.status === "over") return "curled";
@@ -34,7 +35,7 @@ function pipLine(mood: PipMood, summary: Summary | undefined): string {
 	const left = summary?.safe.safeTodayMinor ?? 0;
 	switch (mood) {
 		case "sleepy":
-			return new Date().getHours() < 6
+			return appHour() < 6
 				? t("It's late. Rest up, I'll keep watch over your money.")
 				: t("Getting late. Anything to log before bed? Then I'll keep watch.");
 		case "curled":

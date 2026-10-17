@@ -8,6 +8,7 @@ import { useState } from "react";
 import { CountUp } from "@/components/money/CountUp";
 import { dateLocale, t } from "@/i18n";
 import { cn } from "@/lib/cn";
+import { formatDay } from "@/lib/time";
 import { looksOf } from "./brand";
 
 /** This month in one card: the total, a bar split by service, and a calendar of due days. */
@@ -18,12 +19,9 @@ export function MonthHero({ data }: { data: SubscriptionOverview }) {
 		.map((s) => ({ s, minor: monthlyEquivalent(s.amountMinor, s.cycle) }))
 		.sort((a, b) => b.minor - a.minor);
 	const total = monthly.reduce((n, x) => n + x.minor, 0) || 1;
-	const monthName = new Date(`${data.today}T12:00`).toLocaleDateString(
-		dateLocale(),
-		{
-			month: "long",
-		},
-	);
+	const monthName = formatDay(data.today, {
+		month: "long",
+	});
 
 	return (
 		<section

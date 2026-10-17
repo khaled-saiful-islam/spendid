@@ -7,6 +7,7 @@ import { Sheet } from "@/components/ui/Sheet";
 import { dateLocale, t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { api } from "@/lib/http";
+import { atHourOn, formatDay } from "@/lib/time";
 
 export const aiUsageQuery = {
 	queryKey: ["ai-status"],
@@ -160,7 +161,8 @@ function AllowanceDetails({
 	left: number;
 }) {
 	const reduce = useReducedMotion();
-	const resets = new Date(`${usage.resetsOn}T00:00`);
+	// The allowance resets at midnight starting that day, in the app's time zone.
+	const resets = atHourOn(usage.resetsOn, 0);
 	const days = Math.max(
 		1,
 		Math.ceil((resets.getTime() - Date.now()) / 86_400_000),
@@ -193,7 +195,7 @@ function AllowanceDetails({
 								{usage.left.questions > 0
 									? t("more questions this month")
 									: t("Ask, voice and receipts are back on {date}.", {
-											date: resets.toLocaleDateString(dateLocale(), {
+											date: formatDay(usage.resetsOn, {
 												day: "numeric",
 												month: "long",
 											}),
@@ -264,7 +266,7 @@ function AllowanceDetails({
 				{days === 1
 					? t("A fresh allowance starts tomorrow.")
 					: t("A fresh allowance starts on {date}, in {n} days.", {
-							date: resets.toLocaleDateString(dateLocale(), {
+							date: formatDay(usage.resetsOn, {
 								day: "numeric",
 								month: "long",
 							}),

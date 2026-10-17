@@ -4,6 +4,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { useState } from "react";
 import { dateLocale, t } from "@/i18n";
 import { cn } from "@/lib/cn";
+import { formatDay } from "@/lib/time";
 
 const LEVELS = 5;
 /** Monday-first short weekday names in the app language (1 Jan 2024 was a Monday). */
@@ -27,7 +28,7 @@ const cellStyle = (level: number) =>
 			};
 
 const longDay = (day: string) =>
-	new Date(`${day}T12:00`).toLocaleDateString(dateLocale(), {
+	formatDay(day, {
 		weekday: "long",
 		day: "numeric",
 		month: "long",

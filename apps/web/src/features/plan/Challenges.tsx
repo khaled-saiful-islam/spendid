@@ -13,18 +13,19 @@ import { useState } from "react";
 import { buttonClass } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
 import { toast } from "@/components/ui/Toast";
-import { dateLocale, t } from "@/i18n";
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { challengesQuery, delightApi } from "@/lib/delight-api";
 import { buzz } from "@/lib/haptics";
 import { ApiError } from "@/lib/http";
+import { formatDay } from "@/lib/time";
 
 const weekday = (day: string) =>
-	new Date(`${day}T12:00`).toLocaleDateString(dateLocale(), {
+	formatDay(day, {
 		weekday: "narrow",
 	});
 const shortDate = (day: string) =>
-	new Date(`${day}T12:00`).toLocaleDateString(dateLocale(), {
+	formatDay(day, {
 		day: "numeric",
 		month: "short",
 	});

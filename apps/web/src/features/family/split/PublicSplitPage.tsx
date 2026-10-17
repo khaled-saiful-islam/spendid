@@ -3,8 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Logo } from "@/components/brand/Logo";
 import { buttonClass } from "@/components/ui/Button";
-import { dateLocale, t } from "@/i18n";
+import { t } from "@/i18n";
 import { publicSplitQuery } from "@/lib/family-api";
+import { formatMoment } from "@/lib/time";
 import { SplitSummary } from "./SplitSummary";
 
 /** The page behind a split link: who owes what. No sign-in, nothing beyond this bill. */
@@ -41,14 +42,11 @@ export function PublicSplitPage({ token }: { token: string }) {
 							<p className="relative text-white/80">
 								{t("{name} split this bill on {date}", {
 									name: data.ownerName,
-									date: new Date(data.createdAt).toLocaleDateString(
-										dateLocale(),
-										{
-											day: "numeric",
-											month: "long",
-											year: "numeric",
-										},
-									),
+									date: formatMoment(data.createdAt, {
+										day: "numeric",
+										month: "long",
+										year: "numeric",
+									}),
 								})}
 							</p>
 							<h1 className="relative mt-1 text-[clamp(2rem,7vw,2.8rem)] leading-tight font-bold break-words">

@@ -6,6 +6,7 @@ import {
 } from "@spendid/shared";
 import { useCallback, useState } from "react";
 import { type Outfit, outfitFor } from "@/features/pip/PipOutfit";
+import { appToday } from "@/lib/time";
 
 const KEY = "spendid.pip.hidden";
 export const HATS: PipGift[] = ["leaf", "explorer", "crown"];
@@ -20,10 +21,7 @@ function readHidden(): PipGift[] {
 	}
 }
 
-const localToday = () => {
-	const d = new Date();
-	return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-};
+const localToday = () => appToday();
 
 /**
  * What Pip wears: every gift earned so far, minus any the person took off on this device.

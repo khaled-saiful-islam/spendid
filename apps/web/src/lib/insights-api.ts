@@ -1,6 +1,6 @@
 import type { Heatmap, RecurringOverview, Wrapped } from "@spendid/shared";
 import { queryOptions } from "@tanstack/react-query";
-import { dateLocale } from "@/i18n";
+import { appToday, formatDay } from "@/lib/time";
 import { api } from "./http";
 
 export const recurringQuery = queryOptions({
@@ -20,11 +20,8 @@ export const wrappedQuery = (month: string) =>
 		queryFn: () => api<Wrapped>(`/api/insights/wrapped?month=${month}`),
 	});
 
-/** "2026-10" for the month this device is in. */
-export const thisMonth = (): string => {
-	const d = new Date();
-	return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-};
+/** "2026-10": this month in the app's time zone. */
+export const thisMonth = (): string => appToday().slice(0, 7);
 
 export const shiftMonth = (month: string, by: number): string => {
 	const [y, m] = month.split("-").map(Number) as [number, number];
@@ -35,5 +32,4 @@ export const shiftMonth = (month: string, by: number): string => {
 export const monthName = (
 	month: string,
 	opts: Intl.DateTimeFormatOptions = { month: "long", year: "numeric" },
-): string =>
-	new Date(`${month}-15T12:00`).toLocaleDateString(dateLocale(), opts);
+): string => formatDay(`${month}-15`, opts);

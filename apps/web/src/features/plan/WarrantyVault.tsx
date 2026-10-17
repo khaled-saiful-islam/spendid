@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { ShieldCheck } from "lucide-react";
-import { dateLocale, t } from "@/i18n";
+import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { warrantiesQuery } from "@/lib/receipts-api";
+import { formatDay } from "@/lib/time";
 
 const DAY = 86_400_000;
 
@@ -50,14 +51,11 @@ export function WarrantyVault() {
 								</span>
 								<span className="block text-[0.85rem] text-ink-soft">
 									{t("Until")}{" "}
-									{new Date(`${w.endsOn}T12:00`).toLocaleDateString(
-										dateLocale(),
-										{
-											day: "numeric",
-											month: "short",
-											year: "numeric",
-										},
-									)}
+									{formatDay(w.endsOn, {
+										day: "numeric",
+										month: "short",
+										year: "numeric",
+									})}
 								</span>
 							</span>
 							<span

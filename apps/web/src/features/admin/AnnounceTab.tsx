@@ -6,6 +6,7 @@ import { Field } from "@/components/form/Field";
 import { SubmitButton } from "@/components/form/SubmitButton";
 import { toast } from "@/components/ui/Toast";
 import { ApiError, api } from "@/lib/http";
+import { formatMoment } from "@/lib/time";
 
 interface Announcement {
 	id: string;
@@ -103,7 +104,7 @@ export function AnnounceTab() {
 								<span className="font-semibold break-words">{a.subject}</span>
 								<span className="text-[0.88rem] text-ink-soft">
 									{a.recipients} {a.recipients === 1 ? "person" : "people"},{" "}
-									{new Date(a.createdAt).toLocaleDateString(undefined, {
+									{formatMoment(a.createdAt, {
 										day: "numeric",
 										month: "short",
 									})}
