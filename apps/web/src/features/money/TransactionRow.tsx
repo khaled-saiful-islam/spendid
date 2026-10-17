@@ -19,9 +19,12 @@ const time = (iso: string) => formatTime(iso);
 export function TransactionRow({
 	t,
 	category,
+	onOpen,
 }: {
 	t: Transaction;
 	category?: Category;
+	/** Runs before the edit sheet opens (e.g. to close a sheet this row sits in). */
+	onOpen?: () => void;
 }) {
 	const foreign = t.currency !== t.homeCurrency;
 	return (
@@ -33,7 +36,10 @@ export function TransactionRow({
 		>
 			<button
 				type="button"
-				onClick={() => capture.edit(t)}
+				onClick={() => {
+					onOpen?.();
+					capture.edit(t);
+				}}
 				className="flex w-full items-center gap-3 rounded-tile px-2 py-2.5 text-left transition-colors hover:bg-surface-2"
 			>
 				<CategoryIcon icon={category?.icon} tint={category?.tint} />

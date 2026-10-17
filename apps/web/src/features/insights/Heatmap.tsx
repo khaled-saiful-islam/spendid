@@ -5,7 +5,7 @@ import { useState } from "react";
 import { dateLocale, t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { formatDay } from "@/lib/time";
-import { DayExpenses } from "./DayExpenses";
+import { DayExpensesSheet } from "./DayExpenses";
 
 const LEVELS = 5;
 /** Monday-first short weekday names in the app language (1 Jan 2024 was a Monday). */
@@ -149,10 +149,7 @@ export function Heatmap({ data }: { data: HeatmapData }) {
 						})}
 					</div>
 					<div className="flex flex-wrap items-center justify-between gap-3 text-[0.85rem] text-ink-soft">
-						<p
-							aria-live="polite"
-							className={picked ? "sr-only" : "font-semibold text-ink"}
-						>
+						<p aria-live="polite" className="font-semibold text-ink">
 							{picked
 								? `${longDay(picked)}: ${chosen ? t(chosen.count === 1 ? "{amount}, 1 expense" : "{amount}, {n} expenses", { amount: money(chosen.minor), n: chosen.count }) : t("no spending")}`
 								: t("Tap a day to see its expenses.")}
@@ -172,7 +169,11 @@ export function Heatmap({ data }: { data: HeatmapData }) {
 					</div>
 				</>
 			)}
-			{picked && <DayExpenses day={picked} currency={data.currency} />}
+			<DayExpensesSheet
+				day={picked}
+				currency={data.currency}
+				onClose={() => setPicked(null)}
+			/>
 		</figure>
 	);
 }
