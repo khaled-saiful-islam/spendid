@@ -1,5 +1,6 @@
 import { formatMinor, LEVEL_INFO, type SharedView } from "@spendid/shared";
 import {
+	EyeOff,
 	PauseCircle,
 	ReceiptText,
 	TrendingDown,
@@ -187,6 +188,18 @@ export function SharedViewCard({
 				<p className="text-ink-soft">
 					{t(
 						"Sharing is paused, so nothing is visible right now. It comes back the moment it's turned on again.",
+					)}
+				</p>
+			</div>
+		);
+	if (view.level === "none")
+		return (
+			<div className="flex items-start gap-3 rounded-panel border-2 border-dashed border-line p-5">
+				<EyeOff className="size-7 shrink-0 text-ink-soft" aria-hidden="true" />
+				<p className="text-ink-soft">
+					{t(
+						"{name} shares nothing about their spending with you. You're still in each other's circle, and can save in family jars together.",
+						{ name: view.ownerName.split(/\s+/)[0] ?? view.ownerName },
 					)}
 				</p>
 			</div>

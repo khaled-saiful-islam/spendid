@@ -267,4 +267,13 @@ export const msF: Record<string, string> = {
 	"How much have I spent this month?": "Berapa banyak saya belanja bulan ini?",
 	"Ask about another category": "Tanya tentang kategori lain",
 	"Working it out…": "Sedang mengira…",
+	Nothing: "Tiada",
+	"No spending at all. They only see that you're in each other's circle, and family jars you join together.":
+		"Tiada perbelanjaan langsung. Mereka hanya nampak anda berada dalam bulatan masing-masing, dan tabung keluarga yang anda sertai bersama.",
+	"No spending. You only see that they're in your circle.":
+		"Tiada perbelanjaan. Anda hanya nampak mereka berada dalam bulatan anda.",
+	"{name} shares nothing about their spending with you. You're still in each other's circle, and can save in family jars together.":
+		"{name} tidak berkongsi apa-apa tentang perbelanjaan mereka dengan anda. Anda masih dalam bulatan masing-masing, dan boleh menyimpan dalam tabung keluarga bersama.",
+	"After tax. A rough number is fine, or skip it. Change it any time in Profile, under Money settings.":
+		"Selepas cukai. Anggaran pun tidak mengapa, atau langkau. Ubah bila-bila masa di Profil, bahagian Tetapan wang.",
 };

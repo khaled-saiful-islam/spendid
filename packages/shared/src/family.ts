@@ -12,6 +12,7 @@ export type Relation = (typeof RELATIONS)[number];
 
 /** Each level includes everything before it. */
 export const SHARE_LEVELS = [
+	"none",
 	"totals",
 	"categories",
 	"transactions",
@@ -36,6 +37,11 @@ export const LEVEL_INFO: Record<
 	ShareLevel,
 	{ label: string; sees: string; theirs: string }
 > = {
+	none: {
+		label: "Nothing",
+		sees: "No spending at all. They only see that you're in each other's circle, and family jars you join together.",
+		theirs: "No spending. You only see that they're in your circle.",
+	},
 	totals: {
 		label: "Totals",
 		sees: "How much you spent this month, nothing else.",

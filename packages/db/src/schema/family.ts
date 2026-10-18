@@ -30,6 +30,7 @@ export const familyRelation = pgEnum("family_relation", [
 
 /** Each level includes everything before it. */
 export const shareLevel = pgEnum("share_level", [
+	"none",
 	"totals",
 	"categories",
 	"transactions",

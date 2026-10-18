@@ -141,7 +141,7 @@ export function IncomeStep({
 				value={value}
 				error={error}
 				hint={t(
-					"After tax. A rough number is fine — you can change it any time.",
+					"After tax. A rough number is fine, or skip it. Change it any time in Profile, under Money settings.",
 				)}
 				onChange={(e) => onChange(e.target.value.replace(/[^\d.,]/g, ""))}
 				className="[&_input]:num [&_input]:text-[1.4rem] [&_input]:font-bold"

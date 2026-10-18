@@ -22,6 +22,8 @@ import {
 
 /** Plain words for what's shared. */
 const LEVEL_WORDS: Record<string, (typeof SHARE_LEVELS)[number]> = {
+	nothing: "none",
+	none: "none",
 	totals: "totals",
 	categories: "categories",
 	expenses: "transactions",
@@ -122,7 +124,7 @@ export function familyTools(
 		{
 			name: "propose_sharing",
 			description:
-				"Change what the person shares with someone in their circle (level: totals, categories, expenses or receipts), or pause / resume sharing with them. They always see the change.",
+				"Change what the person shares with someone in their circle (level: nothing, totals, categories, expenses or receipts), or pause / resume sharing with them. They always see the change.",
 			schema: z.object({
 				person: z.string().min(1).max(60),
 				level: WordSchema(Object.keys(LEVEL_WORDS)).nullish(),

@@ -326,6 +326,38 @@ describe.skipIf(!url)("family circle (real database)", () => {
 		});
 	});
 
+	it("sharing nothing shows no money at all, and still keeps you connected", async () => {
+		await call(maya, "PUT", `/family/people/${adam}/share`, {
+			level: "none",
+			paused: false,
+		});
+		const view = await call<SharedView>(
+			adam,
+			"GET",
+			`/family/people/${maya}/view`,
+		);
+		expect(view.status).toBe(200);
+		expect(view.body.data).toMatchObject({
+			level: "none",
+			paused: false,
+			month: null,
+			categories: null,
+			expenses: null,
+		});
+		const pulse = await call<PulseItem[]>(adam, "GET", "/family/pulse");
+		expect(pulse.body.data.some((p) => p.kind === "expense")).toBe(false);
+		await call(maya, "PUT", `/family/people/${adam}/share`, {
+			level: "transactions",
+			paused: false,
+		});
+		// An invite can say from the start that nothing will be shared.
+		const invite = await call<InviteCreated>(maya, "POST", "/family/invites", {
+			relation: "sibling",
+			level: "none",
+		});
+		expect(invite.status).toBeLessThan(300);
+	});
+
 	it("streams new expenses to the pulse and lets family cheer", async () => {
 		events.length = 0;
 		await spend(maya, 4200, "Jaya Grocer");

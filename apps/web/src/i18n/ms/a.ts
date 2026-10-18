@@ -26,8 +26,6 @@ export const msA: Record<string, string> = {
 	"Added 1 expense.": "1 perbelanjaan ditambah.",
 	"Admin accounts can't join a family circle. Sign in with a personal account.":
 		"Akaun admin tidak boleh menyertai bulatan keluarga. Log masuk dengan akaun peribadi.",
-	"After tax. A rough number is fine — you can change it any time.":
-		"Selepas cukai. Anggaran pun tidak mengapa, anda boleh ubah bila-bila masa.",
 	Aisha: "Aisha",
 	"All categories": "Semua kategori",
 	"All currencies": "Semua mata wang",

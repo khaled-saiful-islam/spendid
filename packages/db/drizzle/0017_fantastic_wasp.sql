@@ -1,0 +1,1 @@
+ALTER TYPE "public"."share_level" ADD VALUE 'none' BEFORE 'totals';

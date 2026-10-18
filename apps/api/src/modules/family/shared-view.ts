@@ -46,7 +46,9 @@ export async function buildSharedView(
 		categories: null,
 		expenses: null,
 	};
-	if (grant.paused || !owner) return base;
+	// Paused, or sharing nothing: no money at all, not even the month's total.
+	if (grant.paused || !owner || !levelIncludes(grant.level, "totals"))
+		return base;
 
 	const timeZone = owner.timeZone ?? "UTC";
 	const bounds = await monthBounds(db, timeZone);

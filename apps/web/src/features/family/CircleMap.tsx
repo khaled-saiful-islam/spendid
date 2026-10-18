@@ -16,6 +16,7 @@ import { Avatar, relationLabel, sinceLabel } from "./parts";
 
 /** How much a share shows, as a colour: more shared, warmer. */
 const LEVEL_COLOR: Record<string, string> = {
+	none: "var(--color-ink-soft)",
 	totals: "var(--color-sky)",
 	categories: "var(--color-jade)",
 	transactions: "var(--color-marigold)",
@@ -265,16 +266,18 @@ export function CircleMap({
 			)}
 			{people.length > 0 && (
 				<p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 px-3 pb-1 text-[0.75rem] text-plum-200">
-					{(["totals", "categories", "transactions"] as const).map((level) => (
-						<span key={level} className="inline-flex items-center gap-1.5">
-							<span
-								className="h-0.5 w-4 rounded-full"
-								style={{ background: LEVEL_COLOR[level] }}
-								aria-hidden="true"
-							/>
-							{t(LEVEL_INFO[level].label)}
-						</span>
-					))}
+					{(["none", "totals", "categories", "transactions"] as const).map(
+						(level) => (
+							<span key={level} className="inline-flex items-center gap-1.5">
+								<span
+									className="h-0.5 w-4 rounded-full"
+									style={{ background: LEVEL_COLOR[level] }}
+									aria-hidden="true"
+								/>
+								{t(LEVEL_INFO[level].label)}
+							</span>
+						),
+					)}
 				</p>
 			)}
 		</section>

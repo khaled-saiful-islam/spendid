@@ -119,12 +119,12 @@ export function LevelPicker({
 							aria-hidden="true"
 							className="mt-1 flex shrink-0 items-end gap-0.5"
 						>
-							{SHARE_LEVELS.map((l, j) => (
+							{SHARE_LEVELS.slice(1).map((l, j) => (
 								<span
 									key={l}
 									className={cn(
 										"w-1.5 rounded-full transition-colors",
-										j <= i ? (on ? "bg-plum-500" : "bg-plum-300") : "bg-line",
+										j < i ? (on ? "bg-plum-500" : "bg-plum-300") : "bg-line",
 									)}
 									style={{ height: `${8 + j * 5}px` }}
 								/>

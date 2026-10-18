@@ -102,6 +102,8 @@ export function createFamilyService(deps: Deps) {
 		const label = LEVEL_INFO[after.level].label.toLowerCase();
 		if (after.paused && !before?.paused)
 			return `${name} paused sharing with you.`;
+		if (after.level === "none" && before?.level !== "none")
+			return `${name} now shares nothing with you.`;
 		if (!after.paused && before?.paused)
 			return `${name} is sharing with you again: ${label}.`;
 		if (!after.paused && before?.level !== after.level)
