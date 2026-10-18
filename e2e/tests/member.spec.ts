@@ -232,6 +232,38 @@ test("tapping a question on Ask fills the box to edit; nothing is asked until se
 	await expect(page.getByRole("figure", { name: /type expenses like a text message/ })).toBeVisible();
 });
 
+test("phones get a home-screen card until it's installed or put off", async ({ page, isMobile }) => {
+	test.skip(!isMobile, "The card is for phones");
+	await page.addInitScript(() => localStorage.removeItem("spendid-install-nudge"));
+	await page.goto("/app");
+	const card = page.getByRole("region", { name: "Put Spendid on your home screen" });
+	await expect(card).toBeVisible();
+	await card.getByRole("button", { name: "Show me how" }).click();
+	const sheet = page.getByRole("dialog", { name: "Get the Spendid app" });
+	await expect(sheet).toBeVisible();
+	await sheet.getByRole("button", { name: "Close" }).last().click();
+	await expect(sheet).toBeHidden();
+	await card.getByRole("button", { name: "Not now" }).click();
+	await expect(card).toBeHidden();
+	await page.reload();
+	await expect(page.getByRole("region", { name: "Put Spendid on your home screen" })).toBeHidden();
+});
+
+test("inside another app's browser, the install steps say how to get out first", async ({ browser }) => {
+	const ctx = await browser.newContext({
+		userAgent:
+			"Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 350.0.0",
+		viewport: { width: 390, height: 844 },
+	});
+	const page = await ctx.newPage();
+	await page.goto("/");
+	await page.getByRole("button", { name: "Get the app, it's free" }).click();
+	const sheet = page.getByRole("dialog", { name: "Get the Spendid app" });
+	await expect(sheet.getByText("You're in Instagram's browser, which can't install apps.")).toBeVisible();
+	await expect(sheet.getByText(/Open in Safari/).first()).toBeVisible();
+	await ctx.close();
+});
+
 test("a deleted chat stays deleted after a reload", async ({ page, isMobile }) => {
 	const id = crypto.randomUUID();
 	await page.request.put(`/api/ask/threads/${id}`, {

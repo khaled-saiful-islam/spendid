@@ -18,6 +18,7 @@ import { goalTint } from "../plan/goal-tint";
 import { PendingReceipts } from "../scan/PendingReceipts";
 import { DueSoonCard } from "../subscriptions/DueSoonCard";
 import { AskCard } from "./AskCard";
+import { InstallNudge } from "./InstallNudge";
 import { MonthPace } from "./MonthPace";
 import { SafeCard } from "./SafeCard";
 import { StatTiles } from "./StatTiles";
@@ -51,6 +52,7 @@ export function HomePage() {
 				})}
 			/>
 
+			<InstallNudge />
 			<PendingReceipts />
 
 			{summary ? (

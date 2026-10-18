@@ -216,4 +216,19 @@ export const msF: Record<string, string> = {
 	"Bills coming up, price changes and goals reached show up here, and by email if it's on.":
 		"Bil yang akan tiba, perubahan harga dan matlamat yang dicapai muncul di sini, dan melalui e-mel jika dihidupkan.",
 	New: "Baharu",
+	"You're in another app's browser, which can't install apps.":
+		"Anda dalam pelayar aplikasi lain, yang tidak boleh memasang aplikasi.",
+	"You're in {app}'s browser, which can't install apps.":
+		"Anda dalam pelayar {app}, yang tidak boleh memasang aplikasi.",
+	"Tap ⋯ or the compass icon, then Open in Safari. Then follow the steps below.":
+		"Ketik ⋯ atau ikon kompas, kemudian Buka dalam Safari. Kemudian ikut langkah di bawah.",
+	"Tap ⋮ at the top right, then Open in Chrome (or Open in browser). Then follow the steps below.":
+		"Ketik ⋮ di atas kanan, kemudian Buka dalam Chrome (atau Buka dalam pelayar). Kemudian ikut langkah di bawah.",
+	"Put Spendid on your home screen": "Letak Spendid di skrin utama anda",
+	"You opened Spendid inside another app. Open it in your browser to install it.":
+		"Anda membuka Spendid dalam aplikasi lain. Buka dalam pelayar untuk memasangnya.",
+	"Opens in one tap, full screen, and works offline.":
+		"Dibuka dengan satu ketikan, skrin penuh, dan berfungsi luar talian.",
+	Install: "Pasang",
+	"Show me how": "Tunjukkan caranya",
 };

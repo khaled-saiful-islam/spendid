@@ -107,6 +107,28 @@ export function InstallSheet({
 	return (
 		<Sheet open={open} onClose={onClose} title={t("Get the Spendid app")}>
 			<div className="space-y-5">
+				{install.inApp && !install.installed && (
+					<div className="rounded-tile border-2 border-marigold/60 bg-marigold/10 p-3">
+						<p className="font-semibold">
+							{install.inApp === "another app"
+								? t(
+										"You're in another app's browser, which can't install apps.",
+									)
+								: t("You're in {app}'s browser, which can't install apps.", {
+										app: install.inApp,
+									})}
+						</p>
+						<p className="mt-1 text-[0.92rem] text-ink-soft">
+							{install.platform === "ios"
+								? t(
+										"Tap ⋯ or the compass icon, then Open in Safari. Then follow the steps below.",
+									)
+								: t(
+										"Tap ⋮ at the top right, then Open in Chrome (or Open in browser). Then follow the steps below.",
+									)}
+						</p>
+					</div>
+				)}
 				{install.installed ? (
 					<p className="flex items-center gap-2 rounded-tile bg-jade/12 px-3 py-2.5 font-semibold text-safe">
 						<Check className="size-5 shrink-0" aria-hidden="true" />
