@@ -1,12 +1,12 @@
 // Spendid's service worker: an offline app shell, nothing more.
 // Never caches /api — money and personal data always come fresh from the server.
-const SHELL = "spendid-shell-v3";
+const SHELL = "spendid-shell-v4";
 const ASSETS = "spendid-assets-v1";
 // Voice and scanner models (several MB). Bump when the VAD or OpenCV packages change.
 const MODELS = "spendid-models-v1";
 // A receipt shared into Spendid from another app waits here until the app picks it up.
 const SHARED = "spendid-shared";
-const PRECACHE = ["/", "/theme.js", "/manifest.webmanifest", "/icons/icon-192.png", "/favicon.svg"];
+const PRECACHE = ["/", "/theme.js", "/splash.js", "/manifest.webmanifest", "/icons/icon-192.png", "/favicon.svg"];
 
 self.addEventListener("install", (event) => {
 	event.waitUntil(caches.open(SHELL).then((c) => c.addAll(PRECACHE)));
@@ -69,8 +69,8 @@ self.addEventListener("fetch", (event) => {
 		return;
 	}
 
-	// The theme script runs before every page: fresh online, cached for offline.
-	if (url.pathname === "/theme.js") {
+	// The theme and splash scripts run before every page: fresh online, cached for offline.
+	if (url.pathname === "/theme.js" || url.pathname === "/splash.js") {
 		event.respondWith(
 			fetch(request)
 				.then((res) => {

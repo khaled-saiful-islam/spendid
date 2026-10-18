@@ -6,6 +6,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { t } from "./i18n";
 import { whenSignedOut } from "./lib/http";
+import { hideSplash } from "./lib/splash";
 import { routeTree } from "./routeTree.gen";
 
 const queryClient = new QueryClient({
@@ -46,6 +47,9 @@ createRoot(root).render(
 		</QueryClientProvider>
 	</StrictMode>,
 );
+
+// Once the first screen has drawn, let the splash finish and fade into it.
+requestAnimationFrame(() => requestAnimationFrame(hideSplash));
 
 // Installable app with an offline shell. Dev keeps the plain server (no stale caches).
 if (import.meta.env.PROD && "serviceWorker" in navigator) {

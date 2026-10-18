@@ -191,6 +191,15 @@ test("Get the app: one-tap install when the browser offers it, and a QR code to 
 	await expect(page.getByText("Spendid is installed. Find it with your apps.")).toBeVisible();
 });
 
+test("the animated splash plays on app start, then hands over; a browser tab skips it", async ({ page }) => {
+	await page.goto("/app?splash");
+	await expect(page.locator("#splash .coin")).toBeVisible();
+	await expect(page.locator("#splash")).toHaveCount(0, { timeout: 4000 });
+	await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+	await page.goto("/app");
+	await expect(page.locator("#splash")).toBeHidden();
+});
+
 test("a deleted chat stays deleted after a reload", async ({ page, isMobile }) => {
 	const id = crypto.randomUUID();
 	await page.request.put(`/api/ask/threads/${id}`, {
