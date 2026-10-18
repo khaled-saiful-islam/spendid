@@ -74,7 +74,7 @@ export function Heatmap({ data }: { data: HeatmapData }) {
 						</li>
 					)}
 					{[...data.days]
-						.sort((a, b) => a.day.localeCompare(b.day))
+						.sort((a, b) => b.day.localeCompare(a.day))
 						.map((d) => (
 							<li key={d.day}>
 								<button

@@ -341,7 +341,7 @@ export function renderReport(
 
 	r.section(
 		"Expenses",
-		"Newest last. Amounts in the currency paid and in your home currency.",
+		"Newest first. Amounts in the currency paid and in your home currency.",
 	);
 	if (data.live.length === 0) r.empty("No expenses yet.");
 	else

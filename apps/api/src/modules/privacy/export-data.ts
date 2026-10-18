@@ -22,7 +22,7 @@ import {
 } from "@spendid/db";
 import type { FileStore } from "@spendid/server";
 import { minorDigits } from "@spendid/shared";
-import { asc, eq, or, sql } from "drizzle-orm";
+import { desc, eq, or, sql } from "drizzle-orm";
 
 const EXT: Record<string, string> = {
 	"image/jpeg": "jpg",
@@ -104,7 +104,8 @@ export async function gatherExport(db: Db, store: FileStore, userId: string) {
 		.from(transaction)
 		.innerJoin(category, eq(category.id, transaction.categoryId))
 		.where(eq(transaction.userId, userId))
-		.orderBy(asc(transaction.occurredAt));
+		// Newest first, like everywhere else in the app.
+		.orderBy(desc(transaction.occurredAt), desc(transaction.id));
 	const live = txs.filter((t) => !t.deletedAt);
 
 	const receipts = await db
