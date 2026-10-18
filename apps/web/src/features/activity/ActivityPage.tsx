@@ -148,7 +148,7 @@ function ExpensesView({ initialCategory }: { initialCategory?: string }) {
 					<option value="">{t("All categories")}</option>
 					{categories.map((c) => (
 						<option key={c.id} value={c.id}>
-							{c.name}
+							{t(c.name)}
 						</option>
 					))}
 				</select>

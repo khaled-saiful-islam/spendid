@@ -1,6 +1,6 @@
 import { formatMinor, minorDigits, type Transaction } from "@spendid/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, Trash2 } from "lucide-react";
+import { CalendarDays, ChevronDown, Trash2 } from "lucide-react";
 import { motion } from "motion/react";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { MaybeAlert } from "@/components/form/Alert";
@@ -35,6 +35,9 @@ interface ExpenseFormProps {
 const chip =
 	"inline-flex h-10 items-center gap-2 rounded-full border-2 px-3.5 text-[0.92rem] font-medium transition-colors";
 const chipOn = "border-plum-500 bg-plum-500/10 text-ink";
+/** Categories shown before "More categories". */
+const COMMON_CATEGORIES = 10;
+
 const chipOff = "border-line text-ink-soft hover:border-plum-300";
 
 export function ExpenseForm({
@@ -62,6 +65,7 @@ export function ExpenseForm({
 	const sharedText = prefill && "text" in prefill ? prefill.text : "";
 	const [shorthand, setShorthand] = useState(sharedText);
 	const [pickedByHand, setPickedByHand] = useState(Boolean(editing));
+	const [allCategories, setAllCategories] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [pending, setPending] = useState(false);
 
@@ -149,6 +153,12 @@ export function ExpenseForm({
 	];
 	const customDay =
 		draft.day !== "today" && draft.day !== "yesterday" ? draft.day : "";
+	// The ten most common first; the rest one tap away. The picked one always shows.
+	const shownCategories = allCategories
+		? categories
+		: categories.filter(
+				(c, i) => i < COMMON_CATEGORIES || c.id === draft.categoryId,
+			);
 	const today = appToday();
 	/** The four days before yesterday, one tap each. */
 	const recentDays = [2, 3, 4, 5].map((n) => addDays(today, -n));
@@ -298,7 +308,7 @@ export function ExpenseForm({
 			<fieldset>
 				<legend className="mb-2 font-semibold">{t("Category")}</legend>
 				<div className="flex flex-wrap gap-2">
-					{categories.map((c) => (
+					{shownCategories.map((c) => (
 						<button
 							key={c.id}
 							type="button"
@@ -319,9 +329,21 @@ export function ExpenseForm({
 								size="sm"
 								className="size-7"
 							/>
-							{c.name}
+							{t(c.name)}
 						</button>
 					))}
+					{!allCategories && categories.length > shownCategories.length && (
+						<button
+							type="button"
+							onClick={() => setAllCategories(true)}
+							className={cn(chip, chipOff, "border-dashed")}
+						>
+							<ChevronDown className="size-4" aria-hidden="true" />
+							{t("More categories ({n})", {
+								n: categories.length - shownCategories.length,
+							})}
+						</button>
+					)}
 				</div>
 			</fieldset>
 

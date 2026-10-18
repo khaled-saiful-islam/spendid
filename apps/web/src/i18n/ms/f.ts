@@ -186,4 +186,5 @@ export const msF: Record<string, string> = {
 	Example: "Contoh",
 	"Change the question if you like, then press send.":
 		"Ubah soalan jika mahu, kemudian tekan hantar.",
+	"More categories ({n})": "Kategori lain ({n})",
 };

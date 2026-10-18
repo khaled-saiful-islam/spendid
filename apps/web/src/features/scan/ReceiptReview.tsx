@@ -207,7 +207,7 @@ export function ReceiptReview({
 						<option value="">{t("Pick a category")}</option>
 						{categories.map((c) => (
 							<option key={c.id} value={c.id}>
-								{c.name}
+								{t(c.name)}
 							</option>
 						))}
 					</select>

@@ -14,7 +14,16 @@ export const CHALLENGE_KINDS = [
 ] as const;
 export type ChallengeKind = (typeof CHALLENGE_KINDS)[number];
 
-export const FIXED_COST_SLUGS = ["bills", "subscriptions", "home"] as const;
+export const FIXED_COST_SLUGS = [
+	"bills",
+	"phone",
+	"subscriptions",
+	"home",
+	"insurance",
+	"loans",
+	"taxes",
+	"savings",
+] as const;
 
 export const CHALLENGES: Record<
 	ChallengeKind,
