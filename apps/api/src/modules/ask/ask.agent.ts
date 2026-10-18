@@ -24,6 +24,7 @@ import {
 	STEP_LABELS,
 	type ToolDeps,
 } from "./ask.tools";
+import { coverageProblems } from "./coverage";
 import { ungroundedNumbers } from "./grounding";
 import { repairToolCalls } from "./repair-tool-calls";
 
@@ -55,6 +56,7 @@ function systemPrompt(
 How to answer (money must be exact; a wrong or made-up number is never acceptable):
 - Get every number from the tools, fresh for this question. Expenses may have been added, changed or removed since earlier messages, so never reuse numbers from the conversation.
 - Every amount, percentage and count you write must be exactly one the tools returned. For ANY sum, difference, average, share or percentage, call calculate; never work numbers out yourself. Answers are checked, and numbers that aren't from the tools are rejected.
+- For the biggest or smallest expenses, use find_expenses with sort "biggest" or "smallest".
 - For dates, prefer the period option (today, yesterday, this_week, last_week, this_month, last_month, this_year, last_year, last_7_days, last_30_days); the tools work out the days. Weeks run Monday to Sunday. For totals use spending_totals; to find particular expenses use find_expenses (it can search by shop word, category or amount).
 - If a list says more: true, only some are listed: never present them as all of them, and use the total the tool gives.
 - If a tool returns an error, fix the call (a word that isn't a category goes in search). Never turn an error into "nothing" or zero.
@@ -62,6 +64,8 @@ How to answer (money must be exact; a wrong or made-up number is never acceptabl
 - If the person mentions an amount that doesn't match the data, say what the data shows now. If the tool lists removed expenses, use them to explain the difference. Only say something isn't there after find_expenses found no match.
 - If a tool returns nothing, say there's nothing logged for that.
 - Keep answers short: one to four sentences, warm and plain. No jargon. Quote money exactly as the tools' "shown" values (e.g. "RM 12.50").
+- When you give a total, say which days it covers in plain words, e.g. "last week (5 to 11 Oct)".
+- Answer exactly the period and categories asked: answers are checked against the days and categories each tool looked at.
 - When a comparison or trend helps, call show_chart once with numbers a tool returned.
 - If the person describes purchases to log ("lunch 12 and grab 9"), call propose_expenses.
 - To create or change things, use these tools. Each shows a card the person confirms; nothing changes until they tap it, so never say it's done or saved; say it's ready to confirm.
@@ -158,13 +162,14 @@ export function createAskAgent(deps: AgentDeps) {
 		});
 
 		const side: SideChannel = { charts: [], drafts: [], actions: [] };
+		const categories = await deps.categories.listFor(userId);
 		const tools = createAskTools(
 			deps,
 			{
 				userId,
 				timeZone,
 				homeCurrency,
-				categories: await deps.categories.listFor(userId),
+				categories,
 				name: row?.name,
 				locale: p?.locale === "ms" ? "ms" : "en",
 				receipt,
@@ -323,19 +328,39 @@ export function createAskAgent(deps: AgentDeps) {
 		}
 		// The red line: every number must come from this question's tool results (or the
 		// question). One chance to correct; otherwise say so rather than show a guess.
-		const checked = () => [...(side.sources ?? []), asked];
-		const unchecked = answer ? ungroundedNumbers(answer, checked()) : [];
-		if (unchecked.length) {
+		// And the numbers must be for the period and categories asked, read from the question.
+		const problems = () => {
+			const made = answer
+				? ungroundedNumbers(answer, [...(side.sources ?? []), asked])
+				: [];
+			return [
+				...(made.length
+					? [
+							`${made.join(", ")} ${made.length === 1 ? "is" : "are"} not in the tool results. Every amount, percentage and count must be exactly one a tool returned for this question; use calculate for any arithmetic.`,
+						]
+					: []),
+				...(answer
+					? coverageProblems({
+							question: input.question,
+							today,
+							categories,
+							lookups: side.lookups ?? [],
+						})
+					: []),
+			];
+		};
+		const found = problems();
+		if (found.length) {
 			const rejected = answer;
 			answer = "";
 			yield* run([
 				...messages,
 				new AIMessage(rejected),
 				new HumanMessage(
-					`Check failed: ${unchecked.join(", ")} ${unchecked.length === 1 ? "is" : "are"} not in the tool results. Every amount, percentage and count must be exactly one a tool returned for this question. Call the tools again if needed and use calculate for any arithmetic, then give only the corrected answer.`,
+					`Check failed:\n- ${found.join("\n- ")}\nCall the tools again as needed, then give only the corrected answer.`,
 				),
 			]);
-			if (!answer || ungroundedNumbers(answer, checked()).length)
+			if (!answer || problems().length)
 				answer = UNCHECKED[p?.locale === "ms" ? "ms" : "en"];
 		}
 		// Never echo the bookkeeping notes the app adds to earlier answers.

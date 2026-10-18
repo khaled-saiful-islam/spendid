@@ -250,6 +250,27 @@ describe.skipIf(!url)("ask accuracy (real database)", () => {
 		expect(under.matching).toBe(40);
 	});
 
+	it("the biggest expenses can be listed first, wherever they are in the month", async () => {
+		const { run } = toolsFor();
+		const out = await run("find_expenses", {
+			...march,
+			sort: "biggest",
+			limit: 3,
+		});
+		expect(out.expenses.map((e: { merchant: string }) => e.merchant)).toEqual([
+			"Hotel Bangkok",
+			"Lotus's",
+			"Jaya Grocer",
+		]);
+		expect(out.more).toBe(true);
+		const smallest = await run("find_expenses", {
+			...march,
+			sort: "smallest",
+			limit: 1,
+		});
+		expect(smallest.expenses[0].amount).toBe(1);
+	});
+
 	it("named periods are worked out by the server, in the person's days", async () => {
 		const { run } = toolsFor("2025-04-10");
 		const out = await run("spending_totals", {
@@ -300,6 +321,36 @@ describe.skipIf(!url)("ask accuracy (real database)", () => {
 			],
 		});
 		expect(side.charts).toHaveLength(1);
+	});
+
+	it("each lookup is recorded with its exact days and category, for the coverage check", async () => {
+		const { run, side } = toolsFor("2025-04-10");
+		await run("spending_totals", {
+			period: "last_month",
+			groupBy: "merchant",
+			category: "grocery",
+		});
+		await run("find_expenses", { ...march, over: 100 });
+		await run("spending_totals", {
+			groupBy: "category",
+			category: "coffee",
+			...march,
+		});
+		expect(side.lookups).toEqual([
+			{
+				from: "2025-03-01",
+				to: "2025-03-31",
+				groupBy: "merchant",
+				categoryId: categories.find((c) => c.slug === "groceries")?.id,
+			},
+			{
+				from: "2025-03-01",
+				to: "2025-03-31",
+				groupBy: "list",
+				sort: "newest",
+				complete: true,
+			},
+		]);
 	});
 
 	it("calculate does exact money arithmetic", async () => {

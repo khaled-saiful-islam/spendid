@@ -6,6 +6,7 @@ import { isGrounded } from "../grounding";
 import { calculateTool } from "./calculate";
 import {
 	type AskContext,
+	localToday,
 	major,
 	type SideChannel,
 	type ToolDeps,
@@ -20,6 +21,13 @@ export function readTools(deps: ToolDeps, ctx: AskContext, side: SideChannel) {
 	const budgetOverview = tool(
 		async () => {
 			const s = await deps.summary.forUser(ctx.userId);
+			// This month so far, by category, and today: what its numbers cover.
+			const today = ctx.today ?? localToday(ctx.timeZone);
+			side.lookups ??= [];
+			side.lookups.push(
+				{ from: `${today.slice(0, 8)}01`, to: today, groupBy: "category" },
+				{ from: today, to: today, groupBy: "category" },
+			);
 			const limits = await deps.plan.budgets(ctx.userId);
 			const byId = new Map(ctx.categories.map((c) => [c.id, c]));
 			const spent = new Map(
@@ -145,7 +153,7 @@ export function readTools(deps: ToolDeps, ctx: AskContext, side: SideChannel) {
 	);
 
 	return [
-		...spendingTools(deps, ctx),
+		...spendingTools(deps, ctx, side),
 		calculateTool(),
 		budgetOverview,
 		goalsOverview,

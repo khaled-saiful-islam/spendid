@@ -51,6 +51,14 @@ describe("ungroundedNumbers", () => {
 		).toEqual([]);
 	});
 
+	it("accepts a drop written as a positive amount", () => {
+		expect(
+			ungroundedNumbers("Eating out dropped by RM 153.80.", [
+				JSON.stringify({ expression: "156.8 - 310.6", result: -153.8 }),
+			]),
+		).toEqual([]);
+	});
+
 	it("ignores dates, years and plain words with numbers", () => {
 		expect(
 			ungroundedNumbers(

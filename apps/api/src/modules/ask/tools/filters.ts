@@ -58,8 +58,51 @@ export function resolveRange(
 const norm = (s: string) =>
 	s.trim().toLowerCase().replace(/\s+/g, " ").replace(/&/g, "and");
 
+/** The app's Malay names for the built-in categories, so questions in Malay are understood. */
+const MS_NAMES: Record<string, string> = {
+	food: "Makan di luar",
+	groceries: "Barang dapur",
+	transport: "Pengangkutan",
+	car: "Kereta & minyak",
+	phone: "Telefon & internet",
+	bills: "Bil & utiliti",
+	home: "Rumah & sewa",
+	household: "Rumah tangga & pembaikan",
+	shopping: "Membeli-belah",
+	gadgets: "Gajet & elektronik",
+	health: "Kesihatan",
+	fitness: "Sukan & kecergasan",
+	insurance: "Insurans & takaful",
+	loans: "Pinjaman & hutang",
+	fun: "Hiburan",
+	subscriptions: "Langganan",
+	travel: "Percutian",
+	education: "Pendidikan",
+	family: "Keluarga & anak",
+	pets: "Haiwan peliharaan",
+	gifts: "Hadiah",
+	charity: "Zakat & derma",
+	care: "Penjagaan diri",
+	taxes: "Cukai & yuran",
+	savings: "Simpanan & pelaburan",
+	other: "Lain-lain",
+};
+
+/**
+ * Every way a category is named: slug, English and Malay names, and each part of a name like
+ * "Bills & utilities", lower-case.
+ */
+export function categoryNames(c: Category): string[] {
+	const full = [c.name, MS_NAMES[c.slug]].filter((n): n is string => !!n);
+	return [
+		...new Set(
+			[c.slug, ...full, ...full.flatMap((n) => n.split(/\s*&\s*/))].map(norm),
+		),
+	];
+}
+
 /** The word and its usual singular/plural forms ("grocery" ↔ "groceries", "tax" ↔ "taxes"). */
-function forms(word: string): string[] {
+export function forms(word: string): string[] {
 	return [
 		word,
 		`${word}s`,
@@ -81,10 +124,9 @@ export function resolveCategory(
 	categories: Category[],
 ): Resolved<Category> {
 	const wanted = new Set(forms(norm(word)));
-	const found = categories.find((c) => {
-		const names = [c.slug, c.name, ...c.name.split(/\s*&\s*/)].map(norm);
-		return names.some((n) => wanted.has(n));
-	});
+	const found = categories.find((c) =>
+		categoryNames(c).some((n) => wanted.has(n)),
+	);
 	if (found) return { ok: found };
 	return {
 		error: `"${word}" isn't a category. Categories: ${categories.map((c) => `${c.slug} (${c.name})`).join(", ")}. To look for a shop or item instead, use search.`,

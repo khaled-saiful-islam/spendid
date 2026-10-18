@@ -79,7 +79,8 @@ export function isGrounded(
 ): boolean {
 	const target = roundTo(value, decimals);
 	return sourceNumbers(sources).some(
-		(s) => s >= 0 === value >= 0 && roundTo(s, decimals) === target,
+		// Sizes: "dropped by RM 153.80" is a difference calculate returned as -153.8.
+		(s) => roundTo(s, decimals) === target,
 	);
 }
 
@@ -90,8 +91,7 @@ export function ungroundedNumbers(answer: string, sources: string[]): string[] {
 		.filter(
 			(c) =>
 				!known.some(
-					(s) =>
-						s >= 0 && roundTo(s, c.decimals) === roundTo(c.value, c.decimals),
+					(s) => roundTo(s, c.decimals) === roundTo(c.value, c.decimals),
 				),
 		)
 		.map((c) => c.text);

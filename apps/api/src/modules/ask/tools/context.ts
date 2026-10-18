@@ -17,6 +17,7 @@ import type { JarsService } from "../../family/jars.service";
 import type { PlanRepository } from "../../money/plan.repository";
 import type { SummaryService } from "../../money/summary.service";
 import type { SubscriptionService } from "../../subscriptions/subscriptions.service";
+import type { Lookup } from "../coverage";
 
 export const SLUGS = SYSTEM_CATEGORIES.map((c) => c.slug) as [
 	string,
@@ -48,6 +49,8 @@ export interface SideChannel {
 	actions: AskAction[];
 	/** Every tool result for this question: the only numbers an answer or chart may use. */
 	sources?: string[];
+	/** What the spending tools looked at, to check it fits what was asked. */
+	lookups?: Lookup[];
 }
 
 export const MAX_ACTIONS = 4;
