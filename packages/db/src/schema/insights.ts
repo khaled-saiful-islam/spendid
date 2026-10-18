@@ -113,6 +113,30 @@ export const inAppNotice = pgTable(
 	(t) => [index("in_app_notice_user_idx").on(t.userId, t.createdAt)],
 );
 
+/**
+ * Phones and computers that turned on push notifications. The endpoint is the browser's own
+ * push address; the keys encrypt what's sent so only that device can read it.
+ */
+export const pushSubscription = pgTable(
+	"push_subscription",
+	{
+		id: uuid().primaryKey().default(sql`uuidv7()`),
+		userId: text()
+			.notNull()
+			.references(() => user.id, { onDelete: "cascade" }),
+		endpoint: text().notNull(),
+		p256dh: text().notNull(),
+		auth: text().notNull(),
+		/** Which browser, so a list of devices reads sensibly. */
+		userAgent: text(),
+		createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+	},
+	(t) => [
+		uniqueIndex("push_endpoint_idx").on(t.endpoint),
+		index("push_user_idx").on(t.userId),
+	],
+);
+
 /** Browsers someone has signed in from (hashed), for "new sign-in" emails. */
 export const knownDevice = pgTable(
 	"known_device",

@@ -1,6 +1,6 @@
 // Spendid's service worker: an offline app shell, nothing more.
 // Never caches /api — money and personal data always come fresh from the server.
-const SHELL = "spendid-shell-v4";
+const SHELL = "spendid-shell-v5";
 const ASSETS = "spendid-assets-v1";
 // Voice and scanner models (several MB). Bump when the VAD or OpenCV packages change.
 const MODELS = "spendid-models-v1";
@@ -109,3 +109,34 @@ function cacheFirst(request, cacheName) {
 			}),
 	);
 }
+
+// Phone notifications (web push): show what the server sent; tapping opens the right screen.
+self.addEventListener("push", (event) => {
+	let data = { title: "Spendid", body: "", url: "/app" };
+	try {
+		data = { ...data, ...event.data.json() };
+	} catch {
+		// A message we can't read still shows something rather than nothing.
+	}
+	event.waitUntil(
+		self.registration.showNotification(data.title, {
+			body: data.body,
+			icon: "/icons/icon-192.png",
+			badge: "/icons/icon-192.png",
+			data: { url: data.url },
+			tag: data.url,
+		}),
+	);
+});
+
+self.addEventListener("notificationclick", (event) => {
+	event.notification.close();
+	const target = new URL(event.notification.data?.url || "/app", self.location.origin).href;
+	event.waitUntil(
+		self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((open) => {
+			const app = open.find((c) => c.url.startsWith(self.location.origin));
+			if (app) return app.focus().then(() => app.navigate(target));
+			return self.clients.openWindow(target);
+		}),
+	);
+});

@@ -17,6 +17,7 @@ import type { SessionLookup } from "../auth/guards";
 import { seedCategories } from "../scripts/categories";
 import { createMoneyAlerts } from "./alerts";
 import { createNotifier, localParts } from "./notifier";
+import { createPush } from "./push";
 import { createSecurityAlerts } from "./security";
 import { createUnsubscribeLinks } from "./unsubscribe";
 
@@ -103,7 +104,18 @@ describe.skipIf(!url)("email notifications (real database)", () => {
 		food = cat?.id ?? "";
 		app = await buildApp({
 			checks: { database: database.ping, redis: async () => true },
-			notify: { session, notifier, links },
+			notify: {
+				session,
+				notifier,
+				links,
+				push: createPush({
+					db,
+					publicKey: "BTestPublicKey",
+					privateKey: "test",
+					subject: "mailto:test@spendid.test",
+					sender: async () => {},
+				}),
+			},
 		});
 	});
 	beforeEach(() => {
@@ -183,6 +195,76 @@ describe.skipIf(!url)("email notifications (real database)", () => {
 				(i) => (i as { title: string }).title !== undefined,
 			),
 		).toBe(true);
+	});
+
+	it("buzzes the phone when the email goes out, but not when that email is off", async () => {
+		const pia = await createPerson(db);
+		const buzzed: { title: string; path: string | null }[] = [];
+		const withPush = createNotifier({
+			db,
+			links,
+			appUrl: "http://spendid.test",
+			sendEmail: async () => {},
+			push: {
+				deliver: async (_userId, message) => {
+					buzzed.push({ title: message.title, path: message.path });
+					return 1;
+				},
+			},
+		});
+		// Quiet hours off, so the test doesn't depend on the clock.
+		await withPush.setPrefs(pia, { quietStart: 0, quietEnd: 0 });
+		expect(await withPush.notify(pia, notice("push-1"))).toBe("sent");
+		expect(buzzed).toEqual([{ title: "You spent RM 412.00", path: "/app" }]);
+		await withPush.setPrefs(pia, { weekly: false });
+		expect(await withPush.notify(pia, notice("push-2"))).toBe("off");
+		expect(buzzed).toHaveLength(1);
+	});
+
+	it("lets a phone turn notifications on, test them and turn them off", async () => {
+		const zoe = await createPerson(db);
+		const as = { "x-test-user": zoe };
+		const key = await app.inject({
+			method: "GET",
+			url: "/api/push/key",
+			headers: as,
+		});
+		expect(key.json()).toMatchObject({ data: { publicKey: "BTestPublicKey" } });
+		const device = {
+			endpoint: `https://push.example.test/zoe-${Date.now()}`,
+			keys: { p256dh: "p", auth: "a" },
+		};
+		const bad = await app.inject({
+			method: "POST",
+			url: "/api/push/subscribe",
+			headers: as,
+			payload: { endpoint: "not a url", keys: device.keys },
+		});
+		expect(bad.statusCode).toBe(400);
+		await app.inject({
+			method: "POST",
+			url: "/api/push/subscribe",
+			headers: as,
+			payload: device,
+		});
+		const test = await app.inject({
+			method: "POST",
+			url: "/api/push/test",
+			headers: as,
+		});
+		expect(test.json()).toMatchObject({ data: { delivered: 1 } });
+		await app.inject({
+			method: "POST",
+			url: "/api/push/unsubscribe",
+			headers: as,
+			payload: { endpoint: device.endpoint },
+		});
+		const after = await app.inject({
+			method: "POST",
+			url: "/api/push/test",
+			headers: as,
+		});
+		expect(after.json()).toMatchObject({ data: { delivered: 0 } });
 	});
 
 	it("doesn't double the in-app notice when the email is retried", async () => {

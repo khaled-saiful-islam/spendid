@@ -231,4 +231,29 @@ export const msF: Record<string, string> = {
 		"Dibuka dengan satu ketikan, skrin penuh, dan berfungsi luar talian.",
 	Install: "Pasang",
 	"Show me how": "Tunjukkan caranya",
+	"Notifications are on for this phone.":
+		"Pemberitahuan dihidupkan untuk telefon ini.",
+	"Notifications weren't turned on. Try again any time.":
+		"Pemberitahuan tidak dihidupkan. Cuba lagi bila-bila masa.",
+	"On. Bills due, price changes and goals reached arrive here, even when Spendid is closed.":
+		"Hidup. Bil yang perlu dibayar, perubahan harga dan matlamat dicapai tiba di sini, walaupun Spendid ditutup.",
+	"iPhones only allow notifications once Spendid is on your Home Screen.":
+		"iPhone hanya membenarkan pemberitahuan selepas Spendid berada di Skrin Utama anda.",
+	"Blocked for Spendid. Allow notifications in your browser's site settings, then come back.":
+		"Disekat untuk Spendid. Benarkan pemberitahuan dalam tetapan laman pelayar anda, kemudian kembali.",
+	"This browser can't show notifications. Try Chrome, Edge, Firefox or Safari.":
+		"Pelayar ini tidak boleh memaparkan pemberitahuan. Cuba Chrome, Edge, Firefox atau Safari.",
+	"Get bills due, price changes and goals reached on this phone, even when Spendid is closed.":
+		"Terima bil yang perlu dibayar, perubahan harga dan matlamat dicapai di telefon ini, walaupun Spendid ditutup.",
+	"Notifications on this phone": "Pemberitahuan di telefon ini",
+	"Turn on": "Hidupkan",
+	"Install Spendid first": "Pasang Spendid dahulu",
+	"Test sent. It should appear in a moment.":
+		"Ujian dihantar. Ia akan muncul sebentar lagi.",
+	"Couldn't reach this phone. Turn notifications off and on again.":
+		"Tidak dapat menghubungi telefon ini. Matikan dan hidupkan semula pemberitahuan.",
+	"Couldn't send a test. Try again.":
+		"Tidak dapat menghantar ujian. Cuba lagi.",
+	"Send a test": "Hantar ujian",
+	"Turn off": "Matikan",
 };

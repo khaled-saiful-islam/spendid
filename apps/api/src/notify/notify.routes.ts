@@ -4,13 +4,18 @@ import { z } from "zod";
 import { requireMember, type SessionLookup } from "../auth/guards";
 import { badRequest } from "../http/app-error";
 import type { Notifier } from "./notifier";
+import { type Push, PushDeviceSchema } from "./push";
 import type { UnsubscribeLinks } from "./unsubscribe";
 
 export interface NotifyDeps {
 	session: SessionLookup;
 	notifier: Notifier;
 	links: UnsubscribeLinks;
+	/** Phone notifications; absent when not set up. */
+	push?: Push;
 }
+
+const PushOff = z.object({ endpoint: z.url().max(1000) });
 
 const Unsubscribe = z.object({
 	u: z.string().min(1).max(64),
@@ -73,6 +78,38 @@ async function memberRoutes(
 	app.post("/notices/read", async (req) => {
 		await deps.notifier.markRead(uid(req));
 		return { success: true, data: { ok: true } };
+	});
+
+	/** The key a browser needs to turn on phone notifications (null: not set up here). */
+	app.get("/push/key", async () => ({
+		success: true,
+		data: { publicKey: deps.push?.publicKey ?? null },
+	}));
+	app.post("/push/subscribe", async (req) => {
+		if (!deps.push?.publicKey)
+			throw badRequest("Phone notifications aren't set up on this server.");
+		const device = PushDeviceSchema.parse(req.body);
+		await deps.push.subscribe(
+			uid(req),
+			device,
+			req.headers["user-agent"] ?? null,
+		);
+		return { success: true, data: { ok: true } };
+	});
+	app.post("/push/unsubscribe", async (req) => {
+		const { endpoint } = PushOff.parse(req.body);
+		await deps.push?.unsubscribe(uid(req), endpoint);
+		return { success: true, data: { ok: true } };
+	});
+	/** "Send a test": proves this phone gets them. */
+	app.post("/push/test", async (req) => {
+		const delivered =
+			(await deps.push?.deliver(uid(req), {
+				title: "Notifications are on",
+				body: "Spendid will tell you here when a bill is due or something needs a look.",
+				path: "/app",
+			})) ?? 0;
+		return { success: true, data: { delivered } };
 	});
 }
 

@@ -17,6 +17,7 @@ import {
 } from "@spendid/shared";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import type { SendEmail } from "../email/outbox";
+import type { Push } from "./push";
 import type { UnsubscribeLinks } from "./unsubscribe";
 
 /** Alerts kept in the bell. */
@@ -93,6 +94,8 @@ export function createNotifier(deps: {
 	appUrl: string;
 	/** Live update to the person's open apps, so the bell's count changes at once. */
 	publish?: (userId: string, event: { type: "notices" }) => Promise<unknown>;
+	/** Phone notifications, for the people who turned them on. */
+	push?: Pick<Push, "deliver">;
 }) {
 	const { db } = deps;
 
@@ -101,7 +104,7 @@ export function createNotifier(deps: {
 		userId: string,
 		kind: string,
 		content: { subject: string; preview: string; url?: string },
-	): Promise<void> {
+	): Promise<string | null> {
 		const url = content.url;
 		const path = url?.startsWith(deps.appUrl)
 			? url.slice(deps.appUrl.length) || "/app"
@@ -114,6 +117,7 @@ export function createNotifier(deps: {
 			path,
 		});
 		await deps.publish?.(userId, { type: "notices" }).catch(() => undefined);
+		return path;
 	}
 
 	async function prefs(userId: string): Promise<NotificationPrefs> {
@@ -221,7 +225,16 @@ export function createNotifier(deps: {
 						.where(eq(notificationLog.id, claimId));
 				throw err;
 			}
-			await toInbox(userId, notice.kind, content);
+			const path = await toInbox(userId, notice.kind, content);
+			// The phone buzzes with the email, but never in quiet hours (the bell still has it).
+			if (delayMs === 0)
+				await deps.push
+					?.deliver(userId, {
+						title: content.subject,
+						body: content.preview,
+						path,
+					})
+					.catch(() => undefined);
 			return "sent";
 		},
 

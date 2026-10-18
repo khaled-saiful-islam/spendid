@@ -15,6 +15,7 @@ import type { SubscriptionService } from "../modules/subscriptions/subscriptions
 import { createMoneyAlerts } from "./alerts";
 import { createDigests } from "./digests";
 import { createNotifier, type Notifier } from "./notifier";
+import { createPush } from "./push";
 import { createSecurityAlerts } from "./security";
 import { createUnsubscribeLinks } from "./unsubscribe";
 
@@ -55,7 +56,15 @@ export function createNotifications(deps: {
 	logError: ErrorLog;
 	/** Live updates, so the in-app bell changes as alerts arrive. */
 	publish?: (userId: string, event: { type: "notices" }) => Promise<unknown>;
+	/** Web push keys; empty turns phone notifications off. */
+	vapid?: { publicKey: string; privateKey: string; subject: string };
 }) {
+	const push = createPush({
+		db: deps.db,
+		publicKey: deps.vapid?.publicKey ?? "",
+		privateKey: deps.vapid?.privateKey ?? "",
+		subject: deps.vapid?.subject ?? "mailto:hello@spendid.app",
+	});
 	const links = createUnsubscribeLinks(deps.secret, deps.appUrl);
 	const notifier = createNotifier({
 		db: deps.db,
@@ -63,6 +72,7 @@ export function createNotifications(deps: {
 		links,
 		appUrl: deps.appUrl,
 		publish: deps.publish,
+		push,
 	});
 	const digests = createDigests({
 		db: deps.db,
@@ -81,6 +91,7 @@ export function createNotifications(deps: {
 	return {
 		links,
 		notifier,
+		push,
 		digests,
 		security: createSecurityAlerts({ db: deps.db, notifier }),
 		alerts: createMoneyAlerts({ db: deps.db, notifier }),

@@ -22,6 +22,7 @@ import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { type Notice, noticesApi, noticesQuery } from "@/lib/notices-api";
 import { formatMoment } from "@/lib/time";
+import { PushSwitch } from "./PushSwitch";
 
 /** Each kind of alert with its own icon and colour, so the list scans at a glance. */
 const LOOK: Record<string, { Icon: LucideIcon; tint: string }> = {
@@ -123,6 +124,7 @@ function NoticesSheet({
 
 	return (
 		<Sheet open={open} onClose={onClose} title={t("Alerts")}>
+			<PushSwitch compact />
 			{isPending ? (
 				<div className="h-32 animate-pulse rounded-tile bg-surface-2" />
 			) : !data || data.items.length === 0 ? (

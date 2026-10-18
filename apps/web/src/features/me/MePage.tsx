@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { dateLocale, t } from "@/i18n";
 import { authClient } from "@/lib/auth-client";
+import { PushSwitch } from "../notices/PushSwitch";
 import { METHODS } from "../onboarding/options";
 import { EmailSettings } from "./EmailSettings";
 import { GetTheApp } from "./GetTheApp";
@@ -110,6 +111,8 @@ export function MePage({ me }: { me: Me }) {
 			</section>
 
 			<GetTheApp />
+
+			<PushSwitch />
 
 			<EmailSettings />
 

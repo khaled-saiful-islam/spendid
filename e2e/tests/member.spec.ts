@@ -264,6 +264,56 @@ test("inside another app's browser, the install steps say how to get out first",
 	await ctx.close();
 });
 
+test("phone notifications: turn on, send a test, turn off", async ({ page }) => {
+	// Test browsers have no push service, so this stands in for the browser's side only;
+	// the server side (saving the device, sending the test) is real.
+	const endpoint = `https://push.example.test/e2e-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+	await page.addInitScript((url) => {
+		let sub: unknown = null;
+		const device = {
+			endpoint: url,
+			toJSON: () => ({ endpoint: url, keys: { p256dh: "e2e-p256dh", auth: "e2e-auth" } }),
+			unsubscribe: async () => {
+				sub = null;
+				return true;
+			},
+		};
+		Object.defineProperty(Notification, "permission", { get: () => (sub ? "granted" : "default") });
+		Notification.requestPermission = async () => "granted";
+		PushManager.prototype.getSubscription = async () => sub as PushSubscription | null;
+		PushManager.prototype.subscribe = async () => {
+			sub = device;
+			return device as unknown as PushSubscription;
+		};
+	}, endpoint);
+	await page.goto("/app/me");
+	const card = page.getByRole("region", { name: "Notifications on this phone" });
+	await card.getByRole("button", { name: "Turn on" }).click();
+	await expect(page.getByText("Notifications are on for this phone.")).toBeVisible();
+	await expect(card.getByText(/^On\. Bills due/)).toBeVisible();
+	// The stand-in device can't really be reached, and the app says so plainly.
+	await card.getByRole("button", { name: "Send a test" }).click();
+	await expect(page.getByText("Couldn't reach this phone. Turn notifications off and on again.")).toBeVisible();
+	await card.getByRole("button", { name: "Turn off" }).click();
+	await expect(card.getByRole("button", { name: "Turn on" })).toBeVisible();
+});
+
+test("on an iPhone in Safari, notifications ask to install Spendid first", async ({ browser }) => {
+	const ctx = await browser.newContext({
+		storageState: stateFile("maya"),
+		userAgent:
+			"Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1",
+		viewport: { width: 390, height: 844 },
+	});
+	const page = await ctx.newPage();
+	await page.goto("/app/me");
+	const card = page.getByRole("region", { name: "Notifications on this phone" });
+	await expect(card.getByText(/only allow notifications once Spendid is on your Home Screen/)).toBeVisible();
+	await card.getByRole("button", { name: "Install Spendid first" }).click();
+	await expect(page.getByRole("dialog", { name: "Get the Spendid app" })).toBeVisible();
+	await ctx.close();
+});
+
 test("a deleted chat stays deleted after a reload", async ({ page, isMobile }) => {
 	const id = crypto.randomUUID();
 	await page.request.put(`/api/ask/threads/${id}`, {

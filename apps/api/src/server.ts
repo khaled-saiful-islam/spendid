@@ -81,6 +81,11 @@ const notifications = createNotifications({
 	subscriptions: () => subscriptionService,
 	logError,
 	publish,
+	vapid: {
+		publicKey: env.VAPID_PUBLIC_KEY,
+		privateKey: env.VAPID_PRIVATE_KEY,
+		subject: env.VAPID_SUBJECT,
+	},
 });
 const fileStore = createFileStore({
 	root: env.RECEIPTS_DIR,
@@ -255,6 +260,7 @@ const app = await buildApp({
 		session,
 		notifier: notifications.notifier,
 		links: notifications.links,
+		push: notifications.push,
 	},
 	family: {
 		session,

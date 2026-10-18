@@ -51,6 +51,11 @@ const EnvSchema = z
 		// 32 random bytes, base64. Empty turns receipt scanning off.
 		RECEIPT_ENCRYPTION_KEY: z.string().default(""),
 		AI_MONTHLY_TOKENS_DEFAULT: z.coerce.number().int().min(0).default(200_000),
+		// Push notifications (web push). Empty keys turn phone notifications off; the bell and
+		// emails still work. Make a pair with: npx web-push generate-vapid-keys
+		VAPID_PUBLIC_KEY: z.string().default(""),
+		VAPID_PRIVATE_KEY: z.string().default(""),
+		VAPID_SUBJECT: z.string().default("mailto:hello@spendid.app"),
 	})
 	.superRefine((env, ctx) => {
 		if (env.NODE_ENV !== "production") return;

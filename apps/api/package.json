@@ -28,11 +28,13 @@
 		"jsonrepair": "3.13.3",
 		"langchain": "1.5.18",
 		"pdfkit": "0.20.2",
+		"web-push": "3.6.7",
 		"zod": "4.6.7"
 	},
 	"devDependencies": {
 		"@types/node": "26.6.5",
 		"@types/pdfkit": "0.17.6",
+		"@types/web-push": "3.6.4",
 		"pino-pretty": "13.2.0",
 		"postgres": "3.4.9",
 		"tsx": "4.23.15",
