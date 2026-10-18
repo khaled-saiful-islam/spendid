@@ -1,4 +1,5 @@
 import { motion } from "motion/react";
+import { useId } from "react";
 import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 
@@ -30,6 +31,8 @@ export function SafeDial({
 	const ratio =
 		allowanceMinor > 0 ? Math.max(0, remainingMinor / allowanceMinor) : 0;
 	const percent = Math.round(Math.min(ratio, 1) * 100);
+	// Unique per dial: two dials on one page (one hidden) must not share a gradient.
+	const faceId = `coin-face-${useId().replace(/:/g, "")}`;
 
 	return (
 		<div className={cn("@container relative aspect-square", className)}>
@@ -39,7 +42,7 @@ export function SafeDial({
 				aria-hidden="true"
 			>
 				<defs>
-					<radialGradient id="coin-face" cx="35%" cy="30%" r="80%">
+					<radialGradient id={faceId} cx="35%" cy="30%" r="80%">
 						<stop offset="0%" stopColor="#FFD27A" />
 						<stop offset="60%" stopColor="#FFB224" />
 						<stop offset="100%" stopColor="#F59300" />
@@ -64,7 +67,7 @@ export function SafeDial({
 					animate={{ pathLength: Math.min(ratio, 1), stroke: tone(ratio) }}
 					transition={{ type: "spring", stiffness: 70, damping: 16 }}
 				/>
-				<circle cx="100" cy="100" r={R - 22} fill="url(#coin-face)" />
+				<circle cx="100" cy="100" r={R - 22} fill={`url(#${faceId})`} />
 				<circle
 					cx="100"
 					cy="100"

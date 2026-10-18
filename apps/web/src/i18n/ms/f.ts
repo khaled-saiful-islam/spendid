@@ -159,4 +159,8 @@ export const msF: Record<string, string> = {
 	iPhone: "iPhone",
 	Android: "Android",
 	Computer: "Komputer",
+	"Your money stays yours. The people who run Spendid can't see your spending.":
+		"Wang anda kekal milik anda. Pengendali Spendid tidak dapat melihat perbelanjaan anda.",
+	"A new day. Spend something and watch the number.":
+		"Hari baharu. Belanja sesuatu dan lihat nombornya.",
 };

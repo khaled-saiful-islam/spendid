@@ -1,11 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import { motion } from "motion/react";
+import { Lock, Mic, Users, Wallet } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
 import type { ReactNode } from "react";
 import { Logo } from "@/components/brand/Logo";
-import { SafeDial } from "@/components/money/SafeDial";
 import { LanguageSwitch } from "@/components/system/LanguageSwitch";
 import { ThemeToggle } from "@/components/system/ThemeToggle";
 import { t } from "@/i18n";
+import { AuthShowcase } from "./AuthShowcase";
 
 interface AuthLayoutProps {
 	title: string;
@@ -15,77 +16,91 @@ interface AuthLayoutProps {
 }
 
 const PROMISES = [
-	t("One number each morning: what you can safely spend."),
-	t("Log by voice, photo or a few words."),
-	t("Share with family only when both of you agree."),
+	{ Icon: Wallet, text: "One number each morning: what you can safely spend." },
+	{ Icon: Mic, text: "Log by voice, photo or a few words." },
+	{ Icon: Users, text: "Share with family only when both of you agree." },
 ];
 
-/** Brand panel beside the form on desktop; a slim plum band above it on phones. */
+/**
+ * Sign in, sign up and the rest of the account screens. Phones: a dark band with Spendid
+ * working live, and the form in a card rising over it. Desktop: the same, as a full-height
+ * panel beside the form.
+ */
 export function AuthLayout({
 	title,
 	intro,
 	children,
 	footer,
 }: AuthLayoutProps) {
+	const reduce = useReducedMotion();
 	return (
 		<div className="min-h-dvh lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-			<aside className="bg-scales relative hidden overflow-hidden bg-plum-900 p-10 text-plum-50 lg:flex lg:flex-col dark:bg-plum-950">
-				<Link to="/" aria-label={t("Spendid home")} className="text-plum-50">
-					<Logo />
-				</Link>
-				<div className="my-auto">
-					<SafeDial
-						remainingMinor={4820}
-						allowanceMinor={6000}
-						className="w-56"
-					/>
-					<ul className="mt-10 space-y-4">
-						{PROMISES.map((p, i) => (
-							<motion.li
-								key={p}
-								initial={{ opacity: 0, x: -12 }}
-								animate={{ opacity: 1, x: 0 }}
-								transition={{ delay: 0.2 + i * 0.12 }}
-								className="flex max-w-[30ch] gap-3 font-display text-[1.35rem] leading-snug"
-							>
-								<span
-									className="mt-2.5 size-2 shrink-0 rounded-full bg-marigold"
-									aria-hidden="true"
-								/>
-								{p}
-							</motion.li>
-						))}
-					</ul>
+			<aside className="bg-scales relative overflow-hidden rounded-b-[2rem] bg-plum-900 px-4 pt-3 pb-16 text-plum-50 sm:px-6 lg:flex lg:min-h-dvh lg:flex-col lg:rounded-none lg:p-10 dark:bg-plum-800">
+				<div className="flex items-center justify-between">
+					<Link to="/" aria-label={t("Spendid home")} className="text-plum-50">
+						<Logo />
+					</Link>
+					<ThemeToggle className="text-plum-50 lg:hidden" />
+				</div>
+				<div className="mx-auto mt-5 w-full max-w-md lg:mx-0 lg:my-auto lg:max-w-sm">
+					<div className="lg:hidden">
+						<AuthShowcase />
+					</div>
+					<div className="hidden lg:block">
+						<AuthShowcase large />
+						<ul className="mt-10 space-y-4">
+							{PROMISES.map(({ Icon, text }, i) => (
+								<motion.li
+									key={text}
+									initial={reduce ? false : { opacity: 0, x: -12 }}
+									animate={{ opacity: 1, x: 0 }}
+									transition={{ delay: 0.2 + i * 0.12 }}
+									className="flex items-start gap-3 font-display text-[1.2rem] leading-snug"
+								>
+									<span className="grid size-9 shrink-0 place-items-center rounded-full bg-white/10 text-marigold">
+										<Icon className="size-[1.1rem]" aria-hidden="true" />
+									</span>
+									<span className="pt-1">{t(text)}</span>
+								</motion.li>
+							))}
+						</ul>
+					</div>
 				</div>
 			</aside>
 
-			<div className="flex min-h-dvh flex-col">
-				<header className="flex items-center justify-between bg-plum-900 px-4 py-3 text-plum-50 lg:bg-transparent lg:px-8 lg:pt-6 lg:text-ink dark:bg-plum-950 lg:dark:bg-transparent">
-					<Link to="/" aria-label={t("Spendid home")} className="lg:invisible">
-						<Logo />
-					</Link>
-					<ThemeToggle className="text-current" />
-				</header>
-				<main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-10 sm:px-6">
+			<div className="relative -mt-10 px-4 pb-10 sm:px-6 lg:mt-0 lg:flex lg:min-h-dvh lg:flex-col lg:px-10">
+				<div className="hidden justify-end pt-6 lg:flex">
+					<ThemeToggle />
+				</div>
+				<main className="mx-auto w-full max-w-md lg:my-auto">
 					<motion.div
-						initial={{ opacity: 0, y: 16 }}
+						initial={reduce ? false : { opacity: 0, y: 24 }}
 						animate={{ opacity: 1, y: 0 }}
-						transition={{ duration: 0.45 }}
+						transition={{ type: "spring", stiffness: 140, damping: 20 }}
+						className="rounded-panel border border-line bg-surface p-5 shadow-lift sm:p-7"
 					>
-						<h1 className="text-[clamp(2.1rem,7vw,2.8rem)] font-extrabold">
+						<h1 className="text-[1.85rem] leading-tight font-extrabold sm:text-[2.1rem]">
 							{title}
 						</h1>
 						{intro && (
-							<div className="mt-3 text-[1.05rem] text-ink-soft">{intro}</div>
+							<div className="mt-1.5 text-[1rem] text-ink-soft">{intro}</div>
 						)}
-						<div className="mt-8">{children}</div>
+						<div className="mt-6">{children}</div>
 						{footer && (
-							<div className="mt-8 text-center text-ink-soft">{footer}</div>
+							<div className="mt-6 border-t border-line pt-5 text-center text-ink-soft">
+								{footer}
+							</div>
 						)}
-						<div className="mt-6 flex justify-center">
-							<LanguageSwitch signedIn={false} />
-						</div>
 					</motion.div>
+					<p className="mt-5 flex items-start justify-center gap-2 px-2 text-center text-[0.85rem] text-ink-soft">
+						<Lock className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+						{t(
+							"Your money stays yours. The people who run Spendid can't see your spending.",
+						)}
+					</p>
+					<div className="mt-4 flex justify-center">
+						<LanguageSwitch signedIn={false} />
+					</div>
 				</main>
 			</div>
 		</div>
