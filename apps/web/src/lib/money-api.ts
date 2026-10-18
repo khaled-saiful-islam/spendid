@@ -41,7 +41,7 @@ export const summaryQuery = queryOptions({
 });
 
 /** Expenses per page in lists (Activity, a day's expenses). */
-export const PAGE_SIZE = 30;
+export const PAGE_SIZE = 15;
 
 export interface ActivityFilters {
 	categoryId?: string;

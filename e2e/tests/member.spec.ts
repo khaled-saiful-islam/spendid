@@ -204,15 +204,15 @@ test("the animated splash plays on app start, then hands over; a browser tab ski
 	await expect(page.locator("#splash")).toBeHidden();
 });
 
-test("Activity shows 30 expenses at a time, and more only on Show more", async ({ page }) => {
+test("Activity shows 15 expenses at a time, and more only on Show more", async ({ page }) => {
 	await page.goto("/app/activity");
 	const rows = page.getByRole("main").getByRole("listitem");
-	await expect(page.getByText(/^Showing 30 of \d+$/)).toBeVisible();
-	await expect(rows).toHaveCount(30);
+	await expect(page.getByText(/^Showing 15 of \d+$/)).toBeVisible();
+	await expect(rows).toHaveCount(15);
 	await page.mouse.wheel(0, 20000);
-	await expect(rows).toHaveCount(30);
+	await expect(rows).toHaveCount(15);
 	await page.getByRole("button", { name: /^Show \d+ more$/ }).click();
-	await expect.poll(() => rows.count()).toBeGreaterThan(30);
+	await expect.poll(() => rows.count()).toBeGreaterThan(15);
 });
 
 test("tapping a question on Ask fills the box to edit; nothing is asked until send", async ({ page }) => {
