@@ -48,7 +48,7 @@ function SwapText({
 			<AnimatePresence initial={false}>
 				<motion.span
 					key={text}
-					className="break-words [grid-area:1/1]"
+					className="self-center break-words [grid-area:1/1]"
 					initial={{ opacity: 0, y: 6 }}
 					animate={{ opacity: 1, y: 0 }}
 					exit={{ opacity: 0, y: -6 }}
@@ -79,7 +79,7 @@ function IdeaTile({
 	question: string;
 	/** Every question this tile can show, so swapping one never resizes the tile. */
 	options?: string[];
-	/** A control in the tile's top corner, in place of the arrow (it can't sit inside the button). */
+	/** A control at the tile's end, in place of the arrow (it can't sit inside the button). */
 	extra?: ReactNode;
 	onAsk: (q: string) => void;
 	index: number;
@@ -101,29 +101,32 @@ function IdeaTile({
 				type="button"
 				aria-label={question}
 				onClick={() => onAsk(question)}
-				className="group relative flex h-full w-full flex-col gap-2.5 overflow-hidden rounded-panel border border-line bg-surface p-4 text-left"
+				className={cn(
+					"group relative flex h-full w-full items-center gap-3 overflow-hidden rounded-panel border border-line bg-surface p-3 text-left",
+					extra && "pr-15",
+				)}
 			>
 				<span
 					aria-hidden="true"
 					className={cn(
-						"pointer-events-none absolute inset-0 bg-linear-to-br opacity-[0.16] transition-opacity group-hover:opacity-[0.26] dark:opacity-[0.13] dark:group-hover:opacity-[0.22]",
+						"pointer-events-none absolute inset-0 bg-linear-to-r opacity-[0.16] transition-opacity group-hover:opacity-[0.28] dark:opacity-[0.13] dark:group-hover:opacity-[0.22]",
 						tint,
 					)}
 				/>
-				<span className="relative flex items-center justify-between gap-2">
-					{icon}
-					{!extra && (
-						<ArrowUpRight
-							className="size-4 shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-							aria-hidden="true"
-						/>
-					)}
-				</span>
+				<span className="relative shrink-0">{icon}</span>
 				<SwapText
 					text={question}
 					options={options}
-					className="relative text-[1.05rem] leading-snug font-bold"
+					className="relative flex-1 text-[1rem] leading-snug font-bold"
 				/>
+				{!extra && (
+					<span
+						aria-hidden="true"
+						className="relative grid size-9 shrink-0 place-items-center rounded-full bg-surface/80 ring-1 ring-line transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+					>
+						<ArrowUpRight className="size-4" />
+					</span>
+				)}
 			</button>
 			{extra}
 		</motion.li>
@@ -135,7 +138,7 @@ function Badge({ tint, children }: { tint: string; children: ReactNode }) {
 	return (
 		<span
 			className={cn(
-				"grid size-7 shrink-0 place-items-center rounded-full bg-linear-to-br text-white shadow-sm",
+				"grid size-10 shrink-0 place-items-center rounded-full bg-linear-to-br text-white shadow-sm",
 				tint,
 			)}
 		>
@@ -184,7 +187,7 @@ export function AskWelcome({
 				tint={TINTS.amber ?? ""}
 				icon={
 					<Badge tint={TINTS.amber ?? ""}>
-						<TrendingUp className="size-3.5" aria-hidden="true" />
+						<TrendingUp className="size-[1.15rem]" aria-hidden="true" />
 					</Badge>
 				}
 				question={t("How much have I spent this month?")}
@@ -202,23 +205,25 @@ export function AskWelcome({
 						icon={cat.icon}
 						tint={cat.tint}
 						size="sm"
-						className="size-7"
+						className="size-10 [&_svg]:size-[1.15rem]"
 					/>
 				}
 				question={catQuestion(cat.name)}
 				options={spentIn.map((c) => catQuestion(c.name))}
 				extra={
 					spentIn.length > 1 && (
-						<motion.button
-							type="button"
-							whileTap={{ scale: 0.9, rotate: -20 }}
-							onClick={() => setCatIndex((i) => (i + 1) % spentIn.length)}
-							aria-label={t("Ask about another category")}
-							title={t("Ask about another category")}
-							className="absolute top-2.5 right-2.5 z-10 grid size-9 place-items-center rounded-full bg-surface/90 text-ink shadow-sm ring-1 ring-line hover:bg-surface"
-						>
-							<Shuffle className="size-4" aria-hidden="true" />
-						</motion.button>
+						<span className="absolute inset-y-0 right-3 z-10 flex items-center">
+							<motion.button
+								type="button"
+								whileTap={{ scale: 0.9, rotate: -20 }}
+								onClick={() => setCatIndex((i) => (i + 1) % spentIn.length)}
+								aria-label={t("Ask about another category")}
+								title={t("Ask about another category")}
+								className="grid size-9 place-items-center rounded-full bg-surface text-ink shadow-sm ring-1 ring-line hover:bg-surface-2"
+							>
+								<Shuffle className="size-4" aria-hidden="true" />
+							</motion.button>
+						</span>
 					)
 				}
 			/>,
@@ -232,7 +237,7 @@ export function AskWelcome({
 				tint={TINTS.sky ?? ""}
 				icon={
 					<Badge tint={TINTS.sky ?? ""}>
-						<CalendarClock className="size-3.5" aria-hidden="true" />
+						<CalendarClock className="size-[1.15rem]" aria-hidden="true" />
 					</Badge>
 				}
 				question={t("Which bills are still due this month?")}
@@ -247,7 +252,7 @@ export function AskWelcome({
 				tint={TINTS.lime ?? ""}
 				icon={
 					<Badge tint={TINTS.lime ?? ""}>
-						<Target className="size-3.5" aria-hidden="true" />
+						<Target className="size-[1.15rem]" aria-hidden="true" />
 					</Badge>
 				}
 				question={t("Am I on track for {goal}?", { goal: goal.name })}
@@ -262,7 +267,7 @@ export function AskWelcome({
 				<h2 id="ask-ideas" className="sr-only">
 					{t("Questions about your month")}
 				</h2>
-				<ul className="grid grid-cols-2 gap-3">
+				<ul className="grid gap-3 sm:grid-cols-2">
 					<li className="col-span-full">
 						<LogDemo currency={summary?.homeCurrency ?? "MYR"} />
 					</li>
