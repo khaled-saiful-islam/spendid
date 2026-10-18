@@ -1,5 +1,6 @@
 import {
 	type Db,
+	inAppNotice,
 	notificationLog,
 	notificationPref,
 	profile,
@@ -14,9 +15,12 @@ import {
 	NotificationPrefsSchema,
 	quietDelayMs,
 } from "@spendid/shared";
-import { eq } from "drizzle-orm";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import type { SendEmail } from "../email/outbox";
 import type { UnsubscribeLinks } from "./unsubscribe";
+
+/** Alerts kept in the bell. */
+const INBOX_SIZE = 40;
 
 export interface NoticeContent {
 	subject: string;
@@ -87,8 +91,30 @@ export function createNotifier(deps: {
 	sendEmail: SendEmail;
 	links: UnsubscribeLinks;
 	appUrl: string;
+	/** Live update to the person's open apps, so the bell's count changes at once. */
+	publish?: (userId: string, event: { type: "notices" }) => Promise<unknown>;
 }) {
 	const { db } = deps;
+
+	/** The in-app copy of an alert: what the bell shows. */
+	async function toInbox(
+		userId: string,
+		kind: string,
+		content: { subject: string; preview: string; url?: string },
+	): Promise<void> {
+		const url = content.url;
+		const path = url?.startsWith(deps.appUrl)
+			? url.slice(deps.appUrl.length) || "/app"
+			: null;
+		await db.insert(inAppNotice).values({
+			userId,
+			kind,
+			title: content.subject,
+			body: content.preview,
+			path,
+		});
+		await deps.publish?.(userId, { type: "notices" }).catch(() => undefined);
+	}
 
 	async function prefs(userId: string): Promise<NotificationPrefs> {
 		const [row] = await db
@@ -140,8 +166,7 @@ export function createNotifier(deps: {
 			if (!who || who.banned) return "nobody";
 			if (who.role === "admin" && notice.group !== null) return "nobody";
 			const p = await prefs(userId);
-			if (notice.group && !p[notice.group]) return "off";
-			// Claimed before sending, so two ticks can't both send it.
+			// Claimed before sending, so two ticks can't both send it (or post it twice).
 			let claimId: string | undefined;
 			if (notice.dedupeKey) {
 				const [inserted] = await db
@@ -158,6 +183,11 @@ export function createNotifier(deps: {
 					p.hideAmounts ? mask(currency) : formatMinor(minor, currency),
 				appUrl: deps.appUrl,
 			});
+			// Email off for this kind: it still reaches the in-app inbox.
+			if (notice.group && !p[notice.group]) {
+				await toInbox(userId, notice.kind, content);
+				return "off";
+			}
 			const delayMs = notice.urgent
 				? 0
 				: quietDelayMs(
@@ -191,7 +221,46 @@ export function createNotifier(deps: {
 						.where(eq(notificationLog.id, claimId));
 				throw err;
 			}
+			await toInbox(userId, notice.kind, content);
 			return "sent";
+		},
+
+		/** The latest alerts for the bell, newest first, and how many are unread. */
+		async inbox(userId: string) {
+			const items = await db
+				.select({
+					id: inAppNotice.id,
+					kind: inAppNotice.kind,
+					title: inAppNotice.title,
+					body: inAppNotice.body,
+					path: inAppNotice.path,
+					createdAt: inAppNotice.createdAt,
+					readAt: inAppNotice.readAt,
+				})
+				.from(inAppNotice)
+				.where(eq(inAppNotice.userId, userId))
+				.orderBy(desc(inAppNotice.createdAt), desc(inAppNotice.id))
+				.limit(INBOX_SIZE);
+			const [row] = await db
+				.select({ unread: sql<number>`count(*)::int` })
+				.from(inAppNotice)
+				.where(and(eq(inAppNotice.userId, userId), isNull(inAppNotice.readAt)));
+			return {
+				unread: row?.unread ?? 0,
+				items: items.map((i) => ({
+					...i,
+					createdAt: i.createdAt.toISOString(),
+					read: i.readAt !== null,
+					readAt: undefined,
+				})),
+			};
+		},
+
+		async markRead(userId: string): Promise<void> {
+			await db
+				.update(inAppNotice)
+				.set({ readAt: new Date() })
+				.where(and(eq(inAppNotice.userId, userId), isNull(inAppNotice.readAt)));
 		},
 	};
 }

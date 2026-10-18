@@ -106,6 +106,13 @@
       "when": 1792214050344,
       "tag": "0014_simple_mantis",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1792308065682,
+      "tag": "0015_redundant_mister_sinister",
+      "breakpoints": true
     }
   ]
 }

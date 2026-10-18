@@ -209,4 +209,11 @@ export const msF: Record<string, string> = {
 	"Home loan": "Pinjaman rumah",
 	"Credit card": "Kad kredit",
 	Gas: "Gas",
+	Alerts: "Makluman",
+	"Alerts, 1 new": "Makluman, 1 baharu",
+	"Alerts, {n} new": "Makluman, {n} baharu",
+	"No alerts yet": "Belum ada makluman",
+	"Bills coming up, price changes and goals reached show up here, and by email if it's on.":
+		"Bil yang akan tiba, perubahan harga dan matlamat yang dicapai muncul di sini, dan melalui e-mel jika dihidupkan.",
+	New: "Baharu",
 };

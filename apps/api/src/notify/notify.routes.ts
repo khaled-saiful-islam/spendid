@@ -65,6 +65,15 @@ async function memberRoutes(
 		success: true,
 		data: await deps.notifier.setPrefs(uid(req), req.body),
 	}));
+	/** The bell: this person's latest alerts and how many are unread. */
+	app.get("/notices", async (req) => ({
+		success: true,
+		data: await deps.notifier.inbox(uid(req)),
+	}));
+	app.post("/notices/read", async (req) => {
+		await deps.notifier.markRead(uid(req));
+		return { success: true, data: { ok: true } };
+	});
 }
 
 export async function notifyRoutes(

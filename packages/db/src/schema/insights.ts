@@ -91,6 +91,28 @@ export const notificationLog = pgTable(
 	],
 );
 
+/**
+ * The in-app inbox (the bell): every alert also lands here, even when its email is off.
+ * Only the person's own notices; they're marked read when the inbox is opened.
+ */
+export const inAppNotice = pgTable(
+	"in_app_notice",
+	{
+		id: uuid().primaryKey().default(sql`uuidv7()`),
+		userId: text()
+			.notNull()
+			.references(() => user.id, { onDelete: "cascade" }),
+		kind: text().notNull(),
+		title: text().notNull(),
+		body: text().notNull(),
+		/** Where tapping it goes, inside the app ("/app/subscriptions"). */
+		path: text(),
+		createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+		readAt: timestamp({ withTimezone: true }),
+	},
+	(t) => [index("in_app_notice_user_idx").on(t.userId, t.createdAt)],
+);
+
 /** Browsers someone has signed in from (hashed), for "new sign-in" emails. */
 export const knownDevice = pgTable(
 	"known_device",

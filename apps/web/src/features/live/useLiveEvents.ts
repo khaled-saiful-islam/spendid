@@ -7,6 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { toast } from "@/components/ui/Toast";
 import { t } from "@/i18n";
+import { noticesQuery } from "@/lib/notices-api";
 import { parseEventData, reconnectDelay } from "@/lib/sse";
 import { capture, getCaptureState } from "../capture/capture-store";
 import { splitReceipts } from "../family/split/waiting";
@@ -57,6 +58,12 @@ export function useLiveEvents(): void {
 				void queryClient.invalidateQueries({ queryKey: ["goals"] });
 			if (parsed.data.message) toast(parsed.data.message);
 		};
+		// A new alert: refresh the bell and say so briefly.
+		const onNotices = async () => {
+			await queryClient.invalidateQueries({ queryKey: noticesQuery.queryKey });
+			const latest = queryClient.getQueryData(noticesQuery.queryKey)?.items[0];
+			if (latest && !latest.read) toast(latest.title);
+		};
 		const onExport = () => {
 			void queryClient.invalidateQueries({ queryKey: ["export"] });
 			toast(t("Your data is ready to download in Settings."));
@@ -77,6 +84,7 @@ export function useLiveEvents(): void {
 			source.addEventListener("receipt", onReceipt);
 			source.addEventListener(FAMILY_EVENT, onFamily);
 			source.addEventListener("export", onExport);
+			source.addEventListener("notices", () => void onNotices());
 		};
 		connect();
 		return () => {

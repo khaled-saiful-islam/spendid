@@ -14,6 +14,7 @@ import { useSharedIntoSpendid } from "@/lib/shared-in";
 import { CaptureHost } from "../capture/CaptureHost";
 import { useResumeInvite } from "../family/useResumeInvite";
 import { useLiveEvents } from "../live/useLiveEvents";
+import { NoticesBell } from "../notices/NoticesBell";
 import { AccountCard } from "./AccountCard";
 import { AddButton } from "./AddButton";
 import { ASK_ITEM, NAV_ITEMS, type NavItem } from "./nav";
@@ -94,9 +95,12 @@ export function AppShell() {
 	return (
 		<div className="min-h-dvh md:grid md:grid-cols-[16rem_1fr]">
 			<aside className="sticky top-0 hidden h-dvh flex-col gap-6 border-r border-line p-5 md:flex">
-				<Link to="/app" aria-label={t("Spendid home")}>
-					<Logo />
-				</Link>
+				<div className="flex items-center justify-between gap-2">
+					<Link to="/app" aria-label={t("Spendid home")}>
+						<Logo />
+					</Link>
+					<NoticesBell />
+				</div>
 				<AddButton wide />
 				<nav className="flex flex-col gap-1" aria-label={t("Main")}>
 					{NAV_ITEMS.map((item) => (
@@ -122,6 +126,7 @@ export function AppShell() {
 						>
 							<Sparkles className="size-5" />
 						</Link>
+						<NoticesBell />
 						<HideMoneyToggle />
 						<ThemeToggle />
 						<MeLink />

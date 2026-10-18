@@ -66,6 +66,7 @@ guardProcess(logError);
 const database = createDb(env.DATABASE_URL);
 const cache = createRedis(env.REDIS_URL, logError);
 const outbox = createOutbox(database.db, cache.redis, logError);
+const publish = createPublisher(cache.redis);
 const summary = createSummaryService(database.db);
 const insights = createInsightsService(database.db);
 const notifications = createNotifications({
@@ -79,6 +80,7 @@ const notifications = createNotifications({
 	// Built further down (it needs expenses, which need these notifications).
 	subscriptions: () => subscriptionService,
 	logError,
+	publish,
 });
 const fileStore = createFileStore({
 	root: env.RECEIPTS_DIR,
@@ -107,7 +109,6 @@ const categories = createCategoryRepository(database.db);
 const transactions = createTransactionRepository(database.db);
 const fx = createFxRepository(database.db);
 const plan = createPlanRepository(database.db);
-const publish = createPublisher(cache.redis);
 const merchants = createMerchantMemory(database.db);
 const merchantQueue = new Queue<{ merchantId: string }>(MERCHANT_QUEUE, {
 	connection: cache.redis,

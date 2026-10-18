@@ -53,6 +53,8 @@ export function createNotifications(deps: {
 	insights: InsightsService;
 	subscriptions?: () => SubscriptionService | undefined;
 	logError: ErrorLog;
+	/** Live updates, so the in-app bell changes as alerts arrive. */
+	publish?: (userId: string, event: { type: "notices" }) => Promise<unknown>;
 }) {
 	const links = createUnsubscribeLinks(deps.secret, deps.appUrl);
 	const notifier = createNotifier({
@@ -60,6 +62,7 @@ export function createNotifications(deps: {
 		sendEmail: deps.sendEmail,
 		links,
 		appUrl: deps.appUrl,
+		publish: deps.publish,
 	});
 	const digests = createDigests({
 		db: deps.db,

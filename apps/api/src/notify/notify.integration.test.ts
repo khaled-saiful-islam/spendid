@@ -128,6 +128,80 @@ describe.skipIf(!url)("email notifications (real database)", () => {
 		expect(await notifier.notify(admin, notice("w1"))).toBe("nobody");
 	});
 
+	it("puts every alert in the in-app inbox too, once, even when its email is off", async () => {
+		const kim = await createPerson(db);
+		const live: string[] = [];
+		const withInbox = createNotifier({
+			db,
+			links,
+			appUrl: "http://spendid.test",
+			sendEmail: async () => {},
+			publish: async (userId) => {
+				live.push(userId);
+			},
+		});
+		expect(await withInbox.notify(kim, notice("in-1"))).toBe("sent");
+		expect(await withInbox.notify(kim, notice("in-1"))).toBe("already");
+		await withInbox.setPrefs(kim, { weekly: false });
+		expect(await withInbox.notify(kim, notice("in-2"))).toBe("off");
+		expect(live).toEqual([kim, kim]);
+
+		const read = async () =>
+			(
+				await app.inject({
+					method: "GET",
+					url: "/api/notices",
+					headers: { "x-test-user": kim },
+				})
+			).json() as {
+				data: {
+					unread: number;
+					items: { title: string; path: string | null }[];
+				};
+			};
+		const inbox = (await read()).data;
+		expect(inbox.unread).toBe(2);
+		expect(inbox.items).toHaveLength(2);
+		expect(inbox.items[0]).toMatchObject({
+			title: "You spent RM 412.00",
+			path: "/app",
+		});
+		await app.inject({
+			method: "POST",
+			url: "/api/notices/read",
+			headers: { "x-test-user": kim },
+		});
+		expect((await read()).data.unread).toBe(0);
+		// Someone else's inbox is empty.
+		const other = await app.inject({
+			method: "GET",
+			url: "/api/notices",
+			headers: { "x-test-user": maya },
+		});
+		expect(
+			(other.json() as { data: { items: unknown[] } }).data.items.every(
+				(i) => (i as { title: string }).title !== undefined,
+			),
+		).toBe(true);
+	});
+
+	it("doesn't double the in-app notice when the email is retried", async () => {
+		const lee = await createPerson(db);
+		let down = true;
+		const flaky = createNotifier({
+			db,
+			links,
+			appUrl: "http://spendid.test",
+			sendEmail: async () => {
+				if (down) throw new Error("redis down");
+			},
+		});
+		await expect(flaky.notify(lee, notice("retry-in"))).rejects.toThrow();
+		down = false;
+		expect(await flaky.notify(lee, notice("retry-in"))).toBe("sent");
+		expect((await flaky.inbox(lee)).items).toHaveLength(1);
+	});
+
 	it("tries again next time when the email couldn't be queued", async () => {
 		let down = true;
 		const flaky = createNotifier({
