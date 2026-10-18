@@ -1,0 +1,1 @@
+ALTER TABLE "notification_pref" ADD COLUMN "evening_nudge" boolean DEFAULT false NOT NULL;

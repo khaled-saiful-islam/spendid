@@ -54,6 +54,28 @@ export interface Notice {
 
 export type NotifyResult = "sent" | "off" | "already" | "nobody";
 
+/** Moments for the bell and the phone only: too small or too frequent for email. */
+export type NudgeKind =
+	| "family-joined"
+	| "family-share"
+	| "family-jar"
+	| "family-cheer"
+	| "evening";
+
+export interface NudgeNotice {
+	kind: NudgeKind;
+	/** The switch that also silences the phone for it; null: only quiet hours do. */
+	group: EmailGroup | null;
+	/** Same kind + key never goes out twice (a cheer per person per expense). */
+	dedupeKey?: string;
+	build: (ctx: NoticeContext) => { title: string; body: string; url: string };
+}
+
+export type Nudge = (
+	userId: string,
+	notice: NudgeNotice,
+) => Promise<NotifyResult>;
+
 /** Local hour, minute, weekday (0 Sun), day of month and date in a time zone. */
 export function localParts(timeZone: string, at = new Date()) {
 	const parts = Object.fromEntries(
@@ -234,6 +256,56 @@ export function createNotifier(deps: {
 						body: content.preview,
 						path,
 					})
+					.catch(() => undefined);
+			return "sent";
+		},
+
+		/**
+		 * A small moment: always in the bell; on the phone too unless its switch is off or
+		 * it's quiet hours. Never email.
+		 */
+		async nudge(userId: string, notice: NudgeNotice): Promise<NotifyResult> {
+			const [who] = await db
+				.select({
+					role: user.role,
+					banned: user.banned,
+					timeZone: profile.timeZone,
+				})
+				.from(user)
+				.leftJoin(profile, eq(profile.userId, user.id))
+				.where(eq(user.id, userId))
+				.limit(1);
+			if (!who || who.banned || who.role === "admin") return "nobody";
+			if (notice.dedupeKey) {
+				const [claimed] = await db
+					.insert(notificationLog)
+					.values({ userId, kind: notice.kind, dedupeKey: notice.dedupeKey })
+					.onConflictDoNothing()
+					.returning({ id: notificationLog.id });
+				if (!claimed) return "already";
+			}
+			const p = await prefs(userId);
+			const content = notice.build({
+				hidden: p.hideAmounts,
+				money: (minor, currency) =>
+					p.hideAmounts ? mask(currency) : formatMinor(minor, currency),
+				appUrl: deps.appUrl,
+			});
+			const path = await toInbox(userId, notice.kind, {
+				subject: content.title,
+				preview: content.body,
+				url: content.url,
+			});
+			if (notice.group && !p[notice.group]) return "off";
+			const quiet =
+				quietDelayMs(
+					localParts(who.timeZone ?? "UTC"),
+					p.quietStart,
+					p.quietEnd,
+				) > 0;
+			if (!quiet)
+				await deps.push
+					?.deliver(userId, { title: content.title, body: content.body, path })
 					.catch(() => undefined);
 			return "sent";
 		},

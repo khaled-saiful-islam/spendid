@@ -9,8 +9,6 @@ export const msC: Record<string, string> = {
 		"Log masuk untuk lihat jumlah selamat dibelanjakan hari ini.",
 	"Sign in with a passkey": "Log masuk dengan kunci laluan",
 	"Sign out": "Log keluar",
-	"Sign-in, security and account emails always come. Choose the rest.":
-		"E-mel log masuk, keselamatan dan akaun sentiasa dihantar. Pilih yang lain.",
 	"Signing in…": "Sedang log masuk…",
 	"Skip for now": "Langkau buat masa ini",
 	"Skip it": "Langkau",

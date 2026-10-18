@@ -20,7 +20,7 @@ const HOURS = Array.from({ length: 24 }, (_, h) => h);
 const hourLabel = (h: number) =>
 	new Date(2026, 0, 1, h).toLocaleTimeString(dateLocale(), { hour: "numeric" });
 
-function Toggle({
+export function Toggle({
 	label,
 	about,
 	checked,
@@ -59,18 +59,17 @@ function Toggle({
 }
 
 /** Which emails to get, hidden amounts and quiet hours. Account and security emails always go out. */
-export function EmailSettings() {
+/** The person's alert settings, and a save that shows the change at once. */
+export function useNotificationPrefs() {
 	const queryClient = useQueryClient();
 	const { data } = useQuery(notificationsQuery);
-	if (!data)
-		return <div className="h-64 animate-pulse rounded-panel bg-surface-2" />;
-
 	async function save(patch: Partial<NotificationPrefs>) {
 		const previous = data;
+		if (!previous) return;
 		queryClient.setQueryData(notificationsQuery.queryKey, {
-			...data,
+			...previous,
 			...patch,
-		} as NotificationPrefs);
+		});
 		try {
 			await api<NotificationPrefs>("/api/me/notifications", {
 				method: "PUT",
@@ -81,6 +80,13 @@ export function EmailSettings() {
 			toast(t("Couldn't save. Try again."));
 		}
 	}
+	return { data, save };
+}
+
+export function EmailSettings() {
+	const { data, save } = useNotificationPrefs();
+	if (!data)
+		return <div className="h-64 animate-pulse rounded-panel bg-surface-2" />;
 
 	return (
 		<section
@@ -93,7 +99,7 @@ export function EmailSettings() {
 				icon={Mail}
 				tint="rose"
 				sub={t(
-					"Sign-in, security and account emails always come. Choose the rest.",
+					"Sign-in, security and account emails always come. Choose the rest; one you turn off stays off your phone too, and still shows in the bell.",
 				)}
 			/>
 			<div className="mt-3 divide-y divide-line">

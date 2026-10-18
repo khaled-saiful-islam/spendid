@@ -1,4 +1,4 @@
-import { BellOff, BellRing, Send, Smartphone } from "lucide-react";
+import { BellOff, BellRing, Moon, Send, Smartphone } from "lucide-react";
 import { useState } from "react";
 import { InstallSheet } from "@/components/system/InstallSheet";
 import { buttonClass } from "@/components/ui/Button";
@@ -6,13 +6,14 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { toast } from "@/components/ui/Toast";
 import { t } from "@/i18n";
 import { type PushState, usePush } from "@/lib/push";
+import { Toggle, useNotificationPrefs } from "../me/EmailSettings";
 
 type Push = ReturnType<typeof usePush>;
 
 function statusLine(state: PushState): string {
 	if (state === "on")
 		return t(
-			"On. Bills due, price changes and goals reached arrive here, even when Spendid is closed.",
+			"On. Bills due, price changes, goals reached and family moments arrive here, even when Spendid is closed.",
 		);
 	if (state === "needs-install")
 		return t(
@@ -27,7 +28,7 @@ function statusLine(state: PushState): string {
 			"This browser can't show notifications. Try Chrome, Edge, Firefox or Safari.",
 		);
 	return t(
-		"Get bills due, price changes and goals reached on this phone, even when Spendid is closed.",
+		"Get bills due, price changes, goals reached and family moments on this phone, even when Spendid is closed.",
 	);
 }
 
@@ -171,7 +172,27 @@ export function PushSwitch({ compact = false }: { compact?: boolean }) {
 				sub={statusLine(state)}
 			/>
 			{actions}
+			<EveningReminder />
 			{sheet}
 		</section>
+	);
+}
+
+/** 8 pm: how today went, and a nudge to add anything missed. Off until switched on. */
+function EveningReminder() {
+	const { data, save } = useNotificationPrefs();
+	if (!data) return null;
+	return (
+		<div className="mt-4 rounded-tile bg-bg px-4">
+			<Toggle
+				icon={<Moon className="size-4 text-plum-500" aria-hidden="true" />}
+				label={t("Evening reminder")}
+				about={t(
+					"At 8 pm: how today went, and a nudge to add anything you missed. On your phone and in the bell, never by email.",
+				)}
+				checked={data.eveningNudge}
+				onChange={(on) => void save({ eveningNudge: on })}
+			/>
+		</div>
 	);
 }

@@ -4,15 +4,20 @@ import {
 	BadgeAlert,
 	Bell,
 	CalendarClock,
+	Coins,
 	Download,
+	Eye,
+	HeartHandshake,
 	type LucideIcon,
 	Mail,
+	Moon,
 	PartyPopper,
 	ShieldAlert,
 	ShieldCheck,
 	Sparkles,
 	Target,
 	TrendingUp,
+	UserPlus,
 	Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -42,6 +47,11 @@ const LOOK: Record<string, { Icon: LucideIcon; tint: string }> = {
 	"weekly-summary": { Icon: Mail, tint: "indigo" },
 	announcement: { Icon: Sparkles, tint: "violet" },
 	joined: { Icon: Users, tint: "fuchsia" },
+	"family-joined": { Icon: UserPlus, tint: "fuchsia" },
+	"family-share": { Icon: Eye, tint: "violet" },
+	"family-jar": { Icon: Coins, tint: "lime" },
+	"family-cheer": { Icon: HeartHandshake, tint: "pink" },
+	evening: { Icon: Moon, tint: "indigo" },
 };
 
 const when = (iso: string) =>

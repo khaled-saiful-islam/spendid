@@ -10,12 +10,14 @@ import type {
 	SharedView,
 	SplitDto,
 } from "@spendid/shared";
+import { formatMinor } from "@spendid/shared";
 import { eq } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createPerson, testDbUrl } from "../../../test/db";
 import { buildApp } from "../../app";
 import type { SessionLookup } from "../../auth/guards";
+import type { Nudge } from "../../notify/notifier";
 import { seedCategories } from "../../scripts/categories";
 import { createCategoryRepository } from "../money/categories.repository";
 import { createFxRepository } from "../money/fx.repository";
@@ -43,6 +45,14 @@ describe.skipIf(!url)("family circle (real database)", () => {
 	let food: Category;
 	const emails: EmailJob[] = [];
 	const events: { userId: string; event: unknown }[] = [];
+	const nudges: {
+		userId: string;
+		kind: string;
+		dedupeKey?: string;
+		title: string;
+		body: string;
+		url: string;
+	}[] = [];
 
 	const session: SessionLookup = async (headers) => {
 		const id = headers.get("x-test-user");
@@ -117,7 +127,16 @@ describe.skipIf(!url)("family circle (real database)", () => {
 		const repo = createFamilyRepository(db);
 		const categories = createCategoryRepository(db);
 		const transactions = createTransactionRepository(db);
-		const familyDeps = { db, repo, publish };
+		const nudge: Nudge = async (userId, n) => {
+			const content = n.build({
+				money: (minor, currency) => formatMinor(minor, currency),
+				hidden: false,
+				appUrl: "http://spendid.test",
+			});
+			nudges.push({ userId, kind: n.kind, dedupeKey: n.dedupeKey, ...content });
+			return "sent";
+		};
+		const familyDeps = { db, repo, publish, nudge };
 		app = await buildApp({
 			checks: { database: database.ping, redis: async () => true },
 			money: {
@@ -234,6 +253,12 @@ describe.skipIf(!url)("family circle (real database)", () => {
 			type: "family-joined",
 			joinerName: "Adam",
 		});
+		expect(nudges.at(-1)).toMatchObject({
+			userId: maya,
+			kind: "family-joined",
+			title: "Adam joined your circle",
+			url: "http://spendid.test/app/family",
+		});
 
 		const again = await call(
 			stranger,
@@ -331,6 +356,11 @@ describe.skipIf(!url)("family circle (real database)", () => {
 			level: "none",
 			paused: false,
 		});
+		expect(nudges.at(-1)).toMatchObject({
+			userId: adam,
+			kind: "family-share",
+			title: "Maya now shares nothing with you.",
+		});
 		const view = await call<SharedView>(
 			adam,
 			"GET",
@@ -384,6 +414,13 @@ describe.skipIf(!url)("family circle (real database)", () => {
 			emoji: "👏",
 		});
 		expect(cheer.status).toBe(200);
+		// Maya hears about it once per person per expense, however often it's toggled.
+		expect(nudges.at(-1)).toMatchObject({
+			userId: maya,
+			kind: "family-cheer",
+			title: "Adam cheered 👏 your Jaya Grocer",
+			dedupeKey: `${adam}:${item.id}`,
+		});
 		const self = await call(maya, "POST", "/family/reactions", {
 			kind: "expense",
 			targetId: item.id,
@@ -422,6 +459,12 @@ describe.skipIf(!url)("family circle (real database)", () => {
 			amountMinor: 5000,
 		});
 		expect(put.status).toBe(200);
+		expect(nudges.at(-1)).toMatchObject({
+			userId: maya,
+			kind: "family-jar",
+			url: "http://spendid.test/app/family",
+		});
+		expect(nudges.at(-1)?.title).toMatch(/^Adam added RM 50\.00 to /);
 		const take = await call(adam, "POST", `/family/jars/${id}/deposit`, {
 			amountMinor: -100,
 		});

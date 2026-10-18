@@ -16,6 +16,7 @@ import {
 } from "@spendid/shared";
 import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import { badRequest, notFound } from "../../http/app-error";
+import type { Nudge } from "../../notify/notifier";
 import type { FamilyRepository } from "./family.repository";
 import type { Publish } from "./family.service";
 
@@ -30,6 +31,8 @@ export function createJarsService(deps: {
 	db: Db;
 	repo: FamilyRepository;
 	publish: Publish;
+	/** The bell and the phone (never email). */
+	nudge?: Nudge;
 	/** After a deposit (goal-reached email to the owner). Never awaited. */
 	onDeposit?: (userId: string, goalId: string) => Promise<unknown>;
 }) {
@@ -239,6 +242,26 @@ export function createJarsService(deps: {
 				(id) => id !== userId,
 			);
 			await tell(others, message);
+			const who = me?.name ?? "Someone";
+			const currency = found.currency ?? "MYR";
+			for (const id of others)
+				await deps
+					.nudge?.(id, {
+						kind: "family-jar",
+						group: "family",
+						build: ({ money, appUrl }) => ({
+							title: reached
+								? `${jar} is full! 🎉`
+								: amountMinor > 0
+									? `${who} added ${money(Math.abs(amountMinor), currency)} to ${jar}`
+									: `${who} took ${money(Math.abs(amountMinor), currency)} out of ${jar}`,
+							body: reached
+								? "You reached it together."
+								: "See the jar in Family.",
+							url: `${appUrl}/app/family`,
+						}),
+					})
+					.catch(() => undefined);
 			deps.onDeposit?.(userId, goalId).catch(() => undefined);
 		},
 	};

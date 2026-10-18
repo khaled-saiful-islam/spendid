@@ -48,7 +48,8 @@ export const EMAIL_GROUP_INFO: Record<
 	},
 	family: {
 		label: "Family circle",
-		about: "Someone joined, or changed what they share with you.",
+		about:
+			"Someone joined, changed what they share, added to a shared jar or cheered you on.",
 	},
 	product: {
 		label: "Spendid news",
@@ -67,6 +68,8 @@ export const NotificationPrefsSchema = z.object({
 	family: z.boolean(),
 	product: z.boolean(),
 	hideAmounts: z.boolean(),
+	/** 8 pm: a nudge to log today's spending. Phone and the bell only, never email. */
+	eveningNudge: z.boolean(),
 	quietStart: z.number().int().min(0).max(23),
 	quietEnd: z.number().int().min(0).max(23),
 });
@@ -83,6 +86,7 @@ export const DEFAULT_PREFS: NotificationPrefs = {
 	family: true,
 	product: true,
 	hideAmounts: false,
+	eveningNudge: false,
 	quietStart: 22,
 	quietEnd: 8,
 };

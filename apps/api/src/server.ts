@@ -160,7 +160,12 @@ const receiptService = createReceiptService({
 	transactions: transactionService,
 	store: fileStore,
 });
-const familyDeps = { db: database.db, repo: familyRepo, publish };
+const familyDeps = {
+	db: database.db,
+	repo: familyRepo,
+	publish,
+	nudge: notifications.notifier.nudge,
+};
 const ilmu = { baseUrl: env.ILMU_BASE_URL, apiKey: env.ILMU_API_KEY };
 const settings = createAppSettings({
 	db: database.db,

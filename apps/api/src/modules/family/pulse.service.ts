@@ -20,6 +20,7 @@ import {
 } from "@spendid/shared";
 import { and, desc, eq, gt, inArray, isNull, or, sql } from "drizzle-orm";
 import { badRequest, notFound } from "../../http/app-error";
+import type { Nudge } from "../../notify/notifier";
 import type { FamilyRepository } from "./family.repository";
 import type { Publish } from "./family.service";
 
@@ -36,6 +37,8 @@ export function createPulseService(deps: {
 	db: Db;
 	repo: FamilyRepository;
 	publish: Publish;
+	/** The bell and the phone (never email). */
+	nudge?: Nudge;
 }) {
 	const { db, repo } = deps;
 	const since = () => new Date(Date.now() - WINDOW_DAYS * 86_400_000);
@@ -314,6 +317,34 @@ export function createPulseService(deps: {
 					: undefined,
 			};
 			await deps.publish(ownerId, event).catch(() => undefined);
+			if (input.emoji && deps.nudge) {
+				const [spent] =
+					input.kind === "expense"
+						? await db
+								.select({
+									merchant: transaction.merchant,
+									category: category.name,
+								})
+								.from(transaction)
+								.innerJoin(category, eq(category.id, transaction.categoryId))
+								.where(eq(transaction.id, input.targetId))
+								.limit(1)
+						: [];
+				const what = spent ? (spent.merchant ?? spent.category) : "news";
+				const emoji = input.emoji;
+				await deps
+					.nudge(ownerId, {
+						kind: "family-cheer",
+						group: "family",
+						dedupeKey: `${userId}:${input.targetId}`,
+						build: ({ appUrl }) => ({
+							title: `${me?.name ?? "Someone"} cheered ${emoji} your ${what}`,
+							body: "See it in your family pulse.",
+							url: `${appUrl}/app/family`,
+						}),
+					})
+					.catch(() => undefined);
+			}
 		},
 	};
 }

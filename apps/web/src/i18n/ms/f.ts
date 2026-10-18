@@ -235,16 +235,16 @@ export const msF: Record<string, string> = {
 		"Pemberitahuan dihidupkan untuk telefon ini.",
 	"Notifications weren't turned on. Try again any time.":
 		"Pemberitahuan tidak dihidupkan. Cuba lagi bila-bila masa.",
-	"On. Bills due, price changes and goals reached arrive here, even when Spendid is closed.":
-		"Hidup. Bil yang perlu dibayar, perubahan harga dan matlamat dicapai tiba di sini, walaupun Spendid ditutup.",
+	"On. Bills due, price changes, goals reached and family moments arrive here, even when Spendid is closed.":
+		"Hidup. Bil yang perlu dibayar, perubahan harga, matlamat dicapai dan detik keluarga tiba di sini, walaupun Spendid ditutup.",
 	"iPhones only allow notifications once Spendid is on your Home Screen.":
 		"iPhone hanya membenarkan pemberitahuan selepas Spendid berada di Skrin Utama anda.",
 	"Blocked for Spendid. Allow notifications in your browser's site settings, then come back.":
 		"Disekat untuk Spendid. Benarkan pemberitahuan dalam tetapan laman pelayar anda, kemudian kembali.",
 	"This browser can't show notifications. Try Chrome, Edge, Firefox or Safari.":
 		"Pelayar ini tidak boleh memaparkan pemberitahuan. Cuba Chrome, Edge, Firefox atau Safari.",
-	"Get bills due, price changes and goals reached on this phone, even when Spendid is closed.":
-		"Terima bil yang perlu dibayar, perubahan harga dan matlamat dicapai di telefon ini, walaupun Spendid ditutup.",
+	"Get bills due, price changes, goals reached and family moments on this phone, even when Spendid is closed.":
+		"Terima bil yang perlu dibayar, perubahan harga, matlamat dicapai dan detik keluarga di telefon ini, walaupun Spendid ditutup.",
 	"Notifications on this phone": "Pemberitahuan di telefon ini",
 	"Turn on": "Hidupkan",
 	"Install Spendid first": "Pasang Spendid dahulu",
@@ -276,4 +276,11 @@ export const msF: Record<string, string> = {
 		"{name} tidak berkongsi apa-apa tentang perbelanjaan mereka dengan anda. Anda masih dalam bulatan masing-masing, dan boleh menyimpan dalam tabung keluarga bersama.",
 	"After tax. A rough number is fine, or skip it. Change it any time in Profile, under Money settings.":
 		"Selepas cukai. Anggaran pun tidak mengapa, atau langkau. Ubah bila-bila masa di Profil, bahagian Tetapan wang.",
+	"Evening reminder": "Peringatan waktu malam",
+	"At 8 pm: how today went, and a nudge to add anything you missed. On your phone and in the bell, never by email.":
+		"Pada 8 malam: ringkasan hari ini, dan peringatan untuk menambah apa yang terlupa. Di telefon dan loceng, tidak sekali-kali melalui e-mel.",
+	"Sign-in, security and account emails always come. Choose the rest; one you turn off stays off your phone too, and still shows in the bell.":
+		"E-mel log masuk, keselamatan dan akaun sentiasa dihantar. Pilih yang lain; yang anda matikan juga tidak akan muncul di telefon, tetapi masih ada dalam loceng.",
+	"Someone joined, changed what they share, added to a shared jar or cheered you on.":
+		"Seseorang menyertai, mengubah apa yang dikongsi, menambah ke tabung bersama atau memberi sorakan kepada anda.",
 };

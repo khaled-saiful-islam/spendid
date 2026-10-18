@@ -14,8 +14,11 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createPerson, testDbUrl } from "../../test/db";
 import { buildApp } from "../app";
 import type { SessionLookup } from "../auth/guards";
+import { createInsightsService } from "../modules/insights/insights.service";
+import { createSummaryService } from "../modules/money/summary.service";
 import { seedCategories } from "../scripts/categories";
 import { createMoneyAlerts } from "./alerts";
+import { createDigests } from "./digests";
 import { createNotifier, localParts } from "./notifier";
 import { createPush } from "./push";
 import { createSecurityAlerts } from "./security";
@@ -219,6 +222,122 @@ describe.skipIf(!url)("email notifications (real database)", () => {
 		await withPush.setPrefs(pia, { weekly: false });
 		expect(await withPush.notify(pia, notice("push-2"))).toBe("off");
 		expect(buzzed).toHaveLength(1);
+	});
+
+	it("nudges reach the bell and the phone, never email, with the switch and quiet hours", async () => {
+		const kai = await createPerson(db);
+		const buzzed: string[] = [];
+		const emailed: unknown[] = [];
+		const n = createNotifier({
+			db,
+			links,
+			appUrl: "http://spendid.test",
+			sendEmail: async (job) => {
+				emailed.push(job);
+			},
+			push: {
+				deliver: async (_userId, message) => {
+					buzzed.push(message.title);
+					return 1;
+				},
+			},
+		});
+		await n.setPrefs(kai, { quietStart: 0, quietEnd: 0 });
+		const cheer = (key: string) => ({
+			kind: "family-cheer" as const,
+			group: "family" as const,
+			dedupeKey: key,
+			build: ({ money }: { money: (m: number, c: string) => string }) => ({
+				title: "Adam cheered 👏 your lunch",
+				body: `Lunch, ${money(1250, "MYR")}`,
+				url: "http://spendid.test/app/family",
+			}),
+		});
+		expect(await n.nudge(kai, cheer("c1"))).toBe("sent");
+		expect(await n.nudge(kai, cheer("c1"))).toBe("already");
+		expect(buzzed).toEqual(["Adam cheered 👏 your lunch"]);
+		expect(emailed).toHaveLength(0);
+		expect((await n.inbox(kai)).items[0]).toMatchObject({
+			kind: "family-cheer",
+			title: "Adam cheered 👏 your lunch",
+			body: "Lunch, RM 12.50",
+			path: "/app/family",
+		});
+		// Family switched off: the bell keeps it, the phone stays quiet.
+		await n.setPrefs(kai, { family: false });
+		expect(await n.nudge(kai, cheer("c2"))).toBe("off");
+		expect(buzzed).toHaveLength(1);
+		expect((await n.inbox(kai)).items).toHaveLength(2);
+		// Quiet hours: the same.
+		const hour = localParts("Asia/Kuala_Lumpur").hour;
+		await n.setPrefs(kai, {
+			family: true,
+			hideAmounts: true,
+			quietStart: hour,
+			quietEnd: (hour + 2) % 24,
+		});
+		expect(await n.nudge(kai, cheer("c3"))).toBe("sent");
+		expect(buzzed).toHaveLength(1);
+		expect((await n.inbox(kai)).items[0]?.body).toBe("Lunch, RM •••");
+	});
+
+	it("the evening nudge is off until it's switched on, then says how today went", async () => {
+		const ria = await createPerson(db);
+		const buzzed: { title: string; body: string }[] = [];
+		const n = createNotifier({
+			db,
+			links,
+			appUrl: "http://spendid.test",
+			sendEmail: async () => {},
+			push: {
+				deliver: async (_userId, message) => {
+					buzzed.push({ title: message.title, body: message.body });
+					return 1;
+				},
+			},
+		});
+		const digests = createDigests({
+			db,
+			notifier: n,
+			summary: createSummaryService(db),
+			insights: createInsightsService(db),
+			logError: () => {},
+		});
+		const today = localParts("Asia/Kuala_Lumpur").date;
+		await n.setPrefs(ria, { quietStart: 0, quietEnd: 0 });
+		expect((await n.prefs(ria)).eveningNudge).toBe(false);
+		await digests.evening(ria, today, "MYR");
+		expect(buzzed).toHaveLength(0);
+
+		await n.setPrefs(ria, { eveningNudge: true });
+		await digests.evening(ria, today, "MYR");
+		expect(buzzed.at(-1)).toEqual({
+			title: "Nothing logged today",
+			body: "Spent anything? Add it in a few seconds.",
+		});
+
+		const rib = await createPerson(db);
+		await n.setPrefs(rib, { quietStart: 0, quietEnd: 0, eveningNudge: true });
+		await db.insert(transaction).values(
+			[1250, 680, 2270].map((minor) => ({
+				userId: rib,
+				categoryId: food,
+				merchant: "Kopi",
+				amountMinor: minor,
+				currency: "MYR",
+				homeAmountMinor: minor,
+				homeCurrency: "MYR",
+				occurredAt: new Date(),
+			})),
+		);
+		await digests.evening(rib, today, "MYR");
+		expect(buzzed.at(-1)).toEqual({
+			title: "Today: RM 42.00 over 3 expenses",
+			body: "Anything else to add before bed?",
+		});
+		// Once a day.
+		await digests.evening(rib, today, "MYR");
+		expect(buzzed).toHaveLength(2);
 	});
 
 	it("lets a phone turn notifications on, test them and turn them off", async () => {

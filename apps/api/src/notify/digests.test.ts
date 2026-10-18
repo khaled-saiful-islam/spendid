@@ -29,4 +29,11 @@ describe("dueDigests", () => {
 			"wrapped",
 		]);
 	});
+
+	it("nudges in the evening at 8, or 9 if that hour was missed", () => {
+		expect(dueDigests(at(2, 14, 20))).toEqual(["evening"]);
+		expect(dueDigests(at(2, 14, 21))).toEqual(["evening"]);
+		expect(dueDigests(at(2, 14, 22))).toEqual([]);
+		expect(dueDigests(at(2, 14, 19))).toEqual([]);
+	});
 });

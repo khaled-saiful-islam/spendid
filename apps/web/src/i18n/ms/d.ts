@@ -263,8 +263,6 @@ export const msD: Record<string, string> = {
 		"Apabila matlamat simpanan atau balang bersama penuh.",
 	"Your month in review, on the 1st.": "Imbasan bulan anda, pada 1 haribulan.",
 	"Family circle": "Bulatan keluarga",
-	"Someone joined, or changed what they share with you.":
-		"Seseorang menyertai, atau mengubah apa yang mereka kongsi dengan anda.",
 	"Spendid news": "Berita Spendid",
 	"Occasional updates from the Spendid team. Never your data.":
 		"Kemas kini sekali-sekala daripada pasukan Spendid. Tidak pernah tentang data anda.",

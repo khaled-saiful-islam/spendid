@@ -21,6 +21,7 @@ import {
 } from "@spendid/shared";
 import type { SendEmail } from "../../email/outbox";
 import { AppError, badRequest, notFound } from "../../http/app-error";
+import type { Nudge } from "../../notify/notifier";
 import type { FamilyRepository } from "./family.repository";
 import { buildSharedView, isSharedReceipt } from "./shared-view";
 
@@ -37,6 +38,8 @@ interface Deps {
 	repo: FamilyRepository;
 	sendEmail: SendEmail;
 	publish: Publish;
+	/** The bell and the phone (never email). */
+	nudge?: Nudge;
 	appUrl: string;
 	receiptImage: (
 		ownerId: string,
@@ -267,6 +270,17 @@ export function createFamilyService(deps: Deps) {
 			]);
 			if (me && inviter) {
 				await tell(inviterId, "circle", `${me.name} joined your circle.`);
+				await deps
+					.nudge?.(inviterId, {
+						kind: "family-joined",
+						group: "family",
+						build: () => ({
+							title: `${me.name} joined your circle`,
+							body: "See what you each share, or start a family jar together.",
+							url: familyUrl,
+						}),
+					})
+					.catch(() => undefined);
 				if (!deps.familyEmail || (await deps.familyEmail.wanted(inviter.id)))
 					await deps.sendEmail({
 						type: "family-joined",
@@ -296,6 +310,19 @@ export function createFamilyService(deps: Deps) {
 			const change = describeChange(me?.name ?? "Someone", before, input);
 			if (change) {
 				await tell(otherId, "share", change);
+				await deps
+					.nudge?.(otherId, {
+						kind: "family-share",
+						group: "family",
+						// One per new setting an hour, so flipping it back and forth stays quiet.
+						dedupeKey: `${userId}:${input.level}:${input.paused}:${new Date().toISOString().slice(0, 13)}`,
+						build: () => ({
+							title: change,
+							body: "Open Family to see what you can see now.",
+							url: familyUrl,
+						}),
+					})
+					.catch(() => undefined);
 				if (await deps.allowEmail(`share:${userId}:${otherId}`))
 					await emailChange(otherId, change);
 			}

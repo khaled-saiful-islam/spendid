@@ -46,7 +46,15 @@ const CATCH_UP_HOURS = 3;
 /** People handled at once in a tick. */
 const PARALLEL = 8;
 
-export type DigestKind = "weekly" | "daily" | "subscription-month" | "wrapped";
+export type DigestKind =
+	| "weekly"
+	| "daily"
+	| "subscription-month"
+	| "wrapped"
+	| "evening";
+
+/** The evening nudge's hour, and the one after in case a tick was missed (22:00 is quiet). */
+const EVENING_HOURS = [20, 21];
 
 const within = (hour: number, from: number) =>
 	hour >= from && hour < from + CATCH_UP_HOURS;
@@ -62,6 +70,7 @@ export function dueDigests(local: {
 	if (within(local.hour, 9)) due.push("daily");
 	if (local.day === 1 && within(local.hour, 8)) due.push("subscription-month");
 	if (local.day === 1 && within(local.hour, 9)) due.push("wrapped");
+	if (EVENING_HOURS.includes(local.hour)) due.push("evening");
 	return due;
 }
 
@@ -320,8 +329,62 @@ export function createDigests(deps: {
 		});
 	}
 
+	/** 8 pm, for people who switched it on: how today went, and a nudge to add anything missing. */
+	async function evening(
+		userId: string,
+		date: string,
+		currency: string,
+	): Promise<void> {
+		if (!(await notifier.prefs(userId)).eveningNudge) return;
+		const [who] = await db
+			.select({ timeZone: profile.timeZone })
+			.from(profile)
+			.where(eq(profile.userId, userId))
+			.limit(1);
+		const timeZone = who?.timeZone ?? "UTC";
+		const [today] = await db
+			.select({
+				count: sql<number>`count(*)::int`,
+				minor: sql<string>`coalesce(sum(${transaction.homeAmountMinor}), 0)`,
+			})
+			.from(transaction)
+			.where(
+				and(
+					eq(transaction.userId, userId),
+					isNull(transaction.deletedAt),
+					onLocalDays(
+						transaction.occurredAt,
+						timeZone,
+						date,
+						sql`${date}::date + 1`,
+					),
+				),
+			);
+		const count = today?.count ?? 0;
+		const minor = Number(today?.minor ?? 0);
+		await notifier.nudge(userId, {
+			kind: "evening",
+			group: null,
+			dedupeKey: date,
+			build: ({ money, appUrl }) =>
+				count > 0
+					? {
+							title: `Today: ${money(minor, currency)} over ${count} ${count === 1 ? "expense" : "expenses"}`,
+							body: "Anything else to add before bed?",
+							url: `${appUrl}/app`,
+						}
+					: {
+							title: "Nothing logged today",
+							body: "Spent anything? Add it in a few seconds.",
+							url: `${appUrl}/app`,
+						},
+		});
+	}
+
 	return {
 		/** One pass over everyone. Errors for one person never stop the others. */
+		evening,
+
 		async tick(at = new Date()): Promise<number> {
 			const people = await db
 				.select({
@@ -349,6 +412,7 @@ export function createDigests(deps: {
 					],
 					"subscription-month": () => [subscriptionMonth(p.id, local.date)],
 					wrapped: () => [wrapped(p.id, local.date)],
+					evening: () => [evening(p.id, local.date, p.currency)],
 				};
 				const jobs = dueDigests(local).flatMap((kind) => start[kind]());
 				for (const r of await Promise.allSettled(jobs))
