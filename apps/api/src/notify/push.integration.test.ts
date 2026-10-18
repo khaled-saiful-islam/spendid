@@ -27,7 +27,7 @@ describe.skipIf(!url)("push notifications (real database)", () => {
 		sender,
 	});
 	const device = (n: number) => ({
-		endpoint: `https://push.example.test/device-${n}-${Date.now()}`,
+		endpoint: `https://fcm.googleapis.com/fcm/send/device-${n}-${Date.now()}`,
 		keys: { p256dh: `p256dh-${n}`, auth: `auth-${n}` },
 	});
 

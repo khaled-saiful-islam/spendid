@@ -3,9 +3,37 @@ import { and, eq } from "drizzle-orm";
 import webpush from "web-push";
 import { z } from "zod";
 
+/**
+ * The browsers' own push services. The server only ever sends to these, so a made-up
+ * "device" can't point it at an internal address.
+ */
+const PUSH_HOSTS = [
+	"fcm.googleapis.com",
+	"android.googleapis.com",
+	"push.services.mozilla.com",
+	"notify.windows.com",
+	"push.apple.com",
+];
+
+export function isPushService(endpoint: string): boolean {
+	let url: URL;
+	try {
+		url = new URL(endpoint);
+	} catch {
+		return false;
+	}
+	if (url.protocol !== "https:" || url.port || url.username || url.password)
+		return false;
+	const host = url.hostname.toLowerCase();
+	return PUSH_HOSTS.some((h) => host === h || host.endsWith(`.${h}`));
+}
+
 /** What a browser hands over when push is turned on (PushSubscription.toJSON()). */
 export const PushDeviceSchema = z.object({
-	endpoint: z.url().max(1000),
+	endpoint: z
+		.url()
+		.max(1000)
+		.refine(isPushService, "That isn't a browser push service"),
 	keys: z.object({
 		p256dh: z.string().min(1).max(200),
 		auth: z.string().min(1).max(100),
@@ -99,6 +127,7 @@ export function createPush(deps: {
 			});
 			let delivered = 0;
 			for (const d of devices) {
+				if (!isPushService(d.endpoint)) continue;
 				try {
 					await send(
 						{ endpoint: d.endpoint, keys: { p256dh: d.p256dh, auth: d.auth } },

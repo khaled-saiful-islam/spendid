@@ -231,7 +231,7 @@ describe.skipIf(!url)("email notifications (real database)", () => {
 		});
 		expect(key.json()).toMatchObject({ data: { publicKey: "BTestPublicKey" } });
 		const device = {
-			endpoint: `https://push.example.test/zoe-${Date.now()}`,
+			endpoint: `https://fcm.googleapis.com/fcm/send/zoe-${Date.now()}`,
 			keys: { p256dh: "p", auth: "a" },
 		};
 		const bad = await app.inject({
@@ -241,6 +241,21 @@ describe.skipIf(!url)("email notifications (real database)", () => {
 			payload: { endpoint: "not a url", keys: device.keys },
 		});
 		expect(bad.statusCode).toBe(400);
+		// Only the browsers' push services: never an address inside the server's network.
+		for (const endpoint of [
+			"http://localhost:8601/api/admin",
+			"https://169.254.169.254/latest/meta-data",
+			"https://redis:6379/",
+			"http://fcm.googleapis.com/fcm/send/x",
+		]) {
+			const res = await app.inject({
+				method: "POST",
+				url: "/api/push/subscribe",
+				headers: as,
+				payload: { endpoint, keys: device.keys },
+			});
+			expect(res.statusCode, endpoint).toBe(400);
+		}
 		await app.inject({
 			method: "POST",
 			url: "/api/push/subscribe",

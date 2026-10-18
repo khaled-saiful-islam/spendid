@@ -267,7 +267,7 @@ test("inside another app's browser, the install steps say how to get out first",
 test("phone notifications: turn on, send a test, turn off", async ({ page }) => {
 	// Test browsers have no push service, so this stands in for the browser's side only;
 	// the server side (saving the device, sending the test) is real.
-	const endpoint = `https://push.example.test/e2e-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+	const endpoint = `https://fcm.googleapis.com/fcm/send/e2e-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 	await page.addInitScript((url) => {
 		let sub: unknown = null;
 		const device = {
