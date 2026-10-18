@@ -24,6 +24,7 @@ import {
 	STEP_LABELS,
 	type ToolDeps,
 } from "./ask.tools";
+import { ungroundedNumbers } from "./grounding";
 import { repairToolCalls } from "./repair-tool-calls";
 
 interface AgentDeps extends Omit<ToolDeps, "db" | "summary" | "plan"> {
@@ -51,11 +52,17 @@ function systemPrompt(
 	capabilities: string,
 ): string {
 	return `You are Spendid's money assistant for one person. Today is ${weekday} ${today} (time zone ${timeZone}). Their home currency is ${currency}.
-How to answer:
-- Get every number from the tools. Never guess or invent amounts. If a tool returns nothing, say there's nothing logged for that.
+How to answer (money must be exact; a wrong or made-up number is never acceptable):
+- Get every number from the tools, fresh for this question. Expenses may have been added, changed or removed since earlier messages, so never reuse numbers from the conversation.
+- Every amount, percentage and count you write must be exactly one the tools returned. For ANY sum, difference, average, share or percentage, call calculate; never work numbers out yourself. Answers are checked, and numbers that aren't from the tools are rejected.
+- For dates, prefer the period option (today, yesterday, this_week, last_week, this_month, last_month, this_year, last_year, last_7_days, last_30_days); the tools work out the days. Weeks run Monday to Sunday. For totals use spending_totals; to find particular expenses use find_expenses (it can search by shop word, category or amount).
+- If a list says more: true, only some are listed: never present them as all of them, and use the total the tool gives.
+- If a tool returns an error, fix the call (a word that isn't a category goes in search). Never turn an error into "nothing" or zero.
+- "Where did my RM X go?", "how did I spend RM X" and similar are about a total (this month unless they say otherwise), not one expense: call spending_totals for the period grouped by category and answer from it.
+- If the person mentions an amount that doesn't match the data, say what the data shows now. If the tool lists removed expenses, use them to explain the difference. Only say something isn't there after find_expenses found no match.
+- If a tool returns nothing, say there's nothing logged for that.
 - Keep answers short: one to four sentences, warm and plain. No jargon. Quote money exactly as the tools' "shown" values (e.g. "RM 12.50").
-- "This month" means from the 1st of this month to today; "last week" means the previous Monday to Sunday.
-- When a comparison or trend helps, call show_chart once with numbers you already fetched.
+- When a comparison or trend helps, call show_chart once with numbers a tool returned.
 - If the person describes purchases to log ("lunch 12 and grab 9"), call propose_expenses.
 - To create or change things, use these tools. Each shows a card the person confirms; nothing changes until they tap it, so never say it's done or saved; say it's ready to confirm.
 ${capabilities}
@@ -77,6 +84,12 @@ const TONES = {
 	roast:
 		"\nTone for this answer: a playful roast, like a witty friend. First look up this month's spending (spending_totals by category and by shop). Tease two or three spending choices with the real numbers, with warmth and humour; never mock the person, their body, income, family or anything sensitive. Keep it to four short sentences, then end with one genuinely useful tip.",
 	hype: "\nTone for this answer: an energetic hype-up, like a proud coach. First look up this month (budget_overview, goals_overview, spending_totals). Celebrate two or three real wins with the real numbers (money left, goals growing, a category that's down). Keep it to four short sentences, then one next step to keep it going.",
+} as const;
+
+/** Said instead of an answer whose numbers couldn't be checked against the person's data. */
+const UNCHECKED = {
+	en: "I couldn't double-check every number for that, so I won't guess. Try asking a bit more simply, like \"How much did I spend on food this month?\"",
+	ms: 'Saya tidak dapat menyemak semula setiap angka untuk itu, jadi saya tidak akan meneka. Cuba tanya dengan lebih ringkas, contohnya "Berapa saya belanja untuk makanan bulan ini?"',
 } as const;
 
 /** An answer that talks about a card or something prepared (it should come with a tool call). */
@@ -203,11 +216,12 @@ export function createAskAgent(deps: AgentDeps) {
 			categories: [],
 			receipt,
 		});
+		const asked = note ? `${note}\n\n${input.question}` : input.question;
 		const messages = [
 			...input.history.map((t) =>
 				t.role === "user" ? new HumanMessage(t.text) : new AIMessage(t.text),
 			),
-			new HumanMessage(note ? `${note}\n\n${input.question}` : input.question),
+			new HumanMessage(asked),
 		];
 
 		let answer = "";
@@ -306,6 +320,23 @@ export function createAskAgent(deps: AgentDeps) {
 					p?.locale === "ms"
 						? "Maaf, saya belum dapat menyediakannya. Cuba sebut sekali lagi dengan jumlahnya."
 						: "Sorry, I couldn't prepare that one. Try saying it again with the amount.";
+		}
+		// The red line: every number must come from this question's tool results (or the
+		// question). One chance to correct; otherwise say so rather than show a guess.
+		const checked = () => [...(side.sources ?? []), asked];
+		const unchecked = answer ? ungroundedNumbers(answer, checked()) : [];
+		if (unchecked.length) {
+			const rejected = answer;
+			answer = "";
+			yield* run([
+				...messages,
+				new AIMessage(rejected),
+				new HumanMessage(
+					`Check failed: ${unchecked.join(", ")} ${unchecked.length === 1 ? "is" : "are"} not in the tool results. Every amount, percentage and count must be exactly one a tool returned for this question. Call the tools again if needed and use calculate for any arithmetic, then give only the corrected answer.`,
+				),
+			]);
+			if (!answer || ungroundedNumbers(answer, checked()).length)
+				answer = UNCHECKED[p?.locale === "ms" ? "ms" : "en"];
 		}
 		// Never echo the bookkeeping notes the app adds to earlier answers.
 		answer = answer

@@ -37,6 +37,8 @@ export interface AskContext {
 	locale?: "en" | "ms";
 	/** A receipt the person attached to this question, already read. */
 	receipt?: { id: string; draft: ReceiptDraft } | null;
+	/** A fixed "today" (YYYY-MM-DD) for tests; the server leaves it out and uses the clock. */
+	today?: string;
 }
 
 /** Where tools put what the app should render beside the answer. */
@@ -44,6 +46,8 @@ export interface SideChannel {
 	charts: ChartSpec[];
 	drafts: VoiceDraft[];
 	actions: AskAction[];
+	/** Every tool result for this question: the only numbers an answer or chart may use. */
+	sources?: string[];
 }
 
 export const MAX_ACTIONS = 4;

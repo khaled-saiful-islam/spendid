@@ -77,7 +77,27 @@ export function createAskTools(
 				];
 	// One of each name (areas can share a tool).
 	const seen = new Set<string>();
-	return chosen.filter((t) => !seen.has(t.name) && seen.add(t.name));
+	// Shared on purpose: the side channel is this question's scratch pad.
+	side.sources ??= [];
+	const sources = side.sources;
+	return chosen
+		.filter((t) => !seen.has(t.name) && seen.add(t.name))
+		.map((t) => recordResults(t, sources));
+}
+
+/** Keeps each tool's result, so the answer and any chart can be checked against it. */
+function recordResults(t: AskTool, sources: string[]): AskTool {
+	const runnable = t as AskTool & {
+		func?: (...args: unknown[]) => Promise<unknown>;
+	};
+	const original = runnable.func;
+	if (!original) return t;
+	runnable.func = async (...args: unknown[]) => {
+		const out = await original.apply(runnable, args);
+		sources.push(typeof out === "string" ? out : JSON.stringify(out));
+		return out;
+	};
+	return t;
 }
 
 /** One line per available propose tool, for the system prompt (only tools that are present). */
@@ -127,6 +147,7 @@ export const STEP_LABELS: Record<string, string> = {
 	goals_overview: "Checking your goals…",
 	bills_and_subscriptions: "Checking your bills and subscriptions…",
 	show_chart: "Drawing a chart…",
+	calculate: "Working it out…",
 	propose_expenses: "Preparing cards to confirm…",
 	propose_goal: "Preparing your goal…",
 	propose_goal_deposit: "Finding your goal…",

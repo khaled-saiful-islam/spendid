@@ -1,7 +1,18 @@
 import { category, transaction } from "@spendid/db";
 import type { ExpenseLook, TransactionPatch } from "@spendid/shared";
 import { toMinor } from "@spendid/shared";
-import { and, desc, eq, gte, ilike, isNull, or, sql } from "drizzle-orm";
+import {
+	and,
+	desc,
+	eq,
+	gte,
+	ilike,
+	inArray,
+	isNull,
+	or,
+	type SQL,
+	sql,
+} from "drizzle-orm";
 import { tool } from "langchain";
 import { z } from "zod";
 import {
@@ -56,41 +67,49 @@ export function expenseTools(
 				if (match) where.push(match);
 			}
 			if (input.day) where.push(sql`${localDay} = ${input.day}`);
-			const rows = await db
-				.select({
-					id: transaction.id,
-					merchant: transaction.merchant,
-					amountMinor: transaction.amountMinor,
-					currency: transaction.currency,
-					categoryId: transaction.categoryId,
-					occurredAt: transaction.occurredAt,
-					day: localDay,
-				})
-				.from(transaction)
-				.innerJoin(category, eq(category.id, transaction.categoryId))
-				.where(and(...where))
-				.orderBy(desc(transaction.occurredAt))
-				.limit(20);
+			const find = (extra: SQL[] = []) =>
+				db
+					.select({
+						id: transaction.id,
+						merchant: transaction.merchant,
+						amountMinor: transaction.amountMinor,
+						currency: transaction.currency,
+						categoryId: transaction.categoryId,
+						occurredAt: transaction.occurredAt,
+						day: localDay,
+					})
+					.from(transaction)
+					.innerJoin(category, eq(category.id, transaction.categoryId))
+					.where(and(...where, ...extra))
+					.orderBy(desc(transaction.occurredAt))
+					.limit(20);
 			let { amount, newAmount } = input;
+			// The amount is matched in the database, so an older expense is found too (not just
+			// among the newest 20). Its minor units depend on the currency, so allow each size.
+			const asked = amount;
+			const rows =
+				asked === null || asked === undefined
+					? await find()
+					: await find([
+							inArray(
+								transaction.amountMinor,
+								[0, 2, 3].map((digits) => Math.round(asked * 10 ** digits)),
+							),
+						]);
 			let byAmount =
-				amount === null || amount === undefined
+				asked === null || asked === undefined
 					? rows
-					: rows.filter(
-							(r) => r.amountMinor === toMinor(amount ?? 0, r.currency),
-						);
+					: rows.filter((r) => r.amountMinor === toMinor(asked, r.currency));
 			// "change my Grab to 15": the model sometimes puts the new amount in `amount`.
 			const noOtherChange =
 				!input.remove && !input.newCategory && !input.newShop && !input.newDay;
-			if (
-				byAmount.length === 0 &&
-				rows.length > 0 &&
-				amount &&
-				!newAmount &&
-				noOtherChange
-			) {
-				newAmount = amount;
-				amount = null;
-				byAmount = rows;
+			if (byAmount.length === 0 && amount && !newAmount && noOtherChange) {
+				const recent = await find();
+				if (recent.length > 0) {
+					newAmount = amount;
+					amount = null;
+					byAmount = recent;
+				}
 			}
 			const candidates = input.latest ? byAmount.slice(0, 1) : byAmount;
 			if (candidates.length === 0)

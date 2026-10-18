@@ -216,6 +216,42 @@ describe.skipIf(!url)("ask change tools (real database)", () => {
 		});
 	});
 
+	it("finds an expense by amount even when 20 newer ones came after it", async () => {
+		const lee = await createPerson(db);
+		const food = categories.find((c) => c.slug === "food")?.id ?? "";
+		const shopping = categories.find((c) => c.slug === "shopping")?.id ?? "";
+		const at = (daysAgo: number) => new Date(Date.now() - daysAgo * 86_400_000);
+		const base = {
+			userId: lee,
+			currency: "MYR",
+			homeCurrency: "MYR",
+		};
+		await db.insert(transaction).values([
+			{
+				...base,
+				categoryId: shopping,
+				merchant: "Shoes",
+				amountMinor: 12_800,
+				homeAmountMinor: 12_800,
+				occurredAt: at(20),
+			},
+			...Array.from({ length: 25 }, (_, i) => ({
+				...base,
+				categoryId: food,
+				merchant: `Lunch ${i + 1}`,
+				amountMinor: 500,
+				homeAmountMinor: 500,
+				occurredAt: at(i % 5),
+			})),
+		]);
+		const { call, actions } = run(lee);
+		await call("propose_expense_change", { amount: 128, remove: true });
+		expect(actions[0]).toMatchObject({
+			kind: "expense-delete",
+			look: { merchant: "Shoes" },
+		});
+	});
+
 	it("marks paid, changes and cancels a tracked subscription", async () => {
 		await subscriptions.create(maya, {
 			name: "Netflix",
