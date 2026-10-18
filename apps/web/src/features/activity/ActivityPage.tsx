@@ -1,14 +1,14 @@
 import { formatMinor, type Transaction } from "@spendid/shared";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { LoaderCircle, Search } from "lucide-react";
+import { ChevronDown, LoaderCircle, Search } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useDeferredValue, useEffect, useRef, useState } from "react";
+import { useDeferredValue, useState } from "react";
 import { buttonClass } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
-import { categoriesQuery, transactionsQuery } from "@/lib/money-api";
+import { categoriesQuery, PAGE_SIZE, transactionsQuery } from "@/lib/money-api";
 import { addDays, appToday, formatDay } from "@/lib/time";
 import { capture } from "../capture/capture-store";
 import { localDate } from "../capture/draft";
@@ -116,20 +116,9 @@ function ExpensesView({ initialCategory }: { initialCategory?: string }) {
 		}),
 	);
 	const items = query.data?.pages.flatMap((p) => p.items) ?? [];
-	const sentinel = useRef<HTMLDivElement>(null);
+	const total = query.data?.pages[0]?.total ?? items.length;
 	const { hasNextPage, isFetchingNextPage, fetchNextPage } = query;
-
-	// Load the next page as the end of the list scrolls into view.
-	useEffect(() => {
-		const el = sentinel.current;
-		if (!el || !hasNextPage) return;
-		const io = new IntersectionObserver((entries) => {
-			if (entries[0]?.isIntersecting && !isFetchingNextPage)
-				void fetchNextPage();
-		});
-		io.observe(el);
-		return () => io.disconnect();
-	}, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+	const nextBatch = Math.min(PAGE_SIZE, Math.max(0, total - items.length));
 
 	const filtering = Boolean(q || categoryId);
 
@@ -219,17 +208,36 @@ function ExpensesView({ initialCategory }: { initialCategory?: string }) {
 							</ul>
 						</section>
 					))}
-					<div ref={sentinel} className="flex justify-center py-4">
-						{isFetchingNextPage && (
-							<LoaderCircle
-								className="size-6 animate-spin text-ink-soft"
-								aria-label={t("Loading more")}
-							/>
-						)}
-						{!hasNextPage && (
-							<span className="text-[0.9rem] text-ink-soft">
-								{t("That's everything.")}
-							</span>
+					<div className="flex flex-col items-center gap-3 border-t border-line py-5">
+						<p className="num text-[0.9rem] text-ink-soft" aria-live="polite">
+							{hasNextPage
+								? t("Showing {n} of {total}", { n: items.length, total })
+								: t(
+										total === 1
+											? "That's everything: 1 expense."
+											: "That's everything: {total} expenses.",
+										{ total },
+									)}
+						</p>
+						{hasNextPage && (
+							<button
+								type="button"
+								onClick={() => void fetchNextPage()}
+								disabled={isFetchingNextPage}
+								className={buttonClass("ghost", "md", "border-2 border-line")}
+							>
+								{isFetchingNextPage ? (
+									<LoaderCircle
+										className="size-5 animate-spin"
+										aria-hidden="true"
+									/>
+								) : (
+									<ChevronDown className="size-5" aria-hidden="true" />
+								)}
+								{isFetchingNextPage
+									? t("Loading more")
+									: t("Show {n} more", { n: nextBatch || PAGE_SIZE })}
+							</button>
 						)}
 					</div>
 				</div>

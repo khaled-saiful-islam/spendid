@@ -40,6 +40,9 @@ export const summaryQuery = queryOptions({
 	staleTime: 15_000,
 });
 
+/** Expenses per page in lists (Activity, a day's expenses). */
+export const PAGE_SIZE = 30;
+
 export interface ActivityFilters {
 	categoryId?: string;
 	q?: string;
@@ -52,7 +55,7 @@ export const transactionsQuery = (filters: ActivityFilters) =>
 		queryKey: ["transactions", filters],
 		initialPageParam: "",
 		queryFn: ({ pageParam }) => {
-			const params = new URLSearchParams({ limit: "30" });
+			const params = new URLSearchParams({ limit: String(PAGE_SIZE) });
 			if (pageParam) params.set("cursor", pageParam);
 			if (filters.categoryId) params.set("categoryId", filters.categoryId);
 			if (filters.q) params.set("q", filters.q);

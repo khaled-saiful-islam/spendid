@@ -59,6 +59,8 @@ export type Transaction = z.infer<typeof TransactionSchema>;
 export const TransactionPageSchema = z.object({
 	items: z.array(TransactionSchema),
 	nextCursor: z.string().nullable(),
+	/** How many match in all (every page), for "Showing 30 of 65". */
+	total: z.number().int().min(0),
 });
 export type TransactionPage = z.infer<typeof TransactionPageSchema>;
 

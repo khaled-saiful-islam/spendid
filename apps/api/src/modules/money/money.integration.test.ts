@@ -205,6 +205,30 @@ describe.skipIf(!url)("money API (real database)", () => {
 		expect(bad.status).toBe(400);
 	});
 
+	it("says how many there are in all, for 'Showing 30 of 65'", async () => {
+		const ben = await createPerson(db);
+		for (const merchant of ["One", "Two", "Three"])
+			await call(ben, "POST", "/transactions", {
+				amountMinor: 500,
+				currency: "MYR",
+				categoryId: food.id,
+				merchant,
+			});
+		const first = await call<TransactionPage>(
+			ben,
+			"GET",
+			"/transactions?limit=2",
+		);
+		expect(first.body.data.items).toHaveLength(2);
+		expect(first.body.data.total).toBe(3);
+		const found = await call<TransactionPage>(
+			ben,
+			"GET",
+			"/transactions?limit=2&q=two",
+		);
+		expect(found.body.data.total).toBe(1);
+	});
+
 	it("deletes softly so Undo can restore", async () => {
 		const { body } = await call<Transaction>(sam, "POST", "/transactions", {
 			amountMinor: 999,

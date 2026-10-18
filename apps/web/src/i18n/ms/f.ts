@@ -179,4 +179,8 @@ export const msF: Record<string, string> = {
 	Good: "Baik",
 	Strong: "Kuat",
 	"Very strong": "Sangat kuat",
+	"Showing {n} of {total}": "Menunjukkan {n} daripada {total}",
+	"That's everything: 1 expense.": "Itu sahaja: 1 perbelanjaan.",
+	"That's everything: {total} expenses.": "Itu sahaja: {total} perbelanjaan.",
+	"Show {n} more": "Tunjuk {n} lagi",
 };

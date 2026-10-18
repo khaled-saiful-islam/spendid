@@ -143,6 +143,11 @@ export function createTransactionRepository(db: Db) {
 					or(ilike(transaction.merchant, term), ilike(transaction.note, term)),
 				);
 			}
+			// Counted before the cursor narrows the list: the same number on every page.
+			const [counted] = await db
+				.select({ total: sql<number>`count(*)::int` })
+				.from(transaction)
+				.where(and(...filters));
 			const cursor = opts.cursor ? decodeCursor(opts.cursor) : null;
 			if (cursor) {
 				filters.push(
@@ -167,6 +172,7 @@ export function createTransactionRepository(db: Db) {
 				items: page.map(toDto),
 				nextCursor:
 					rows.length > opts.limit && last ? encodeCursor(last) : null,
+				total: counted?.total ?? page.length,
 			};
 		},
 	};
