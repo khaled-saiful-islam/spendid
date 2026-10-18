@@ -231,6 +231,9 @@ export function AskPage({ initialQuestion }: { initialQuestion?: string }) {
 			onSend={(q, file) => {
 				void chat.send(q, tone ?? undefined, file ?? undefined);
 				setTone(null);
+				// The box moves under the chat once a question is sent; a kept suggestion would
+				// fill it again there.
+				setSuggestion(null);
 			}}
 			onStop={chat.stop}
 		/>

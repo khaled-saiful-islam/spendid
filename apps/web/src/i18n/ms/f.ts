@@ -264,4 +264,6 @@ export const msF: Record<string, string> = {
 	"Reconnecting…": "Menyambung semula…",
 	"Waiting for a connection": "Menunggu sambungan",
 	"Trying again in {n}s": "Cuba lagi dalam {n}s",
+	"How much have I spent this month?": "Berapa banyak saya belanja bulan ini?",
+	"Ask about another category": "Tanya tentang kategori lain",
 };

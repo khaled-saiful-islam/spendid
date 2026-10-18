@@ -1,4 +1,3 @@
-import { formatMinor } from "@spendid/shared";
 import { useQuery } from "@tanstack/react-query";
 import {
 	ArrowUpRight,
@@ -6,92 +5,89 @@ import {
 	Flame,
 	Lock,
 	PartyPopper,
+	Shuffle,
 	Target,
 	TrendingUp,
 } from "lucide-react";
-import { motion, useReducedMotion } from "motion/react";
-import type { ReactNode } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { type ReactNode, useState } from "react";
 import { CategoryIcon, TINTS } from "@/components/money/CategoryIcon";
 import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
-import { heatmapQuery, recurringQuery, thisMonth } from "@/lib/insights-api";
+import { recurringQuery } from "@/lib/insights-api";
 import { categoriesQuery, goalsQuery, summaryQuery } from "@/lib/money-api";
-import { appToday, formatDay } from "@/lib/time";
 import { LogDemo } from "./LogDemo";
 
-/** A tiny line of this month's daily spending: the shape, not just a total. */
-function Sparkline({ values }: { values: number[] }) {
-	if (values.length < 2) return null;
-	const max = Math.max(...values, 1);
-	const step = 100 / (values.length - 1);
-	const points = values
-		.map(
-			(v, i) => `${(i * step).toFixed(2)},${(28 - (v / max) * 26).toFixed(2)}`,
-		)
-		.join(" ");
-	return (
-		<svg
-			viewBox="0 0 100 30"
-			preserveAspectRatio="none"
-			className="mt-2 h-8 w-full text-orange-500 dark:text-marigold"
-			aria-hidden="true"
-		>
-			<motion.polyline
-				points={points}
-				fill="none"
-				stroke="currentColor"
-				strokeWidth="2"
-				strokeLinejoin="round"
-				strokeLinecap="round"
-				vectorEffect="non-scaling-stroke"
-				initial={{ pathLength: 0 }}
-				animate={{ pathLength: 1 }}
-				transition={{ duration: 1.1, delay: 0.3 }}
-			/>
-		</svg>
-	);
-}
+/** How many of this month's categories the category tile can cycle through. */
+const MAX_CATEGORIES = 6;
 
-/** A share of something, as a short filled bar. */
-function ShareBar({ pct, tint }: { pct: number; tint: string }) {
+/**
+ * Text that changes in place without resizing anything: the slot is as tall as the longest
+ * of its options, so nothing around it moves.
+ */
+function SwapText({
+	text,
+	options = [],
+	className,
+}: {
+	text: string;
+	options?: string[];
+	className?: string;
+}) {
 	return (
-		<span className="mt-2.5 block h-2 overflow-hidden rounded-full bg-ink/10">
-			<motion.span
-				className={cn("block h-full rounded-full bg-linear-to-r", tint)}
-				initial={{ width: 0 }}
-				animate={{ width: `${Math.min(100, pct)}%` }}
-				transition={{ duration: 0.8, delay: 0.3 }}
-			/>
+		<span className={cn("grid min-w-0", className)}>
+			{options.map((o) => (
+				<span
+					key={o}
+					aria-hidden="true"
+					className="invisible break-words [grid-area:1/1]"
+				>
+					{o}
+				</span>
+			))}
+			<AnimatePresence initial={false}>
+				<motion.span
+					key={text}
+					className="break-words [grid-area:1/1]"
+					initial={{ opacity: 0, y: 6 }}
+					animate={{ opacity: 1, y: 0 }}
+					exit={{ opacity: 0, y: -6 }}
+					transition={{ duration: 0.22 }}
+				>
+					{text}
+				</motion.span>
+			</AnimatePresence>
 		</span>
 	);
 }
 
 /**
- * A question with a preview of the real number behind it. The colour wash says which part
- * of your money it's about; tapping asks the question.
+ * A question to ask, nothing more: no numbers on the tile, the answer comes from the chat.
+ * The colour wash and icon say which part of your money it's about; tapping fills the box.
  */
 function IdeaTile({
 	tint,
 	icon,
-	label,
-	value,
-	visual,
 	question,
+	options,
+	extra,
 	onAsk,
 	index,
 }: {
 	tint: string;
 	icon: ReactNode;
-	label: string;
-	value: ReactNode;
-	visual?: ReactNode;
 	question: string;
+	/** Every question this tile can show, so swapping one never resizes the tile. */
+	options?: string[];
+	/** A control in the tile's top corner, in place of the arrow (it can't sit inside the button). */
+	extra?: ReactNode;
 	onAsk: (q: string) => void;
 	index: number;
 }) {
 	const reduce = useReducedMotion();
 	return (
 		<motion.li
+			className="relative"
 			initial={reduce ? false : { opacity: 0, y: 14 }}
 			animate={{ opacity: 1, y: 0 }}
 			transition={{
@@ -103,37 +99,33 @@ function IdeaTile({
 		>
 			<button
 				type="button"
+				aria-label={question}
 				onClick={() => onAsk(question)}
-				className="group relative flex h-full w-full flex-col overflow-hidden rounded-panel border border-line bg-surface p-4 text-left transition-transform hover:-translate-y-0.5"
+				className="group relative flex h-full w-full flex-col gap-2.5 overflow-hidden rounded-panel border border-line bg-surface p-4 text-left"
 			>
 				<span
 					aria-hidden="true"
 					className={cn(
-						"pointer-events-none absolute inset-0 bg-linear-to-br opacity-[0.16] transition-opacity group-hover:opacity-[0.24] dark:opacity-[0.13]",
+						"pointer-events-none absolute inset-0 bg-linear-to-br opacity-[0.16] transition-opacity group-hover:opacity-[0.26] dark:opacity-[0.13] dark:group-hover:opacity-[0.22]",
 						tint,
 					)}
 				/>
-				<span className="relative flex items-start justify-between gap-2 pb-3 text-[1rem] leading-snug font-bold">
-					<span className="min-w-0 break-words">{question}</span>
-					<ArrowUpRight
-						className="mt-0.5 size-4 shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-						aria-hidden="true"
-					/>
+				<span className="relative flex items-center justify-between gap-2">
+					{icon}
+					{!extra && (
+						<ArrowUpRight
+							className="size-4 shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+							aria-hidden="true"
+						/>
+					)}
 				</span>
-				<span className="relative mt-auto block border-t border-ink/10 pt-3">
-					<span className="flex items-center gap-2 text-[0.8rem] font-semibold text-ink-soft">
-						{icon}
-						<span className="min-w-0 break-words">{label}</span>
-					</span>
-					<span
-						data-money
-						className="num mt-1.5 block text-[1.3rem] leading-tight font-extrabold break-words"
-					>
-						{value}
-					</span>
-					{visual && <span className="block">{visual}</span>}
-				</span>
+				<SwapText
+					text={question}
+					options={options}
+					className="relative text-[1.05rem] leading-snug font-bold"
+				/>
 			</button>
+			{extra}
 		</motion.li>
 	);
 }
@@ -152,7 +144,7 @@ function Badge({ tint, children }: { tint: string; children: ReactNode }) {
 	);
 }
 
-/** First screen: the question box, questions previewing this month's real numbers, two modes. */
+/** First screen: the question box, an example, questions about this month, two modes. */
 export function AskWelcome({
 	onAsk,
 	onTone,
@@ -168,34 +160,22 @@ export function AskWelcome({
 	const { data: categories = [] } = useQuery(categoriesQuery);
 	const { data: goals = [] } = useQuery(goalsQuery);
 	const { data: recurring } = useQuery(recurringQuery);
-	const { data: heat } = useQuery(heatmapQuery(thisMonth()));
+	const [catIndex, setCatIndex] = useState(0);
 
-	const cur = summary?.homeCurrency ?? "MYR";
-	const money = (m: number) => formatMinor(m, cur);
-	const top = [...(summary?.byCategory ?? [])].sort(
-		(a, b) => b.spentMinor - a.spentMinor,
-	)[0];
-	const topCat = categories.find((c) => c.id === top?.categoryId);
-	const topShare =
-		top && summary?.monthSpentMinor
-			? Math.round((top.spentMinor / summary.monthSpentMinor) * 100)
-			: 0;
+	// Only categories with spending this month, biggest first, so every question has an answer.
+	const spentIn = [...(summary?.byCategory ?? [])]
+		.filter((c) => c.spentMinor > 0)
+		.sort((a, b) => b.spentMinor - a.spentMinor)
+		.flatMap((c) => categories.filter((cat) => cat.id === c.categoryId))
+		.slice(0, MAX_CATEGORIES);
+	const cat = spentIn[catIndex % Math.max(spentIn.length, 1)];
+	const catQuestion = (name: string) =>
+		t("Why so much on {category}?", { category: t(name).toLowerCase() });
 	const goal = goals.find((g) => g.savedMinor < g.targetMinor);
-	const goalPct = goal
-		? Math.round((goal.savedMinor / goal.targetMinor) * 100)
-		: 0;
-	const bills = recurring?.billsDue;
-	const nextBill = bills?.items[0];
-	const dayValues = heat
-		? Array.from({ length: Number(heat.today.slice(8, 10)) }, (_, i) => {
-				const day = `${heat.month}-${String(i + 1).padStart(2, "0")}`;
-				return heat.days.find((d) => d.day === day)?.minor ?? 0;
-			})
-		: [];
-	const monthLabel = formatDay(appToday(), { month: "long" });
+	const billsDue = (recurring?.billsDue.items.length ?? 0) > 0;
 
 	const tiles: ReactNode[] = [];
-	if (summary && summary.monthSpentMinor > 0)
+	if (summary)
 		tiles.push(
 			<IdeaTile
 				key="spent"
@@ -207,43 +187,43 @@ export function AskWelcome({
 						<TrendingUp className="size-3.5" aria-hidden="true" />
 					</Badge>
 				}
-				label={t("Spent in {month}", { month: monthLabel })}
-				value={money(summary.monthSpentMinor)}
-				visual={<Sparkline values={dayValues} />}
-				question={t("Where did my {amount} go?", {
-					amount: money(summary.monthSpentMinor),
-				})}
+				question={t("How much have I spent this month?")}
 			/>,
 		);
-	if (topCat && top)
+	if (cat)
 		tiles.push(
 			<IdeaTile
-				key="top"
+				key="category"
 				index={tiles.length}
 				onAsk={onAsk}
-				tint={TINTS[topCat.tint] ?? TINTS.slate ?? ""}
+				tint={TINTS[cat.tint] ?? TINTS.slate ?? ""}
 				icon={
 					<CategoryIcon
-						icon={topCat.icon}
-						tint={topCat.tint}
+						icon={cat.icon}
+						tint={cat.tint}
 						size="sm"
 						className="size-7"
 					/>
 				}
-				label={t("Biggest category")}
-				value={`${t(topCat.name)} ${topShare}%`}
-				visual={
-					<ShareBar
-						pct={topShare}
-						tint={TINTS[topCat.tint] ?? TINTS.slate ?? ""}
-					/>
+				question={catQuestion(cat.name)}
+				options={spentIn.map((c) => catQuestion(c.name))}
+				extra={
+					spentIn.length > 1 && (
+						<motion.button
+							type="button"
+							whileTap={{ scale: 0.9, rotate: -20 }}
+							onClick={() => setCatIndex((i) => (i + 1) % spentIn.length)}
+							aria-label={t("Ask about another category")}
+							title={t("Ask about another category")}
+							className="absolute top-2.5 right-2.5 z-10 grid size-9 place-items-center rounded-full bg-surface/90 text-ink shadow-sm ring-1 ring-line hover:bg-surface"
+						>
+							<Shuffle className="size-4" aria-hidden="true" />
+						</motion.button>
+					)
 				}
-				question={t("Why so much on {category}?", {
-					category: t(topCat.name).toLowerCase(),
-				})}
 			/>,
 		);
-	if (bills && bills.items.length > 0 && nextBill)
+	if (billsDue)
 		tiles.push(
 			<IdeaTile
 				key="bills"
@@ -254,19 +234,6 @@ export function AskWelcome({
 					<Badge tint={TINTS.sky ?? ""}>
 						<CalendarClock className="size-3.5" aria-hidden="true" />
 					</Badge>
-				}
-				label={t(
-					bills.items.length === 1 ? "1 bill still due" : "{n} bills still due",
-					{ n: bills.items.length },
-				)}
-				value={money(bills.minor)}
-				visual={
-					<span className="mt-1 block text-[0.85rem] text-ink-soft">
-						{t("Next: {name}, {date}", {
-							name: nextBill.merchant,
-							date: formatDay(nextBill.day, { day: "numeric", month: "short" }),
-						})}
-					</span>
 				}
 				question={t("Which bills are still due this month?")}
 			/>,
@@ -283,9 +250,6 @@ export function AskWelcome({
 						<Target className="size-3.5" aria-hidden="true" />
 					</Badge>
 				}
-				label={`${goal.emoji} ${goal.name}`}
-				value={t("{pct}% saved", { pct: goalPct })}
-				visual={<ShareBar pct={goalPct} tint={TINTS.lime ?? ""} />}
 				question={t("Am I on track for {goal}?", { goal: goal.name })}
 			/>,
 		);
@@ -300,7 +264,7 @@ export function AskWelcome({
 				</h2>
 				<ul className="grid grid-cols-2 gap-3">
 					<li className="col-span-full">
-						<LogDemo currency={cur} />
+						<LogDemo currency={summary?.homeCurrency ?? "MYR"} />
 					</li>
 					{tiles}
 				</ul>

@@ -68,16 +68,17 @@ test("hide amounts blurs every number until shown again", async ({ page, isMobil
 	await expect(html).not.toHaveAttribute("data-hide-money", /.*/);
 });
 
-test("Ask Spendid opens with real numbers, playful modes and the question box", async ({ page }) => {
+test("Ask Spendid opens with question tiles, playful modes and the question box", async ({ page }) => {
 	await page.goto("/app/ask");
 	const fresh = page.getByRole("button", { name: /New chat/ });
 	if (await fresh.count()) await fresh.first().click();
 	await expect(page.getByRole("textbox", { name: "Your question" })).toBeVisible();
-	await expect(
-		page
-			.getByRole("region", { name: "Questions about your month" })
-			.getByRole("button", { name: /Where did my RM [\d,.]+ go\?/ }),
-	).toBeVisible();
+	const ideas = page.getByRole("region", { name: "Questions about your month" });
+	await expect(ideas.getByRole("button", { name: "How much have I spent this month?" })).toBeVisible();
+	await expect(ideas.getByRole("button", { name: /^Why so much on / })).toBeVisible();
+	// Tiles are questions only: no amounts or percentages (the example's made-up receipt aside).
+	for (const tile of await ideas.getByRole("listitem").filter({ hasNot: page.getByRole("figure") }).all())
+		await expect(tile).not.toContainText(/RM\s?\d|\d+%/);
 	await expect(page.getByRole("figure", { name: /type expenses like a text message/ })).toBeVisible();
 	await expect(page.getByRole("button", { name: /^Roast my month/ })).toBeVisible();
 	await expect(page.getByRole("button", { name: /^Hype me up\s*Your real wins/ })).toBeVisible();
@@ -219,17 +220,37 @@ test("tapping a question on Ask fills the box to edit; nothing is asked until se
 	await page.goto("/app/ask");
 	const fresh = page.getByRole("button", { name: /New chat/ });
 	if (await fresh.count()) await fresh.first().click();
-	const tile = page
-		.getByRole("region", { name: "Questions about your month" })
-		.getByRole("button", { name: /^Where did my RM [\d,.]+ go\?/ });
-	const question = (await tile.innerText()).split("\n")[0]?.trim() ?? "";
-	await tile.click();
+	const ideas = page.getByRole("region", { name: "Questions about your month" });
+	await ideas.getByRole("button", { name: "How much have I spent this month?" }).click();
 	const box = page.getByRole("textbox", { name: "Your question" });
-	await expect(box).toHaveValue(question);
+	await expect(box).toHaveValue("How much have I spent this month?");
 	await expect(box).toBeFocused();
 	await expect(page.getByText("Change the question if you like, then press send.")).toBeVisible();
 	// Still the start screen: no question was sent.
 	await expect(page.getByRole("figure", { name: /type expenses like a text message/ })).toBeVisible();
+});
+
+test("Ask: another category swaps the question, and a sent question leaves the box empty", async ({ page }) => {
+	// No AI call and no saved chat: this is about the box, not the answer.
+	await page.route("**/api/ask", (route) => route.abort());
+	await page.route("**/api/ask/threads/*", (route) =>
+		route.request().method() === "GET" ? route.continue() : route.abort(),
+	);
+	await page.goto("/app/ask");
+	const fresh = page.getByRole("button", { name: /New chat/ });
+	if (await fresh.count()) await fresh.first().click();
+	const ideas = page.getByRole("region", { name: "Questions about your month" });
+	const category = ideas.getByRole("button", { name: /^Why so much on / });
+	const before = await category.getAttribute("aria-label");
+	await ideas.getByRole("button", { name: "Ask about another category" }).click();
+	await expect(category).not.toHaveAttribute("aria-label", before ?? "");
+	await category.click();
+	const box = page.getByRole("textbox", { name: "Your question" });
+	await expect(box).toHaveValue(/^Why so much on /);
+	await page.getByRole("button", { name: "Ask", exact: true }).click();
+	await expect(page.getByRole("figure", { name: /type expenses like a text message/ })).toBeHidden();
+	await expect(box).toHaveValue("");
+	await expect(page.getByText("Change the question if you like, then press send.")).toBeHidden();
 });
 
 test("phones get a home-screen card until it's installed or put off", async ({ page, isMobile }) => {
