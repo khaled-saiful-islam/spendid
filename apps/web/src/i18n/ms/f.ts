@@ -163,4 +163,20 @@ export const msF: Record<string, string> = {
 		"Wang anda kekal milik anda. Pengendali Spendid tidak dapat melihat perbelanjaan anda.",
 	"A new day. Spend something and watch the number.":
 		"Hari baharu. Belanja sesuatu dan lihat nombornya.",
+	"Welcome back, {name}": "Selamat kembali, {name}",
+	"Your fingerprint, face or phone PIN. No password to type.":
+		"Cap jari, wajah atau PIN telefon anda. Tiada kata laluan perlu ditaip.",
+	"{name}, today you can spend": "{name}, hari ini anda boleh belanja",
+	"Hi {name}!": "Hai {name}!",
+	"Two more things and your plan is ready.":
+		"Dua perkara lagi dan rancangan anda sedia.",
+	"All set. One tap to go.": "Semua sedia. Satu ketikan lagi.",
+	"{n} of 3 done": "{n} daripada 3 selesai",
+	"Create my account, {name}": "Cipta akaun saya, {name}",
+	"At least 8 characters": "Sekurang-kurangnya 8 aksara",
+	"A short sentence works well.": "Ayat pendek sesuai sekali.",
+	"Too short": "Terlalu pendek",
+	Good: "Baik",
+	Strong: "Kuat",
+	"Very strong": "Sangat kuat",
 };

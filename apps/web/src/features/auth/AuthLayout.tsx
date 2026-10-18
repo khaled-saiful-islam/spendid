@@ -9,10 +9,12 @@ import { t } from "@/i18n";
 import { AuthShowcase } from "./AuthShowcase";
 
 interface AuthLayoutProps {
-	title: string;
+	title: ReactNode;
 	intro?: ReactNode;
 	children: ReactNode;
 	footer?: ReactNode;
+	/** First name as it's typed: the live demo greets them by it. */
+	greetingName?: string;
 }
 
 const PROMISES = [
@@ -31,6 +33,7 @@ export function AuthLayout({
 	intro,
 	children,
 	footer,
+	greetingName,
 }: AuthLayoutProps) {
 	const reduce = useReducedMotion();
 	return (
@@ -44,10 +47,10 @@ export function AuthLayout({
 				</div>
 				<div className="mx-auto mt-5 w-full max-w-md lg:mx-0 lg:my-auto lg:max-w-sm">
 					<div className="lg:hidden">
-						<AuthShowcase />
+						<AuthShowcase name={greetingName} />
 					</div>
 					<div className="hidden lg:block">
-						<AuthShowcase large />
+						<AuthShowcase large name={greetingName} />
 						<ul className="mt-10 space-y-4">
 							{PROMISES.map(({ Icon, text }, i) => (
 								<motion.li
@@ -77,20 +80,22 @@ export function AuthLayout({
 						initial={reduce ? false : { opacity: 0, y: 24 }}
 						animate={{ opacity: 1, y: 0 }}
 						transition={{ type: "spring", stiffness: 140, damping: 20 }}
-						className="rounded-panel border border-line bg-surface p-5 shadow-lift sm:p-7"
+						className="rounded-[calc(1.75rem+2px)] bg-linear-to-br from-plum-500 via-coral to-marigold p-[2px] shadow-[0_30px_60px_-28px_rgb(122_79_196/0.55)] dark:shadow-[0_30px_60px_-28px_rgb(245_184_61/0.35)]"
 					>
-						<h1 className="text-[1.85rem] leading-tight font-extrabold sm:text-[2.1rem]">
-							{title}
-						</h1>
-						{intro && (
-							<div className="mt-1.5 text-[1rem] text-ink-soft">{intro}</div>
-						)}
-						<div className="mt-6">{children}</div>
-						{footer && (
-							<div className="mt-6 border-t border-line pt-5 text-center text-ink-soft">
-								{footer}
-							</div>
-						)}
+						<div className="rounded-panel bg-surface p-5 sm:p-7">
+							<h1 className="text-[1.85rem] leading-tight font-extrabold sm:text-[2.1rem]">
+								{title}
+							</h1>
+							{intro && (
+								<div className="mt-1.5 text-[1rem] text-ink-soft">{intro}</div>
+							)}
+							<div className="mt-6">{children}</div>
+							{footer && (
+								<div className="mt-6 border-t border-line pt-5 text-center text-ink-soft">
+									{footer}
+								</div>
+							)}
+						</div>
 					</motion.div>
 					<p className="mt-5 flex items-start justify-center gap-2 px-2 text-center text-[0.85rem] text-ink-soft">
 						<Lock className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />

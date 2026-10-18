@@ -1,4 +1,5 @@
-import { Eye, EyeOff } from "lucide-react";
+import { CircleCheck, Eye, EyeOff, type LucideIcon } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import {
 	type InputHTMLAttributes,
 	type ReactNode,
@@ -13,10 +14,14 @@ interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
 	hint?: string;
 	error?: string;
 	adornment?: ReactNode;
+	/** A small icon inside the field, on the left. */
+	icon?: LucideIcon;
+	/** Shows a green tick inside the field once what's typed is right. */
+	valid?: boolean;
 }
 
 const inputClass =
-	"h-13 w-full rounded-tile border-2 border-line bg-surface px-4 text-[1.02rem] text-ink outline-none transition-colors placeholder:text-ink-soft/60 focus:border-plum-500 aria-invalid:border-coral";
+	"h-13 w-full rounded-tile border-2 border-line bg-surface px-4 text-[1.02rem] text-ink outline-none transition-[border-color,box-shadow] placeholder:text-ink-soft/60 focus:border-plum-500 focus:ring-4 focus:ring-plum-500/15 aria-invalid:border-coral";
 
 /** Labelled input with hint and error wired up for screen readers. */
 export function Field({
@@ -24,6 +29,8 @@ export function Field({
 	hint,
 	error,
 	adornment,
+	icon: Icon,
+	valid,
 	className,
 	id,
 	...input
@@ -42,6 +49,12 @@ export function Field({
 				{label}
 			</label>
 			<div className="relative">
+				{Icon && (
+					<Icon
+						className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-ink-soft"
+						aria-hidden="true"
+					/>
+				)}
 				{adornment && (
 					<span className="pointer-events-none absolute inset-y-0 left-4 flex items-center font-semibold text-ink-soft">
 						{adornment}
@@ -51,9 +64,27 @@ export function Field({
 					id={inputId}
 					aria-invalid={error ? true : undefined}
 					aria-describedby={describedBy}
-					className={cn(inputClass, adornment ? "pl-14" : undefined)}
+					className={cn(
+						inputClass,
+						adornment ? "pl-14" : Icon ? "pl-12" : undefined,
+						valid !== undefined && "pr-12",
+					)}
 					{...input}
 				/>
+				<AnimatePresence>
+					{valid && (
+						<motion.span
+							initial={{ scale: 0, opacity: 0 }}
+							animate={{ scale: 1, opacity: 1 }}
+							exit={{ scale: 0, opacity: 0 }}
+							transition={{ type: "spring", stiffness: 500, damping: 24 }}
+							className="field-tick pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-safe"
+							aria-hidden="true"
+						>
+							<CircleCheck className="size-5" />
+						</motion.span>
+					)}
+				</AnimatePresence>
 			</div>
 			{error ? (
 				<p
@@ -81,7 +112,12 @@ export function PasswordField(props: Omit<FieldProps, "type" | "adornment">) {
 				{...props}
 				id={props.id ?? id}
 				type={visible ? "text" : "password"}
-				className={cn("[&_input]:pr-14", props.className)}
+				className={cn(
+					"[&_input]:pr-14",
+					props.valid !== undefined &&
+						"[&_.field-tick]:right-14 [&_input]:pr-24",
+					props.className,
+				)}
 			/>
 			<button
 				type="button"

@@ -1,11 +1,11 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Fingerprint } from "lucide-react";
+import { Fingerprint, Lock, UserRound } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { type FormEvent, useState } from "react";
 import { MaybeAlert } from "@/components/form/Alert";
 import { Field, PasswordField } from "@/components/form/Field";
 import { SubmitButton } from "@/components/form/SubmitButton";
-import { buttonClass } from "@/components/ui/Button";
 import { t } from "@/i18n";
 import { authClient, authErrorMessage } from "@/lib/auth-client";
 import { api } from "@/lib/http";
@@ -26,6 +26,7 @@ export function SignInPage({ notice }: SignInPageProps) {
 	);
 	const [pending, setPending] = useState(false);
 	const [resent, setResent] = useState(false);
+	const reduce = useReducedMotion();
 
 	async function goHome() {
 		await queryClient.invalidateQueries({ queryKey: meQuery.queryKey });
@@ -73,10 +74,26 @@ export function SignInPage({ notice }: SignInPageProps) {
 	}
 
 	const canResend = error?.code === "EMAIL_NOT_VERIFIED" && !resent;
+	// "maya" from "maya" or "maya@example.com": the screen greets them as they type.
+	const who = identifier.trim().split("@")[0]?.slice(0, 24) ?? "";
 
 	return (
 		<AuthLayout
-			title={t("Welcome back")}
+			greetingName={who || undefined}
+			title={
+				<AnimatePresence mode="wait" initial={false}>
+					<motion.span
+						key={who ? "named" : "plain"}
+						initial={reduce ? false : { opacity: 0, y: 8 }}
+						animate={{ opacity: 1, y: 0 }}
+						exit={{ opacity: 0, y: -8 }}
+						transition={{ duration: 0.2 }}
+						className="block break-words"
+					>
+						{who ? t("Welcome back, {name}", { name: who }) : t("Welcome back")}
+					</motion.span>
+				</AnimatePresence>
+			}
 			intro={t("Sign in to see what's safe to spend today.")}
 			footer={
 				<>
@@ -110,6 +127,7 @@ export function SignInPage({ notice }: SignInPageProps) {
 				<Field
 					label={t("Email or username")}
 					name="identifier"
+					icon={UserRound}
 					autoComplete="username webauthn"
 					required
 					value={identifier}
@@ -119,6 +137,7 @@ export function SignInPage({ notice }: SignInPageProps) {
 					<PasswordField
 						label={t("Password")}
 						name="password"
+						icon={Lock}
 						autoComplete="current-password"
 						required
 						value={password}
@@ -147,10 +166,23 @@ export function SignInPage({ notice }: SignInPageProps) {
 			<button
 				type="button"
 				onClick={signInWithPasskey}
-				className={buttonClass("ghost", "lg", "w-full border-2 border-line")}
+				className="group flex w-full items-center gap-3 rounded-tile border-2 border-line bg-surface-2/60 p-3 text-left transition-colors hover:border-plum-300"
 			>
-				<Fingerprint className="size-5" aria-hidden="true" />
-				{t("Sign in with a passkey")}
+				<span className="relative grid size-11 shrink-0 place-items-center rounded-full bg-marigold text-plum-900">
+					<span
+						aria-hidden="true"
+						className="absolute -inset-1 animate-pulse rounded-full ring-4 ring-marigold/35 motion-reduce:hidden"
+					/>
+					<Fingerprint className="relative size-6" aria-hidden="true" />
+				</span>
+				<span className="min-w-0 flex-1">
+					<span className="block font-semibold">
+						{t("Sign in with a passkey")}
+					</span>
+					<span className="block text-[0.85rem] text-ink-soft">
+						{t("Your fingerprint, face or phone PIN. No password to type.")}
+					</span>
+				</span>
 			</button>
 		</AuthLayout>
 	);

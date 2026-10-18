@@ -23,7 +23,14 @@ const STEP_MS = 2300;
  * Spendid working, before you've signed in: today's safe-to-spend and the coin dial react
  * as a day's purchases come in, then a new day starts. Still with reduced motion.
  */
-export function AuthShowcase({ large = false }: { large?: boolean }) {
+export function AuthShowcase({
+	large = false,
+	name,
+}: {
+	large?: boolean;
+	/** Who is signing up or in, as they type: the demo speaks to them. */
+	name?: string;
+}) {
 	const reduce = useReducedMotion();
 	const [step, setStep] = useState(reduce ? 2 : 0);
 
@@ -45,7 +52,9 @@ export function AuthShowcase({ large = false }: { large?: boolean }) {
 			<div className="flex items-center gap-4">
 				<div className="min-w-0 flex-1">
 					<p className="text-[0.85rem] font-medium text-plum-200">
-						{t("Safe to spend today")}
+						{name
+							? t("{name}, today you can spend", { name })
+							: t("Safe to spend today")}
 					</p>
 					<CountUp
 						minor={remaining}

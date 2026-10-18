@@ -14,7 +14,8 @@ test("sign up, confirm email, set up, then delete the account", async ({ page })
 	await page.getByLabel("Your name").fill("E2E Tester");
 	await page.getByLabel("Email").fill(email);
 	await page.getByLabel("Password", { exact: true }).fill(password);
-	await page.getByRole("button", { name: "Create account" }).click();
+	await expect(page.getByRole("heading", { name: "Hi E2E!" })).toBeVisible();
+	await page.getByRole("button", { name: /^Create (my )?account/ }).click();
 	await expect(page).toHaveURL(/\/check-email/);
 
 	// Signing in before confirming is refused.
