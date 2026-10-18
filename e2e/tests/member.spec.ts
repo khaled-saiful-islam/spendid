@@ -314,6 +314,23 @@ test("on an iPhone in Safari, notifications ask to install Spendid first", async
 	await ctx.close();
 });
 
+test("can't reach Spendid: says why, retries by itself, and comes back", async ({ page, context }) => {
+	await page.route("**/api/**", (route) => route.abort());
+	await page.goto("/app");
+	await expect(page.getByRole("heading", { name: "Can't reach Spendid" })).toBeVisible();
+	await expect(page.getByText(/^Trying again in \d+s$/)).toBeVisible();
+	await context.setOffline(true);
+	await expect(page.getByRole("heading", { name: "You're offline" })).toBeVisible();
+	await expect(page.getByText("Waiting for a connection").first()).toBeVisible();
+	// The connection and the server come back: no tap needed.
+	await page.unroute("**/api/**");
+	await context.setOffline(false);
+	await expect(page.getByRole("heading", { name: /^(Can't reach Spendid|You're offline)$/ })).toBeHidden({
+		timeout: 10_000,
+	});
+	await expect(page.getByRole("link", { name: "Home" }).first()).toBeVisible();
+});
+
 test("a deleted chat stays deleted after a reload", async ({ page, isMobile }) => {
 	const id = crypto.randomUUID();
 	await page.request.put(`/api/ask/threads/${id}`, {

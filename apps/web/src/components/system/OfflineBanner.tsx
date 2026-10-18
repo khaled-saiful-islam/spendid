@@ -1,20 +1,11 @@
 import { WifiOff } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useSyncExternalStore } from "react";
 import { t } from "@/i18n";
-
-const subscribe = (l: () => void) => {
-	window.addEventListener("online", l);
-	window.addEventListener("offline", l);
-	return () => {
-		window.removeEventListener("online", l);
-		window.removeEventListener("offline", l);
-	};
-};
+import { useOnline } from "@/lib/online";
 
 /** A calm note when the connection drops; it goes away by itself when it's back. */
 export function OfflineBanner() {
-	const online = useSyncExternalStore(subscribe, () => navigator.onLine);
+	const online = useOnline();
 	return (
 		<AnimatePresence>
 			{!online && (

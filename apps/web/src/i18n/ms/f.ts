@@ -256,4 +256,12 @@ export const msF: Record<string, string> = {
 		"Tidak dapat menghantar ujian. Cuba lagi.",
 	"Send a test": "Hantar ujian",
 	"Turn off": "Matikan",
+	"You're offline": "Anda di luar talian",
+	"Your connection works, but Spendid isn't answering. Your data is safe.":
+		"Sambungan anda berfungsi, tetapi Spendid tidak menjawab. Data anda selamat.",
+	"Your data is safe. Spendid reconnects by itself when your connection is back.":
+		"Data anda selamat. Spendid akan bersambung semula sendiri apabila sambungan anda pulih.",
+	"Reconnecting…": "Menyambung semula…",
+	"Waiting for a connection": "Menunggu sambungan",
+	"Trying again in {n}s": "Cuba lagi dalam {n}s",
 };
