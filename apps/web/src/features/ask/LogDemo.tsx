@@ -106,13 +106,16 @@ export function LogDemo({ currency }: { currency: string }) {
 
 			<span className="relative" aria-hidden="true">
 				<span className="flex flex-wrap items-center gap-2 text-[0.82rem] font-semibold text-ink-soft">
+					<span className="rounded-full bg-ink px-2 py-0.5 text-[0.72rem] font-bold tracking-wide text-bg">
+						{t("Example")}
+					</span>
 					{t("Type it like a text")}
 					<span className="rounded-full bg-surface/80 px-2 py-0.5 text-[0.72rem] ring-1 ring-line">
 						EN · BM
 					</span>
 				</span>
 				<span className="mt-2.5 flex items-end gap-2">
-					<span className="min-h-[3.2rem] max-w-full rounded-[1.2rem] rounded-br-md bg-plum-900 px-3.5 py-2.5 text-[1rem] leading-snug font-medium text-plum-50 shadow-lift dark:bg-marigold/15 dark:text-ink dark:ring-1 dark:ring-marigold/30">
+					<span className="min-h-[3.2rem] max-w-full rounded-[1.2rem] rounded-br-md border-2 border-dashed border-ink/25 bg-surface/80 px-3.5 py-2.5 text-[1rem] leading-snug font-medium text-ink">
 						{example.text.slice(0, shownChars)}
 						{typing && (
 							<span className="ml-0.5 inline-block h-4 w-0.5 translate-y-0.5 animate-pulse bg-current" />

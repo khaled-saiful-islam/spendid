@@ -183,4 +183,7 @@ export const msF: Record<string, string> = {
 	"That's everything: 1 expense.": "Itu sahaja: 1 perbelanjaan.",
 	"That's everything: {total} expenses.": "Itu sahaja: {total} perbelanjaan.",
 	"Show {n} more": "Tunjuk {n} lagi",
+	Example: "Contoh",
+	"Change the question if you like, then press send.":
+		"Ubah soalan jika mahu, kemudian tekan hantar.",
 };

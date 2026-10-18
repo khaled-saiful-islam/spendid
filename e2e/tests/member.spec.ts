@@ -73,7 +73,11 @@ test("Ask Spendid opens with real numbers, playful modes and the question box", 
 	const fresh = page.getByRole("button", { name: /New chat/ });
 	if (await fresh.count()) await fresh.first().click();
 	await expect(page.getByRole("textbox", { name: "Your question" })).toBeVisible();
-	await expect(page.getByRole("button", { name: /Where did my RM [\d,.]+ go\?/ })).toBeVisible();
+	await expect(
+		page
+			.getByRole("region", { name: "Questions about your month" })
+			.getByRole("button", { name: /Where did my RM [\d,.]+ go\?/ }),
+	).toBeVisible();
 	await expect(page.getByRole("figure", { name: /type expenses like a text message/ })).toBeVisible();
 	await expect(page.getByRole("button", { name: /^Roast my month/ })).toBeVisible();
 	await expect(page.getByRole("button", { name: /^Hype me up\s*Your real wins/ })).toBeVisible();
@@ -209,6 +213,23 @@ test("Activity shows 30 expenses at a time, and more only on Show more", async (
 	await expect(rows).toHaveCount(30);
 	await page.getByRole("button", { name: /^Show \d+ more$/ }).click();
 	await expect.poll(() => rows.count()).toBeGreaterThan(30);
+});
+
+test("tapping a question on Ask fills the box to edit; nothing is asked until send", async ({ page }) => {
+	await page.goto("/app/ask");
+	const fresh = page.getByRole("button", { name: /New chat/ });
+	if (await fresh.count()) await fresh.first().click();
+	const tile = page
+		.getByRole("region", { name: "Questions about your month" })
+		.getByRole("button", { name: /^Where did my RM [\d,.]+ go\?/ });
+	const question = (await tile.innerText()).split("\n")[0]?.trim() ?? "";
+	await tile.click();
+	const box = page.getByRole("textbox", { name: "Your question" });
+	await expect(box).toHaveValue(question);
+	await expect(box).toBeFocused();
+	await expect(page.getByText("Change the question if you like, then press send.")).toBeVisible();
+	// Still the start screen: no question was sent.
+	await expect(page.getByRole("figure", { name: /type expenses like a text message/ })).toBeVisible();
 });
 
 test("a deleted chat stays deleted after a reload", async ({ page, isMobile }) => {

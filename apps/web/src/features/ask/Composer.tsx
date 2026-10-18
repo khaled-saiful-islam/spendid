@@ -12,8 +12,16 @@ import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { isPdf } from "@/lib/pdf-to-image";
 
+/** A question someone tapped: it fills the box to edit, and is only sent from there. */
+export interface Suggestion {
+	text: string;
+	/** Changes on every tap, so tapping the same question again still fills the box. */
+	id: number;
+}
+
 interface ComposerProps {
 	busy: boolean;
+	suggestion?: Suggestion | null;
 	/** Floats over a conversation; on the welcome screen it sits in the flow. */
 	floating: boolean;
 	onSend: (question: string, attachment: File | null) => void;
@@ -21,8 +29,31 @@ interface ComposerProps {
 }
 
 /** The question box: type, or attach a receipt photo or PDF and say what to do with it. */
-export function Composer({ busy, floating, onSend, onStop }: ComposerProps) {
+export function Composer({
+	busy,
+	floating,
+	suggestion,
+	onSend,
+	onStop,
+}: ComposerProps) {
 	const [draft, setDraft] = useState("");
+	const [suggested, setSuggested] = useState(false);
+	const input = useRef<HTMLTextAreaElement>(null);
+	const form = useRef<HTMLFormElement>(null);
+
+	// A tapped question lands here to edit; the cursor goes to the end, ready to type.
+	useEffect(() => {
+		if (!suggestion) return;
+		setDraft(suggestion.text);
+		setSuggested(true);
+		const el = input.current;
+		if (!el) return;
+		form.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+		el.focus({ preventScroll: true });
+		requestAnimationFrame(() =>
+			el.setSelectionRange(suggestion.text.length, suggestion.text.length),
+		);
+	}, [suggestion]);
 	const [file, setFile] = useState<File | null>(null);
 	const [preview, setPreview] = useState<string | null>(null);
 	const picker = useRef<HTMLInputElement>(null);
@@ -40,10 +71,12 @@ export function Composer({ busy, floating, onSend, onStop }: ComposerProps) {
 		onSend(draft, file);
 		setDraft("");
 		setFile(null);
+		setSuggested(false);
 	}
 
 	return (
 		<form
+			ref={form}
 			onSubmit={submit}
 			className={cn("z-20", floating && "sticky bottom-24 md:bottom-4")}
 		>
@@ -89,6 +122,7 @@ export function Composer({ busy, floating, onSend, onStop }: ComposerProps) {
 							{t("Your question")}
 						</label>
 						<textarea
+							ref={input}
 							id="ask-input"
 							rows={1}
 							value={draft}
@@ -98,7 +132,10 @@ export function Composer({ busy, floating, onSend, onStop }: ComposerProps) {
 									? t("What should I do with it? (optional)")
 									: t("Ask or log something…")
 							}
-							onChange={(e) => setDraft(e.target.value)}
+							onChange={(e) => {
+								setDraft(e.target.value);
+								if (!e.target.value) setSuggested(false);
+							}}
 							onKeyDown={(e) => {
 								if (e.key === "Enter" && !e.shiftKey) {
 									e.preventDefault();
@@ -152,6 +189,14 @@ export function Composer({ busy, floating, onSend, onStop }: ComposerProps) {
 					</div>
 				</div>
 			</div>
+			{suggested && draft && !busy && (
+				<p
+					className="mt-2 px-3 text-[0.85rem] text-ink-soft"
+					aria-live="polite"
+				>
+					{t("Change the question if you like, then press send.")}
+				</p>
+			)}
 		</form>
 	);
 }

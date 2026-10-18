@@ -113,23 +113,25 @@ function IdeaTile({
 						tint,
 					)}
 				/>
-				<span className="relative flex items-center gap-2 text-[0.82rem] font-semibold text-ink-soft">
-					{icon}
-					<span className="min-w-0 break-words">{label}</span>
-				</span>
-				<span
-					data-money
-					className="num relative mt-2 block text-[1.35rem] leading-tight font-extrabold break-words"
-				>
-					{value}
-				</span>
-				{visual && <span className="relative block">{visual}</span>}
-				<span className="relative mt-auto flex items-end justify-between gap-2 pt-3 text-[0.92rem] leading-snug font-semibold">
+				<span className="relative flex items-start justify-between gap-2 pb-3 text-[1rem] leading-snug font-bold">
 					<span className="min-w-0 break-words">{question}</span>
 					<ArrowUpRight
-						className="size-4 shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+						className="mt-0.5 size-4 shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
 						aria-hidden="true"
 					/>
+				</span>
+				<span className="relative mt-auto block border-t border-ink/10 pt-3">
+					<span className="flex items-center gap-2 text-[0.8rem] font-semibold text-ink-soft">
+						{icon}
+						<span className="min-w-0 break-words">{label}</span>
+					</span>
+					<span
+						data-money
+						className="num mt-1.5 block text-[1.3rem] leading-tight font-extrabold break-words"
+					>
+						{value}
+					</span>
+					{visual && <span className="block">{visual}</span>}
 				</span>
 			</button>
 		</motion.li>
@@ -297,10 +299,10 @@ export function AskWelcome({
 					{t("Questions about your month")}
 				</h2>
 				<ul className="grid grid-cols-2 gap-3">
-					{tiles}
 					<li className="col-span-full">
 						<LogDemo currency={cur} />
 					</li>
+					{tiles}
 				</ul>
 			</section>
 

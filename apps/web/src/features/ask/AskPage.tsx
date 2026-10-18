@@ -13,7 +13,7 @@ import { AiAllowance } from "./AiAllowance";
 import { AnswerText } from "./AnswerText";
 import { AskWelcome } from "./AskWelcome";
 import { ChatsDrawerButton, ChatsPanel } from "./ChatsPanel";
-import { Composer } from "./Composer";
+import { Composer, type Suggestion } from "./Composer";
 import { ChartView } from "./charts/ChartView";
 import { type CoinState, SpendidCoin } from "./SpendidCoin";
 import { ThinkingTrail } from "./ThinkingTrail";
@@ -32,12 +32,12 @@ function NewChatButton({ onClick }: { onClick: () => void }) {
 			type="button"
 			onClick={onClick}
 			whileTap={{ scale: 0.94 }}
-			className="group inline-flex h-11 shrink-0 items-center gap-2 rounded-full border border-line bg-surface py-1 pr-4 pl-1 font-semibold hover:bg-surface-2"
+			className="group inline-flex h-11 shrink-0 items-center gap-2 rounded-full border border-line bg-surface py-1 pr-1 pl-1 font-semibold hover:bg-surface-2 sm:pr-4"
 		>
 			<span className="grid size-9 place-items-center rounded-full bg-marigold text-plum-900 transition-transform duration-500 group-hover:rotate-[360deg]">
 				<MessageSquarePlus className="size-4.5" aria-hidden="true" />
 			</span>
-			{t("New chat")}
+			<span className="max-sm:sr-only">{t("New chat")}</span>
 		</motion.button>
 	);
 }
@@ -192,13 +192,29 @@ export function AskPage({ initialQuestion }: { initialQuestion?: string }) {
 	const endRef = useRef<HTMLDivElement>(null);
 	const asked = useRef(false);
 	const lastMsg = chat.messages.at(-1);
+	const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
+	// Roast and Hype wait in the box like any question; their tone goes with the send.
+	const [tone, setTone] = useState<"roast" | "hype" | null>(null);
 
+	/** A tapped question goes into the box to edit; nothing is asked until they press send. */
+	function suggest(text: string, withTone: "roast" | "hype" | null = null) {
+		setSuggestion({ text, id: Date.now() });
+		setTone(withTone);
+	}
+
+	// Arriving on a fresh chat opens at the top: the question box first, never mid-page.
+	// biome-ignore lint/correctness/useExhaustiveDependencies: only when the page opens
+	useEffect(() => {
+		if (chat.messages.length === 0) window.scrollTo({ top: 0 });
+	}, []);
+
+	// A question from another screen (?q=) arrives ready to edit, not already asked.
 	useEffect(() => {
 		if (initialQuestion && !asked.current) {
 			asked.current = true;
-			void chat.send(initialQuestion);
+			setSuggestion({ text: initialQuestion, id: Date.now() });
 		}
-	}, [initialQuestion, chat.send]);
+	}, [initialQuestion]);
 
 	// Keep the newest message in view as the answer streams in.
 	const lastText = lastMsg?.text ?? "";
@@ -211,7 +227,11 @@ export function AskPage({ initialQuestion }: { initialQuestion?: string }) {
 		<Composer
 			busy={chat.busy}
 			floating={chat.messages.length > 0}
-			onSend={(q, file) => void chat.send(q, undefined, file ?? undefined)}
+			suggestion={suggestion}
+			onSend={(q, file) => {
+				void chat.send(q, tone ?? undefined, file ?? undefined);
+				setTone(null);
+			}}
 			onStop={chat.stop}
 		/>
 	);
@@ -256,13 +276,13 @@ export function AskPage({ initialQuestion }: { initialQuestion?: string }) {
 					{chat.messages.length === 0 ? (
 						<AskWelcome
 							composer={composer}
-							onAsk={(q) => void chat.send(q)}
-							onTone={(tone) =>
-								void chat.send(
-									tone === "roast"
+							onAsk={(q) => suggest(q)}
+							onTone={(mode) =>
+								suggest(
+									mode === "roast"
 										? t("Roast my spending this month.")
 										: t("Hype me up about my money this month."),
-									tone,
+									mode,
 								)
 							}
 						/>
@@ -278,7 +298,7 @@ export function AskPage({ initialQuestion }: { initialQuestion?: string }) {
 									onResolveAction={(index, status) =>
 										chat.resolveAction(m.id, index, status)
 									}
-									onAsk={(q) => void chat.send(q)}
+									onAsk={(q) => suggest(q)}
 								/>
 							))}
 						</AnimatePresence>
