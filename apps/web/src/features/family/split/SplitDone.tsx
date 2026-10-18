@@ -4,10 +4,10 @@ import { Link } from "@tanstack/react-router";
 import { Check, Copy, Share2 } from "lucide-react";
 import { useState } from "react";
 import { buttonClass } from "@/components/ui/Button";
+import { QrCode } from "@/components/ui/QrCode";
 import { toast } from "@/components/ui/Toast";
 import { t } from "@/i18n";
 import { familyApi, refreshFamily } from "@/lib/family-api";
-import { QrCode } from "../QrCode";
 import { SplitSummary } from "./SplitSummary";
 
 /** The finished split: who owes what, plus the link to send. */

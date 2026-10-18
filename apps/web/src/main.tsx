@@ -1,4 +1,5 @@
 import "./styles/app.css";
+import "./lib/install";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { StrictMode } from "react";

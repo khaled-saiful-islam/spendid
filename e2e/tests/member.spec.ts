@@ -173,6 +173,24 @@ test("Money Wrapped downloads its card as a PDF", async ({ page }) => {
 	expect((await readFile(path)).subarray(0, 5).toString()).toBe("%PDF-");
 });
 
+test("Get the app: one-tap install when the browser offers it, and a QR code to share", async ({ page }) => {
+	await page.goto("/app/me");
+	// Pretend the browser offered to install (Chrome fires this once, on its own schedule).
+	await page.evaluate(() => {
+		const offer = Object.assign(new Event("beforeinstallprompt"), {
+			prompt: async () => undefined,
+			userChoice: Promise.resolve({ outcome: "accepted" }),
+		});
+		window.dispatchEvent(offer);
+	});
+	await page.getByRole("button", { name: "Get the app" }).click();
+	const sheet = page.getByRole("dialog", { name: "Get the Spendid app" });
+	await expect(sheet.getByRole("img", { name: /^QR code that opens/ })).toBeVisible();
+	await expect(sheet.getByRole("button", { name: "Copy link" })).toBeVisible();
+	await sheet.getByRole("button", { name: "Install Spendid" }).click();
+	await expect(page.getByText("Spendid is installed. Find it with your apps.")).toBeVisible();
+});
+
 test("a deleted chat stays deleted after a reload", async ({ page, isMobile }) => {
 	const id = crypto.randomUUID();
 	await page.request.put(`/api/ask/threads/${id}`, {

@@ -6,11 +6,13 @@ import {
 	EyeOff,
 	LogOut,
 	Moon,
+	Smartphone,
 	Sun,
 	UserRound,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
+import { InstallSheet } from "@/components/system/InstallSheet";
 import { LanguageSwitch } from "@/components/system/LanguageSwitch";
 import { t } from "@/i18n";
 import { authClient } from "@/lib/auth-client";
@@ -26,6 +28,7 @@ import { useTheme } from "@/lib/theme";
 export function AccountCard() {
 	const { data: me } = useQuery(meQuery);
 	const [open, setOpen] = useState(false);
+	const [installing, setInstalling] = useState(false);
 	const menuId = useId();
 	const rootRef = useRef<HTMLDivElement>(null);
 	const name = me?.user.name ?? "";
@@ -64,7 +67,10 @@ export function AccountCard() {
 						transition={{ type: "spring", stiffness: 420, damping: 32 }}
 						className="absolute bottom-full left-0 z-30 mb-2 w-[19rem] origin-bottom-left rounded-panel border border-line bg-surface p-2 shadow-lift"
 					>
-						<AccountMenu onDone={() => setOpen(false)} />
+						<AccountMenu
+							onDone={() => setOpen(false)}
+							onInstall={() => setInstalling(true)}
+						/>
 					</motion.div>
 				)}
 			</AnimatePresence>
@@ -99,11 +105,18 @@ export function AccountCard() {
 					aria-hidden="true"
 				/>
 			</button>
+			<InstallSheet open={installing} onClose={() => setInstalling(false)} />
 		</div>
 	);
 }
 
-function AccountMenu({ onDone }: { onDone: () => void }) {
+function AccountMenu({
+	onDone,
+	onInstall,
+}: {
+	onDone: () => void;
+	onInstall: () => void;
+}) {
 	const hidden = useHideMoney();
 	const { theme, toggle } = useTheme();
 	const navigate = useNavigate();
@@ -125,6 +138,17 @@ function AccountMenu({ onDone }: { onDone: () => void }) {
 				<UserRound className="size-5 text-plum-500" aria-hidden="true" />
 				{t("Profile and settings")}
 			</Link>
+			<button
+				type="button"
+				onClick={() => {
+					onDone();
+					onInstall();
+				}}
+				className="flex w-full items-center gap-3 rounded-tile px-3 py-2.5 text-left font-semibold hover:bg-surface-2"
+			>
+				<Smartphone className="size-5 text-plum-500" aria-hidden="true" />
+				{t("Get the app and share it")}
+			</button>
 			<Switch
 				icon={
 					hidden ? <EyeOff className="size-5" /> : <Eye className="size-5" />

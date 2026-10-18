@@ -96,4 +96,45 @@ export const msF: Record<string, string> = {
 		"Paling hampir dahulu. Tandakan dibayar apabila ia keluar.",
 	"Tap one to change its amount, day or reminder.":
 		"Ketik satu untuk mengubah jumlah, hari atau peringatannya.",
+	"Open this page in Safari and tap Share":
+		"Buka halaman ini dalam Safari dan ketik Kongsi",
+	"Scroll down and tap Add to Home Screen":
+		"Tatal ke bawah dan ketik Tambah ke Skrin Utama",
+	"Tap Add. Spendid is now on your home screen":
+		"Ketik Tambah. Spendid kini di skrin utama anda",
+	"In Chrome, tap the menu (three dots)":
+		"Dalam Chrome, ketik menu (tiga titik)",
+	"Tap Install app or Add to Home screen":
+		"Ketik Pasang aplikasi atau Tambah ke skrin Utama",
+	"Tap Install. Spendid is now with your apps":
+		"Ketik Pasang. Spendid kini bersama aplikasi anda",
+	"In Chrome or Edge, click Install in the address bar":
+		"Dalam Chrome atau Edge, klik Pasang di bar alamat",
+	"Spendid opens in its own window, like an app":
+		"Spendid dibuka dalam tetingkapnya sendiri, seperti aplikasi",
+	"Spendid is installed. Find it with your apps.":
+		"Spendid sudah dipasang. Cari bersama aplikasi anda.",
+	"Couldn't copy. Press and hold the link to copy it.":
+		"Tidak dapat menyalin. Tekan dan tahan pautan untuk menyalinnya.",
+	"Spendid tells you what's safe to spend today. Try it:":
+		"Spendid memberitahu berapa yang selamat dibelanjakan hari ini. Cubalah:",
+	"Get the Spendid app": "Dapatkan aplikasi Spendid",
+	"You're using the installed app on this device.":
+		"Anda sedang menggunakan aplikasi yang dipasang pada peranti ini.",
+	"Open Spendid from your home screen like any app, full screen and quick to start.":
+		"Buka Spendid dari skrin utama seperti aplikasi lain, skrin penuh dan pantas dimulakan.",
+	"Install Spendid": "Pasang Spendid",
+	"Add Spendid to your home screen. It opens full screen like any app and updates itself.":
+		"Tambah Spendid ke skrin utama. Ia dibuka skrin penuh seperti aplikasi lain dan dikemas kini sendiri.",
+	"Share Spendid": "Kongsi Spendid",
+	"QR code that opens {link}": "Kod QR yang membuka {link}",
+	"Friends scan this with their phone camera, or you send them the link.":
+		"Rakan imbas ini dengan kamera telefon, atau hantar pautan kepada mereka.",
+	"Get the app": "Dapatkan aplikasi",
+	"Get the app and share it": "Dapatkan aplikasi dan kongsikan",
+	"Spendid on your phone": "Spendid di telefon anda",
+	"Installed on this device. Share it with family and friends.":
+		"Dipasang pada peranti ini. Kongsikan dengan keluarga dan rakan.",
+	"Install it from your browser, and share it with friends.":
+		"Pasang dari pelayar anda, dan kongsikan dengan rakan.",
 };

@@ -1,7 +1,10 @@
 import { Link } from "@tanstack/react-router";
+import { Smartphone } from "lucide-react";
 import { motion } from "motion/react";
+import { useState } from "react";
 import { Logo } from "@/components/brand/Logo";
 import { CountUp } from "@/components/money/CountUp";
+import { InstallSheet } from "@/components/system/InstallSheet";
 import { ThemeToggle } from "@/components/system/ThemeToggle";
 import { buttonClass } from "@/components/ui/Button";
 import { t } from "@/i18n";
@@ -17,6 +20,7 @@ import { SiteFooter } from "./SiteFooter";
 
 export function WelcomePage() {
 	const demo = useDemoSpending();
+	const [installing, setInstalling] = useState(false);
 
 	return (
 		<div className="overflow-x-clip">
@@ -70,6 +74,14 @@ export function WelcomePage() {
 								<Link to="/signin" className={buttonClass("ghost", "lg")}>
 									{t("I have an account")}
 								</Link>
+								<button
+									type="button"
+									onClick={() => setInstalling(true)}
+									className={buttonClass("ghost", "lg")}
+								>
+									<Smartphone className="size-5" aria-hidden="true" />{" "}
+									{t("Get the app")}
+								</button>
 							</div>
 						</motion.div>
 
@@ -96,6 +108,7 @@ export function WelcomePage() {
 			<div className="pt-16">
 				<SiteFooter />
 			</div>
+			<InstallSheet open={installing} onClose={() => setInstalling(false)} />
 		</div>
 	);
 }

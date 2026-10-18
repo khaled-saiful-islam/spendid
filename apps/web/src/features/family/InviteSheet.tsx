@@ -12,13 +12,13 @@ import { MaybeAlert } from "@/components/form/Alert";
 import { Field } from "@/components/form/Field";
 import { SubmitButton } from "@/components/form/SubmitButton";
 import { buttonClass } from "@/components/ui/Button";
+import { QrCode } from "@/components/ui/QrCode";
 import { Sheet } from "@/components/ui/Sheet";
 import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { familyApi, refreshFamily } from "@/lib/family-api";
 import { ApiError } from "@/lib/http";
 import { LevelPicker } from "./parts";
-import { QrCode } from "./QrCode";
 
 const RELATION_EMOJI: Record<Relation, string> = {
 	spouse: "💍",

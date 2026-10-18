@@ -10,6 +10,7 @@ import { dateLocale, t } from "@/i18n";
 import { authClient } from "@/lib/auth-client";
 import { METHODS } from "../onboarding/options";
 import { EmailSettings } from "./EmailSettings";
+import { GetTheApp } from "./GetTheApp";
 import { PasskeyPanel } from "./PasskeyPanel";
 import { YourData } from "./YourData";
 
@@ -107,6 +108,8 @@ export function MePage({ me }: { me: Me }) {
 				/>
 				<LanguageSwitch signedIn />
 			</section>
+
+			<GetTheApp />
 
 			<EmailSettings />
 
