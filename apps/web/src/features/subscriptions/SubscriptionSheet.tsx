@@ -3,11 +3,13 @@ import {
 	type BillingCycle,
 	minorDigits,
 	SUBSCRIPTION_BRANDS,
+	SUBSCRIPTION_GROUPS,
 	type Subscription,
+	type SubscriptionBrand,
 	toMinor,
 } from "@spendid/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import { MaybeAlert } from "@/components/form/Alert";
 import { Field } from "@/components/form/Field";
@@ -126,7 +128,7 @@ function SubscriptionForm({
 		setD((x) => ({ ...x, ...p }));
 	const categoryId = d.categoryId || slugId("subscriptions");
 
-	function pick(key: string | null) {
+	function pick(key: string | null, typedName = "") {
 		const brand = SUBSCRIPTION_BRANDS.find((b) => b.key === key);
 		patch(
 			brand
@@ -134,9 +136,9 @@ function SubscriptionForm({
 						name: brand.name,
 						brand: brand.key,
 						categoryId: slugId(brand.slug),
-						amountVaries: brand.key === "tnb" || brand.key === "water",
+						amountVaries: brand.slug === "bills",
 					}
-				: { name: "", brand: null },
+				: { name: typedName, brand: null },
 		);
 		setPicking(false);
 	}
@@ -180,42 +182,7 @@ function SubscriptionForm({
 		}
 	}
 
-	if (picking)
-		return (
-			<div className="space-y-4">
-				<p className="text-ink-soft">{t("Pick one, or add your own.")}</p>
-				<ul className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-					{SUBSCRIPTION_BRANDS.map((b) => (
-						<li key={b.key}>
-							<button
-								type="button"
-								onClick={() => pick(b.key)}
-								className="flex h-full w-full flex-col items-center gap-2 rounded-tile border border-line p-3 text-center hover:border-plum-300 hover:bg-surface-2"
-							>
-								<BrandTile sub={{ brand: b.key, name: b.name }} />
-								<span className="text-[0.85rem] leading-tight font-semibold break-words">
-									{t(b.name)}
-								</span>
-							</button>
-						</li>
-					))}
-					<li>
-						<button
-							type="button"
-							onClick={() => pick(null)}
-							className="flex h-full w-full flex-col items-center gap-2 rounded-tile border-2 border-dashed border-line p-3 text-center hover:border-plum-300"
-						>
-							<span className="grid size-12 place-items-center rounded-[28%] bg-surface-2 text-plum-500">
-								<Plus className="size-6" aria-hidden="true" />
-							</span>
-							<span className="text-[0.85rem] leading-tight font-semibold">
-								{t("Something else")}
-							</span>
-						</button>
-					</li>
-				</ul>
-			</div>
-		);
+	if (picking) return <BrandPicker onPick={pick} />;
 
 	return (
 		<form onSubmit={onSubmit} className="space-y-5">
@@ -375,5 +342,100 @@ function Chip({
 		>
 			{children}
 		</button>
+	);
+}
+
+/**
+ * Pick a service: search by name, or browse by kind. Logos where the brand offers one.
+ * "Something else" is always first, for anything not listed.
+ */
+function BrandPicker({
+	onPick,
+}: {
+	onPick: (key: string | null, typedName?: string) => void;
+}) {
+	const [query, setQuery] = useState("");
+	const q = query.trim().toLowerCase();
+	const matches = (b: SubscriptionBrand) =>
+		!q ||
+		b.name.toLowerCase().includes(q) ||
+		t(b.name).toLowerCase().includes(q) ||
+		b.key.includes(q.replace(/\s+/g, ""));
+	const sections = SUBSCRIPTION_GROUPS.map((g) => ({
+		...g,
+		brands: SUBSCRIPTION_BRANDS.filter((b) => b.group === g.key && matches(b)),
+	})).filter((g) => g.brands.length > 0);
+
+	const tile = (b: SubscriptionBrand) => (
+		<li key={b.key}>
+			<button
+				type="button"
+				onClick={() => onPick(b.key)}
+				className="flex h-full w-full flex-col items-center gap-2 rounded-tile border border-line p-3 text-center hover:border-plum-300 hover:bg-surface-2"
+			>
+				<BrandTile sub={{ brand: b.key, name: b.name }} />
+				<span className="text-[0.82rem] leading-tight font-semibold break-words">
+					{t(b.name)}
+				</span>
+			</button>
+		</li>
+	);
+
+	return (
+		<div className="space-y-4">
+			<label className="relative block">
+				<span className="sr-only">{t("Search services")}</span>
+				<Search
+					className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-ink-soft"
+					aria-hidden="true"
+				/>
+				<input
+					type="search"
+					data-autofocus
+					value={query}
+					onChange={(e) => setQuery(e.target.value)}
+					placeholder={t("Search {n} services", {
+						n: SUBSCRIPTION_BRANDS.length,
+					})}
+					className="h-12 w-full rounded-full border-2 border-line bg-surface pr-4 pl-12 outline-none focus:border-plum-500"
+				/>
+			</label>
+			<button
+				type="button"
+				onClick={() => onPick(null, query.trim())}
+				className="flex w-full items-center gap-3 rounded-tile border-2 border-dashed border-line p-3 text-left hover:border-plum-300"
+			>
+				<span className="grid size-12 shrink-0 place-items-center rounded-[28%] bg-surface-2 text-plum-500">
+					<Plus className="size-6" aria-hidden="true" />
+				</span>
+				<span>
+					<span className="block font-semibold">{t("Something else")}</span>
+					<span className="block text-[0.85rem] text-ink-soft">
+						{q
+							? t('Add "{name}" yourself', { name: query.trim() })
+							: t("Anything you pay again and again")}
+					</span>
+				</span>
+			</button>
+			{sections.length === 0 ? (
+				<p className="text-center text-ink-soft">
+					{t("Not in the list. Add it as something else.")}
+				</p>
+			) : (
+				sections.map((g) => (
+					<section key={g.key} aria-labelledby={`group-${g.key}`}>
+						<h3
+							id={`group-${g.key}`}
+							className="mb-2 font-sans text-[0.85rem] font-bold text-ink-soft"
+						>
+							{t(g.name)}
+						</h3>
+						<ul className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+							{g.brands.map(tile)}
+						</ul>
+					</section>
+				))
+			)}
+		</div>
 	);
 }

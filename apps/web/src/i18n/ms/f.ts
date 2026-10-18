@@ -187,4 +187,26 @@ export const msF: Record<string, string> = {
 	"Change the question if you like, then press send.":
 		"Ubah soalan jika mahu, kemudian tekan hantar.",
 	"More categories ({n})": "Kategori lain ({n})",
+	"Search services": "Cari perkhidmatan",
+	"Search {n} services": "Cari {n} perkhidmatan",
+	'Add "{name}" yourself': 'Tambah "{name}" sendiri',
+	"Anything you pay again and again":
+		"Apa sahaja yang anda bayar berulang kali",
+	"Not in the list. Add it as something else.":
+		"Tiada dalam senarai. Tambah sebagai sesuatu yang lain.",
+	Streaming: "Penstriman",
+	"Music & audio": "Muzik & audio",
+	"AI & apps": "AI & aplikasi",
+	"Cloud, passwords & VPN": "Awan, kata laluan & VPN",
+	Gaming: "Permainan",
+	"Learning & reading": "Pembelajaran & bacaan",
+	"Health & fitness": "Kesihatan & kecergasan",
+	"Delivery & shopping": "Penghantaran & membeli-belah",
+	"Social & dating": "Sosial & janji temu",
+	Utilities: "Utiliti",
+	"Loans & home": "Pinjaman & rumah",
+	"Maintenance fee": "Yuran penyelenggaraan",
+	"Home loan": "Pinjaman rumah",
+	"Credit card": "Kad kredit",
+	Gas: "Gas",
 };

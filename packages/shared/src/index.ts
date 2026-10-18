@@ -18,6 +18,7 @@ export * from "./receipts";
 export * from "./recurring";
 export * from "./safe-to-spend";
 export * from "./split";
+export * from "./subscription-brands";
 export * from "./subscriptions";
 export * from "./transactions";
 export * from "./voice";
