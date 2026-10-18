@@ -22,7 +22,7 @@ interface Step {
 	text: string;
 }
 
-const STEPS: Record<InstallPlatform, Step[]> = {
+export const INSTALL_STEPS: Record<InstallPlatform, Step[]> = {
 	ios: [
 		{ Icon: Share, text: "Open this page in Safari and tap Share" },
 		{ Icon: SquarePlus, text: "Scroll down and tap Add to Home Screen" },
@@ -43,10 +43,10 @@ const STEPS: Record<InstallPlatform, Step[]> = {
 };
 
 /** Numbered steps with an icon each, for browsers that can't show their own install dialog. */
-function Steps({ platform }: { platform: InstallPlatform }) {
+export function InstallSteps({ platform }: { platform: InstallPlatform }) {
 	return (
 		<ol className="space-y-2">
-			{STEPS[platform].map(({ Icon, text }, i) => (
+			{INSTALL_STEPS[platform].map(({ Icon, text }, i) => (
 				<li
 					key={text}
 					className="flex items-center gap-3 rounded-tile bg-surface-2 px-3 py-2.5"
@@ -135,7 +135,7 @@ export function InstallSheet({
 								"Add Spendid to your home screen. It opens full screen like any app and updates itself.",
 							)}
 						</p>
-						<Steps platform={install.platform} />
+						<InstallSteps platform={install.platform} />
 					</div>
 				)}
 

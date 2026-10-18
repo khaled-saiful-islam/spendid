@@ -137,4 +137,26 @@ export const msF: Record<string, string> = {
 		"Dipasang pada peranti ini. Kongsikan dengan keluarga dan rakan.",
 	"Install it from your browser, and share it with friends.":
 		"Pasang dari pelayar anda, dan kongsikan dengan rakan.",
+	"Spendid app": "Aplikasi Spendid",
+	"Free. Installs in two taps.": "Percuma. Dipasang dengan dua ketikan.",
+	Get: "Dapatkan",
+	"Spendid's home screen: safe to spend today, the last 7 days and colour tiles":
+		"Skrin utama Spendid: selamat dibelanjakan hari ini, 7 hari lepas dan jubin berwarna",
+	"Get the app, it's free": "Dapatkan aplikasi, percuma",
+	"Get Spendid on your phone": "Dapatkan Spendid di telefon anda",
+	"Scan with your phone's camera. It installs from the browser in two taps, no app store.":
+		"Imbas dengan kamera telefon. Ia dipasang dari pelayar dengan dua ketikan, tanpa gedung aplikasi.",
+	"No app store needed": "Tidak perlu gedung aplikasi",
+	"One number, always honest.": "Satu nombor, sentiasa jujur.",
+	"Tap something you bought. Spendid takes it off today's amount straight away, so you always know what's safe to spend.":
+		"Ketik sesuatu yang anda beli. Spendid terus menolaknya daripada jumlah hari ini, jadi anda sentiasa tahu berapa yang selamat dibelanjakan.",
+	"Spendid lives on your home screen": "Spendid tinggal di skrin utama anda",
+	"No app store and nothing to wait for. Install it from your browser in a few taps; it opens full screen and updates itself.":
+		"Tiada gedung aplikasi dan tiada apa perlu ditunggu. Pasang dari pelayar dengan beberapa ketikan; ia dibuka skrin penuh dan dikemas kini sendiri.",
+	"Your device": "Peranti anda",
+	"On a computer? Scan with your phone's camera.":
+		"Guna komputer? Imbas dengan kamera telefon anda.",
+	iPhone: "iPhone",
+	Android: "Android",
+	Computer: "Komputer",
 };
