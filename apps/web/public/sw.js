@@ -1,12 +1,20 @@
 // Spendid's service worker: an offline app shell, nothing more.
 // Never caches /api — money and personal data always come fresh from the server.
-const SHELL = "spendid-shell-v5";
+const SHELL = "spendid-shell-v6";
 const ASSETS = "spendid-assets-v1";
 // Voice and scanner models (several MB). Bump when the VAD or OpenCV packages change.
 const MODELS = "spendid-models-v1";
 // A receipt shared into Spendid from another app waits here until the app picks it up.
 const SHARED = "spendid-shared";
-const PRECACHE = ["/", "/theme.js", "/splash.js", "/manifest.webmanifest", "/icons/icon-192.png", "/favicon.svg"];
+const PRECACHE = [
+	"/",
+	"/theme.js",
+	"/splash.js",
+	"/manifest.webmanifest",
+	"/icons/icon-192.png",
+	"/icons/badge-96.png",
+	"/favicon.svg",
+];
 
 self.addEventListener("install", (event) => {
 	event.waitUntil(caches.open(SHELL).then((c) => c.addAll(PRECACHE)));
@@ -121,8 +129,10 @@ self.addEventListener("push", (event) => {
 	event.waitUntil(
 		self.registration.showNotification(data.title, {
 			body: data.body,
-			icon: "/icons/icon-192.png",
-			badge: "/icons/icon-192.png",
+			// The coin in full colour beside the message; the status bar only draws a badge's
+			// shape, so that one is a white "S" coin on transparent.
+			icon: new URL("/icons/icon-192.png", self.location.origin).href,
+			badge: new URL("/icons/badge-96.png", self.location.origin).href,
 			data: { url: data.url },
 			tag: data.url,
 		}),
