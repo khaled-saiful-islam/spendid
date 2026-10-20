@@ -41,7 +41,7 @@ export function createMeRepository(db: Db): MeRepository {
 				locale: p?.locale === "ms" ? "ms" : "en",
 				timeZone: p?.timeZone ?? "Asia/Kuala_Lumpur",
 				monthlyIncomeMinor: p?.monthlyIncomeMinor ?? null,
-				budgetMethod: p?.budgetMethod ?? "fifty_thirty_twenty",
+				budgetMethod: p?.budgetMethod ?? null,
 				onboardedAt: p?.onboardedAt?.toISOString() ?? null,
 			},
 			needsOnboarding: row.user.role !== "admin" && !p?.onboardedAt,

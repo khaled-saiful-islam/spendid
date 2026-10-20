@@ -110,6 +110,16 @@ describe("reservedSavings", () => {
 		expect(reservedSavings(base)).toBe(0);
 	});
 
+	it("with no plan keeps only what goals need", () => {
+		expect(
+			reservedSavings({
+				incomeMinor: 500_000,
+				method: null,
+				goalsMonthlyMinor: 30_000,
+			}),
+		).toBe(30_000);
+	});
+
 	it("leaves salary minus transfers to spend", () => {
 		const safe = computeSafeToSpend({
 			incomeMinor: 400_000,

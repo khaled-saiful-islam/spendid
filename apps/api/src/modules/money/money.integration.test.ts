@@ -278,9 +278,9 @@ describe.skipIf(!url)("money API (real database)", () => {
 		expect(s.safe.leftThisMonthMinor).toBe(400_000 - 80_000);
 
 		// Someone else never sees them.
-		expect((await call<Transfer[]>(sam, "GET", "/transfers")).body.data).toEqual(
-			[],
-		);
+		expect(
+			(await call<Transfer[]>(sam, "GET", "/transfers")).body.data,
+		).toEqual([]);
 
 		// Saving again replaces the whole list.
 		await call(me, "PUT", "/transfers", [{ name: "ASB", amountMinor: 20_000 }]);

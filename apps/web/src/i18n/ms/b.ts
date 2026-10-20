@@ -108,8 +108,6 @@ export const msB: Record<string, string> = {
 		"Pilih gambar resit anda sebaliknya.",
 	"Pick an icon": "Pilih ikon",
 	"Pick another day": "Pilih hari lain",
-	"Pick the style that feels natural. You can switch later.":
-		"Pilih gaya yang paling selesa. Anda boleh tukar kemudian.",
 	"Pick who you're inviting.": "Pilih siapa yang anda jemput.",
 	"Play the story": "Mainkan cerita",
 	"Point your camera, it captures by itself":

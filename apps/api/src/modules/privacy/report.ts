@@ -311,7 +311,9 @@ export function renderReport(
 		],
 		[
 			"Budget style",
-			METHOD_LABEL[s?.budgetMethod ?? ""] ?? s?.budgetMethod ?? "",
+			s?.budgetMethod
+				? (METHOD_LABEL[s.budgetMethod] ?? s.budgetMethod)
+				: "No plan yet",
 		],
 		["Time zone", s?.timeZone ?? ""],
 		["Language", s?.locale === "ms" ? "Bahasa Melayu" : "English"],

@@ -39,7 +39,9 @@ const STEPS = [
 	},
 	{
 		title: t("How do you like to budget?"),
-		intro: t("Pick the style that feels natural. You can switch later."),
+		intro: t(
+			"Pick the style that feels natural, or skip it for now. You can choose or switch later.",
+		),
 	},
 ];
 
@@ -58,7 +60,9 @@ export function OnboardingPage({ me }: { me: Me }) {
 	const [homeCurrency, setCurrency] = useState(me.profile.homeCurrency);
 	const [locale, setLocale] = useState<Locale>(me.profile.locale);
 	const [income, setIncome] = useState(initialIncome(me));
-	const [method, setMethod] = useState<BudgetMethod>(me.profile.budgetMethod);
+	const [method, setMethod] = useState<BudgetMethod | null>(
+		me.profile.budgetMethod,
+	);
 	const [errors, setErrors] = useState<Record<string, string>>({});
 	const [pending, setPending] = useState(false);
 	const [revealed, setRevealed] = useState<Summary | null>(null);
@@ -95,8 +99,10 @@ export function OnboardingPage({ me }: { me: Me }) {
 		void finish();
 	}
 
-	async function finish() {
-		if (payFirst && "error" in typed) return setErrors({ _: typed.error });
+	async function finish(chosen: BudgetMethod | null = method) {
+		const transfersFirst = chosen === "pay_yourself_first";
+		if (transfersFirst && "error" in typed)
+			return setErrors({ _: typed.error });
 		setPending(true);
 		try {
 			const saved = await saveProfile({
@@ -106,9 +112,9 @@ export function OnboardingPage({ me }: { me: Me }) {
 				timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 				monthlyIncomeMinor:
 					incomeNumber === null ? null : toMinor(incomeNumber, homeCurrency),
-				budgetMethod: method,
+				budgetMethod: chosen,
 			});
-			if (payFirst && "list" in typed) {
+			if (transfersFirst && "list" in typed) {
 				await moneyApi.setTransfers(typed.list);
 				await queryClient.invalidateQueries({ queryKey: ["transfers"] });
 			}
@@ -276,6 +282,19 @@ export function OnboardingPage({ me }: { me: Me }) {
 									onClick={() => {
 										setIncome("");
 										setStep(2);
+									}}
+									className="h-11 w-full font-medium text-ink-soft hover:text-ink"
+								>
+									{t("Skip for now")}
+								</button>
+							)}
+							{step === 2 && (
+								<button
+									type="button"
+									disabled={pending}
+									onClick={() => {
+										setMethod(null);
+										void finish(null);
 									}}
 									className="h-11 w-full font-medium text-ink-soft hover:text-ink"
 								>

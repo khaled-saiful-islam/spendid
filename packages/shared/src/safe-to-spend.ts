@@ -58,11 +58,11 @@ export function computeSafeToSpend(input: SafeToSpendInput): SafeToSpend {
 
 /**
  * Pay yourself first keeps exactly its transfers aside. Otherwise 50/30/20 keeps at least 20%
- * of income aside, and every style keeps what goals need.
+ * of income aside, and every other style (or no plan) keeps what goals need.
  */
 export function reservedSavings(input: {
 	incomeMinor: number | null;
-	method: BudgetMethod;
+	method: BudgetMethod | null;
 	goalsMonthlyMinor: number;
 	transfersMinor?: number;
 }): number {

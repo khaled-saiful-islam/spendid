@@ -66,7 +66,8 @@ export type TransactionPage = z.infer<typeof TransactionPageSchema>;
 
 export const SummarySchema = z.object({
 	homeCurrency: z.string(),
-	method: z.enum(BUDGET_METHODS),
+	/** Null when no plan has been chosen. */
+	method: z.enum(BUDGET_METHODS).nullable(),
 	incomeMinor: z.number().nullable(),
 	reservedMinor: z.number(),
 	/** Money sent out first when salary lands (the pay-yourself-first plan). */

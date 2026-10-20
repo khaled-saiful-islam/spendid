@@ -62,7 +62,7 @@ export function createSummaryService(db: Db) {
 				.limit(1);
 			const timeZone = p?.timeZone ?? "UTC";
 			const homeCurrency = p?.homeCurrency ?? "MYR";
-			const method: BudgetMethod = p?.budgetMethod ?? "fifty_thirty_twenty";
+			const method: BudgetMethod | null = p?.budgetMethod ?? null;
 			const incomeMinor = p?.monthlyIncomeMinor ?? null;
 			const bounds = await monthBounds(db, timeZone);
 

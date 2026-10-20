@@ -37,7 +37,23 @@ export function PlanPage() {
 		<div className="space-y-5">
 			<PageHeader title={t("Your plan")} />
 
-			{summary.incomeMinor === null ? (
+			{summary.incomeMinor !== null && summary.method === null ? (
+				<section className="rounded-panel border-2 border-dashed border-line p-5">
+					<p className="font-semibold">{t("You haven't picked a plan yet.")}</p>
+					<p className="mt-1 text-[0.95rem] text-ink-soft">
+						{t(
+							"Safe to spend already works from your income. A plan shows where your money goes each month.",
+						)}
+					</p>
+					<Link
+						to="/onboarding"
+						search={{ edit: true }}
+						className={buttonClass("coin", "md", "mt-3")}
+					>
+						{t("Pick a plan")}
+					</Link>
+				</section>
+			) : summary.incomeMinor === null ? (
 				<section className="rounded-panel border-2 border-dashed border-line p-5">
 					<p className="font-semibold">
 						{t("Add your monthly income to plan your budget.")}
@@ -69,8 +85,7 @@ export function PlanPage() {
 				)}
 
 			{summary.incomeMinor !== null &&
-				summary.method !== "fifty_thirty_twenty" &&
-				summary.method !== "pay_yourself_first" && (
+				(summary.method === "envelope" || summary.method === "zero_based") && (
 					<section aria-labelledby="limits-heading" className="space-y-3">
 						<SectionHeader
 							id="limits-heading"

@@ -316,4 +316,11 @@ export const msF: Record<string, string> = {
 	"{amount} for transfers": "{amount} untuk pindahan",
 	"{amount} sent out first in transfers":
 		"{amount} dihantar dahulu sebagai pindahan",
+	"No plan yet": "Belum ada rancangan",
+	"You haven't picked a plan yet.": "Anda belum memilih rancangan.",
+	"Safe to spend already works from your income. A plan shows where your money goes each month.":
+		"Jumlah selamat dibelanjakan sudah dikira daripada pendapatan anda. Rancangan menunjukkan ke mana wang anda pergi setiap bulan.",
+	"Pick a plan": "Pilih rancangan",
+	"Pick the style that feels natural, or skip it for now. You can choose or switch later.":
+		"Pilih gaya yang terasa sesuai, atau langkau dahulu. Anda boleh memilih atau menukarnya kemudian.",
 };

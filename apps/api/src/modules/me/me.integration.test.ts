@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createPerson, testDbUrl } from "../../../test/db";
 import { seedCategories } from "../../scripts/categories";
 import { createCategoryRepository } from "../money/categories.repository";
+import { createSummaryService } from "../money/summary.service";
 import { createMeRepository } from "./me.repository";
 
 const url = testDbUrl();
@@ -27,6 +28,28 @@ describe.skipIf(!url)("profile (real database)", () => {
 		const saved = await me.saveProfile(fresh, { ...base, homeCurrency: "SGD" });
 		expect(saved.profile.homeCurrency).toBe("SGD");
 		expect(saved.currencyLocked).toBe(false);
+	});
+
+	it("saves without a plan, and safe to spend still works from income", async () => {
+		const fresh = await createPerson(db, { currency: "MYR" });
+		const saved = await me.saveProfile(fresh, {
+			...base,
+			homeCurrency: "MYR",
+			monthlyIncomeMinor: 310_000,
+			budgetMethod: null,
+		});
+		expect(saved.profile.budgetMethod).toBeNull();
+		const s = await createSummaryService(db).forUser(fresh);
+		expect(s.method).toBeNull();
+		expect(s.reservedMinor).toBe(0);
+		expect(s.safe.leftThisMonthMinor).toBe(310_000);
+		// A plan can be picked later.
+		const later = await me.saveProfile(fresh, {
+			...base,
+			homeCurrency: "MYR",
+			budgetMethod: "envelope",
+		});
+		expect(later.profile.budgetMethod).toBe("envelope");
 	});
 
 	it("keeps the home currency once spending exists, so totals never mix currencies", async () => {

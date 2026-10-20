@@ -20,7 +20,7 @@ interface PreviewProps {
 	currency: string;
 	/** Monthly income in minor units, or null while it's empty. */
 	incomeMinor: number | null;
-	method: BudgetMethod;
+	method: BudgetMethod | null;
 	step: number;
 	/** Pay yourself first: the transfers typed so far. */
 	transfers?: { name: string; amountMinor: number }[];
@@ -36,10 +36,21 @@ interface PreviewBar {
 
 /** The style's example split, or for pay yourself first the real transfers and what's left. */
 function barsFor(
-	method: BudgetMethod,
+	method: BudgetMethod | null,
 	income: number,
 	transfers: { name: string; amountMinor: number }[],
 ): PreviewBar[] {
+	// No plan yet: all of it is simply there to spend.
+	if (method === null)
+		return [
+			{
+				key: "spend",
+				label: t("To spend"),
+				color: "bg-jade",
+				share: 100,
+				minor: income,
+			},
+		];
 	if (method !== "pay_yourself_first") {
 		const style = METHODS.find((m) => m.id === method) ?? METHODS[0];
 		return (style?.bars ?? []).map((b) => ({

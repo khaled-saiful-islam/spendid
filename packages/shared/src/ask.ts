@@ -172,7 +172,7 @@ export const AskActionSchema = z.discriminatedUnion("kind", [
 		currency: z.string().length(3),
 		before: z.object({
 			incomeMinor: z.number().int().nullable(),
-			method: z.string(),
+			method: z.string().nullable(),
 		}),
 		input: ProfileInputSchema,
 	}),

@@ -29,7 +29,8 @@ export function MePage({ me }: { me: Me }) {
 	const queryClient = useQueryClient();
 	const { user, profile } = me;
 	const method =
-		METHODS.find((m) => m.id === profile.budgetMethod)?.title ?? "—";
+		METHODS.find((m) => m.id === profile.budgetMethod)?.title ??
+		t("No plan yet");
 
 	async function signOut() {
 		await authClient.signOut();

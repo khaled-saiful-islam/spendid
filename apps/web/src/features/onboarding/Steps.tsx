@@ -156,7 +156,8 @@ export function IncomeStep({
 }
 
 interface MethodStepProps {
-	value: BudgetMethod;
+	/** Null while no plan is picked; picking one is optional. */
+	value: BudgetMethod | null;
 	onChange: (value: BudgetMethod) => void;
 }
 

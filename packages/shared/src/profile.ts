@@ -37,7 +37,8 @@ export const ProfileInputSchema = z.object({
 		.min(0)
 		.max(10_000_000_000_000)
 		.nullable(),
-	budgetMethod: z.enum(BUDGET_METHODS),
+	/** Null until the person picks a plan; choosing one is optional. */
+	budgetMethod: z.enum(BUDGET_METHODS).nullable(),
 });
 
 export type ProfileInput = z.infer<typeof ProfileInputSchema>;

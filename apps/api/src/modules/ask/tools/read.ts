@@ -35,7 +35,7 @@ export function readTools(deps: ToolDeps, ctx: AskContext, side: SideChannel) {
 			);
 			return JSON.stringify({
 				currency: cur,
-				budgetStyle: s.method,
+				budgetStyle: s.method ?? "none chosen yet",
 				monthlyIncome:
 					s.incomeMinor === null ? null : major(s.incomeMinor, cur),
 				...(s.method === "pay_yourself_first"

@@ -227,7 +227,8 @@ function GoalArchiveBody({ action }: { action: ActionOf<"goal-archive"> }) {
 	);
 }
 
-const methodName = (m: string) => METHODS.find((x) => x.id === m)?.title ?? m;
+const methodName = (m: string | null) =>
+	t(m === null ? "No plan yet" : (METHODS.find((x) => x.id === m)?.title ?? m));
 
 function PlanBody({ action }: { action: ActionOf<"plan"> }) {
 	const { before: b, input: n } = action;
@@ -254,10 +255,7 @@ function PlanBody({ action }: { action: ActionOf<"plan"> }) {
 			{b.method !== n.budgetMethod && (
 				<>
 					<Note>{t("Budget style")}</Note>
-					<Change
-						from={t(methodName(b.method))}
-						to={t(methodName(n.budgetMethod))}
-					/>
+					<Change from={methodName(b.method)} to={methodName(n.budgetMethod)} />
 				</>
 			)}
 			<Note>{t("Safe to spend is worked out again from these.")}</Note>
@@ -399,7 +397,7 @@ export const changeSpecs: Pick<
 			await saveProfile({
 				...a.input,
 				monthlyIncomeMinor: a.before.incomeMinor,
-				budgetMethod: a.before.method as BudgetMethod,
+				budgetMethod: a.before.method as BudgetMethod | null,
 			});
 		},
 		link: () => plan,

@@ -28,7 +28,8 @@ export const profile = pgTable(
 		locale: text().notNull().default("en"),
 		timeZone: text().notNull().default("Asia/Kuala_Lumpur"),
 		monthlyIncomeMinor: bigint({ mode: "number" }),
-		budgetMethod: budgetMethod().notNull().default("fifty_thirty_twenty"),
+		/** Null until the person picks a plan (optional in onboarding). */
+		budgetMethod: budgetMethod(),
 		onboardedAt: timestamp({ withTimezone: true }),
 		createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
 		updatedAt: timestamp({ withTimezone: true })
