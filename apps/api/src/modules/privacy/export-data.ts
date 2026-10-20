@@ -9,6 +9,7 @@ import {
 	goal,
 	goalDeposit,
 	merchant,
+	monthlyTransfer,
 	notificationPref,
 	profile,
 	receipt,
@@ -205,6 +206,14 @@ export async function gatherExport(db: Db, store: FileStore, userId: string) {
 			.from(budget)
 			.innerJoin(category, eq(category.id, budget.categoryId))
 			.where(eq(budget.userId, userId)),
+		transfers: await db
+			.select({
+				name: monthlyTransfer.name,
+				amountMinor: monthlyTransfer.amountMinor,
+			})
+			.from(monthlyTransfer)
+			.where(eq(monthlyTransfer.userId, userId))
+			.orderBy(monthlyTransfer.position),
 		goals: goals.map((g) => ({
 			...g,
 			deposits: deposits.filter((d) => d.goalId === g.id),

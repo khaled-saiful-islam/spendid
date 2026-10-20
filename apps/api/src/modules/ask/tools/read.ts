@@ -38,7 +38,16 @@ export function readTools(deps: ToolDeps, ctx: AskContext, side: SideChannel) {
 				budgetStyle: s.method,
 				monthlyIncome:
 					s.incomeMinor === null ? null : major(s.incomeMinor, cur),
-				keptAsideForSavings: major(s.reservedMinor, cur),
+				...(s.method === "pay_yourself_first"
+					? {
+							// Pay yourself first: these go out when salary lands; the rest is to spend.
+							transfersOutFirst: s.transfers.map((t) => ({
+								name: t.name,
+								amount: major(t.amountMinor, cur),
+							})),
+							transfersTotal: major(s.reservedMinor, cur),
+						}
+					: { keptAsideForSavings: major(s.reservedMinor, cur) }),
 				safeToSpendToday: major(s.safe.safeTodayMinor, cur),
 				dailyAllowance: major(s.safe.dailyAllowanceMinor, cur),
 				daysLeftInMonth: s.daysLeft,
@@ -54,7 +63,7 @@ export function readTools(deps: ToolDeps, ctx: AskContext, side: SideChannel) {
 		{
 			name: "budget_overview",
 			description:
-				"This month's plan: income, savings kept aside, safe to spend today, days left, spent so far, and any category limits.",
+				"This month's plan: income, savings kept aside (or, for pay yourself first, the monthly transfers), safe to spend today, days left, spent so far, and any category limits.",
 			schema: z.object({}),
 		},
 	);

@@ -97,4 +97,15 @@ export const METHODS: MethodOption[] = [
 			{ share: 30, color: "bg-marigold", label: t("Goals") },
 		],
 	},
+	{
+		id: "pay_yourself_first",
+		title: t("Pay yourself first"),
+		body: t(
+			"Your transfers go out as soon as salary lands. Whatever is left is yours to spend.",
+		),
+		bars: [
+			{ share: 25, color: "bg-marigold", label: t("Transfers") },
+			{ share: 75, color: "bg-jade", label: t("To spend") },
+		],
+	},
 ];

@@ -30,14 +30,19 @@ export function MoneyFlow({
 	data,
 	incomeMinor,
 	reservedMinor,
+	savedLabel,
 }: {
 	data: Wrapped;
 	incomeMinor: number | null;
 	reservedMinor: number;
+	/** Pay yourself first: transfers aren't all savings, so the group says so. */
+	savedLabel?: string;
 }) {
 	const reduce = useReducedMotion();
 	const { data: categories = [] } = useQuery(categoriesQuery);
 	const [showAll, setShowAll] = useState(false);
+	const labelOf = (k: GroupKey) =>
+		k === "saved" && savedLabel ? savedLabel : t(GROUP[k].label);
 	const money = (m: number) => formatMinor(m, data.currency);
 
 	const sumOf = (k: "need" | "want" | "saving") =>
@@ -83,14 +88,14 @@ export function MoneyFlow({
 				aria-label={groups
 					.map(
 						(g) =>
-							`${t(GROUP[g.key].label)}: ${money(g.minor)} (${pct(g.minor, income)}%)`,
+							`${labelOf(g.key)}: ${money(g.minor)} (${pct(g.minor, income)}%)`,
 					)
 					.join(", ")}
 			>
 				{groups.map((g, i) => (
 					<motion.span
 						key={g.key}
-						title={`${t(GROUP[g.key].label)}: ${money(g.minor)}`}
+						title={`${labelOf(g.key)}: ${money(g.minor)}`}
 						className="h-full first:rounded-l-full last:rounded-r-full"
 						style={{ background: GROUP[g.key].color }}
 						initial={reduce ? false : { flexGrow: 0 }}
@@ -108,7 +113,7 @@ export function MoneyFlow({
 								style={{ background: GROUP[g.key].color }}
 								aria-hidden="true"
 							/>
-							{t(GROUP[g.key].label)}
+							{labelOf(g.key)}
 						</span>
 						<span data-money className="num block text-[0.92rem] font-semibold">
 							{money(g.minor)}{" "}

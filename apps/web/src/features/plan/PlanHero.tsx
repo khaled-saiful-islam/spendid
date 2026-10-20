@@ -11,6 +11,7 @@ import { TINTS } from "@/components/money/CategoryIcon";
 import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { appToday } from "@/lib/time";
+import { transferFill } from "./Transfers";
 
 interface Block {
 	key: string;
@@ -21,6 +22,8 @@ interface Block {
 	fill: string;
 	/** Kept aside up front rather than spent through the month. */
 	locked?: boolean;
+	/** What a locked block says under its amount. */
+	note?: string;
 }
 
 /** Day of the month and how much of the month has gone, in the app's time zone. */
@@ -97,6 +100,29 @@ function byLimits(
 	return blocks;
 }
 
+/** Pay yourself first: each transfer goes out first; everything after is "To spend". */
+function payYourselfFirst(summary: Summary): Block[] {
+	const income = summary.incomeMinor ?? 0;
+	return [
+		...summary.transfers.map((x, i) => ({
+			key: `transfer-${i}`,
+			label: x.name,
+			planned: x.amountMinor,
+			used: x.amountMinor,
+			fill: transferFill(i),
+			locked: true,
+			note: t("sent out first"),
+		})),
+		{
+			key: "spend",
+			label: t("To spend"),
+			planned: Math.max(0, income - summary.reservedMinor),
+			used: summary.monthSpentMinor,
+			fill: "bg-jade",
+		},
+	];
+}
+
 /** One plain sentence on how the month is going against the plan. */
 function insight(blocks: Block[], summary: Summary): string {
 	const { day, days, elapsed } = monthProgress(summary);
@@ -153,7 +179,9 @@ export function PlanHero({
 	const blocks =
 		summary.method === "fifty_thirty_twenty"
 			? fiftyThirtyTwenty(summary, categoryMap)
-			: byLimits(summary, categories, budgets);
+			: summary.method === "pay_yourself_first"
+				? payYourselfFirst(summary)
+				: byLimits(summary, categories, budgets);
 	const plannedTotal = blocks.reduce((s, b) => s + b.planned, 0);
 	const free = Math.max(0, income - plannedTotal);
 	const { elapsed } = monthProgress(summary);
@@ -283,7 +311,7 @@ export function PlanHero({
 										)}
 									>
 										{b.locked
-											? t("kept aside first")
+											? (b.note ?? t("kept aside first"))
 											: left < 0
 												? t("{amount} over", { amount: money(-left) })
 												: t("{amount} left", { amount: money(left) })}

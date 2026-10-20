@@ -9,6 +9,8 @@ import type {
 	TransactionInput,
 	TransactionPage,
 	TransactionPatch,
+	Transfer,
+	TransferInput,
 } from "@spendid/shared";
 import {
 	infiniteQueryOptions,
@@ -70,6 +72,11 @@ export const budgetsQuery = queryOptions({
 	queryFn: () => api<BudgetLine[]>("/api/budgets"),
 });
 
+export const transfersQuery = queryOptions({
+	queryKey: ["transfers"],
+	queryFn: () => api<Transfer[]>("/api/transfers"),
+});
+
 export const goalsQuery = queryOptions({
 	queryKey: ["goals"],
 	queryFn: () => api<Goal[]>("/api/goals"),
@@ -86,6 +93,8 @@ export const moneyApi = {
 		api<Transaction>(`/api/transactions/${id}/restore`, json("POST")),
 	setBudget: (input: BudgetInput) =>
 		api<BudgetLine[]>("/api/budgets", json("PUT", input)),
+	setTransfers: (list: TransferInput[]) =>
+		api<Transfer[]>("/api/transfers", json("PUT", list)),
 	createGoal: (input: GoalInput) =>
 		api<Goal>("/api/goals", json("POST", input)),
 	updateGoal: (id: string, input: GoalInput) =>
@@ -98,8 +107,13 @@ export const moneyApi = {
 /** After any money change: refresh the numbers that depend on it. */
 export function refreshMoney(queryClient: QueryClient): Promise<void> {
 	return Promise.all(
-		["summary", "transactions", "goals", "budgets", "insights"].map((key) =>
-			queryClient.invalidateQueries({ queryKey: [key] }),
-		),
+		[
+			"summary",
+			"transactions",
+			"goals",
+			"budgets",
+			"transfers",
+			"insights",
+		].map((key) => queryClient.invalidateQueries({ queryKey: [key] })),
 	).then(() => undefined);
 }

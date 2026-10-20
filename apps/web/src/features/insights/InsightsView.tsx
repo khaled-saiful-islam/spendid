@@ -74,6 +74,11 @@ function FlowSection({ month }: { month: string }) {
 			data={data}
 			incomeMinor={summary.incomeMinor}
 			reservedMinor={summary.reservedMinor}
+			savedLabel={
+				summary.method === "pay_yourself_first"
+					? t("Transfers and savings")
+					: undefined
+			}
 		/>
 	);
 }

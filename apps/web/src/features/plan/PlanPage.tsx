@@ -19,6 +19,7 @@ import { GoalsSection } from "./GoalsSection";
 import { ImpulsePause } from "./ImpulsePause";
 import { PlanHero } from "./PlanHero";
 import { CategoryBudgets } from "./StyleBudgets";
+import { TransfersSection } from "./Transfers";
 import { WarrantyVault } from "./WarrantyVault";
 
 export function PlanPage() {
@@ -60,7 +61,16 @@ export function PlanPage() {
 			)}
 
 			{summary.incomeMinor !== null &&
-				summary.method !== "fifty_thirty_twenty" && (
+				summary.method === "pay_yourself_first" && (
+					<TransfersSection
+						currency={summary.homeCurrency}
+						incomeMinor={summary.incomeMinor}
+					/>
+				)}
+
+			{summary.incomeMinor !== null &&
+				summary.method !== "fifty_thirty_twenty" &&
+				summary.method !== "pay_yourself_first" && (
 					<section aria-labelledby="limits-heading" className="space-y-3">
 						<SectionHeader
 							id="limits-heading"

@@ -5,6 +5,7 @@ import {
 	type GoalInput,
 	type TransactionInput,
 	type TransactionPatch,
+	TransfersInputSchema,
 } from "@spendid/shared";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
@@ -127,6 +128,19 @@ export async function moneyRoutes(
 			throw badRequest("Pick one of your categories.");
 		await deps.plan.setBudget(uid(req), input);
 		return { success: true, data: await deps.plan.budgets(uid(req)) };
+	});
+
+	app.get("/transfers", async (req) => ({
+		success: true,
+		data: await deps.plan.transfers(uid(req)),
+	}));
+
+	app.put("/transfers", async (req) => {
+		await deps.plan.setTransfers(
+			uid(req),
+			TransfersInputSchema.parse(req.body),
+		);
+		return { success: true, data: await deps.plan.transfers(uid(req)) };
 	});
 
 	app.get("/goals", async (req) => ({

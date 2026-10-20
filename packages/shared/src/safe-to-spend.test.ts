@@ -99,6 +99,28 @@ describe("reservedSavings", () => {
 			}),
 		).toBe(30_000);
 	});
+
+	it("keeps exactly the transfers aside for pay yourself first, goals or not", () => {
+		const base = {
+			incomeMinor: 400_000,
+			method: "pay_yourself_first" as const,
+			goalsMonthlyMinor: 30_000,
+		};
+		expect(reservedSavings({ ...base, transfersMinor: 80_000 })).toBe(80_000);
+		expect(reservedSavings(base)).toBe(0);
+	});
+
+	it("leaves salary minus transfers to spend", () => {
+		const safe = computeSafeToSpend({
+			incomeMinor: 400_000,
+			reservedMinor: 80_000,
+			spentBeforeTodayMinor: 0,
+			spentTodayMinor: 0,
+			daysLeft: 10,
+		});
+		expect(safe.leftThisMonthMinor).toBe(320_000);
+		expect(safe.dailyAllowanceMinor).toBe(32_000);
+	});
 });
 
 describe("goalMonthlyNeeded", () => {

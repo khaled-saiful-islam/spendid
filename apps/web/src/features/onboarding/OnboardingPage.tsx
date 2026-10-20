@@ -6,7 +6,7 @@ import {
 	type Summary,
 	toMinor,
 } from "@spendid/shared";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
@@ -17,7 +17,13 @@ import { SubmitButton } from "@/components/form/SubmitButton";
 import { t } from "@/i18n";
 import { ApiError } from "@/lib/http";
 import { meQuery, saveProfile } from "@/lib/me";
-import { summaryQuery } from "@/lib/money-api";
+import { moneyApi, summaryQuery, transfersQuery } from "@/lib/money-api";
+import {
+	readDrafts,
+	type TransferDraft,
+	TransfersEditor,
+	toDrafts,
+} from "../plan/Transfers";
 import { LivePreview } from "./LivePreview";
 import { Reveal } from "./Reveal";
 import { IncomeStep, MethodStep, PlaceStep } from "./Steps";
@@ -56,6 +62,18 @@ export function OnboardingPage({ me }: { me: Me }) {
 	const [errors, setErrors] = useState<Record<string, string>>({});
 	const [pending, setPending] = useState(false);
 	const [revealed, setRevealed] = useState<Summary | null>(null);
+	const { data: savedTransfers } = useQuery(transfersQuery);
+	const [transferDrafts, setTransferDrafts] = useState<TransferDraft[] | null>(
+		null,
+	);
+	const drafts = transferDrafts ?? toDrafts(savedTransfers ?? [], homeCurrency);
+	const payFirst = method === "pay_yourself_first";
+	const typed = readDrafts(drafts, homeCurrency);
+	// Only rows that are complete show in the preview while typing.
+	const previewTransfers = drafts.flatMap((d) => {
+		const one = readDrafts([d], homeCurrency);
+		return "list" in one ? one.list : [];
+	});
 
 	const incomeNumber =
 		income.trim() === "" ? null : Number(income.replace(",", "."));
@@ -78,6 +96,7 @@ export function OnboardingPage({ me }: { me: Me }) {
 	}
 
 	async function finish() {
+		if (payFirst && "error" in typed) return setErrors({ _: typed.error });
 		setPending(true);
 		try {
 			const saved = await saveProfile({
@@ -89,6 +108,10 @@ export function OnboardingPage({ me }: { me: Me }) {
 					incomeNumber === null ? null : toMinor(incomeNumber, homeCurrency),
 				budgetMethod: method,
 			});
+			if (payFirst && "list" in typed) {
+				await moneyApi.setTransfers(typed.list);
+				await queryClient.invalidateQueries({ queryKey: ["transfers"] });
+			}
 			queryClient.setQueryData(meQuery.queryKey, saved);
 			// Show today's real number before going in; the app opens on "Let's go".
 			setRevealed(
@@ -144,6 +167,7 @@ export function OnboardingPage({ me }: { me: Me }) {
 						incomeMinor={incomeMinor}
 						method={method}
 						step={step}
+						transfers={previewTransfers}
 					/>
 				</div>
 
@@ -207,6 +231,23 @@ export function OnboardingPage({ me }: { me: Me }) {
 								{step === 2 && (
 									<MethodStep value={method} onChange={setMethod} />
 								)}
+								{step === 2 && payFirst && (
+									<div className="mt-5 space-y-2">
+										<p className="font-semibold">
+											{t("What goes out when salary lands?")}
+										</p>
+										<p className="text-[0.92rem] text-ink-soft">
+											{t(
+												"Savings, family, ASB, a loan: add each one. You can change them later on Plan.",
+											)}
+										</p>
+										<TransfersEditor
+											currency={homeCurrency}
+											drafts={drafts}
+											onChange={setTransferDrafts}
+										/>
+									</div>
+								)}
 								{step > 0 && (
 									<div className="mt-6 rounded-panel bg-plum-900 lg:hidden">
 										<LivePreview
@@ -215,6 +256,7 @@ export function OnboardingPage({ me }: { me: Me }) {
 											incomeMinor={incomeMinor}
 											method={method}
 											step={step}
+											transfers={previewTransfers}
 										/>
 									</div>
 								)}

@@ -150,6 +150,26 @@ export const goal = pgTable(
 	],
 );
 
+/** Pay yourself first: money sent out when salary lands (savings, family, ASB). Home currency. */
+export const monthlyTransfer = pgTable(
+	"monthly_transfer",
+	{
+		id: id(),
+		userId: text()
+			.notNull()
+			.references(() => user.id, { onDelete: "cascade" }),
+		name: text().notNull(),
+		amountMinor: bigint({ mode: "number" }).notNull(),
+		/** Order the person listed them in. */
+		position: integer().notNull().default(0),
+		createdAt: createdAt(),
+	},
+	(t) => [
+		index("monthly_transfer_user_idx").on(t.userId),
+		check("monthly_transfer_amount_positive", sql`${t.amountMinor} > 0`),
+	],
+);
+
 /** Daily reference rates, base EUR (ECB via Frankfurter). */
 export const fxRate = pgTable(
 	"fx_rate",

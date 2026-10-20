@@ -26,9 +26,12 @@ export function Reveal({
 	const facts = hasIncome
 		? [
 				summary.reservedMinor > 0
-					? t("{amount} kept aside for savings first", {
-							amount: money(summary.reservedMinor),
-						})
+					? t(
+							summary.method === "pay_yourself_first"
+								? "{amount} sent out first in transfers"
+								: "{amount} kept aside for savings first",
+							{ amount: money(summary.reservedMinor) },
+						)
 					: null,
 				summary.bills.minor > 0
 					? t("{amount} kept aside for bills still due", {

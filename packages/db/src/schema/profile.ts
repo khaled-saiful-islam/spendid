@@ -14,6 +14,7 @@ export const budgetMethod = pgEnum("budget_method", [
 	"envelope",
 	"zero_based",
 	"fifty_thirty_twenty",
+	"pay_yourself_first",
 ]);
 
 /** One row per person: money settings chosen during onboarding. */

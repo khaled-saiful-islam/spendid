@@ -56,7 +56,12 @@ export function SafeCard({ summary }: { summary: Summary }) {
 				})
 			: `${t(daysLeft === 1 ? "{amount} a day for the next day" : "{amount} a day for the next {n} days", { amount: money(safe.dailyAllowanceMinor), n: daysLeft })}${keptAside(
 					reservedMinor > 0
-						? t("{amount} for savings", { amount: money(reservedMinor) })
+						? t(
+								summary.method === "pay_yourself_first"
+									? "{amount} for transfers"
+									: "{amount} for savings",
+								{ amount: money(reservedMinor) },
+							)
 						: null,
 					summary.bills.minor > 0
 						? t(

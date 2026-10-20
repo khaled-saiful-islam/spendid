@@ -12,6 +12,7 @@ import {
 } from "motion/react";
 import { useEffect } from "react";
 import { t } from "@/i18n";
+import { transferFill } from "../plan/Transfers";
 import { METHODS } from "./options";
 
 interface PreviewProps {
@@ -21,6 +22,51 @@ interface PreviewProps {
 	incomeMinor: number | null;
 	method: BudgetMethod;
 	step: number;
+	/** Pay yourself first: the transfers typed so far. */
+	transfers?: { name: string; amountMinor: number }[];
+}
+
+interface PreviewBar {
+	key: string;
+	label: string;
+	color: string;
+	share: number;
+	minor: number;
+}
+
+/** The style's example split, or for pay yourself first the real transfers and what's left. */
+function barsFor(
+	method: BudgetMethod,
+	income: number,
+	transfers: { name: string; amountMinor: number }[],
+): PreviewBar[] {
+	if (method !== "pay_yourself_first") {
+		const style = METHODS.find((m) => m.id === method) ?? METHODS[0];
+		return (style?.bars ?? []).map((b) => ({
+			key: b.label,
+			...b,
+			minor: Math.round((income * b.share) / 100),
+		}));
+	}
+	const sent = transfers.reduce((s, x) => s + x.amountMinor, 0);
+	const whole = Math.max(income, sent, 1);
+	const rest = Math.max(0, income - sent);
+	return [
+		...transfers.map((x, i) => ({
+			key: `${i}-${x.name}`,
+			label: x.name,
+			color: transferFill(i),
+			share: (x.amountMinor / whole) * 100,
+			minor: x.amountMinor,
+		})),
+		{
+			key: "spend",
+			label: t("To spend"),
+			color: "bg-jade",
+			share: (rest / whole) * 100,
+			minor: rest,
+		},
+	];
 }
 
 /** A number that glides to its new value as the person types. */
@@ -50,11 +96,18 @@ export function LivePreview({
 	incomeMinor,
 	method,
 	step,
+	transfers = [],
 }: PreviewProps) {
 	const reduce = useReducedMotion();
-	const style = METHODS.find((m) => m.id === method) ?? METHODS[0];
 	const income = incomeMinor ?? 0;
-	const kept = reservedSavings({ incomeMinor, method, goalsMonthlyMinor: 0 });
+	const bars = barsFor(method, income, transfers);
+	const payFirst = method === "pay_yourself_first";
+	const kept = reservedSavings({
+		incomeMinor,
+		method,
+		goalsMonthlyMinor: 0,
+		transfersMinor: transfers.reduce((s, x) => s + x.amountMinor, 0),
+	});
 	const daily =
 		income > 0 ? Math.floor((income - kept) / daysInThisMonth()) : 0;
 	const first = name.trim().split(/\s+/)[0] ?? "";
@@ -86,9 +139,9 @@ export function LivePreview({
 			</p>
 
 			<div className="mt-5 flex h-14 w-full gap-[3px]" aria-hidden="true">
-				{style?.bars.map((b, i) => (
+				{bars.map((b, i) => (
 					<motion.div
-						key={`${method}-${b.label}`}
+						key={`${method}-${b.key}`}
 						className={`${b.color} flex h-full items-end overflow-hidden rounded-xl`}
 						initial={reduce ? false : { width: 0, opacity: 0 }}
 						animate={{
@@ -116,20 +169,17 @@ export function LivePreview({
 				))}
 			</div>
 			<ul className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-[0.9rem] sm:grid-cols-3">
-				{style?.bars.map((b) => (
-					<li key={b.label} className="flex items-start gap-2">
+				{bars.map((b) => (
+					<li key={b.key} className="flex items-start gap-2">
 						<span
 							className={`${b.color} mt-1.5 size-2.5 shrink-0 rounded-full`}
 							aria-hidden="true"
 						/>
 						<span>
-							<span className="block text-plum-100">{b.label}</span>
+							<span className="block break-words text-plum-100">{b.label}</span>
 							<span className="num block font-bold">
 								{income > 0 ? (
-									<Glide
-										minor={Math.round((income * b.share) / 100)}
-										currency={currency}
-									/>
+									<Glide minor={b.minor} currency={currency} />
 								) : (
 									"–"
 								)}
@@ -141,7 +191,11 @@ export function LivePreview({
 
 			<div className="mt-5 flex flex-wrap items-baseline justify-between gap-2 border-t border-white/12 pt-4">
 				<span className="text-plum-100">
-					{kept > 0 ? t("Kept aside for savings first") : t("Daily amount")}
+					{kept > 0
+						? payFirst
+							? t("Sent out first")
+							: t("Kept aside for savings first")
+						: t("Daily amount")}
 				</span>
 				<span className="num font-display text-[1.4rem] font-extrabold">
 					{income > 0 ? (

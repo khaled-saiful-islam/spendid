@@ -4,6 +4,7 @@ export const BUDGET_METHODS = [
 	"envelope",
 	"zero_based",
 	"fifty_thirty_twenty",
+	"pay_yourself_first",
 ] as const;
 export const LOCALES = ["en", "ms"] as const;
 export const ROLES = ["user", "admin"] as const;

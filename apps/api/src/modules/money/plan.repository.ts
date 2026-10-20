@@ -1,10 +1,19 @@
-import { budget, type Db, goal, goalDeposit } from "@spendid/db";
+import {
+	budget,
+	type Db,
+	goal,
+	goalDeposit,
+	monthlyTransfer,
+} from "@spendid/db";
 import {
 	type BudgetInput,
 	type Goal,
 	type GoalInput,
 	GoalInputSchema,
 	goalMonthlyNeeded,
+	type Transfer,
+	type TransferInput,
+	TransfersInputSchema,
 } from "@spendid/shared";
 import { and, asc, eq, isNull, sql } from "drizzle-orm";
 import { badRequest, notFound } from "../../http/app-error";
@@ -140,6 +149,33 @@ export function createPlanRepository(db: Db) {
 				throw notFound("Goal");
 			}
 			return goalDto(row);
+		},
+
+		/** Pay yourself first: what goes out when salary lands, in the order listed. */
+		async transfers(userId: string): Promise<Transfer[]> {
+			return db
+				.select({
+					id: monthlyTransfer.id,
+					name: monthlyTransfer.name,
+					amountMinor: monthlyTransfer.amountMinor,
+				})
+				.from(monthlyTransfer)
+				.where(eq(monthlyTransfer.userId, userId))
+				.orderBy(asc(monthlyTransfer.position), asc(monthlyTransfer.createdAt));
+		},
+
+		/** Replaces the whole list at once, so it never shows half-saved. */
+		async setTransfers(userId: string, raw: TransferInput[]): Promise<void> {
+			const list = TransfersInputSchema.parse(raw);
+			await db.transaction(async (tx) => {
+				await tx
+					.delete(monthlyTransfer)
+					.where(eq(monthlyTransfer.userId, userId));
+				if (list.length > 0)
+					await tx
+						.insert(monthlyTransfer)
+						.values(list.map((t, position) => ({ userId, ...t, position })));
+			});
 		},
 
 		async archiveGoal(userId: string, id: string): Promise<void> {

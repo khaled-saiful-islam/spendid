@@ -21,6 +21,9 @@ const STYLE_WORDS: Record<string, (typeof BUDGET_METHODS)[number]> = {
 	envelopes: "envelope",
 	"zero-based": "zero_based",
 	zero: "zero_based",
+	"pay yourself first": "pay_yourself_first",
+	"pay-yourself-first": "pay_yourself_first",
+	"transfers first": "pay_yourself_first",
 };
 
 /** Change monthly income or budget style (Plan's settings), as a card to confirm. */
@@ -68,7 +71,7 @@ export function planTools(deps: ToolDeps, ctx: AskContext, side: SideChannel) {
 		},
 		{
 			name: "propose_plan_change",
-			description: `Change the person's monthly take-home income ("my salary is now 6000") or budget style ("switch to envelopes"): 50/30/20, envelope or zero-based. Amount in ${cur}. Safe-to-spend is worked out from these.`,
+			description: `Change the person's monthly take-home income ("my salary is now 6000") or budget style ("switch to envelopes"): 50/30/20, envelope, zero-based or pay yourself first (salary minus monthly transfers is what's left to spend). Amount in ${cur}. Safe-to-spend is worked out from these.`,
 			schema: z.object({
 				monthlyIncome: z.number().min(0).nullish(),
 				style: WordSchema(Object.keys(STYLE_WORDS)).nullish(),

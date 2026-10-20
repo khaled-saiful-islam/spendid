@@ -69,6 +69,8 @@ export const SummarySchema = z.object({
 	method: z.enum(BUDGET_METHODS),
 	incomeMinor: z.number().nullable(),
 	reservedMinor: z.number(),
+	/** Money sent out first when salary lands (the pay-yourself-first plan). */
+	transfers: z.array(z.object({ name: z.string(), amountMinor: z.number() })),
 	daysLeft: z.number(),
 	monthSpentMinor: z.number(),
 	safe: z.object({
@@ -106,6 +108,25 @@ export const BudgetLineSchema = z.object({
 	monthlyLimitMinor: z.number(),
 });
 export type BudgetLine = z.infer<typeof BudgetLineSchema>;
+
+/** Pay yourself first: one transfer that goes out every month, in home currency. */
+export const TransferInputSchema = z.object({
+	name: z.string().trim().min(1, "Name this transfer").max(40),
+	amountMinor: z
+		.number()
+		.int()
+		.positive("Set an amount above zero")
+		.max(MAX_MINOR),
+});
+export type TransferInput = z.infer<typeof TransferInputSchema>;
+
+/** The whole list is saved at once, in the order shown. */
+export const TransfersInputSchema = z
+	.array(TransferInputSchema)
+	.max(12, "Up to 12 transfers");
+
+export const TransferSchema = TransferInputSchema.extend({ id: z.uuid() });
+export type Transfer = z.infer<typeof TransferSchema>;
 
 export const GoalInputSchema = z.object({
 	name: z.string().trim().min(1, "Name your goal").max(60),

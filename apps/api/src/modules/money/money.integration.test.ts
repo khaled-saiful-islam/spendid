@@ -1,10 +1,12 @@
-import { createDb, fxRate } from "@spendid/db";
+import { createDb, fxRate, goal, profile } from "@spendid/db";
 import type {
 	Category,
 	Summary,
 	Transaction,
 	TransactionPage,
+	Transfer,
 } from "@spendid/shared";
+import { eq } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createPerson, testDbUrl } from "../../../test/db";
@@ -45,7 +47,7 @@ describe.skipIf(!url)("money API (real database)", () => {
 	const as = (userId: string) => ({ "x-test-user": userId });
 	const call = async <T>(
 		userId: string,
-		method: "GET" | "POST" | "PATCH" | "DELETE",
+		method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE",
 		path: string,
 		payload?: object,
 	) => {
@@ -245,6 +247,74 @@ describe.skipIf(!url)("money API (real database)", () => {
 			(await call<TransactionPage>(sam, "GET", "/transactions")).body.data
 				.items,
 		).toHaveLength(1);
+	});
+
+	it("pay yourself first: salary minus transfers is what's left to spend", async () => {
+		const me = await createPerson(db, { incomeMinor: 400_000 });
+		await db
+			.update(profile)
+			.set({ budgetMethod: "pay_yourself_first" })
+			.where(eq(profile.userId, me));
+		// A goal with a date needs money each month; this plan still keeps only the transfers.
+		await db.insert(goal).values({
+			userId: me,
+			name: "Trip",
+			targetMinor: 120_000,
+			targetDate: "2099-01-01",
+		});
+		const saved = await call<Transfer[]>(me, "PUT", "/transfers", [
+			{ name: "Savings", amountMinor: 50_000 },
+			{ name: "Mum", amountMinor: 30_000 },
+		]);
+		expect(saved.status).toBe(200);
+		expect(saved.body.data.map((x) => x.name)).toEqual(["Savings", "Mum"]);
+
+		const s = (await call<Summary>(me, "GET", "/summary")).body.data;
+		expect(s.reservedMinor).toBe(80_000);
+		expect(s.transfers).toEqual([
+			{ name: "Savings", amountMinor: 50_000 },
+			{ name: "Mum", amountMinor: 30_000 },
+		]);
+		expect(s.safe.leftThisMonthMinor).toBe(400_000 - 80_000);
+
+		// Someone else never sees them.
+		expect((await call<Transfer[]>(sam, "GET", "/transfers")).body.data).toEqual(
+			[],
+		);
+
+		// Saving again replaces the whole list.
+		await call(me, "PUT", "/transfers", [{ name: "ASB", amountMinor: 20_000 }]);
+		const after = (await call<Summary>(me, "GET", "/summary")).body.data;
+		expect(after.reservedMinor).toBe(20_000);
+		expect(after.safe.leftThisMonthMinor).toBe(380_000);
+	});
+
+	it("rejects a transfer without a name or amount, and keeps the old list", async () => {
+		const me = await createPerson(db, { incomeMinor: 400_000 });
+		await call(me, "PUT", "/transfers", [{ name: "Mum", amountMinor: 30_000 }]);
+		const bad = await call(me, "PUT", "/transfers", [
+			{ name: "", amountMinor: 10_000 },
+		]);
+		expect(bad.status).toBe(400);
+		const zero = await call(me, "PUT", "/transfers", [
+			{ name: "Mum", amountMinor: 0 },
+		]);
+		expect(zero.status).toBe(400);
+		const list = await call<Transfer[]>(me, "GET", "/transfers");
+		expect(list.body.data.map((x) => x.amountMinor)).toEqual([30_000]);
+	});
+
+	it("ignores saved transfers once another plan is chosen", async () => {
+		const me = await createPerson(db, { incomeMinor: 400_000 });
+		await db
+			.update(profile)
+			.set({ budgetMethod: "envelope" })
+			.where(eq(profile.userId, me));
+		await call(me, "PUT", "/transfers", [{ name: "Mum", amountMinor: 30_000 }]);
+		const s = (await call<Summary>(me, "GET", "/summary")).body.data;
+		expect(s.transfers).toEqual([]);
+		expect(s.reservedMinor).toBe(0);
+		expect(s.safe.leftThisMonthMinor).toBe(400_000);
 	});
 
 	it("never lets the admin role reach money", async () => {

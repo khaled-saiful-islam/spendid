@@ -1,4 +1,10 @@
-import { type Db, goal, profile, transaction } from "@spendid/db";
+import {
+	type Db,
+	goal,
+	monthlyTransfer,
+	profile,
+	transaction,
+} from "@spendid/db";
 import {
 	type BudgetMethod,
 	computeSafeToSpend,
@@ -6,7 +12,7 @@ import {
 	reservedSavings,
 	type Summary,
 } from "@spendid/shared";
-import { and, desc, eq, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, isNull, sql } from "drizzle-orm";
 import { recurringFor } from "../insights/charges";
 import { onLocalDays } from "./local-days";
 import { toDto } from "./transactions.repository";
@@ -72,7 +78,7 @@ export function createSummaryService(db: Db) {
 				),
 			);
 
-			const [totals, byCategory, todayRows, goals, recurring] =
+			const [totals, byCategory, todayRows, goals, recurring, transfers] =
 				await Promise.all([
 					db
 						.select({
@@ -103,6 +109,17 @@ export function createSummaryService(db: Db) {
 						.from(goal)
 						.where(and(eq(goal.userId, userId), isNull(goal.archivedAt))),
 					recurringFor(db, userId),
+					db
+						.select({
+							name: monthlyTransfer.name,
+							amountMinor: monthlyTransfer.amountMinor,
+						})
+						.from(monthlyTransfer)
+						.where(eq(monthlyTransfer.userId, userId))
+						.orderBy(
+							asc(monthlyTransfer.position),
+							asc(monthlyTransfer.createdAt),
+						),
 				]);
 
 			const spentBeforeTodayMinor = Number(totals[0]?.before ?? 0);
@@ -115,6 +132,7 @@ export function createSummaryService(db: Db) {
 				incomeMinor,
 				method,
 				goalsMonthlyMinor,
+				transfersMinor: transfers.reduce((sum, t) => sum + t.amountMinor, 0),
 			});
 
 			return {
@@ -122,6 +140,8 @@ export function createSummaryService(db: Db) {
 				method,
 				incomeMinor,
 				reservedMinor,
+				// Kept when switching plans, but only counted while this plan is on.
+				transfers: method === "pay_yourself_first" ? transfers : [],
 				daysLeft: bounds.daysLeft,
 				monthSpentMinor: spentBeforeTodayMinor + spentTodayMinor,
 				safe: computeSafeToSpend({

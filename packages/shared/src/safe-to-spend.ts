@@ -56,12 +56,17 @@ export function computeSafeToSpend(input: SafeToSpendInput): SafeToSpend {
 	};
 }
 
-/** 50/30/20 keeps at least 20% of income aside; every style keeps what goals need. */
+/**
+ * Pay yourself first keeps exactly its transfers aside. Otherwise 50/30/20 keeps at least 20%
+ * of income aside, and every style keeps what goals need.
+ */
 export function reservedSavings(input: {
 	incomeMinor: number | null;
 	method: BudgetMethod;
 	goalsMonthlyMinor: number;
+	transfersMinor?: number;
 }): number {
+	if (input.method === "pay_yourself_first") return input.transfersMinor ?? 0;
 	const styleShare =
 		input.method === "fifty_thirty_twenty" && input.incomeMinor !== null
 			? Math.round(input.incomeMinor * 0.2)

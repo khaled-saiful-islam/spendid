@@ -1,5 +1,6 @@
-import { createDb, transaction } from "@spendid/db";
+import { createDb, profile, transaction } from "@spendid/db";
 import type { Category } from "@spendid/shared";
+import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createPerson, testDbUrl } from "../../../test/db";
 import { seedCategories } from "../../scripts/categories";
@@ -364,5 +365,36 @@ describe.skipIf(!url)("ask accuracy (real database)", () => {
 		expect((await run("calculate", { expression: "1 / 0" })).error).toMatch(
 			/zero/i,
 		);
+	});
+
+	it("pay yourself first: the plan names every transfer and what's left", async () => {
+		const payer = await createPerson(db, { incomeMinor: 400_000 });
+		await db
+			.update(profile)
+			.set({ budgetMethod: "pay_yourself_first" })
+			.where(eq(profile.userId, payer));
+		const plan = createPlanRepository(db);
+		await plan.setTransfers(payer, [
+			{ name: "Savings", amountMinor: 50_000 },
+			{ name: "Mum", amountMinor: 30_000 },
+		]);
+		const side: SideChannel = { charts: [], drafts: [], actions: [] };
+		const tool = createAskTools(
+			{ db, summary: createSummaryService(db), plan },
+			{ userId: payer, timeZone: KL, homeCurrency: "MYR", categories },
+			side,
+		).find((t) => t.name === "budget_overview") as unknown as {
+			invoke: (i: unknown) => Promise<string>;
+		};
+		const out = JSON.parse(await tool.invoke({}));
+		expect(out.budgetStyle).toBe("pay_yourself_first");
+		expect(out.monthlyIncome).toBe(4000);
+		expect(out.transfersOutFirst).toEqual([
+			{ name: "Savings", amount: 500 },
+			{ name: "Mum", amount: 300 },
+		]);
+		expect(out.transfersTotal).toBe(800);
+		expect(out.leftThisMonth).toBe(3200);
+		expect(out.keptAsideForSavings).toBeUndefined();
 	});
 });

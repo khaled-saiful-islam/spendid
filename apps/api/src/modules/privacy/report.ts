@@ -45,6 +45,7 @@ const METHOD_LABEL: Record<string, string> = {
 	fifty_thirty_twenty: "50 / 30 / 20",
 	envelope: "Envelopes",
 	zero_based: "Every ringgit a job (zero-based)",
+	pay_yourself_first: "Pay yourself first",
 };
 
 /** AI features in words people use. */
@@ -394,6 +395,17 @@ export function renderReport(
 			],
 			data.budgets.map((b) => [b.category, money(b.monthlyLimitMinor, home)]),
 		);
+
+	if (data.transfers.length > 0) {
+		r.section("Monthly transfers");
+		r.table(
+			[
+				{ label: "Transfer", width: 3 },
+				{ label: "Each month", width: 2, align: "right" },
+			],
+			data.transfers.map((x) => [x.name, money(x.amountMinor, home)]),
+		);
+	}
 
 	r.section("Subscriptions and bills");
 	if (data.subscriptions.length === 0) r.empty("None added.");

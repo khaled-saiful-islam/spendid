@@ -97,6 +97,8 @@ const WORDS: Record<Exclude<Area, "receipt">, string[]> = {
 		"envelope",
 		"zero-based",
 		"50/30/20",
+		"transfer",
+		"transfers",
 		"style",
 		"method",
 		"gaji",

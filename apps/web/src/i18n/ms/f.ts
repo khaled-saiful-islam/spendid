@@ -283,4 +283,37 @@ export const msF: Record<string, string> = {
 		"E-mel log masuk, keselamatan dan akaun sentiasa dihantar. Pilih yang lain; yang anda matikan juga tidak akan muncul di telefon, tetapi masih ada dalam loceng.",
 	"Someone joined, changed what they share, added to a shared jar or cheered you on.":
 		"Seseorang menyertai, mengubah apa yang dikongsi, menambah ke tabung bersama atau memberi sorakan kepada anda.",
+	"Pay yourself first": "Bayar diri sendiri dahulu",
+	"Your transfers go out as soon as salary lands. Whatever is left is yours to spend.":
+		"Pindahan anda keluar sebaik sahaja gaji masuk. Baki yang tinggal untuk anda belanjakan.",
+	Transfers: "Pindahan",
+	"To spend": "Untuk dibelanjakan",
+	"Sent out first": "Dihantar dahulu",
+	"sent out first": "dihantar dahulu",
+	"Name each transfer.": "Namakan setiap pindahan.",
+	"Set an amount above zero for {name}.":
+		"Tetapkan jumlah melebihi sifar untuk {name}.",
+	"e.g. Savings, Mum, ASB": "cth. Simpanan, Mak, ASB",
+	"Transfer {n} name": "Nama pindahan {n}",
+	Amount: "Jumlah",
+	"Transfer {n} amount in {currency}": "Jumlah pindahan {n} dalam {currency}",
+	"Remove transfer {n}": "Buang pindahan {n}",
+	"Add a transfer": "Tambah pindahan",
+	"Your transfers": "Pindahan anda",
+	"What goes out each month when salary lands":
+		"Apa yang keluar setiap bulan bila gaji masuk",
+	"Transfers each month": "Pindahan setiap bulan",
+	"Left for spending": "Baki untuk dibelanjakan",
+	"Your transfers are more than your income.":
+		"Pindahan anda melebihi pendapatan anda.",
+	"Save transfers": "Simpan pindahan",
+	"Saved. Safe to spend is updated.":
+		"Disimpan. Jumlah selamat dibelanjakan sudah dikemas kini.",
+	"What goes out when salary lands?": "Apa yang keluar bila gaji masuk?",
+	"Savings, family, ASB, a loan: add each one. You can change them later on Plan.":
+		"Simpanan, keluarga, ASB, pinjaman: tambah satu demi satu. Anda boleh mengubahnya kemudian di halaman Plan.",
+	"Transfers and savings": "Pindahan dan simpanan",
+	"{amount} for transfers": "{amount} untuk pindahan",
+	"{amount} sent out first in transfers":
+		"{amount} dihantar dahulu sebagai pindahan",
 };
