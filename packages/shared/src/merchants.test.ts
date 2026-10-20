@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { cleanMerchant, merchantKey, sameMerchant } from "./merchants";
+import {
+	cleanMerchant,
+	looksLikeSameShop,
+	merchantKey,
+	sameMerchant,
+} from "./merchants";
 
 describe("cleanMerchant", () => {
 	it.each([
@@ -37,5 +42,29 @@ describe("sameMerchant", () => {
 		expect(sameMerchant("celcom postpaid", "celcomdigi")).toBe(false);
 		expect(sameMerchant("grab", "grabfood")).toBe(false);
 		expect(sameMerchant("", "grab")).toBe(false);
+	});
+});
+
+describe("looksLikeSameShop", () => {
+	it.each([
+		["tealive klcc", "tealive"],
+		["unifi", "unifi internet"],
+		["grab food", "grabfood"],
+		["7 eleven", "7eleven"],
+		["starbuck", "starbucks"],
+		["kedai kopi ah seng", "ah seng"],
+	])("%s and %s are the same shop written two ways", (a, b) => {
+		expect(looksLikeSameShop(a, b)).toBe(true);
+	});
+
+	it.each([
+		["lunch in office", "for breakfast in office"],
+		["sushi lunch", "thai lunch"],
+		["kopi", "teh"],
+		["jaya grocer", "village grocer"],
+		["lunch", "dinner"],
+		["grab", "grabfood"],
+	])("%s and %s are different things", (a, b) => {
+		expect(looksLikeSameShop(a, b)).toBe(false);
 	});
 });

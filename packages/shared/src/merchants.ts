@@ -59,3 +59,37 @@ export function sameMerchant(a: string, b: string): boolean {
 	if (!a || !b) return false;
 	return a === b || a.startsWith(`${b} `) || b.startsWith(`${a} `);
 }
+
+/** How many single-letter edits turn one string into the other. */
+function editDistance(a: string, b: string): number {
+	let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+	for (let i = 1; i <= a.length; i++) {
+		const row = [i];
+		for (let j = 1; j <= b.length; j++)
+			row[j] = Math.min(
+				(prev[j] ?? 0) + 1,
+				(row[j - 1] ?? 0) + 1,
+				(prev[j - 1] ?? 0) + (a[i - 1] === b[j - 1] ? 0 : 1),
+			);
+		prev = row;
+	}
+	return prev[b.length] ?? 0;
+}
+
+/**
+ * Two shop keys that look like one shop written two ways: the same apart from spaces
+ * ("grab food" / "grabfood"), one inside the other at a word boundary ("tealive klcc" /
+ * "tealive"), or a small typo ("starbuck" / "starbucks"). Names that only mean something
+ * similar ("lunch in office" / "for breakfast in office") are different things.
+ */
+export function looksLikeSameShop(a: string, b: string): boolean {
+	if (!a || !b) return false;
+	const squash = (s: string) => s.replace(/\s+/g, "");
+	const x = squash(a);
+	const y = squash(b);
+	if (x === y) return true;
+	const [short, long] = a.length <= b.length ? [a, b] : [b, a];
+	if (long.startsWith(`${short} `) || long.endsWith(` ${short}`)) return true;
+	const longest = Math.max(x.length, y.length);
+	return longest >= 5 && 1 - editDistance(x, y) / longest >= 0.85;
+}

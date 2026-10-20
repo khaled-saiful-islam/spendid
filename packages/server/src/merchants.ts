@@ -1,5 +1,5 @@
 import { type Db, merchant, transaction } from "@spendid/db";
-import { cleanMerchant, merchantKey } from "@spendid/shared";
+import { cleanMerchant, looksLikeSameShop, merchantKey } from "@spendid/shared";
 import {
 	and,
 	cosineDistance,
@@ -52,6 +52,19 @@ export function createMerchantMemory(db: Db) {
 				.where(and(eq(merchant.userId, userId), eq(merchant.key, key)))
 				.limit(1);
 			return row ?? null;
+		},
+
+		/**
+		 * The person named this shop themselves (an edit): their name wins from now on, and
+		 * undoes any earlier merge of these words into another shop's name.
+		 */
+		async keepName(userId: string, raw: string): Promise<void> {
+			const key = merchantKey(raw);
+			if (!key) return;
+			await db
+				.update(merchant)
+				.set({ name: cleanMerchant(raw) })
+				.where(and(eq(merchant.userId, userId), eq(merchant.key, key)));
 		},
 
 		/** The name to store for a typed or read merchant: a known shop's name, else a cleaned one. */
@@ -154,6 +167,7 @@ export function createMerchantMatcher(deps: {
 		const [nearest] = await db
 			.select({
 				id: merchant.id,
+				key: merchant.key,
 				name: merchant.name,
 				categoryId: merchant.categoryId,
 				distance,
@@ -169,10 +183,16 @@ export function createMerchantMatcher(deps: {
 			.orderBy(distance)
 			.limit(1);
 
+		// Close in meaning isn't enough ("lunch in office" / "for breakfast in office"): the
+		// names must look like one shop written two ways, in the same category.
 		const same =
 			nearest &&
 			Number(nearest.distance) < SAME_SHOP_DISTANCE &&
-			nearest.name !== row.name;
+			nearest.name !== row.name &&
+			looksLikeSameShop(row.key, nearest.key) &&
+			(!row.categoryId ||
+				!nearest.categoryId ||
+				row.categoryId === nearest.categoryId);
 		await db.transaction(async (tx) => {
 			await tx
 				.update(merchant)

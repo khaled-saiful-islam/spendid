@@ -1,6 +1,7 @@
 import { type Db, profile } from "@spendid/db";
 import { type ErrorLog, type MerchantMemory, stderrLog } from "@spendid/server";
 import {
+	cleanMerchant,
 	type Transaction,
 	type TransactionInput,
 	TransactionInputSchema,
@@ -149,9 +150,13 @@ export function createTransactionService({
 					)
 				: null;
 
+			// A name the person types in an edit is kept as they wrote it (cleaned), never
+			// swapped for a remembered one.
 			const merchant =
 				patch.merchant !== undefined
-					? await nameFor(userId, patch.merchant)
+					? patch.merchant
+						? cleanMerchant(patch.merchant)
+						: null
 					: existing.merchant;
 			const updated = await transactions.update(userId, id, {
 				amountMinor,
@@ -173,6 +178,9 @@ export function createTransactionService({
 					patch.categoryId ?? existing.categoryId,
 					0,
 				);
+			// ...and a changed name is one too: these words mean this name from now on.
+			if (patch.merchant && merchants)
+				await merchants.keepName(userId, patch.merchant);
 			return changed(userId, updated ?? toDto(existing));
 		},
 
