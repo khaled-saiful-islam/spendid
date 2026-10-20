@@ -2,6 +2,7 @@ import {
 	computeSplit,
 	type FamilyPerson,
 	formatMinor,
+	parseAmount,
 	type SplitItem,
 	type SplitPerson,
 	toMinor,
@@ -27,7 +28,7 @@ export interface SplitDraft {
 }
 
 const newKey = () => Math.random().toString(36).slice(2, 10);
-const parseMajor = (v: string) => Number(v.replace(",", "."));
+const parseMajor = (v: string) => parseAmount(v);
 /** Short chip label; the full name shows on each line's choices. */
 const firstName = (name: string) => name.trim().split(/\s+/)[0] ?? name;
 

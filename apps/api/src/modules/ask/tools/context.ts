@@ -51,6 +51,8 @@ export interface SideChannel {
 	sources?: string[];
 	/** What the spending tools looked at, to check it fits what was asked. */
 	lookups?: Lookup[];
+	/** The plan (budget_overview) was read: the only source for monthly transfers. */
+	planRead?: boolean;
 }
 
 export const MAX_ACTIONS = 4;

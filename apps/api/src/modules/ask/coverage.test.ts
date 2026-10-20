@@ -5,6 +5,7 @@ import {
 	type Lookup,
 	mentionedCategories,
 	mentionedPeriods,
+	planNameProblems,
 } from "./coverage";
 
 const cat = (slug: string, name: string): Category =>
@@ -202,6 +203,91 @@ describe("coverageProblems", () => {
 				{ from: "2026-10-01", to: "2026-10-18", groupBy: "category" },
 				{ from: "2026-10-18", to: "2026-10-18", groupBy: "category" },
 			]),
+		).toEqual([]);
+	});
+
+	it("monthly transfers must come from the plan, in English or Malay", () => {
+		const asked = (question: string, planRead: boolean) =>
+			coverageProblems({
+				question,
+				today: TODAY,
+				categories: CATEGORIES,
+				lookups: [],
+				planRead,
+			});
+		for (const q of [
+			"How much do I transfer out every month?",
+			"What are my monthly transfers?",
+			"Berapa jumlah pindahan saya setiap bulan?",
+			"How does pay yourself first work for me?",
+		]) {
+			expect(asked(q, false), q).toHaveLength(1);
+			expect(asked(q, true), q).toEqual([]);
+		}
+		expect(
+			asked("How much did I spend on food this month?", false),
+		).not.toEqual(expect.arrayContaining([expect.stringMatching(/transfers/)]));
+	});
+});
+
+describe("planNameProblems", () => {
+	const check = (
+		question: string,
+		answer: string,
+		method: Parameters<typeof planNameProblems>[0]["method"],
+	) => planNameProblems({ question, answer, method });
+
+	it("rejects naming a plan the person isn't on, in English or Malay", () => {
+		expect(
+			check(
+				"Berapa jumlah pindahan saya setiap bulan?",
+				'Anda menggunakan pelan "bayar diri sendiri dahulu" yang menghantar RM 1,300.',
+				"fifty_thirty_twenty",
+			),
+		).toHaveLength(1);
+		expect(
+			check(
+				"What budget style am I using?",
+				"You use envelopes.",
+				"zero_based",
+			),
+		).toHaveLength(1);
+		expect(check("What's my plan?", "You're on 50/30/20.", null)).toHaveLength(
+			1,
+		);
+	});
+
+	it("accepts the person's own plan", () => {
+		expect(
+			check(
+				"What budget style am I using?",
+				"You use 50 / 30 / 20.",
+				"fifty_thirty_twenty",
+			),
+		).toEqual([]);
+		expect(
+			check(
+				"Berapa pindahan saya?",
+				"Pelan anda: Bayar diri sendiri dahulu.",
+				"pay_yourself_first",
+			),
+		).toEqual([]);
+	});
+
+	it("allows other plans when the question names one or asks for advice", () => {
+		expect(
+			check(
+				"Is envelopes better for me?",
+				"Envelopes or 50/30/20 both work.",
+				"pay_yourself_first",
+			),
+		).toEqual([]);
+		expect(
+			check(
+				"Which budget style should I use?",
+				"Try pay yourself first.",
+				null,
+			),
 		).toEqual([]);
 	});
 });

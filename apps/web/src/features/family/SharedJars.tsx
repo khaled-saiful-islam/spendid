@@ -1,6 +1,7 @@
 import {
 	type FamilyPerson,
 	formatMinor,
+	parseAmount,
 	type SharedJar,
 	toMinor,
 } from "@spendid/shared";
@@ -90,7 +91,7 @@ function DepositSheet({
 				className="space-y-4"
 				onSubmit={(e) => {
 					e.preventDefault();
-					void add(Number(value.replace(",", ".")));
+					void add(parseAmount(value));
 				}}
 			>
 				<div className="flex flex-wrap gap-2">

@@ -1,5 +1,6 @@
 import {
 	formatMinor,
+	parseAmount,
 	toMinor,
 	WISH_COOLDOWN_HOURS,
 	type Wish,
@@ -96,7 +97,7 @@ function AddWish({
 
 	async function onSubmit(e: FormEvent) {
 		e.preventDefault();
-		const amount = Number(price.replace(",", "."));
+		const amount = parseAmount(price);
 		if (!name.trim()) return setError(t("What do you want to buy?"));
 		if (!(amount > 0)) return setError(t("Add the price."));
 		setPending(true);

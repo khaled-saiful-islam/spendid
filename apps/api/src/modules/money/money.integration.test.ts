@@ -320,5 +320,10 @@ describe.skipIf(!url)("money API (real database)", () => {
 	it("never lets the admin role reach money", async () => {
 		const res = await call(admin, "GET", "/summary");
 		expect(res.status).toBe(403);
+		expect((await call(admin, "GET", "/transfers")).status).toBe(403);
+		expect(
+			(await call(admin, "PUT", "/transfers", [{ name: "x", amountMinor: 1 }]))
+				.status,
+		).toBe(403);
 	});
 });

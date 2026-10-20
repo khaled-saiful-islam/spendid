@@ -1,6 +1,7 @@
 import {
 	formatMinor,
 	minorDigits,
+	parseAmount,
 	type Receipt,
 	toMinor,
 } from "@spendid/shared";
@@ -33,7 +34,7 @@ interface Line {
 const WARRANTY_WORTHY = 50;
 const toText = (minor: number, cur: string) =>
 	(minor / 10 ** minorDigits(cur)).toFixed(minorDigits(cur));
-const toNum = (text: string) => Number(text.replace(",", "."));
+const toNum = (text: string) => parseAmount(text);
 const monthYear = (iso: string) =>
 	formatMoment(iso, {
 		day: "numeric",

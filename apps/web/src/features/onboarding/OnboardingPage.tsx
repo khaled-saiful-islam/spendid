@@ -3,11 +3,12 @@ import {
 	type Locale,
 	type Me,
 	minorDigits,
+	parseAmount,
 	type Summary,
 	toMinor,
 } from "@spendid/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useRouter } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { type FormEvent, useState } from "react";
@@ -18,12 +19,12 @@ import { t } from "@/i18n";
 import { ApiError } from "@/lib/http";
 import { meQuery, saveProfile } from "@/lib/me";
 import { moneyApi, summaryQuery, transfersQuery } from "@/lib/money-api";
+import { TransfersEditor, TransfersLoading } from "../plan/Transfers";
 import {
 	readDrafts,
 	type TransferDraft,
-	TransfersEditor,
 	toDrafts,
-} from "../plan/Transfers";
+} from "../plan/transfer-drafts";
 import { LivePreview } from "./LivePreview";
 import { Reveal } from "./Reveal";
 import { IncomeStep, MethodStep, PlaceStep } from "./Steps";
@@ -54,6 +55,7 @@ function initialIncome(me: Me): string {
 
 export function OnboardingPage({ me }: { me: Me }) {
 	const navigate = useNavigate();
+	const router = useRouter();
 	const queryClient = useQueryClient();
 	const [step, setStep] = useState(0);
 	const [name, setName] = useState(me.user.name);
@@ -66,7 +68,11 @@ export function OnboardingPage({ me }: { me: Me }) {
 	const [errors, setErrors] = useState<Record<string, string>>({});
 	const [pending, setPending] = useState(false);
 	const [revealed, setRevealed] = useState<Summary | null>(null);
-	const { data: savedTransfers } = useQuery(transfersQuery);
+	const {
+		data: savedTransfers,
+		isError: transfersFailed,
+		refetch: refetchTransfers,
+	} = useQuery(transfersQuery);
 	const [transferDrafts, setTransferDrafts] = useState<TransferDraft[] | null>(
 		null,
 	);
@@ -79,8 +85,7 @@ export function OnboardingPage({ me }: { me: Me }) {
 		return "list" in one ? one.list : [];
 	});
 
-	const incomeNumber =
-		income.trim() === "" ? null : Number(income.replace(",", "."));
+	const incomeNumber = income.trim() === "" ? null : parseAmount(income);
 
 	function next(e: FormEvent) {
 		e.preventDefault();
@@ -114,7 +119,8 @@ export function OnboardingPage({ me }: { me: Me }) {
 					incomeNumber === null ? null : toMinor(incomeNumber, homeCurrency),
 				budgetMethod: chosen,
 			});
-			if (transfersFirst && "list" in typed) {
+			// Only a list the person edited is saved; an untouched one stays as it is.
+			if (transfersFirst && transferDrafts !== null && "list" in typed) {
 				await moneyApi.setTransfers(typed.list);
 				await queryClient.invalidateQueries({ queryKey: ["transfers"] });
 			}
@@ -123,6 +129,10 @@ export function OnboardingPage({ me }: { me: Me }) {
 			setRevealed(
 				await queryClient.fetchQuery({ ...summaryQuery, staleTime: 0 }),
 			);
+			// Fetch Home's code and data while the number shows, so "Let's go" opens it at once.
+			router.preloadRoute({ to: "/app" }).catch(() => {
+				// A failed preload only means Home loads on the tap instead.
+			});
 		} catch (error) {
 			setPending(false);
 			setErrors(
@@ -247,11 +257,18 @@ export function OnboardingPage({ me }: { me: Me }) {
 												"Savings, family, ASB, a loan: add each one. You can change them later on Plan.",
 											)}
 										</p>
-										<TransfersEditor
-											currency={homeCurrency}
-											drafts={drafts}
-											onChange={setTransferDrafts}
-										/>
+										{savedTransfers === undefined ? (
+											<TransfersLoading
+												failed={transfersFailed}
+												onRetry={() => void refetchTransfers()}
+											/>
+										) : (
+											<TransfersEditor
+												currency={homeCurrency}
+												drafts={drafts}
+												onChange={setTransferDrafts}
+											/>
+										)}
 									</div>
 								)}
 								{step > 0 && (

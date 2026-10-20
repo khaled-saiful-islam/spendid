@@ -1,4 +1,8 @@
-import { type Category, SYSTEM_CATEGORIES } from "@spendid/shared";
+import {
+	type BudgetMethod,
+	type Category,
+	SYSTEM_CATEGORIES,
+} from "@spendid/shared";
 import { categoryNames, forms } from "./tools/filters";
 import { type Period, periodRange } from "./tools/period";
 
@@ -190,8 +194,29 @@ function superlativeProblems(
 			];
 }
 
+/** Monthly transfers (pay yourself first) live in the plan, never in spending. EN + BM. */
+const TRANSFERS =
+	/(^|[^\p{L}])(transfers?|transferring|transferred|pay yourself first|pindahan|pindah|dipindahkan)(?=$|[^\p{L}])/iu;
+
 /** What's wrong with the lookups for this question; empty when they fit what was asked. */
 export function coverageProblems(input: {
+	question: string;
+	today: string;
+	categories: Category[];
+	lookups: Lookup[];
+	/** budget_overview was called for this question. */
+	planRead?: boolean;
+}): string[] {
+	const plan =
+		TRANSFERS.test(input.question) && !input.planRead
+			? [
+					"The question is about monthly transfers, which are part of the plan, not spending. Call budget_overview and answer from monthlyTransfersOutFirst, monthlyTransfersTotal and incomeLeftAfterTransfers (or say the plan has none).",
+				]
+			: [];
+	return [...plan, ...spendingCoverage(input)];
+}
+
+function spendingCoverage(input: {
 	question: string;
 	today: string;
 	categories: Category[];
@@ -245,4 +270,47 @@ export function coverageProblems(input: {
 				);
 	}
 	return problems;
+}
+
+/** Each plan's name in English and Malay, as the app shows it. */
+const PLAN_NAMES: Record<BudgetMethod, { label: string; re: RegExp }> = {
+	fifty_thirty_twenty: { label: "50/30/20", re: /50\s*\/\s*30\s*\/\s*20/ },
+	envelope: { label: "envelopes", re: /\benvelopes?\b|\bsampul\b/i },
+	zero_based: {
+		label: "every bit has a job (zero-based)",
+		re: /zero[- ]based|every (bit|ringgit) has a job|setiap ringgit ada tugas/i,
+	},
+	pay_yourself_first: {
+		label: "pay yourself first",
+		re: /pay yourself first|bayar diri (sendiri )?dahulu/i,
+	},
+};
+
+/** Asking for advice or a comparison: other plans may rightly be named. EN + BM. */
+const ADVICE =
+	/\b(should|recommend|suggest|best|better|options?|alternatives?|compare|versus|vs|switch|change|patut|cadang|sesuai|pilihan|banding|tukar)\b/i;
+
+const plansIn = (text: string) =>
+	(Object.keys(PLAN_NAMES) as BudgetMethod[]).filter((m) =>
+		PLAN_NAMES[m].re.test(text),
+	);
+
+/**
+ * An answer must never say someone is on a plan they aren't. Skipped when the question names
+ * a plan or asks for advice, where naming other plans is the point.
+ */
+export function planNameProblems(input: {
+	question: string;
+	answer: string;
+	method: BudgetMethod | null;
+}): string[] {
+	if (plansIn(input.question).length || ADVICE.test(input.question)) return [];
+	const wrong = plansIn(input.answer).filter((m) => m !== input.method);
+	if (wrong.length === 0) return [];
+	const actual = input.method
+		? PLAN_NAMES[input.method].label
+		: "none (no plan chosen yet)";
+	return [
+		`The answer names ${wrong.map((m) => PLAN_NAMES[m].label).join(" and ")}, but the person's plan is ${actual}. Name only the plan budget_overview gives.`,
+	];
 }

@@ -1,4 +1,4 @@
-import { formatMinor, type Goal, toMinor } from "@spendid/shared";
+import { formatMinor, type Goal, parseAmount, toMinor } from "@spendid/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import confetti from "canvas-confetti";
 import { Plus, Target } from "lucide-react";
@@ -76,25 +76,35 @@ function DepositForm({
 	const queryClient = useQueryClient();
 	const [value, setValue] = useState("");
 	const [pending, setPending] = useState(false);
+	const [error, setError] = useState<string>();
 	const quick = [50, 100, 500];
 
 	async function add(amount: number) {
-		if (!(amount > 0)) return;
+		if (!(amount > 0)) return setError(t("Enter an amount above zero."));
+		setError(undefined);
 		setPending(true);
-		const updated = await moneyApi.depositGoal(goal.id, toMinor(amount, cur));
-		await refreshMoney(queryClient);
-		if (
-			updated.savedMinor >= updated.targetMinor &&
-			goal.savedMinor < goal.targetMinor
-		)
-			cheer();
-		toast(
-			t("Added {amount} to {name}.", {
-				amount: formatMinor(toMinor(amount, cur), cur),
-				name: goal.name,
-			}),
-		);
-		onDone();
+		try {
+			const updated = await moneyApi.depositGoal(goal.id, toMinor(amount, cur));
+			await refreshMoney(queryClient);
+			if (
+				updated.savedMinor >= updated.targetMinor &&
+				goal.savedMinor < goal.targetMinor
+			)
+				cheer();
+			toast(
+				t("Added {amount} to {name}.", {
+					amount: formatMinor(toMinor(amount, cur), cur),
+					name: goal.name,
+				}),
+			);
+			onDone();
+		} catch (err) {
+			setError(
+				err instanceof ApiError ? err.message : t("Couldn't save. Try again."),
+			);
+		} finally {
+			setPending(false);
+		}
 	}
 
 	return (
@@ -102,7 +112,7 @@ function DepositForm({
 			className="space-y-4"
 			onSubmit={(e) => {
 				e.preventDefault();
-				void add(Number(value.replace(",", ".")));
+				void add(parseAmount(value));
 			}}
 		>
 			<div className="flex flex-wrap gap-2">
@@ -123,6 +133,7 @@ function DepositForm({
 				data-autofocus
 				adornment={currencySymbol(cur)}
 				value={value}
+				error={error}
 				onChange={(e) => setValue(e.target.value.replace(/[^\d.,]/g, ""))}
 			/>
 			<SubmitButton pending={pending}>
@@ -143,7 +154,7 @@ function NewGoalForm({ cur, onDone }: { cur: string; onDone: () => void }) {
 
 	async function onSubmit(e: FormEvent) {
 		e.preventDefault();
-		const n = Number(target.replace(",", "."));
+		const n = parseAmount(target);
 		if (!name.trim()) return setError(t("Name your goal."));
 		if (!(n > 0)) return setError(t("Set a target above zero."));
 		setPending(true);

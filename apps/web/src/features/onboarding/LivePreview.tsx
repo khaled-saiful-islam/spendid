@@ -12,7 +12,7 @@ import {
 } from "motion/react";
 import { useEffect } from "react";
 import { t } from "@/i18n";
-import { transferFill } from "../plan/Transfers";
+import { transferFill } from "../plan/transfer-drafts";
 import { METHODS } from "./options";
 
 interface PreviewProps {

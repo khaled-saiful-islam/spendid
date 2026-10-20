@@ -13,6 +13,14 @@ import {
 } from "./context";
 import { spendingTools } from "./spending";
 
+/** The plan in the words people use, so answers never show an internal id. */
+const STYLE_NAME: Record<string, string> = {
+	fifty_thirty_twenty: "50/30/20",
+	envelope: "envelopes",
+	zero_based: "every bit has a job (zero-based)",
+	pay_yourself_first: "pay yourself first",
+};
+
 /** Read-only views of the person's own money, plus show_chart. Nothing here writes. */
 export function readTools(deps: ToolDeps, ctx: AskContext, side: SideChannel) {
 	const { db } = deps;
@@ -21,6 +29,7 @@ export function readTools(deps: ToolDeps, ctx: AskContext, side: SideChannel) {
 	const budgetOverview = tool(
 		async () => {
 			const s = await deps.summary.forUser(ctx.userId);
+			side.planRead = true;
 			// This month so far, by category, and today: what its numbers cover.
 			const today = ctx.today ?? localToday(ctx.timeZone);
 			side.lookups ??= [];
@@ -35,19 +44,28 @@ export function readTools(deps: ToolDeps, ctx: AskContext, side: SideChannel) {
 			);
 			return JSON.stringify({
 				currency: cur,
-				budgetStyle: s.method ?? "none chosen yet",
+				budgetStyle: s.method
+					? (STYLE_NAME[s.method] ?? s.method)
+					: "none chosen yet",
 				monthlyIncome:
 					s.incomeMinor === null ? null : major(s.incomeMinor, cur),
 				...(s.method === "pay_yourself_first"
 					? {
 							// Pay yourself first: these go out when salary lands; the rest is to spend.
-							transfersOutFirst: s.transfers.map((t) => ({
+							monthlyTransfersOutFirst: s.transfers.map((t) => ({
 								name: t.name,
 								amount: major(t.amountMinor, cur),
 							})),
-							transfersTotal: major(s.reservedMinor, cur),
+							monthlyTransfersTotal: major(s.reservedMinor, cur),
+							incomeLeftAfterTransfers:
+								s.incomeMinor === null
+									? null
+									: major(s.incomeMinor - s.reservedMinor, cur),
 						}
-					: { keptAsideForSavings: major(s.reservedMinor, cur) }),
+					: {
+							keptAsideForSavings: major(s.reservedMinor, cur),
+							monthlyTransfers: "none: this plan has no monthly transfers",
+						}),
 				safeToSpendToday: major(s.safe.safeTodayMinor, cur),
 				dailyAllowance: major(s.safe.dailyAllowanceMinor, cur),
 				daysLeftInMonth: s.daysLeft,
@@ -63,7 +81,7 @@ export function readTools(deps: ToolDeps, ctx: AskContext, side: SideChannel) {
 		{
 			name: "budget_overview",
 			description:
-				"This month's plan: income, savings kept aside (or, for pay yourself first, the monthly transfers), safe to spend today, days left, spent so far, and any category limits.",
+				"The person's plan and this month: budget style, income, savings kept aside, safe to spend today, days left, spent so far, category limits. Also the ONLY source for monthly transfers (pindahan bulanan: savings, family, ASB sent out when salary lands, in the pay yourself first plan) and the income left after them. Transfers are planned amounts, not expenses: never look for them with the spending tools.",
 			schema: z.object({}),
 		},
 	);

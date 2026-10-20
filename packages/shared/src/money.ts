@@ -13,6 +13,24 @@ export function minorDigits(currency: string): number {
 	}).resolvedOptions().maximumFractionDigits as number;
 }
 
+const PLAIN = /^(\d+(\.\d+)?|\.\d+)$/;
+const THOUSANDS = /^\d{1,3}(,\d{3})+(\.\d+)?$/;
+const DECIMAL_COMMA = /^\d+,\d{1,2}$/;
+
+/**
+ * What someone typed in an amount box → a number. "4,500" is four thousand five hundred (how
+ * Malaysia writes it); "12,50" is twelve and a half (a decimal comma). Anything else that
+ * would need a guess is NaN, so the form says so instead of saving a wrong amount. Blank is 0.
+ */
+export function parseAmount(text: string): number {
+	const v = text.trim();
+	if (v === "") return 0;
+	if (PLAIN.test(v)) return Number(v);
+	if (THOUSANDS.test(v)) return Number(v.replaceAll(",", ""));
+	if (DECIMAL_COMMA.test(v)) return Number(v.replace(",", "."));
+	return Number.NaN;
+}
+
 /** Typed major amount (12.3) → integer minor units (1230). */
 export function toMinor(major: number, currency: string): number {
 	return Math.round(major * 10 ** minorDigits(currency));

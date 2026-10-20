@@ -1,6 +1,7 @@
-import { createDb, transaction } from "@spendid/db";
+import { createDb, profile, transaction } from "@spendid/db";
 import type { AskAction, Category, Transaction } from "@spendid/shared";
 import { DEFAULT_PREFS } from "@spendid/shared";
+import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createPerson, testDbUrl } from "../../../test/db";
 import { seedCategories } from "../../scripts/categories";
@@ -334,6 +335,29 @@ describe.skipIf(!url)("ask change tools (real database)", () => {
 		});
 		await call("propose_budget", { category: "food", remove: true });
 		expect(actions[1]).toMatchObject({ kind: "budget", limitMinor: null });
+	});
+
+	it("offers pay yourself first from no plan, and says when nothing would change", async () => {
+		const lee = await createPerson(db);
+		await db
+			.update(profile)
+			.set({ budgetMethod: null })
+			.where(eq(profile.userId, lee));
+		const { call, actions } = run(lee);
+		await call("propose_plan_change", { style: "pay yourself first" });
+		expect(actions[0]).toMatchObject({
+			kind: "plan",
+			before: { method: null },
+			input: { budgetMethod: "pay_yourself_first" },
+		});
+		await db
+			.update(profile)
+			.set({ budgetMethod: "pay_yourself_first" })
+			.where(eq(profile.userId, lee));
+		expect(
+			await call("propose_plan_change", { style: "pay yourself first" }),
+		).toMatch(/Nothing to change/);
+		expect(actions).toHaveLength(1);
 	});
 
 	it("starts a challenge with a suggested cap and stops a running one", async () => {

@@ -2,6 +2,7 @@ import {
 	formatMinor,
 	minorDigits,
 	monthlyEquivalent,
+	parseAmount,
 	type Subscription,
 	type SubscriptionOverview,
 	toMinor,
@@ -433,7 +434,7 @@ function PayForm({ sub, onDone }: { sub: Subscription; onDone: () => void }) {
 
 	async function onSubmit(e: FormEvent) {
 		e.preventDefault();
-		const value = Number(amount.replace(",", "."));
+		const value = parseAmount(amount);
 		if (!(value > 0)) return setError(t("Add the amount"));
 		setPending(true);
 		try {

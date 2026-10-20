@@ -1,4 +1,5 @@
 import type { Receipt, SplitDto } from "@spendid/shared";
+import { parseAmount } from "@spendid/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, Sparkles } from "lucide-react";
@@ -118,7 +119,7 @@ export function SplitPage() {
 	async function create() {
 		setPending(true);
 		setError(null);
-		const adjust = Number(draft.adjust.replace(",", ".")) || 0;
+		const adjust = parseAmount(draft.adjust) || 0;
 		const digits =
 			new Intl.NumberFormat("en", {
 				style: "currency",

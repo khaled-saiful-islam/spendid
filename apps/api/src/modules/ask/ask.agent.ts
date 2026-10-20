@@ -24,7 +24,7 @@ import {
 	STEP_LABELS,
 	type ToolDeps,
 } from "./ask.tools";
-import { coverageProblems } from "./coverage";
+import { coverageProblems, planNameProblems } from "./coverage";
 import { ungroundedNumbers } from "./grounding";
 import { repairToolCalls } from "./repair-tool-calls";
 
@@ -345,6 +345,14 @@ export function createAskAgent(deps: AgentDeps) {
 							today,
 							categories,
 							lookups: side.lookups ?? [],
+							planRead: side.planRead,
+						})
+					: []),
+				...(answer
+					? planNameProblems({
+							question: input.question,
+							answer,
+							method: p?.budgetMethod ?? null,
 						})
 					: []),
 			];

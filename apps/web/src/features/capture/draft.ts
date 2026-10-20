@@ -1,6 +1,7 @@
 import {
 	type Category,
 	minorDigits,
+	parseAmount,
 	parseQuickEntry,
 	type Transaction,
 	toMinor,
@@ -86,7 +87,7 @@ function dayFromWords(
 
 /** Parsed amount in minor units, or null when it isn't a positive number. */
 export function draftMinor(draft: Draft): number | null {
-	const n = Number(draft.amountText.replace(",", "."));
+	const n = parseAmount(draft.amountText);
 	if (!Number.isFinite(n) || n <= 0) return null;
 	return toMinor(n, draft.currency);
 }

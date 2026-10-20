@@ -3,6 +3,7 @@ import {
 	type Category,
 	formatMinor,
 	minorDigits,
+	parseAmount,
 	type Summary,
 	toMinor,
 } from "@spendid/shared";
@@ -53,6 +54,7 @@ export function CategoryBudgets({
 	const queryClient = useQueryClient();
 	const [editing, setEditing] = useState<string | null>(null);
 	const [value, setValue] = useState("");
+	const [error, setError] = useState<string>();
 	const cur = summary.homeCurrency;
 	const limitOf = new Map(
 		budgets.map((b) => [b.categoryId, b.monthlyLimitMinor]),
@@ -66,13 +68,18 @@ export function CategoryBudgets({
 	const unassigned = (summary.incomeMinor ?? 0) - assigned;
 
 	async function save(categoryId: string) {
-		const n = Number(value.replace(",", "."));
-		const monthlyLimitMinor =
-			value.trim() === "" || n === 0 ? null : toMinor(n, cur);
-		if (monthlyLimitMinor !== null && !(n > 0)) return;
-		await moneyApi.setBudget({ categoryId, monthlyLimitMinor });
-		await refreshMoney(queryClient);
-		setEditing(null);
+		const n = parseAmount(value);
+		// Blank or 0 clears the limit; anything unreadable is pointed out, never saved.
+		if (!(n >= 0)) return setError(t("Enter an amount like 500 or 1,200.50."));
+		const monthlyLimitMinor = n === 0 ? null : toMinor(n, cur);
+		try {
+			await moneyApi.setBudget({ categoryId, monthlyLimitMinor });
+			await refreshMoney(queryClient);
+			setError(undefined);
+			setEditing(null);
+		} catch {
+			setError(t("Couldn't save. Try again."));
+		}
 	}
 
 	return (
@@ -115,6 +122,7 @@ export function CategoryBudgets({
 								<button
 									type="button"
 									onClick={() => {
+										setError(undefined);
 										setEditing(open ? null : c.id);
 										setValue(
 											limit ? (limit / 10 ** minorDigits(cur)).toString() : "",
@@ -154,6 +162,8 @@ export function CategoryBudgets({
 											category: t(c.name),
 										})}
 										placeholder={t("Monthly limit")}
+										aria-invalid={error ? true : undefined}
+										aria-describedby={error ? `limit-error-${c.id}` : undefined}
 										value={value}
 										onChange={(e) =>
 											setValue(e.target.value.replace(/[^\d.,]/g, ""))
@@ -167,6 +177,15 @@ export function CategoryBudgets({
 										{t("Save")}
 									</button>
 								</form>
+							)}
+							{open && error && (
+								<p
+									id={`limit-error-${c.id}`}
+									role="alert"
+									className="mt-2 text-[0.9rem] text-over"
+								>
+									{error}
+								</p>
 							)}
 						</li>
 					);

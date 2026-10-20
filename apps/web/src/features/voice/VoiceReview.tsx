@@ -1,6 +1,7 @@
 import {
 	formatMinor,
 	minorDigits,
+	parseAmount,
 	toMinor,
 	type VoiceDraft,
 	type VoiceResult,
@@ -99,7 +100,7 @@ export function VoiceReview({
 			},
 		]);
 	const valid = rows.filter(
-		(r) => Number(r.amountText.replace(",", ".")) > 0 && r.categoryId,
+		(r) => parseAmount(r.amountText) > 0 && r.categoryId,
 	);
 
 	async function saveAll() {
@@ -109,10 +110,7 @@ export function VoiceReview({
 			const saved = await Promise.all(
 				valid.map((r) =>
 					moneyApi.addTransaction({
-						amountMinor: toMinor(
-							Number(r.amountText.replace(",", ".")),
-							r.currency,
-						),
+						amountMinor: toMinor(parseAmount(r.amountText), r.currency),
 						currency: r.currency,
 						categoryId: r.categoryId ?? "",
 						merchant: r.merchant.trim() || null,
@@ -299,7 +297,7 @@ export function VoiceReview({
 							? t("Add {amount}", {
 									amount: formatMinor(
 										toMinor(
-											Number(valid[0]?.amountText.replace(",", ".") ?? 0),
+											parseAmount(valid[0]?.amountText ?? ""),
 											valid[0]?.currency ?? "MYR",
 										),
 										valid[0]?.currency ?? "MYR",

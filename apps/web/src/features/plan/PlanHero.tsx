@@ -11,7 +11,7 @@ import { TINTS } from "@/components/money/CategoryIcon";
 import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { appToday } from "@/lib/time";
-import { transferFill } from "./Transfers";
+import { transferFill } from "./transfer-drafts";
 
 interface Block {
 	key: string;

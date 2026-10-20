@@ -295,7 +295,6 @@ export const msF: Record<string, string> = {
 		"Tetapkan jumlah melebihi sifar untuk {name}.",
 	"e.g. Savings, Mum, ASB": "cth. Simpanan, Mak, ASB",
 	"Transfer {n} name": "Nama pindahan {n}",
-	Amount: "Jumlah",
 	"Transfer {n} amount in {currency}": "Jumlah pindahan {n} dalam {currency}",
 	"Remove transfer {n}": "Buang pindahan {n}",
 	"Add a transfer": "Tambah pindahan",
@@ -311,7 +310,7 @@ export const msF: Record<string, string> = {
 		"Disimpan. Jumlah selamat dibelanjakan sudah dikemas kini.",
 	"What goes out when salary lands?": "Apa yang keluar bila gaji masuk?",
 	"Savings, family, ASB, a loan: add each one. You can change them later on Plan.":
-		"Simpanan, keluarga, ASB, pinjaman: tambah satu demi satu. Anda boleh mengubahnya kemudian di halaman Plan.",
+		"Simpanan, keluarga, ASB, pinjaman: tambah satu demi satu. Anda boleh mengubahnya kemudian di halaman Rancangan.",
 	"Transfers and savings": "Pindahan dan simpanan",
 	"{amount} for transfers": "{amount} untuk pindahan",
 	"{amount} sent out first in transfers":
@@ -323,4 +322,8 @@ export const msF: Record<string, string> = {
 	"Pick a plan": "Pilih rancangan",
 	"Pick the style that feels natural, or skip it for now. You can choose or switch later.":
 		"Pilih gaya yang terasa sesuai, atau langkau dahulu. Anda boleh memilih atau menukarnya kemudian.",
+	"Couldn't load your transfers.": "Tidak dapat memuatkan pindahan anda.",
+	"Loading your transfers": "Memuatkan pindahan anda",
+	"Enter an amount like 500 or 1,200.50.":
+		"Masukkan jumlah seperti 500 atau 1,200.50.",
 };

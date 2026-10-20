@@ -387,14 +387,26 @@ describe.skipIf(!url)("ask accuracy (real database)", () => {
 			invoke: (i: unknown) => Promise<string>;
 		};
 		const out = JSON.parse(await tool.invoke({}));
-		expect(out.budgetStyle).toBe("pay_yourself_first");
+		expect(out.budgetStyle).toBe("pay yourself first");
 		expect(out.monthlyIncome).toBe(4000);
-		expect(out.transfersOutFirst).toEqual([
+		expect(out.monthlyTransfersOutFirst).toEqual([
 			{ name: "Savings", amount: 500 },
 			{ name: "Mum", amount: 300 },
 		]);
-		expect(out.transfersTotal).toBe(800);
+		expect(out.monthlyTransfersTotal).toBe(800);
+		expect(out.incomeLeftAfterTransfers).toBe(3200);
 		expect(out.leftThisMonth).toBe(3200);
 		expect(out.keptAsideForSavings).toBeUndefined();
+		expect(side.planRead).toBe(true);
+
+		// Another plan says plainly there are no transfers, so none get made up.
+		await db
+			.update(profile)
+			.set({ budgetMethod: "envelope" })
+			.where(eq(profile.userId, payer));
+		const other = JSON.parse(await tool.invoke({}));
+		expect(other.budgetStyle).toBe("envelopes");
+		expect(other.monthlyTransfers).toMatch(/^none/);
+		expect(other.monthlyTransfersOutFirst).toBeUndefined();
 	});
 });

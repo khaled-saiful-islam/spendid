@@ -2,6 +2,7 @@ import {
 	BILLING_CYCLES,
 	type BillingCycle,
 	minorDigits,
+	parseAmount,
 	SUBSCRIPTION_BRANDS,
 	SUBSCRIPTION_GROUPS,
 	type Subscription,
@@ -145,7 +146,7 @@ function SubscriptionForm({
 
 	async function onSubmit(e: FormEvent) {
 		e.preventDefault();
-		const amount = Number(d.amountText.replace(",", "."));
+		const amount = parseAmount(d.amountText);
 		if (!d.name.trim()) return setError(t("Name it"));
 		if (!(amount > 0)) return setError(t("Add the amount"));
 		setPending(true);
