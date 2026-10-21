@@ -23,6 +23,7 @@ import { z } from "zod";
 import { createEmailProcessor, type EmailQueueData } from "./email";
 import { FX_QUEUE, refreshRates } from "./fx";
 import { backfillMerchants, type MerchantJob } from "./merchants";
+import { purgeRemovedPhotos, TIDY_QUEUE } from "./receipt-tidy";
 import { createReceiptProcessor, RECEIPT_QUEUE } from "./receipts";
 
 const env = z
@@ -80,6 +81,11 @@ const guard = createAiGuard({
 
 const merchants = createMerchantMemory(database.db);
 const merchantQueue = new Queue<MerchantJob>(MERCHANT_QUEUE, { connection });
+/** Receipt photos, encrypted on disk: read by the receipt jobs, tidied once a day. */
+const receiptStore = createFileStore({
+	root: env.RECEIPTS_DIR,
+	keyBase64: env.RECEIPT_ENCRYPTION_KEY,
+});
 const matchMerchant = createMerchantMatcher({
 	db: database.db,
 	guard,
@@ -115,10 +121,7 @@ const workers = [
 		createReceiptProcessor({
 			db: database.db,
 			guard,
-			store: createFileStore({
-				root: env.RECEIPTS_DIR,
-				keyBase64: env.RECEIPT_ENCRYPTION_KEY,
-			}),
+			store: receiptStore,
 			read: createReceiptReader({
 				baseUrl: env.ILMU_BASE_URL,
 				apiKey: env.ILMU_API_KEY,
@@ -128,6 +131,13 @@ const workers = [
 			merchants,
 		}),
 		{ connection, concurrency: 3 },
+	),
+	new Worker(
+		TIDY_QUEUE,
+		async () => ({
+			photosDeleted: await purgeRemovedPhotos(database.db, receiptStore),
+		}),
+		{ connection, concurrency: 1 },
 	),
 	new Worker<MerchantJob>(
 		MERCHANT_QUEUE,
@@ -159,13 +169,32 @@ void backfillMerchants(database.db, merchants, merchantQueue)
 
 // Exchange rates: once at startup, then every 6 hours (ECB publishes once per working day).
 const fxQueue = new Queue(FX_QUEUE, { connection });
-logErrors("queues", logError, notifyQueue, merchantQueue, fxQueue, ...workers);
+const tidyQueue = new Queue(TIDY_QUEUE, { connection });
+logErrors(
+	"queues",
+	logError,
+	notifyQueue,
+	merchantQueue,
+	fxQueue,
+	tidyQueue,
+	...workers,
+);
 await fxQueue.upsertJobScheduler(
 	"fx-refresh",
 	{ every: 6 * 60 * 60 * 1000, immediately: true },
 	{
 		name: "refresh",
 		opts: { attempts: 5, backoff: { type: "exponential", delay: 30_000 } },
+	},
+);
+
+// Receipt photos of expenses removed over a week ago: deleted once a day.
+await tidyQueue.upsertJobScheduler(
+	"receipt-tidy",
+	{ every: 24 * 60 * 60 * 1000, immediately: true },
+	{
+		name: "tidy",
+		opts: { attempts: 3, backoff: { type: "exponential", delay: 60_000 } },
 	},
 );
 
@@ -193,6 +222,7 @@ async function shutdown(): Promise<void> {
 	await Promise.allSettled([
 		...workers.map((w) => w.close()),
 		fxQueue.close(),
+		tidyQueue.close(),
 		merchantQueue.close(),
 		notifyQueue.close(),
 	]);

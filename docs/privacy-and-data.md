@@ -28,6 +28,15 @@ The zip contains a `README.txt` plus:
 | `warranties.json`, `wishlist.json`, `check-ins.json` | Reminders, impulse-pause items, nightly check-ins |
 | `family.json` | Circle members, relation, and what each side shares |
 
+## Receipt photos
+
+- Stored encrypted on the server (AES-256-GCM, a random IV per file); only the owner can open them.
+- The full photo is read once by ILMU; then a smaller copy is kept (JPEG, longest side 1200 px,
+  still readable as proof) and the full one is deleted (`apps/worker/src/receipt-photo.ts`).
+- A receipt discarded before saving is deleted straight away. A saved one stays with its expense.
+- When an expense is removed, its photo stays for 7 days so Undo brings it back, then a daily job
+  deletes it for good (`apps/worker/src/receipt-tidy.ts`). The removed expense itself stays removed.
+
 ## Delete the account
 
 `DELETE /api/me` needs the password and the word `DELETE` typed. It removes every row and every

@@ -10,6 +10,7 @@ import {
 import type { ReceiptDraft, ReceiptEvent } from "@spendid/shared";
 import { type Job, UnrecoverableError } from "bullmq";
 import { eq } from "drizzle-orm";
+import { keepCopy } from "./receipt-photo";
 
 export const RECEIPT_QUEUE = "receipts";
 
@@ -56,6 +57,35 @@ export function createReceiptProcessor({
 		};
 	}
 
+	/**
+	 * Once read, keep a smaller copy of the photo and delete the full one. Never fails the
+	 * read: if anything goes wrong, the original simply stays.
+	 */
+	async function keepSmaller(
+		row: { id: string; userId: string; fileKey: string },
+		photo: Buffer,
+	): Promise<void> {
+		try {
+			const small = await keepCopy(photo);
+			if (!small) return;
+			const fileKey = await store.put(row.userId, small);
+			try {
+				await db
+					.update(receipt)
+					.set({ fileKey, mime: "image/jpeg", bytes: small.byteLength })
+					.where(eq(receipt.id, row.id));
+			} catch (error) {
+				await store.remove(fileKey);
+				throw error;
+			}
+			await store.remove(row.fileKey);
+		} catch (error) {
+			process.stderr.write(
+				`[worker] receipts: keeping a smaller photo failed, the original stays: ${String(error)}\n`,
+			);
+		}
+	}
+
 	async function fail(
 		id: string,
 		userId: string,
@@ -83,8 +113,9 @@ export function createReceiptProcessor({
 			.limit(1);
 		try {
 			await guard.assertAllowed(row.userId);
+			const photo = await store.get(row.fileKey);
 			const reading = await read(
-				await store.get(row.fileKey),
+				photo,
 				row.mime,
 				p?.home ?? "MYR",
 				// The person's own day, so a date after it is never taken as the purchase day.
@@ -106,6 +137,7 @@ export function createReceiptProcessor({
 					error: null,
 				})
 				.where(eq(receipt.id, row.id));
+			await keepSmaller(row, photo);
 			await publish(row.userId, {
 				type: "receipt",
 				id: row.id,
