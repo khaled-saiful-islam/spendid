@@ -138,14 +138,81 @@ export function mentionedCategories(
 	return found.sort((a, b) => a.at - b.at).map((f) => f.c);
 }
 
-function covers(
-	l: Lookup,
-	t: { period: Period; from: string; to: string },
-): boolean {
+/** Days a question is about: how to name them, how to look them up, and how finely. */
+interface Span {
+	label: string;
+	use: string;
+	from: string;
+	to: string;
+	grains: Lookup["groupBy"][];
+}
+
+function covers(l: Lookup, t: Span): boolean {
 	if (l.from === t.from && l.to === t.to) return true;
-	return (
-		GRAINS[t.period].includes(l.groupBy) && l.from <= t.from && l.to >= t.to
+	return t.grains.includes(l.groupBy) && l.from <= t.from && l.to >= t.to;
+}
+
+const NUMBER_WORDS: Record<string, number> = {
+	two: 2,
+	three: 3,
+	four: 4,
+	five: 5,
+	six: 6,
+	seven: 7,
+	eight: 8,
+	nine: 9,
+	ten: 10,
+	dua: 2,
+	tiga: 3,
+	empat: 4,
+	lima: 5,
+	enam: 6,
+	tujuh: 7,
+	lapan: 8,
+	sembilan: 9,
+	sepuluh: 10,
+};
+const COUNT = `(\\d{1,3}|${Object.keys(NUMBER_WORDS).join("|")})`;
+const LAST_DAYS = [
+	new RegExp(`\\b(?:last|past|previous)\\s+${COUNT}\\s+days?\\b`, "gi"),
+	new RegExp(`\\b${COUNT}\\s+hari\\s+(?:lepas|lalu|terakhir)\\b`, "gi"),
+];
+
+/** "last 3 days", "past five days", "3 hari lepas": N days up to and including today. */
+export function mentionedLastDays(question: string): number[] {
+	const found = LAST_DAYS.flatMap((re) =>
+		[...question.matchAll(re)].map((m) => {
+			const word = (m[1] ?? "").toLowerCase();
+			return NUMBER_WORDS[word] ?? Number(word);
+		}),
 	);
+	return [...new Set(found)].filter((n) => n >= 1 && n <= 366);
+}
+
+/** The periods and "last N days" a question names, as spans of days. */
+function spansIn(question: string, today: string): Span[] {
+	const spans: Span[] = mentionedPeriods(question).map((period) => ({
+		label: PERIOD_LABEL[period],
+		use: `period ${period}`,
+		...periodRange(period, today),
+		grains: GRAINS[period],
+	}));
+	for (const n of mentionedLastDays(question)) {
+		const from = new Date(
+			Date.parse(`${today}T00:00:00Z`) - (n - 1) * 86_400_000,
+		)
+			.toISOString()
+			.slice(0, 10);
+		if (!spans.some((s) => s.from === from && s.to === today))
+			spans.push({
+				label: `the last ${n} days`,
+				use: `lastDays ${n} with groupBy day`,
+				from,
+				to: today,
+				grains: ["day"],
+			});
+	}
+	return spans;
 }
 
 /** Categories the question hints at with everyday words, without naming them. */
@@ -173,7 +240,7 @@ const coversCategory = (l: Lookup, c: Category) =>
 /** "Biggest expense" read off the newest few is a wrong answer that looks right. */
 function superlativeProblems(
 	question: string,
-	periods: { period: Period; from: string; to: string }[],
+	periods: Span[],
 	lookups: Lookup[],
 ): string[] {
 	if (GROUPS.test(question)) return [];
@@ -222,14 +289,10 @@ function spendingCoverage(input: {
 	categories: Category[];
 	lookups: Lookup[];
 }): string[] {
-	const periods = mentionedPeriods(input.question).map((period) => ({
-		period,
-		...periodRange(period, input.today),
-	}));
+	const periods = spansIn(input.question, input.today);
 	const cats = mentionedCategories(input.question, input.categories);
 	const { lookups } = input;
-	const span = (t: (typeof periods)[number]) =>
-		`${PERIOD_LABEL[t.period]} (${t.from} to ${t.to})`;
+	const span = (t: Span) => `${t.label} (${t.from} to ${t.to})`;
 
 	if (lookups.length === 0)
 		return SPENDING.test(input.question) && (periods.length || cats.length)
@@ -251,7 +314,7 @@ function spendingCoverage(input: {
 				)
 			)
 				problems.push(
-					`The question is about ${span(t)}, but no lookup of all spending covered exactly those days. Use period ${t.period}.`,
+					`The question is about ${span(t)}, but no lookup of all spending covered exactly those days. Use ${t.use}.`,
 				);
 		return problems;
 	}
@@ -266,7 +329,7 @@ function spendingCoverage(input: {
 		for (const t of periods)
 			if (!lookups.some((l) => coversCategory(l, c) && covers(l, t)))
 				problems.push(
-					`The question asks about ${c.name} for ${span(t)}, but no lookup covered ${c.name} for exactly those days. Use spending_totals with category ${c.slug} and period ${t.period}.`,
+					`The question asks about ${c.name} for ${span(t)}, but no lookup covered ${c.name} for exactly those days. Use spending_totals with category ${c.slug} and ${t.use}.`,
 				);
 	}
 	return problems;

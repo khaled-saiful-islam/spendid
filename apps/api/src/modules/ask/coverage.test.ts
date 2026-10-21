@@ -4,6 +4,7 @@ import {
 	coverageProblems,
 	type Lookup,
 	mentionedCategories,
+	mentionedLastDays,
 	mentionedPeriods,
 	planNameProblems,
 } from "./coverage";
@@ -288,6 +289,42 @@ describe("planNameProblems", () => {
 				"Try pay yourself first.",
 				null,
 			),
+		).toEqual([]);
+	});
+});
+
+describe("the last N days", () => {
+	it("reads 'last 3 days', 'past five days' and '3 hari lepas'", () => {
+		expect(mentionedLastDays("Last 3 days")).toEqual([3]);
+		expect(mentionedLastDays("what did I spend the past five days?")).toEqual([
+			5,
+		]);
+		expect(mentionedLastDays("Berapa saya belanja 3 hari lepas")).toEqual([3]);
+		expect(
+			mentionedLastDays("expenses of last 2 days including today"),
+		).toEqual([2]);
+		expect(mentionedLastDays("this month")).toEqual([]);
+	});
+
+	it("needs one lookup of exactly those days, up to today", () => {
+		// TODAY is 2026-10-18 in these tests.
+		expect(
+			problems("Last 3 days", [
+				{ from: "2026-10-16", to: "2026-10-18", groupBy: "day" },
+			]),
+		).toEqual([]);
+		// Day-by-day lookups (or the wrong span) don't hold the total: the model would add it up.
+		const piecemeal = problems("Last 3 days", [
+			{ from: "2026-10-18", to: "2026-10-18", groupBy: "day" },
+			{ from: "2026-10-17", to: "2026-10-17", groupBy: "day" },
+			{ from: "2026-10-16", to: "2026-10-16", groupBy: "day" },
+		]);
+		expect(piecemeal).toHaveLength(1);
+		expect(piecemeal[0]).toMatch(/lastDays 3/);
+		expect(
+			problems("expenses of last 2 days including today", [
+				{ from: "2026-10-17", to: "2026-10-18", groupBy: "day" },
+			]),
 		).toEqual([]);
 	});
 });

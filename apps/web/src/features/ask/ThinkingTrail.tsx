@@ -37,7 +37,9 @@ export function ThinkingTrail({
 	live: boolean;
 }) {
 	if (!steps.length && !live) return null;
-	const shown = steps.length ? steps : ["Thinking…"];
+	// Each step once, also for chats saved before steps were de-duplicated.
+	const unique = [...new Set(steps)];
+	const shown = unique.length ? unique : ["Thinking…"];
 	return (
 		<ol className="mb-3 space-y-2" aria-live="polite">
 			{shown.map((s, i) => {

@@ -58,7 +58,8 @@ How to answer (money must be exact; a wrong or made-up number is never acceptabl
 - Get every number from the tools, fresh for this question. Expenses may have been added, changed or removed since earlier messages, so never reuse numbers from the conversation.
 - Every amount, percentage and count you write must be exactly one the tools returned. For ANY sum, difference, average, share or percentage, call calculate; never work numbers out yourself. Answers are checked, and numbers that aren't from the tools are rejected.
 - For the biggest or smallest expenses, use find_expenses with sort "biggest" or "smallest".
-- For dates, prefer the period option (today, yesterday, this_week, last_week, this_month, last_month, this_year, last_year, last_7_days, last_30_days); the tools work out the days. Weeks run Monday to Sunday. For totals use spending_totals; to find particular expenses use find_expenses (it can search by shop word, category or amount).
+- For dates, prefer the period option (today, yesterday, this_week, last_week, this_month, last_month, this_year, last_year, last_7_days, last_30_days), or lastDays for "the last N days" (including today); the tools work out the days. Weeks run Monday to Sunday. For totals use spending_totals; to find particular expenses use find_expenses (it can search by shop word, category or amount).
+- For several days ("last 3 days", "the past 2 days including today"), make ONE spending_totals call over the whole range with groupBy day: it gives every day and the total. Never add days up yourself.
 - If a list says more: true, only some are listed: never present them as all of them, and use the total the tool gives.
 - If a tool returns an error, fix the call (a word that isn't a category goes in search). Never turn an error into "nothing" or zero.
 - "Where did my RM X go?", "how did I spend RM X" and similar are about a total (this month unless they say otherwise), not one expense: call spending_totals for the period grouped by category and answer from it.
@@ -250,6 +251,14 @@ export function createAskAgent(deps: AgentDeps) {
 		let answer = "";
 		// Update events can replay earlier messages; show each tool step once.
 		const seenCalls = new Set<string>();
+		// Each step shows once: five lookups are one "Looking through your expenses…".
+		const shownSteps = new Set<string>();
+		const stepFor = (name: string): AskEvent | null => {
+			const label = STEP_LABELS[name] ?? "Thinking…";
+			if (shownSteps.has(label)) return null;
+			shownSteps.add(label);
+			return { type: "step", label };
+		};
 
 		/** One agent run; streams steps and charts, and leaves the final words in `answer`. */
 		async function* run(
@@ -274,10 +283,8 @@ export function createAskAgent(deps: AgentDeps) {
 									call.id ?? `${call.name}:${JSON.stringify(call.args)}`;
 								if (seenCalls.has(key)) continue;
 								seenCalls.add(key);
-								yield {
-									type: "step",
-									label: STEP_LABELS[call.name] ?? "Thinking…",
-								};
+								const step = stepFor(call.name);
+								if (step) yield step;
 							}
 							if (
 								!m.tool_calls?.length &&
@@ -342,7 +349,8 @@ export function createAskAgent(deps: AgentDeps) {
 			for (const call of forced.tool_calls ?? []) {
 				const found = tools.find((t) => t.name === call.name);
 				if (!found || !call.name.startsWith("propose_")) continue;
-				yield { type: "step", label: STEP_LABELS[call.name] ?? "Thinking…" };
+				const step = stepFor(call.name);
+				if (step) yield step;
 				await (found as unknown as { invoke: (a: unknown) => Promise<unknown> })
 					.invoke(call.args)
 					.catch(() => undefined);

@@ -304,7 +304,11 @@ export function useAskChat(userId: string) {
 					{ question: q, history, tone, receiptId },
 					(e) => {
 						if (e.type === "step")
-							patchLast((m) => ({ ...m, steps: [...m.steps, e.label] }));
+							patchLast((m) =>
+								m.steps.includes(e.label)
+									? m
+									: { ...m, steps: [...m.steps, e.label] },
+							);
 						if (e.type === "token")
 							patchLast((m) => ({ ...m, text: m.text + e.text }));
 						if (e.type === "chart")

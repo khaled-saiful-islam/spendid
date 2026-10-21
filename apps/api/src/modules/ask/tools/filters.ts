@@ -11,12 +11,22 @@ export const RangeFields = {
 		.describe(
 			"A named period, worked out for you in the person's days. Prefer this when it fits.",
 		),
+	lastDays: z
+		.number()
+		.int()
+		.min(1)
+		.max(366)
+		.optional()
+		.describe(
+			"The last N days up to and including today, worked out for you: 3 for 'last 3 days'. Use instead of from/to.",
+		),
 	from: z.string().optional().describe("First day, YYYY-MM-DD (with `to`)"),
 	to: z.string().optional().describe("Last day, YYYY-MM-DD, inclusive"),
 };
 
 export type RangeInput = {
 	period?: (typeof PERIODS)[number];
+	lastDays?: number;
 	from?: string;
 	to?: string;
 };
@@ -34,10 +44,16 @@ export function resolveRange(
 	input: RangeInput,
 	ctx: Pick<AskContext, "timeZone" | "today">,
 ): Resolved<{ from: string; to: string }> {
-	if (input.period)
-		return {
-			ok: periodRange(input.period, ctx.today ?? localToday(ctx.timeZone)),
-		};
+	const today = ctx.today ?? localToday(ctx.timeZone);
+	if (input.period) return { ok: periodRange(input.period, today) };
+	if (input.lastDays) {
+		const from = new Date(
+			Date.parse(`${today}T00:00:00Z`) - (input.lastDays - 1) * 86_400_000,
+		)
+			.toISOString()
+			.slice(0, 10);
+		return { ok: { from, to: today } };
+	}
 	if (!input.from || !input.to)
 		return {
 			error:
