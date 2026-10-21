@@ -61,4 +61,42 @@ describe.skipIf(!url)("voice notes (real database)", () => {
 			result.drafts.map((d) => [d.merchant, d.amountMinor, d.daysAgo]),
 		).toEqual([["Grab", 2000, 1]]);
 	});
+
+	const aiSaying = (
+		...items: { description: string; amount: number; daysAgo: number }[]
+	) =>
+		vi.fn<ExpenseExtractor>(async () => ({
+			expenses: items.map((i) => ({
+				...i,
+				currency: "MYR",
+				category: "groceries",
+				yourShare: null,
+				splitWith: null,
+			})),
+			inputTokens: 1,
+			outputTokens: 1,
+			model: "test",
+		})) as unknown as ExpenseExtractor;
+
+	it("a note that clearly says 'yesterday' is yesterday, even if the AI read today", async () => {
+		const result = await serviceHearing(
+			"Yesterday, I spent RM49 on groceries.",
+			aiSaying({ description: "groceries", amount: 49, daysAgo: 0 }),
+		).read(maya, Buffer.from("x"), "audio/wav", log);
+		expect(result.readBy).toBe("ai");
+		expect(result.drafts.map((d) => [d.amountMinor, d.daysAgo])).toEqual([
+			[4900, 1],
+		]);
+	});
+
+	it("trusts the AI when the note names more than one day", async () => {
+		const result = await serviceHearing(
+			"Yesterday lunch 12, and today coffee 5.",
+			aiSaying(
+				{ description: "lunch", amount: 12, daysAgo: 1 },
+				{ description: "coffee", amount: 5, daysAgo: 0 },
+			),
+		).read(maya, Buffer.from("x"), "audio/wav", log);
+		expect(result.drafts.map((d) => d.daysAgo)).toEqual([1, 0]);
+	});
 });

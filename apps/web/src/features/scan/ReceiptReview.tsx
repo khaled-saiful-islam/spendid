@@ -55,6 +55,8 @@ export function ReceiptReview({
 	const cur = d?.currency ?? homeCurrency;
 	const [merchant, setMerchant] = useState(d?.merchant ?? "");
 	const [day, setDay] = useState(d?.date ?? localDate(new Date()));
+	// No date could be read: today is only a starting point, so say so until it's checked.
+	const [dateUnread, setDateUnread] = useState(Boolean(d) && !d?.date);
 	const [totalText, setTotalText] = useState(
 		d ? toText(d.totalMinor, cur) : "",
 	);
@@ -193,12 +195,26 @@ export function ReceiptReview({
 						<input
 							type="date"
 							aria-label={t("Date")}
+							aria-describedby={dateUnread ? "receipt-date-hint" : undefined}
 							value={day}
 							max={localDate(new Date())}
-							onChange={(e) => setDay(e.target.value)}
+							onChange={(e) => {
+								setDay(e.target.value);
+								setDateUnread(false);
+							}}
 							className={cn(field, "min-w-0")}
 						/>
 					</div>
+					{dateUnread && (
+						<p
+							id="receipt-date-hint"
+							className="text-[0.85rem] leading-snug text-ink-soft"
+						>
+							{t(
+								"No date on the receipt, so it's set to today. Change it if you bought this another day.",
+							)}
+						</p>
+					)}
 					<select
 						aria-label={t("Category")}
 						value={chosenCategory}

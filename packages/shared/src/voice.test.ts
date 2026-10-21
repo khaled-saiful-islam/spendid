@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { wordsToDigits } from "./number-words";
-import { hasSpokenAmount, quickReadSpoken, splitSpokenEntries } from "./voice";
+import {
+	hasSpokenAmount,
+	quickReadSpoken,
+	splitSpokenEntries,
+	spokenDay,
+} from "./voice";
 
 describe("splitSpokenEntries", () => {
 	it("splits a one-breath note into items", () => {
@@ -64,5 +69,45 @@ describe("hasSpokenAmount", () => {
 		expect(hasSpokenAmount("lunch twelve")).toBe(true);
 		expect(hasSpokenAmount("grab dua puluh ringgit")).toBe(true);
 		expect(hasSpokenAmount("coffee 6.50")).toBe(true);
+	});
+});
+
+describe("the day in a voice note", () => {
+	const today = "2026-10-21";
+	const days = (said: string) =>
+		quickReadSpoken(wordsToDigits(said), today).map((i) => [
+			i.description,
+			i.daysAgo,
+		]);
+
+	it("a day said once covers the items after it", () => {
+		expect(days("Yesterday, I spent RM49 on groceries.")).toEqual([
+			["Groceries", 1],
+		]);
+		expect(days("Yesterday, lunch 12 and coffee 5.")).toEqual([
+			["Lunch", 1],
+			["Coffee", 1],
+		]);
+	});
+
+	it("until another day, or today, is said", () => {
+		expect(days("Yesterday lunch 12, and today coffee 5")).toEqual([
+			["Lunch", 1],
+			["Coffee", 0],
+		]);
+		expect(days("Semalam makan 12, kelmarin grab 8")).toEqual([
+			["Makan", 1],
+			["Grab", 2],
+		]);
+	});
+
+	it("spokenDay gives the one day a whole note names, or null", () => {
+		expect(spokenDay("Yesterday, I spent 49 on groceries.", today)).toBe(1);
+		expect(spokenDay("semalam, makan 12 dan kopi 5", today)).toBe(1);
+		expect(spokenDay("lunch 12 and coffee 5", today)).toBeNull();
+		expect(
+			spokenDay("yesterday lunch 12 and today coffee 5", today),
+		).toBeNull();
+		expect(spokenDay("yesterday lunch 12, kelmarin grab 8", today)).toBeNull();
 	});
 });

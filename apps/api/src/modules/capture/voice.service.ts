@@ -14,6 +14,7 @@ import {
 	MAX_DAYS_BACK,
 	type QuickEntry,
 	quickReadSpoken,
+	spokenDay,
 	toMinor,
 	type VoiceDraft,
 	type VoiceResult,
@@ -195,9 +196,18 @@ export function createVoiceService(deps: Deps) {
 					inputTokens: result.inputTokens,
 					outputTokens: result.outputTokens,
 				});
+				// The note itself naming one earlier day ("Yesterday, …") beats an AI "today".
+				const said = spokenDay(digits, today.date);
 				const drafts = result.expenses
 					.map((e) => fromAi(e, home, bySlug))
-					.filter((d): d is VoiceDraft => d !== null);
+					.filter((d): d is VoiceDraft => d !== null)
+					.map((d, _, all) =>
+						said !== null &&
+						said <= MAX_DAYS_BACK &&
+						all.every((x) => x.daysAgo === 0)
+							? { ...d, daysAgo: said }
+							: d,
+					);
 				return {
 					transcript: heard.text,
 					drafts: await applyLearned(deps.merchants, userId, drafts),

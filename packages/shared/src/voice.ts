@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { wordsToDigits } from "./number-words";
+import { takePastDay } from "./past-day";
 import { parseQuickEntry, type QuickEntry } from "./quick-entry";
 
 /** How far back an expense said or typed in words can go (about three months). */
@@ -56,15 +57,19 @@ export function splitSpokenEntries(text: string): string[] {
 		}
 		if (current.length) out.push(current.join(" "));
 	}
-	// Word-only fragments ("for dinner") attach to the item before them.
+	// Word-only fragments ("for dinner") attach to the item before them; at the start
+	// ("Yesterday, lunch 12") to the item after, so a day said first is never lost.
 	const merged: string[] = [];
+	let lead = "";
 	for (const piece of out) {
 		const prev = merged.at(-1);
-		if (prev !== undefined && !/\d/.test(piece))
-			merged[merged.length - 1] = `${prev} ${piece}`;
-		else merged.push(piece);
+		if (/\d/.test(piece)) {
+			merged.push(lead ? `${lead} ${piece}` : piece);
+			lead = "";
+		} else if (prev === undefined) lead = lead ? `${lead} ${piece}` : piece;
+		else merged[merged.length - 1] = `${prev} ${piece}`;
 	}
-	return merged.filter((p) => /\d/.test(p));
+	return merged;
 }
 
 /** Greetings, filler and "today" words people say around items, in English and Malay. */
@@ -98,10 +103,44 @@ export function hasSpokenAmount(text: string): boolean {
 	return /\d/.test(wordsToDigits(text));
 }
 
-/** Fallback read of a transcript: split, then parse each piece like typed shorthand. */
-export function quickReadSpoken(text: string, today?: string): QuickEntry[] {
-	return splitSpokenEntries(text)
-		.map((piece) => parseQuickEntry(piece, today))
-		.filter((e) => e.amount !== null && e.amount > 0)
-		.map((e) => ({ ...e, description: cleanSpokenDescription(e.description) }));
+/** "Today" said out loud, so a day named earlier in the note stops applying. EN + BM. */
+const SAID_TODAY =
+	/\b(today|tonight|this (morning|afternoon|evening)|just now|hari ini|tadi|malam ini)\b/i;
+
+const isoToday = () => new Date().toISOString().slice(0, 10);
+
+/**
+ * Fallback read of a transcript: split, then parse each piece like typed shorthand. A day said
+ * once ("Yesterday, lunch 12 and coffee 5") covers the items after it, until another day or
+ * "today" is said.
+ */
+export function quickReadSpoken(
+	text: string,
+	today: string = isoToday(),
+): QuickEntry[] {
+	const entries: QuickEntry[] = [];
+	let carried = 0;
+	for (const piece of splitSpokenEntries(text)) {
+		const entry = parseQuickEntry(piece, today);
+		if (takePastDay(` ${piece} `, today).found) carried = entry.daysAgo;
+		else if (SAID_TODAY.test(piece)) carried = 0;
+		if (entry.amount !== null && entry.amount > 0)
+			entries.push({
+				...entry,
+				daysAgo: carried,
+				description: cleanSpokenDescription(entry.description),
+			});
+	}
+	return entries;
+}
+
+/**
+ * The one earlier day a whole note names ("Yesterday, lunch 12 and coffee 5" → 1), or null
+ * when it names none, several, or also says "today". A check on what the AI read.
+ */
+export function spokenDay(text: string, today: string): number | null {
+	if (SAID_TODAY.test(text)) return null;
+	const first = takePastDay(` ${text} `, today);
+	if (!first.found || takePastDay(first.rest, today).found) return null;
+	return first.daysAgo;
 }

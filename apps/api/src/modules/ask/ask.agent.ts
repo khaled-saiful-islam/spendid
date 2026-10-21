@@ -2,7 +2,7 @@ import { ChatOpenAI } from "@langchain/openai";
 import { type Db, profile, user } from "@spendid/db";
 import type { AiGuard } from "@spendid/server";
 import type { AskEvent, AskRequest, ReceiptDraft } from "@spendid/shared";
-import { AskRequestSchema } from "@spendid/shared";
+import { AskRequestSchema, MAX_DAYS_BACK, spokenDay } from "@spendid/shared";
 import { eq } from "drizzle-orm";
 import {
 	AIMessage,
@@ -26,6 +26,7 @@ import {
 } from "./ask.tools";
 import { coverageProblems, planNameProblems } from "./coverage";
 import { ungroundedNumbers } from "./grounding";
+import { questionLanguage, tellsAPurchase } from "./intent";
 import { repairToolCalls } from "./repair-tool-calls";
 
 interface AgentDeps extends Omit<ToolDeps, "db" | "summary" | "plan"> {
@@ -61,13 +62,13 @@ How to answer (money must be exact; a wrong or made-up number is never acceptabl
 - If a list says more: true, only some are listed: never present them as all of them, and use the total the tool gives.
 - If a tool returns an error, fix the call (a word that isn't a category goes in search). Never turn an error into "nothing" or zero.
 - "Where did my RM X go?", "how did I spend RM X" and similar are about a total (this month unless they say otherwise), not one expense: call spending_totals for the period grouped by category and answer from it.
-- If the person mentions an amount that doesn't match the data, say what the data shows now. If the tool lists removed expenses, use them to explain the difference. Only say something isn't there after find_expenses found no match.
+- If the person asks about an amount that doesn't match the data, say what the data shows now. If the tool lists removed expenses, use them to explain the difference. Only say something isn't there after find_expenses found no match.
 - If a tool returns nothing, say there's nothing logged for that.
 - Keep answers short: one to four sentences, warm and plain. No jargon. Quote money exactly as the tools' "shown" values (e.g. "RM 12.50").
 - When you give a total, say which days it covers in plain words, e.g. "last week (5 to 11 Oct)".
 - Answer exactly the period and categories asked: answers are checked against the days and categories each tool looked at.
 - When a comparison or trend helps, call show_chart once with numbers a tool returned.
-- If the person describes purchases to log ("lunch 12 and grab 9"), call propose_expenses.
+- If the person tells you they spent money ("lunch 12 and grab 9", "Yesterday I spent RM49 on groceries", "semalam saya belanja 20 untuk makan"), that is a purchase to log, not a question: call propose_expenses, with daysAgo for the day they named. Don't check it against their data unless they ask ("did I…?", "how much…?").
 - To create or change things, use these tools. Each shows a card the person confirms; nothing changes until they tap it, so never say it's done or saved; say it's ready to confirm.
 ${capabilities}
 - Deleting the account, passwords and passkeys are never done in chat: say they're in Profile & settings in the app.
@@ -89,6 +90,23 @@ const TONES = {
 		"\nTone for this answer: a playful roast, like a witty friend. First look up this month's spending (spending_totals by category and by shop). Tease two or three spending choices with the real numbers, with warmth and humour; never mock the person, their body, income, family or anything sensitive. Keep it to four short sentences, then end with one genuinely useful tip.",
 	hype: "\nTone for this answer: an energetic hype-up, like a proud coach. First look up this month (budget_overview, goals_overview, spending_totals). Celebrate two or three real wins with the real numbers (money left, goals growing, a category that's down). Keep it to four short sentences, then one next step to keep it going.",
 } as const;
+
+/**
+ * Cards for expenses the person described: when their words name one earlier day ("yesterday
+ * I spent 49 on groceries") and the AI dated every card today, the words win.
+ */
+function datedAsSaid<T extends { daysAgo: number }>(
+	drafts: T[],
+	question: string,
+	today: string,
+): T[] {
+	const said = spokenDay(question, today);
+	return said !== null &&
+		said <= MAX_DAYS_BACK &&
+		drafts.every((d) => d.daysAgo === 0)
+		? drafts.map((d) => ({ ...d, daysAgo: said }))
+		: drafts;
+}
 
 /** Said instead of an answer whose numbers couldn't be checked against the person's data. */
 const UNCHECKED = {
@@ -282,12 +300,20 @@ export function createAskAgent(deps: AgentDeps) {
 		}
 
 		yield* run(messages);
-		// Said "prepared" but called no tool, so nothing would appear. One more model call that
-		// must call a tool; only the propose tools may run from it.
+		// Said "prepared" but called no tool, so nothing would appear; or was told about spending
+		// and answered instead of logging it. One more model call that must call a tool; only
+		// the propose tools may run from it.
+		// Fixed replies follow the language of the question, else the app's language.
+		const replyLang = questionLanguage(
+			input.question,
+			p?.locale === "ms" ? "ms" : "en",
+		);
+		const claimed = CLAIMS_A_CARD.test(answer);
+		const told = tellsAPurchase(input.question);
 		if (
 			side.actions.length === 0 &&
 			side.drafts.length === 0 &&
-			CLAIMS_A_CARD.test(answer)
+			(claimed || told)
 		) {
 			await deps.guard.assertAllowed(userId);
 			const forced = repairToolCalls(
@@ -299,7 +325,9 @@ export function createAskAgent(deps: AgentDeps) {
 							...messages,
 							new AIMessage(answer),
 							new HumanMessage(
-								"No card appeared, because no tool was called. Call the right propose tool now with the details.",
+								claimed
+									? "No card appeared, because no tool was called. Call the right propose tool now with the details."
+									: "The person told you about money they spent: a purchase to log, not a question. Call propose_expenses now with it, daysAgo for the day they named.",
 							),
 						],
 						{ signal },
@@ -320,9 +348,9 @@ export function createAskAgent(deps: AgentDeps) {
 					.catch(() => undefined);
 			}
 			// Never claim a card that isn't there.
-			if (side.actions.length === 0 && side.drafts.length === 0)
+			if (claimed && side.actions.length === 0 && side.drafts.length === 0)
 				answer =
-					p?.locale === "ms"
+					replyLang === "ms"
 						? "Maaf, saya belum dapat menyediakannya. Cuba sebut sekali lagi dengan jumlahnya."
 						: "Sorry, I couldn't prepare that one. Try saying it again with the amount.";
 		}
@@ -368,9 +396,12 @@ export function createAskAgent(deps: AgentDeps) {
 					`Check failed:\n- ${found.join("\n- ")}\nCall the tools again as needed, then give only the corrected answer.`,
 				),
 			]);
-			if (!answer || problems().length)
-				answer = UNCHECKED[p?.locale === "ms" ? "ms" : "en"];
+			if (!answer || problems().length) answer = UNCHECKED[replyLang];
 		}
+		// Told about spending and a card was made (here or in the retry above): the reply is
+		// about the card. An answer that checked the data instead ("you spent RM 0.00
+		// yesterday") would contradict it.
+		if (told && side.drafts.length && !CLAIMS_A_CARD.test(answer)) answer = "";
 		// Never echo the bookkeeping notes the app adds to earlier answers.
 		answer = answer
 			.replace(/\(This answer's card came from[^)]*\)/gi, "")
@@ -378,10 +409,14 @@ export function createAskAgent(deps: AgentDeps) {
 			.trim();
 		if (!answer && (side.actions.length || side.drafts.length))
 			answer =
-				p?.locale === "ms"
+				replyLang === "ms"
 					? "Ini yang saya sediakan. Semak dan sahkan di bawah."
 					: "Here's what I prepared. Check it and confirm below.";
-		if (side.drafts.length) yield { type: "drafts", drafts: side.drafts };
+		if (side.drafts.length)
+			yield {
+				type: "drafts",
+				drafts: datedAsSaid(side.drafts, input.question, today),
+			};
 		if (side.actions.length) yield { type: "actions", actions: side.actions };
 		// Words arrive in small pieces so the answer appears to be typed, without waiting for every token.
 		for (const piece of answer.match(/\S+\s*/g) ?? [

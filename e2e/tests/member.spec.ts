@@ -50,6 +50,39 @@ test("add an expense by typing, see it in Activity, then remove it", async ({ pa
 	await expect(page.getByText(shop)).toHaveCount(0);
 });
 
+test("a typed sentence that says 'yesterday' is saved on yesterday, named for what it was", async ({ page }) => {
+	const shop = "Groceries";
+	const amount = 4_937;
+	const mine = async () => {
+		const res = await page.request.get("/api/transactions", { params: { q: shop, limit: 50 } });
+		const { data } = (await res.json()) as {
+			data: { items: { id: string; merchant: string | null; amountMinor: number; occurredAt: string }[] };
+		};
+		return data.items.filter((t) => t.merchant === shop && t.amountMinor === amount);
+	};
+	for (const left of await mine())
+		await page.request.delete(`/api/transactions/${left.id}`, { headers: { "content-type": "application/json" }, data: {} });
+
+	await page.goto("/app");
+	await page.getByRole("button", { name: /^Add spending/ }).click();
+	await page.getByRole("dialog", { name: "Add spending" }).getByRole("button", { name: /^Type it/ }).click();
+	const sheet = page.getByRole("dialog", { name: "Add an expense" });
+	// Exactly as a person typed it on their phone (a real report).
+	await sheet.getByLabel("Type it like you'd say it").fill("Yesterday, I spend RM49.37 for groceries");
+	await expect(sheet.getByLabel("What was it?")).toHaveValue(shop);
+	await expect(sheet.getByRole("button", { name: "Yesterday", exact: true })).toHaveAttribute("aria-pressed", "true");
+	await expect(sheet.getByRole("button", { name: "Groceries" })).toHaveAttribute("aria-pressed", "true");
+	await sheet.getByRole("button", { name: "Add RM 49.37" }).click();
+	await expect(sheet).toBeHidden();
+
+	const [saved] = await mine();
+	expect(saved, "the expense was saved").toBeTruthy();
+	const day = (at: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kuala_Lumpur" }).format(at);
+	const yesterday = day(new Date(Date.now() - 86_400_000));
+	expect(day(new Date(saved?.occurredAt ?? 0))).toBe(yesterday);
+	await page.request.delete(`/api/transactions/${saved?.id}`, { headers: { "content-type": "application/json" }, data: {} });
+});
+
 test("hide amounts blurs every number until shown again", async ({ page, isMobile }) => {
 	await page.goto("/app");
 	const html = page.locator("html");

@@ -326,4 +326,6 @@ export const msF: Record<string, string> = {
 	"Loading your transfers": "Memuatkan pindahan anda",
 	"Enter an amount like 500 or 1,200.50.":
 		"Masukkan jumlah seperti 500 atau 1,200.50.",
+	"No date on the receipt, so it's set to today. Change it if you bought this another day.":
+		"Tiada tarikh pada resit, jadi ia ditetapkan kepada hari ini. Tukar jika anda membelinya pada hari lain.",
 };

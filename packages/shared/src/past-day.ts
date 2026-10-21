@@ -109,14 +109,24 @@ const RULES: Rule[] = [
 	},
 ];
 
+/** "yesterday's lunch" names the day just like "yesterday lunch". */
+const DAY_POSSESSIVE = new RegExp(
+	`\\b(yesterday|semalam|kelmarin|${WEEKDAY})['\u2019]s\\b`,
+	"gi",
+);
+/** Sentence punctuation (not the dot or comma inside "12.50" or "1,250"). */
+const PUNCTUATION = /(?<!\d)[.,](?!\d)|[;:!?()"\u201c\u201d[\]]/g;
+
 /**
  * Finds the first earlier-day phrase in `text` (padded with spaces) and removes it.
- * `today` is the person's own calendar day ("YYYY-MM-DD").
+ * `today` is the person's own calendar day ("YYYY-MM-DD"). Punctuation is spaced out first,
+ * so "Yesterday, I spent…" or "…lunch 12 yesterday." still count.
  */
 export function takePastDay(
-	text: string,
+	raw: string,
 	today: string,
-): { rest: string; daysAgo: number } {
+): { rest: string; daysAgo: number; found: boolean } {
+	const text = raw.replace(DAY_POSSESSIVE, "$1").replace(PUNCTUATION, " $& ");
 	for (const rule of RULES) {
 		const m = rule.pattern.exec(text);
 		if (!m) continue;
@@ -125,7 +135,8 @@ export function takePastDay(
 		return {
 			rest: `${text.slice(0, m.index)} ${text.slice(m.index + m[0].length)}`,
 			daysAgo: days,
+			found: true,
 		};
 	}
-	return { rest: text, daysAgo: 0 };
+	return { rest: text, daysAgo: 0, found: false };
 }

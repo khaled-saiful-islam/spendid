@@ -111,4 +111,59 @@ describe("parseQuickEntry", () => {
 			categorySlug: "groceries",
 		});
 	});
+
+	describe("whole sentences, as people really type them", () => {
+		const today = "2026-10-21";
+		const read = (text: string) => parseQuickEntry(text, today);
+
+		it("reads 'Yesterday, I spend RM49 for groceries' as RM 49 groceries yesterday", () => {
+			expect(read("Yesterday, I spend RM49 for groceries")).toEqual({
+				amount: 49,
+				currency: "MYR",
+				description: "Groceries",
+				categorySlug: "groceries",
+				daysAgo: 1,
+			});
+		});
+
+		it("finds a day word next to any punctuation", () => {
+			for (const text of [
+				"yesterday, lunch 12",
+				"lunch 12 yesterday.",
+				"lunch 12 yesterday!",
+				"lunch 12 (yesterday)",
+				"Yesterday: lunch 12",
+				"lunch 12, yesterday",
+				"yesterday's lunch 12",
+				"Semalam, makan tengah hari 12",
+			])
+				expect(read(text).daysAgo, text).toBe(1);
+			expect(read("3 days ago, grab 15").daysAgo).toBe(3);
+			expect(read("Kelmarin, nasi lemak 6.").daysAgo).toBe(2);
+			expect(read("On Monday, petrol 80.").daysAgo).toBe(2);
+		});
+
+		it("drops 'I spent', 'paid', 'bought' and the like from the name", () => {
+			expect(read("I spent RM12 on Grab").description).toBe("Grab");
+			expect(read("I paid 30 for parking yesterday").description).toBe(
+				"Parking",
+			);
+			expect(read("Bought coffee at Zus 14").description).toBe("Coffee at Zus");
+			expect(
+				read("Saya belanja RM20 untuk barang dapur semalam"),
+			).toMatchObject({
+				description: "Barang dapur",
+				daysAgo: 1,
+			});
+			expect(read("coffee at Zus 14").description).toBe("Coffee at Zus");
+		});
+
+		it("still reads today's plain shorthand as today", () => {
+			expect(read("I spent RM12 on lunch today")).toMatchObject({
+				daysAgo: 0,
+				description: "Lunch",
+			});
+			expect(read("lunch 12").daysAgo).toBe(0);
+		});
+	});
 });

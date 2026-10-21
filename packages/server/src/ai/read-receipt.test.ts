@@ -57,3 +57,26 @@ describe("toDraft", () => {
 		expect(d.date).toBeNull();
 	});
 });
+
+describe("toDraft dates", () => {
+	const today = "2026-10-21";
+	const dated = (date: string | null) =>
+		toDraft({ ...read, date }, "MYR", today).date;
+
+	it("keeps yesterday's receipt on yesterday", () => {
+		expect(dated("2026-10-20")).toBe("2026-10-20");
+		expect(dated(today)).toBe(today);
+	});
+
+	it("refuses impossible dates", () => {
+		expect(dated("2026-02-30")).toBeNull();
+		expect(dated("2026-13-01")).toBeNull();
+		expect(dated("20/10/2026")).toBeNull();
+	});
+
+	it("fixes a day and month read the wrong way round, else refuses a future date", () => {
+		// "10/12/2026" printed day-first is 10 Dec, still ahead: unless swapped it can't be right.
+		expect(dated("2026-12-10")).toBe("2026-10-12");
+		expect(dated("2026-11-25")).toBeNull();
+	});
+});

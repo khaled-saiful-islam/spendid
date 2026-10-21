@@ -77,7 +77,7 @@ export function createReceiptProcessor({
 		if (row?.status !== "reading") return;
 
 		const [p] = await db
-			.select({ home: profile.homeCurrency })
+			.select({ home: profile.homeCurrency, timeZone: profile.timeZone })
 			.from(profile)
 			.where(eq(profile.userId, row.userId))
 			.limit(1);
@@ -87,6 +87,10 @@ export function createReceiptProcessor({
 				await store.get(row.fileKey),
 				row.mime,
 				p?.home ?? "MYR",
+				// The person's own day, so a date after it is never taken as the purchase day.
+				new Intl.DateTimeFormat("en-CA", {
+					timeZone: p?.timeZone ?? "Asia/Kuala_Lumpur",
+				}).format(new Date()),
 			);
 			await guard.record(row.userId, {
 				feature: "receipt-read",

@@ -52,6 +52,28 @@ function capitalise(s: string): string {
 	return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+/** Words for "today" add nothing to the name (the day is already today). EN + BM. */
+const TODAY_WORDS =
+	/\s(?:today|tonight|this morning|this afternoon|just now|hari ini|tadi|pagi tadi|malam ini)(?=\s)/gi;
+/** How people start a sentence about spending: "I spent", "paid", "saya belanja". */
+const SPENT_LEAD =
+	/^(?:(?:i|i've|i have|saya|aku)\s+)?(?:just\s+)?(?:spent|spend|paid|bought|belanja|beli|bayar|membeli|membayar)(?=\s|$)\s*/i;
+/** …followed by "on/for/at": "I spent RM12 on Grab" is Grab. */
+const LEAD_WORD = /^(?:on|for|at|untuk|kat|di|pada)\s+/i;
+
+/** The words left after the amount and day: what it was, tidied for a name. */
+function tidyDescription(rest: string): string {
+	return rest
+		.replace(TODAY_WORDS, " ")
+		.replace(/\s+/g, " ")
+		.replace(/\s+([,.;:!?)])/g, "$1")
+		.replace(/\(\s+/g, "(")
+		.replace(/^[\s,.;:!?()\u2013-]+|[\s,.;:!?()\u2013-]+$/g, "")
+		.replace(SPENT_LEAD, "")
+		.replace(LEAD_WORD, "")
+		.trim();
+}
+
 /**
  * Turns shorthand like "coffee 6.50" or "rm12 grab yesterday" into a draft expense.
  * `today` is the person's calendar day, for words like "monday" or "3 oct".
@@ -83,12 +105,7 @@ export function parseQuickEntry(
 	if (last?.index !== undefined)
 		rest = rest.slice(0, last.index) + rest.slice(last.index + last[0].length);
 
-	const description = capitalise(
-		rest
-			.replace(/\s+/g, " ")
-			.replace(/^[\s,.;:\u2013-]+|[\s,.;:\u2013-]+$/g, "")
-			.trim(),
-	);
+	const description = capitalise(tidyDescription(` ${rest} `));
 	return {
 		amount,
 		currency,

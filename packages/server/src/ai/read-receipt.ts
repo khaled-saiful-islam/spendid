@@ -43,7 +43,7 @@ const ReadSchema = z.object({
 });
 
 const SYSTEM = `Read the receipt in the photo and record it exactly as printed.
-- merchant: the shop name. date: purchase date as YYYY-MM-DD, or null.
+- merchant: the shop name. date: purchase date as YYYY-MM-DD, or null if not printed or unclear. Receipts here print the day first: 02/10/2026, 02-10-26 or 02.10.2026 is 2 October 2026. A purchase is never after today.
 - currency: from symbols or text (RM = MYR, S$ = SGD); null if unclear.
 - total: the final amount paid. tax: the tax line if shown.
 - items: every purchased line with its line total. If a line shows a quantity ("x2", "2 @ 6.90"), set quantity and drop it from the name. Skip subtotal, tax, payment, rounding and change lines.
@@ -61,7 +61,35 @@ export type ReceiptReader = (
 	image: Buffer,
 	mime: string,
 	homeCurrency: string,
+	/** The person's own calendar day, YYYY-MM-DD. */
+	today: string,
 ) => Promise<ReceiptReading>;
+
+/** A real calendar day, YYYY-MM-DD. */
+function realDay(y: number, m: number, d: number): string | null {
+	const at = new Date(Date.UTC(y, m - 1, d));
+	if (
+		at.getUTCFullYear() !== y ||
+		at.getUTCMonth() !== m - 1 ||
+		at.getUTCDate() !== d
+	)
+		return null;
+	return at.toISOString().slice(0, 10);
+}
+
+/**
+ * The purchase day, or null when it can't be right: not a real date, or after today. A future
+ * date that is a real past day with day and month swapped was read the wrong way round.
+ */
+export function purchaseDay(raw: string | null, today?: string): string | null {
+	const m = raw?.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+	if (!m) return null;
+	const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
+	const day = realDay(y, mo, d);
+	if (!day || !today || day <= today) return day;
+	const swapped = realDay(y, d, mo);
+	return swapped && swapped <= today ? swapped : null;
+}
 
 /** "XIAOMI POWER BANK 20K" → "Xiaomi Power Bank 20K": words with digits (sizes, models) keep their case. */
 const titleCase = (s: string) =>
@@ -77,11 +105,11 @@ const titleCase = (s: string) =>
 export function toDraft(
 	read: z.infer<typeof ReadSchema>,
 	homeCurrency: string,
+	today?: string,
 ): ReceiptDraft {
 	const upper = read.currency?.toUpperCase();
 	const currency = upper && KNOWN.has(upper) ? upper : homeCurrency;
-	const date =
-		read.date && /^\d{4}-\d{2}-\d{2}$/.test(read.date) ? read.date : null;
+	const date = purchaseDay(read.date, today);
 	return {
 		merchant: titleCase(read.merchant) || "Receipt",
 		date,
@@ -128,7 +156,7 @@ export function createReceiptReader(cfg: {
 		includeRaw: true,
 	});
 
-	return async (image, mime, homeCurrency) => {
+	return async (image, mime, homeCurrency, today) => {
 		const messages = [
 			{ role: "system", content: SYSTEM },
 			{
@@ -136,7 +164,7 @@ export function createReceiptReader(cfg: {
 				content: [
 					{
 						type: "text",
-						text: `Home currency: ${homeCurrency}. Read this receipt.`,
+						text: `Today is ${today}. Home currency: ${homeCurrency}. Read this receipt.`,
 					},
 					{
 						type: "image_url",
@@ -155,6 +183,6 @@ export function createReceiptReader(cfg: {
 			},
 		);
 		const { parsed, ...usage } = structuredResult(out, cfg.model);
-		return { draft: toDraft(parsed, homeCurrency), ...usage };
+		return { draft: toDraft(parsed, homeCurrency, today), ...usage };
 	};
 }
