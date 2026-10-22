@@ -31,6 +31,10 @@ services:
   db:
     image: pgvector/pgvector:pg18
     container_name: spendid-db
+    # A tiny init reaps the healthcheck's processes. Without it Postgres (as PID 1) reaps them
+    # itself, and one that times out under load (exit 2) looks like a crashed backend: Postgres
+    # then drops every connection and runs crash recovery (seen on Docker Desktop).
+    init: true
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
