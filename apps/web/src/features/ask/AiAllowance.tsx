@@ -7,7 +7,7 @@ import { Sheet } from "@/components/ui/Sheet";
 import { dateLocale, t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { api } from "@/lib/http";
-import { atHourOn, formatDay } from "@/lib/time";
+import { formatDay } from "@/lib/time";
 
 export const aiUsageQuery = {
 	queryKey: ["ai-status"],
@@ -161,8 +161,8 @@ function AllowanceDetails({
 	left: number;
 }) {
 	const reduce = useReducedMotion();
-	// The allowance resets at midnight starting that day, in the app's time zone.
-	const resets = atHourOn(usage.resetsOn, 0);
+	// The allowance renews at midnight starting that day, Malaysia time (UTC+8, no DST).
+	const resets = new Date(`${usage.resetsOn}T00:00:00+08:00`);
 	const days = Math.max(
 		1,
 		Math.ceil((resets.getTime() - Date.now()) / 86_400_000),

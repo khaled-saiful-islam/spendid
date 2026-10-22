@@ -22,7 +22,7 @@ export function CaptureModes() {
 				)}
 			</p>
 
-			<div className="mt-12 grid gap-6 md:grid-cols-3">
+			<div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
 				<article className="rounded-panel bg-plum-900 p-6 text-plum-50 dark:bg-plum-800">
 					<Mic className="size-6 text-marigold" aria-hidden="true" />
 					<h3 className="mt-4 text-[1.5rem] font-bold">{t("Say it")}</h3>

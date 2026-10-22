@@ -1,3 +1,4 @@
+export * from "./ai/allowance-month";
 export * from "./ai/embed";
 export * from "./ai/extract-expenses";
 export * from "./ai/guard";

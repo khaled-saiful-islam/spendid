@@ -21,7 +21,7 @@ export function SourcePicker({
 		"flex w-full items-center gap-4 rounded-panel border-2 border-line bg-surface p-4 text-left transition-[transform,border-color] hover:-translate-y-0.5 hover:border-plum-300";
 	return (
 		<div className="space-y-6">
-			<div className="grid gap-3 sm:grid-cols-2">
+			<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 				<motion.button
 					type="button"
 					whileTap={{ scale: 0.97 }}
@@ -65,7 +65,7 @@ export function SourcePicker({
 						{t("Receipts you snap show up here with their items.")}
 					</p>
 				) : (
-					<ul className="grid gap-2 sm:grid-cols-2">
+					<ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
 						{data.map((r) => (
 							<li key={r.id}>
 								<button

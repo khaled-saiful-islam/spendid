@@ -4,6 +4,7 @@ import { and, eq, gte, sql } from "drizzle-orm";
 import type { Redis } from "ioredis";
 import { ServiceError as AppError } from "../errors";
 import type { AppSettingsStore } from "../settings";
+import { allowanceMonth } from "./allowance-month";
 
 /** Spoken seconds are billed as tokens so one allowance covers every AI feature. */
 export const AUDIO_TOKENS_PER_SECOND = 25;
@@ -43,10 +44,6 @@ export interface AiStatus {
 	limitTokens: number;
 }
 
-function monthKey(now = new Date()): string {
-	return `${now.getUTCFullYear()}${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
-}
-
 /**
  * Checks a person's AI allowance before a call and records counts after it.
  * Redis keeps the running monthly total; the ai_usage table is the permanent ledger.
@@ -62,16 +59,16 @@ export function createAiGuard(deps: {
 	onLimitReached?: (userId: string) => Promise<unknown>;
 }) {
 	const { db, redis } = deps;
-	const usedKey = (userId: string) => `ai:used:${userId}:${monthKey()}`;
-	const heldKey = (userId: string) => `ai:held:${userId}:${monthKey()}`;
+	// Months run in Malaysia time (allowanceMonth): a new month, a new key, a fresh allowance.
+	const usedKey = (userId: string) =>
+		`ai:month:${userId}:${allowanceMonth().key}`;
+	const heldKey = (userId: string) =>
+		`ai:held:${userId}:${allowanceMonth().key}`;
 
 	async function usedThisMonth(userId: string): Promise<number> {
 		const cached = await redis.get(usedKey(userId));
 		if (cached !== null) return Number(cached);
-		const now = new Date();
-		const start = new Date(
-			Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
-		);
+		const { start } = allowanceMonth();
 		const [row] = await db
 			.select({ total: sql<string>`coalesce(sum(${aiUsage.billedTokens}), 0)` })
 			.from(aiUsage)
@@ -101,13 +98,7 @@ export function createAiGuard(deps: {
 	/** This month's ledger by feature, in everyday terms, for the person's own allowance view. */
 	async function usage(userId: string): Promise<AiUsage> {
 		const s = await status(userId);
-		const now = new Date();
-		const start = new Date(
-			Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
-		);
-		const next = new Date(
-			Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1),
-		);
+		const { start, resetsOn } = allowanceMonth();
 		const rows = await db
 			.select({
 				feature: aiUsage.feature,
@@ -119,7 +110,7 @@ export function createAiGuard(deps: {
 			.groupBy(aiUsage.feature);
 		return {
 			...s,
-			resetsOn: next.toISOString().slice(0, 10),
+			resetsOn,
 			...summariseAiUsage(rows, s.usedTokens, s.limitTokens),
 		};
 	}

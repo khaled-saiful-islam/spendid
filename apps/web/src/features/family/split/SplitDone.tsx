@@ -39,7 +39,7 @@ export function SplitDone({
 				}
 			/>
 			{url && (
-				<section className="grid items-center gap-5 rounded-panel border border-line bg-surface p-5 sm:grid-cols-[auto_1fr]">
+				<section className="grid grid-cols-1 items-center gap-5 rounded-panel border border-line bg-surface p-5 sm:grid-cols-[auto_1fr]">
 					<div className="mx-auto w-44">
 						<QrCode text={url} label={t("QR code for the split link")} />
 					</div>

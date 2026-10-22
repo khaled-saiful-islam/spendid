@@ -28,6 +28,7 @@ import {
 } from "@/lib/subscriptions-api";
 import { addDays, appToday } from "@/lib/time";
 import { BrandTile } from "./brand";
+import { RemoveSubscription } from "./RemoveSubscription";
 
 export interface SubscriptionDraft {
 	name: string;
@@ -315,6 +316,9 @@ function SubscriptionForm({
 				>
 					{t("I cancelled it")}
 				</button>
+			)}
+			{editing && (
+				<RemoveSubscription sub={editing} variant="sheet" onRemoved={onDone} />
 			)}
 		</form>
 	);

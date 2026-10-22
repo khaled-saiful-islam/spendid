@@ -1,5 +1,5 @@
-import { aiLimit, createDb } from "@spendid/db";
-import { createAiGuard } from "@spendid/server";
+import { aiLimit, aiUsage, createDb } from "@spendid/db";
+import { allowanceMonth, createAiGuard } from "@spendid/server";
 import { Redis } from "ioredis";
 import { afterAll, describe, expect, it } from "vitest";
 import { createPerson, testDbUrl } from "../../../test/db";
@@ -58,6 +58,47 @@ describe.skipIf(!url || !redisUrl)(
 			await redis.set(`ai:burst:${zoe}`, "5");
 			await guard.assertAllowed(zoe);
 			expect(await redis.ttl(`ai:burst:${zoe}`)).toBeGreaterThan(0);
+		});
+
+		it("renews every month by itself: last month's use doesn't count", async () => {
+			const lee = await createPerson(database.db);
+			await database.db
+				.insert(aiLimit)
+				.values({ userId: lee, monthlyTokens: 5_000, enabled: true });
+			const { start, resetsOn } = allowanceMonth();
+			// Far over the limit, but one minute before this month began (Malaysia time).
+			await database.db.insert(aiUsage).values({
+				userId: lee,
+				feature: "ask",
+				model: "m",
+				billedTokens: 50_000,
+				createdAt: new Date(start.getTime() - 60_000),
+			});
+			await expect(guard.assertAllowed(lee)).resolves.toBeUndefined();
+			const usage = await guard.usage(lee);
+			expect(usage.usedTokens).toBe(0);
+			expect(usage.limitTokens).toBe(5_000);
+			expect(usage.resetsOn).toBe(resetsOn);
+
+			// This month's use does count.
+			await database.db.insert(aiUsage).values({
+				userId: lee,
+				feature: "ask",
+				model: "m",
+				billedTokens: 6_000,
+				createdAt: new Date(start.getTime() + 60_000),
+			});
+			await redis.del(`ai:month:${lee}:${allowanceMonth().key}`);
+			await expect(guard.assertAllowed(lee)).rejects.toThrow(/allowance/i);
+		});
+
+		it("stays off when the admin switched AI off, whatever the month", async () => {
+			const kim = await createPerson(database.db);
+			await database.db
+				.insert(aiLimit)
+				.values({ userId: kim, monthlyTokens: 5_000, enabled: false });
+			await expect(guard.assertAllowed(kim)).rejects.toThrow();
+			expect((await guard.status(kim)).enabled).toBe(false);
 		});
 	},
 );

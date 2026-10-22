@@ -66,7 +66,7 @@ export function Challenges() {
 			{data.active.length === 0 ? (
 				<PickTiles onMore={() => setPicking(true)} />
 			) : (
-				<ul className="grid gap-3 sm:grid-cols-2">
+				<ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 					{data.active.map((c) => (
 						<li key={c.id}>
 							<ChallengeCard challenge={c} today={data.today} />
@@ -253,7 +253,7 @@ function PickTiles({ onMore }: { onMore: () => void }) {
 	const { start, pending } = useStartChallenge();
 	return (
 		<div className="space-y-2">
-			<ul className="grid gap-3 sm:grid-cols-3">
+			<ul className="grid grid-cols-1 gap-3 sm:grid-cols-3">
 				{PICKS.map(({ kind, tint }, i) => {
 					const info = CHALLENGES[kind];
 					return (

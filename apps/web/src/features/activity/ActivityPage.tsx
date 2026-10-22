@@ -124,7 +124,7 @@ function ExpensesView({ initialCategory }: { initialCategory?: string }) {
 
 	return (
 		<div className="space-y-5">
-			<div className="grid gap-3 sm:grid-cols-[1fr_14rem]">
+			<div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_14rem]">
 				<label className="relative block">
 					<span className="sr-only">{t("Search shops and notes")}</span>
 					<Search

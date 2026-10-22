@@ -4,10 +4,12 @@ import { cn } from "@/lib/cn";
 interface LogoProps {
 	className?: string;
 	showWord?: boolean;
+	/** Extra classes for the wordmark, e.g. to hide it on narrow screens. */
+	wordClassName?: string;
 }
 
 /** Coin mark + wordmark. */
-export function Logo({ className, showWord = true }: LogoProps) {
+export function Logo({ className, showWord = true, wordClassName }: LogoProps) {
 	return (
 		<span className={cn("inline-flex items-center gap-2", className)}>
 			<svg
@@ -35,7 +37,12 @@ export function Logo({ className, showWord = true }: LogoProps) {
 				/>
 			</svg>
 			{showWord && (
-				<span className="font-display text-[1.35rem] font-bold tracking-tight">
+				<span
+					className={cn(
+						"font-display text-[1.35rem] font-bold tracking-tight",
+						wordClassName,
+					)}
+				>
 					{t("Spendid")}
 				</span>
 			)}

@@ -193,13 +193,20 @@ export function AskPage({ initialQuestion }: { initialQuestion?: string }) {
 	const asked = useRef(false);
 	const lastMsg = chat.messages.at(-1);
 	const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
-	// Roast and Hype wait in the box like any question; their tone goes with the send.
-	const [tone, setTone] = useState<"roast" | "hype" | null>(null);
-
 	/** A tapped question goes into the box to edit; nothing is asked until they press send. */
-	function suggest(text: string, withTone: "roast" | "hype" | null = null) {
+	function suggest(text: string) {
 		setSuggestion({ text, id: Date.now() });
-		setTone(withTone);
+	}
+
+	/** Roast and Hype are one tap: asked straight away, with their tone. */
+	function askWithTone(mode: "roast" | "hype") {
+		setSuggestion(null);
+		void chat.send(
+			mode === "roast"
+				? t("Roast my spending this month.")
+				: t("Hype me up about my money this month."),
+			mode,
+		);
 	}
 
 	// Arriving on a fresh chat opens at the top: the question box first, never mid-page.
@@ -216,10 +223,12 @@ export function AskPage({ initialQuestion }: { initialQuestion?: string }) {
 		}
 	}, [initialQuestion]);
 
-	// Keep the newest message in view as the answer streams in.
+	// Keep the newest message in view as the answer streams in. Never on a fresh chat: there it
+	// would scroll the question box away as the page opens.
 	const lastText = lastMsg?.text ?? "";
 	// biome-ignore lint/correctness/useExhaustiveDependencies: re-scroll whenever messages or streamed words grow
 	useEffect(() => {
+		if (chat.messages.length === 0) return;
 		endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
 	}, [chat.messages.length, lastText.length]);
 
@@ -229,8 +238,7 @@ export function AskPage({ initialQuestion }: { initialQuestion?: string }) {
 			floating={chat.messages.length > 0}
 			suggestion={suggestion}
 			onSend={(q, file) => {
-				void chat.send(q, tone ?? undefined, file ?? undefined);
-				setTone(null);
+				void chat.send(q, undefined, file ?? undefined);
 				// The box moves under the chat once a question is sent; a kept suggestion would
 				// fill it again there.
 				setSuggestion(null);
@@ -273,22 +281,13 @@ export function AskPage({ initialQuestion }: { initialQuestion?: string }) {
 							</div>
 						}
 					/>
+					{/* A fresh chat: the question box sits in the pinned header, always in view. */}
+					{chat.messages.length === 0 && <div className="mt-3">{composer}</div>}
 				</div>
 
 				<div className="flex-1 space-y-5 py-4">
 					{chat.messages.length === 0 ? (
-						<AskWelcome
-							composer={composer}
-							onAsk={(q) => suggest(q)}
-							onTone={(mode) =>
-								suggest(
-									mode === "roast"
-										? t("Roast my spending this month.")
-										: t("Hype me up about my money this month."),
-									mode,
-								)
-							}
-						/>
+						<AskWelcome onAsk={(q) => suggest(q)} onTone={askWithTone} />
 					) : (
 						<AnimatePresence initial={false}>
 							{chat.messages.map((m, i) => (

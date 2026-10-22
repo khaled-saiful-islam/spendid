@@ -76,7 +76,7 @@ export function AppBand({ onGetApp }: { onGetApp: () => void }) {
 			className="mx-auto max-w-6xl px-4 py-16 sm:px-6"
 		>
 			<div className="bg-scales relative overflow-hidden rounded-panel bg-plum-900 p-6 text-plum-50 sm:p-10 dark:bg-plum-800">
-				<div className="relative grid items-center gap-10 md:grid-cols-2">
+				<div className="relative grid grid-cols-1 items-center gap-10 md:grid-cols-2">
 					<div>
 						<h2
 							id="get-app-title"

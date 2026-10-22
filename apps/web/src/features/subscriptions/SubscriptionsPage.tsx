@@ -41,6 +41,7 @@ import {
 import { formatDay } from "@/lib/time";
 import { BrandTile, CYCLE_LABEL, dueLabel, TONE_CLASS } from "./brand";
 import { MonthHero } from "./MonthHero";
+import { RemoveSubscription } from "./RemoveSubscription";
 import { type SubscriptionDraft, SubscriptionSheet } from "./SubscriptionSheet";
 
 const shortDay = (day: string) =>
@@ -246,7 +247,7 @@ function AllSubscriptions({
 				title={t("All of them")}
 				icon={Repeat}
 				tint="sky"
-				sub={t("Tap one to change its amount, day or reminder.")}
+				sub={t("Tap one to change it, cancel it or remove it.")}
 			/>
 			<ul className="rounded-panel border border-line bg-surface p-2">
 				{data.active.map((s) => (
@@ -379,9 +380,9 @@ function Cancelled({ data }: { data: SubscriptionOverview }) {
 			</p>
 			<ul className="space-y-2">
 				{data.cancelled.map((s) => (
-					<li key={s.id} className="flex items-center gap-3 opacity-80">
-						<BrandTile sub={s} size="sm" className="grayscale" />
-						<span className="min-w-0 flex-1 font-semibold break-words line-through decoration-ink-soft/60">
+					<li key={s.id} className="flex flex-wrap items-center gap-3">
+						<BrandTile sub={s} size="sm" className="opacity-80 grayscale" />
+						<span className="min-w-0 flex-1 font-semibold break-words line-through decoration-ink-soft/60 opacity-80">
 							{s.name}
 						</span>
 						<button
@@ -397,6 +398,7 @@ function Cancelled({ data }: { data: SubscriptionOverview }) {
 							<RotateCcw className="size-4" aria-hidden="true" />{" "}
 							{t("Bring back")}
 						</button>
+						<RemoveSubscription sub={s} variant="row" />
 					</li>
 				))}
 			</ul>

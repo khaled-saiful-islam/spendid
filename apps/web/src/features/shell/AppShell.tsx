@@ -114,9 +114,11 @@ export function AppShell() {
 			</aside>
 
 			<div className="min-w-0 pb-28 md:pb-0">
-				<header className="flex items-center justify-between px-4 pt-4 md:hidden">
-					<Link to="/app" aria-label={t("Spendid home")}>
-						<Logo />
+				<header className="flex items-center justify-between gap-2 px-4 pt-4 md:hidden">
+					<Link to="/app" aria-label={t("Spendid home")} className="shrink-0">
+						{/* Under 400px wide (most Android phones are 360) the coin alone, so the
+						    five buttons fit without pushing the page sideways. */}
+						<Logo wordClassName="max-[399px]:sr-only" />
 					</Link>
 					<div className="flex items-center gap-1">
 						<Link

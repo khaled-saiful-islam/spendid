@@ -28,7 +28,7 @@ const PEOPLE = [
 export function FamilyShare() {
 	return (
 		<section aria-labelledby="family-title" className="bg-scales">
-			<div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-20 sm:px-6 md:grid-cols-2">
+			<div className="mx-auto grid grid-cols-1 max-w-6xl items-center gap-10 px-4 py-20 sm:px-6 md:grid-cols-2">
 				<div>
 					<h2
 						id="family-title"

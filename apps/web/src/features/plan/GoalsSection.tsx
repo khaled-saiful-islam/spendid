@@ -279,7 +279,7 @@ export function GoalsSection({ goals, cur }: { goals: Goal[]; cur: string }) {
 					</span>
 				</button>
 			) : (
-				<ul className="grid gap-3 sm:grid-cols-2">
+				<ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 					{goals.map((g) => {
 						const ratio = Math.min(1, g.savedMinor / g.targetMinor);
 						const tint = goalTint(g.id);

@@ -20,7 +20,7 @@ export function SplitSummary({
 	const seedOf = new Map(split.people.map((p) => [p.key, p.userId ?? p.key]));
 	return (
 		<div className="space-y-6">
-			<ul className="grid gap-3 sm:grid-cols-2">
+			<ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 				{split.result.shares.map((s, i) => {
 					const paid = split.paid.includes(s.key);
 					return (

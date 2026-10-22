@@ -117,6 +117,53 @@ test("Ask Spendid opens with question tiles, playful modes and the question box"
 	await expect(page.getByRole("button", { name: /^Hype me up\s*Your real wins/ })).toBeVisible();
 });
 
+test("Ask opens with the question box in view, and it stays there while the ideas scroll", async ({ page }) => {
+	await page.goto("/app");
+	await page.getByRole("link", { name: "Ask Spendid" }).filter({ visible: true }).first().click();
+	await expect(page).toHaveURL(/\/app\/ask/);
+	const fresh = page.getByRole("button", { name: /New chat/ });
+	if (await fresh.count()) await fresh.first().click();
+	const box = page.getByRole("textbox", { name: "Your question" });
+	await expect(box).toBeInViewport();
+	// Nothing scrolls it away once the page has opened.
+	await page.waitForTimeout(1500);
+	await expect(box).toBeInViewport();
+	await page.evaluate(() => window.scrollBy(0, 900));
+	await page.waitForTimeout(300);
+	await expect(box).toBeInViewport();
+});
+
+test("Roast and Hype ask straight away, with their tone", async ({ page }) => {
+	const sent: { question: string; tone?: string }[] = [];
+	// A stand-in answer: this checks what the app sends, not the AI.
+	await page.route("**/api/ask", async (route) => {
+		sent.push(route.request().postDataJSON());
+		await route.fulfill({
+			status: 200,
+			headers: { "content-type": "text/event-stream" },
+			body: 'data: {"type":"token","text":"A playful answer."}\n\ndata: {"type":"done"}\n\n',
+		});
+	});
+	await page.goto("/app/ask");
+	const fresh = page.getByRole("button", { name: /New chat/ });
+	if (await fresh.count()) await fresh.first().click();
+
+	await page.getByRole("button", { name: /^Roast my month/ }).click();
+	await expect(page.getByText("A playful answer.")).toBeVisible();
+	expect(sent).toEqual([expect.objectContaining({ question: "Roast my spending this month.", tone: "roast" })]);
+	await expect(page.getByRole("textbox", { name: "Your question" })).toHaveValue("");
+
+	await page.getByRole("button", { name: /New chat/ }).first().click();
+	await page.getByRole("button", { name: /^Hype me up/ }).click();
+	await expect.poll(() => sent.length).toBe(2);
+	expect(sent[1]).toMatchObject({ question: "Hype me up about my money this month.", tone: "hype" });
+
+	// The two chats were saved to the account: remove them.
+	const list = (await (await page.request.get("/api/ask/threads")).json()).data as { id: string; title: string }[];
+	for (const thread of list.filter((x) => /^(Roast my spending|Hype me up)/.test(x.title)))
+		await page.request.delete(`/api/ask/threads/${thread.id}`, { headers: { "content-type": "application/json" }, data: {} });
+});
+
 test("Family shows the circle and what each side shares", async ({ page }) => {
 	await page.goto("/app/family");
 	await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
@@ -137,6 +184,24 @@ test("no page scrolls sideways on this screen size", async ({ page }) => {
 	}
 });
 
+test.describe("on a small phone (360 px wide, like most Android phones)", () => {
+	test.use({ viewport: { width: 360, height: 760 } });
+
+	test("no page scrolls sideways, and a sheet fits the screen", async ({ page }) => {
+		for (const path of ["/app", "/app/activity", "/app/activity?view=insights", "/app/plan", "/app/ask", "/app/family", "/app/me", "/app/subscriptions", "/app/wrapped"]) {
+			await page.goto(path);
+			await page.waitForLoadState("networkidle");
+			const wide = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1 || window.innerWidth > 360);
+			expect(wide, `${path} scrolls sideways`).toBe(false);
+		}
+		await page.goto("/app/subscriptions");
+		await page.getByRole("main").getByRole("button", { name: /^Add( your first)?$/ }).first().click();
+		const sheet = page.getByRole("dialog", { name: "Add a subscription" });
+		await expect(sheet.getByRole("button", { name: "Close" })).toBeInViewport();
+		expect((await sheet.boundingBox())?.width).toBeLessThanOrEqual(360);
+	});
+});
+
 test("subscriptions: add one, see it coming up, then remove it", async ({ page }) => {
 	const name = "Playwright Prime";
 	await page.goto("/app/subscriptions");
@@ -151,10 +216,50 @@ test("subscriptions: add one, see it coming up, then remove it", async ({ page }
 	await expect(sheet).toBeHidden();
 	await expect(page.getByRole("region", { name: "Coming up" }).getByText(name)).toBeVisible();
 
-	const res = await page.request.get("/api/subscriptions");
-	const sub = ((await res.json()).data.active as { id: string; name: string }[]).find((s) => s.name === name);
-	expect(sub).toBeTruthy();
-	await page.request.delete(`/api/subscriptions/${sub?.id}`, { headers: { "content-type": "application/json" }, data: {} });
+	// Remove it from the app: asks first, "Keep it" changes nothing.
+	const all = page.getByRole("region", { name: "All of them" });
+	await all.getByRole("button", { name: new RegExp(name) }).click();
+	const edit = page.getByRole("dialog", { name: "Edit subscription" });
+	await edit.getByRole("button", { name: "Remove", exact: true }).click();
+	await edit.getByRole("button", { name: "Keep it" }).click();
+	await expect(edit.getByRole("button", { name: "Remove for good" })).toHaveCount(0);
+	await edit.getByRole("button", { name: "Remove", exact: true }).click();
+	await expect(edit.getByRole("group", { name: `Remove ${name}?` })).toContainText("Expenses you've logged for it stay");
+	await edit.getByRole("button", { name: "Remove for good" }).click();
+	await expect(edit).toBeHidden();
+	await expect(page.getByText(`${name} removed.`)).toBeVisible();
+	await expect(page.getByText(name, { exact: true })).toHaveCount(0);
+	const left = (await (await page.request.get("/api/subscriptions")).json()).data as {
+		active: { name: string }[];
+		cancelled: { name: string }[];
+	};
+	expect([...left.active, ...left.cancelled].map((s) => s.name)).not.toContain(name);
+});
+
+test("a cancelled subscription can be removed from the Cancelled list", async ({ page }) => {
+	const name = "Playwright Old Plan";
+	const cats = (await (await page.request.get("/api/categories")).json()).data as { id: string }[];
+	const made = await page.request.post("/api/subscriptions", {
+		data: {
+			name,
+			amountMinor: 1500,
+			currency: "MYR",
+			cycle: "monthly",
+			nextDue: new Date(Date.now() + 5 * 86_400_000).toISOString().slice(0, 10),
+			remindDays: 1,
+			categoryId: cats[0]?.id,
+		},
+	});
+	expect(made.ok(), await made.text()).toBe(true);
+	const { id } = (await made.json()).data as { id: string };
+	await page.request.post(`/api/subscriptions/${id}/cancel`, { data: {} });
+
+	await page.goto("/app/subscriptions");
+	const cancelled = page.getByRole("region", { name: /Cancelled/ });
+	await cancelled.getByRole("button", { name: `Remove ${name}` }).click();
+	await cancelled.getByRole("button", { name: "Remove for good" }).click();
+	await expect(page.getByText(`${name} removed.`)).toBeVisible();
+	await expect(cancelled.getByText(name)).toHaveCount(0);
 });
 
 test("challenges: start one, see its days, then stop it", async ({ page }) => {

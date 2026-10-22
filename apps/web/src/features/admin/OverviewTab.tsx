@@ -138,7 +138,7 @@ export function OverviewTab() {
 						Counts only. Nobody's words or money are stored here.
 					</p>
 				</div>
-				<div className="grid gap-3 sm:grid-cols-3">
+				<div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
 					<Tile
 						icon={<Bot className="size-4" aria-hidden="true" />}
 						label="Tokens today"

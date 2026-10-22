@@ -8,6 +8,7 @@ import {
 	session,
 	user,
 } from "@spendid/db";
+import { allowanceMonth } from "@spendid/server";
 import { and, desc, eq, gte, ilike, lt, or, sql } from "drizzle-orm";
 
 /*
@@ -16,10 +17,8 @@ import { and, desc, eq, gte, ilike, lt, or, sql } from "drizzle-orm";
  * are deliberately unreachable from here — admin.boundary.test.ts enforces it.
  */
 
-const startOfUtcMonth = () => {
-	const n = new Date();
-	return new Date(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), 1));
-};
+/** Where this allowance month began (Malaysia time), the same month the AI guard counts. */
+const startOfAllowanceMonth = () => allowanceMonth().start;
 const daysAgo = (d: number) => new Date(Date.now() - d * 86_400_000);
 const escapeLike = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);
 
@@ -40,7 +39,7 @@ export interface AdminUser {
 export function createAdminRepository(db: Db) {
 	return {
 		async overview() {
-			const month = startOfUtcMonth();
+			const month = startOfAllowanceMonth();
 			const today = new Date(new Date().toISOString().slice(0, 10));
 			const [people] = await db
 				.select({
@@ -117,7 +116,7 @@ export function createAdminRepository(db: Db) {
 			before?: string;
 			limit: number;
 		}): Promise<{ items: AdminUser[]; nextBefore: string | null }> {
-			const month = startOfUtcMonth();
+			const month = startOfAllowanceMonth();
 			const filters = [];
 			if (opts.q) {
 				const term = `%${escapeLike(opts.q)}%`;

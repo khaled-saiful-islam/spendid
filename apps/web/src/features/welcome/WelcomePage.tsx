@@ -87,7 +87,7 @@ export function WelcomePage() {
 			<main>
 				<section className="relative">
 					<div className="bg-scales absolute inset-x-0 top-0 h-[70%] [mask-image:linear-gradient(#000,transparent)]" />
-					<div className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 pt-8 pb-16 sm:px-6 md:grid-cols-12 md:pt-16">
+					<div className="relative mx-auto grid grid-cols-1 max-w-6xl items-center gap-10 px-4 pt-8 pb-16 sm:px-6 md:grid-cols-12 md:pt-16">
 						<motion.div
 							className="md:col-span-7"
 							initial={{ opacity: 0, y: 24 }}
@@ -192,7 +192,7 @@ export function WelcomePage() {
 
 				<section
 					aria-labelledby="try-title"
-					className="mx-auto grid max-w-6xl items-center gap-10 px-4 pb-8 sm:px-6 md:grid-cols-2"
+					className="mx-auto grid grid-cols-1 max-w-6xl items-center gap-10 px-4 pb-8 sm:px-6 md:grid-cols-2"
 				>
 					<div>
 						<h2

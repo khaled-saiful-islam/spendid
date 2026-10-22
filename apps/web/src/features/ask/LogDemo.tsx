@@ -179,7 +179,7 @@ export function LogDemo({ currency }: { currency: string }) {
 	const money = (m: number) => formatMinor(m, currency);
 
 	return (
-		<figure className="relative grid w-full gap-4 overflow-hidden rounded-panel border border-line bg-surface p-4 text-left sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,15rem)] sm:items-center">
+		<figure className="relative grid grid-cols-1 w-full gap-4 overflow-hidden rounded-panel border border-line bg-surface p-4 text-left sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,15rem)] sm:items-center">
 			<span
 				aria-hidden="true"
 				className={cn(

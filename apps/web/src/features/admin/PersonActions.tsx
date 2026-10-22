@@ -31,6 +31,24 @@ function useRun(onDone: () => void) {
 	return { pending, error, run };
 }
 
+/** The 1st of next month in Malaysia time, when every AI allowance renews. */
+function renewsOn(now: Date = new Date()): string {
+	const [y, m] = new Intl.DateTimeFormat("en-CA", {
+		timeZone: "Asia/Kuala_Lumpur",
+		year: "numeric",
+		month: "2-digit",
+	})
+		.format(now)
+		.split("-")
+		.map(Number) as [number, number];
+	return new Date(Date.UTC(y, m, 1)).toLocaleDateString("en-MY", {
+		day: "numeric",
+		month: "short",
+		year: "numeric",
+		timeZone: "UTC",
+	});
+}
+
 export function AiLimitForm({
 	person,
 	defaultTokens,
@@ -69,6 +87,10 @@ export function AiLimitForm({
 			</label>
 			<fieldset className="space-y-2">
 				<legend className="mb-1 font-semibold">Monthly allowance</legend>
+				<p className="text-[0.9rem] text-ink-soft">
+					Renews by itself on {renewsOn()} (midnight, Malaysia time), every
+					month. Only switching AI off above stops it.
+				</p>
 				{[false, true].map((isCustom) => (
 					<label
 						key={String(isCustom)}

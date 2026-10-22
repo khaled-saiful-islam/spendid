@@ -25,7 +25,7 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
 	return createPortal(
 		<AnimatePresence>
 			{open && (
-				<div className="fixed inset-0 z-50 grid items-end sm:place-items-center sm:p-6">
+				<div className="fixed inset-0 z-50 grid grid-cols-1 items-end sm:place-items-center sm:p-6">
 					<motion.button
 						type="button"
 						aria-label={t("Close")}

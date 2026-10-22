@@ -81,7 +81,7 @@ export function MonthHero({ data }: { data: SubscriptionOverview }) {
 				))}
 			</ul>
 
-			<div className="mt-6 grid gap-5 sm:grid-cols-[1fr_auto] sm:items-end">
+			<div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-[1fr_auto] sm:items-end">
 				<dl className="grid grid-cols-2 gap-4">
 					<div>
 						<dt className="text-[0.85rem] text-plum-200">

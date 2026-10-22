@@ -107,7 +107,7 @@ export function PlanPage() {
 
 			<GoalsSection goals={goals} cur={summary.homeCurrency} />
 			<Challenges />
-			<div className="grid gap-5 lg:grid-cols-2 lg:items-start">
+			<div className="grid grid-cols-1 gap-5 lg:grid-cols-2 lg:items-start">
 				<SubscriptionsDoorway />
 				<WarrantyVault />
 			</div>

@@ -94,8 +94,8 @@ export const msF: Record<string, string> = {
 	"Download PDF": "Muat turun PDF",
 	"Soonest first. Mark one paid when it goes out.":
 		"Paling hampir dahulu. Tandakan dibayar apabila ia keluar.",
-	"Tap one to change its amount, day or reminder.":
-		"Ketik satu untuk mengubah jumlah, hari atau peringatannya.",
+	"Tap one to change it, cancel it or remove it.":
+		"Ketik satu untuk mengubah, membatalkan atau membuangnya.",
 	"Open this page in Safari and tap Share":
 		"Buka halaman ini dalam Safari dan ketik Kongsi",
 	"Scroll down and tap Add to Home Screen":
@@ -328,4 +328,14 @@ export const msF: Record<string, string> = {
 		"Masukkan jumlah seperti 500 atau 1,200.50.",
 	"No date on the receipt, so it's set to today. Change it if you bought this another day.":
 		"Tiada tarikh pada resit, jadi ia ditetapkan kepada hari ini. Tukar jika anda membelinya pada hari lain.",
+	"{name} removed.": "{name} dibuang.",
+	"Couldn't remove it. Try again.": "Tidak dapat membuangnya. Cuba lagi.",
+	"Remove {name}?": "Buang {name}?",
+	"Remove {name} for good? Spendid stops tracking it. Expenses you've logged for it stay.":
+		"Buang {name} terus? Spendid berhenti menjejakinya. Perbelanjaan yang anda catat untuknya kekal.",
+	"Remove {name} for good?": "Buang {name} terus?",
+	"Removing…": "Membuang…",
+	"Remove for good": "Buang terus",
+	"Keep it": "Simpan",
+	Remove: "Buang",
 };

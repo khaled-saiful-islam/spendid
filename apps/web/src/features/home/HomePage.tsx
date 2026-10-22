@@ -65,7 +65,7 @@ export function HomePage() {
 			<AskCard />
 			<DueSoonCard />
 
-			<div className="grid gap-5 lg:grid-cols-2 lg:items-start">
+			<div className="grid grid-cols-1 gap-5 lg:grid-cols-2 lg:items-start">
 				<section aria-labelledby="today-title" className="space-y-3">
 					<SectionHeader
 						id="today-title"

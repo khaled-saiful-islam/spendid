@@ -147,14 +147,11 @@ function Badge({ tint, children }: { tint: string; children: ReactNode }) {
 	);
 }
 
-/** First screen: the question box, an example, questions about this month, two modes. */
+/** First screen, under the question box: an example, questions about this month, two modes. */
 export function AskWelcome({
 	onAsk,
 	onTone,
-	composer,
 }: {
-	/** The question box, shown first. */
-	composer?: ReactNode;
 	onAsk: (q: string) => void;
 	/** A roast of the month's spending, or a hype-up of its wins. */
 	onTone: (tone: "roast" | "hype") => void;
@@ -261,13 +258,11 @@ export function AskWelcome({
 
 	return (
 		<div className="space-y-4">
-			{composer}
-
 			<section aria-labelledby="ask-ideas">
 				<h2 id="ask-ideas" className="sr-only">
 					{t("Questions about your month")}
 				</h2>
-				<ul className="grid gap-3 sm:grid-cols-2">
+				<ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 					<li className="col-span-full">
 						<LogDemo currency={summary?.homeCurrency ?? "MYR"} />
 					</li>
