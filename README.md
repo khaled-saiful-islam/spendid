@@ -13,7 +13,7 @@ Share money life with family, only with consent.
 ![PWA](https://img.shields.io/badge/PWA-installable-5a0fc8.svg)
 ![WCAG 2.2 AA](https://img.shields.io/badge/a11y-WCAG%202.2%20AA-0a7d4f.svg)
 
-**Live:** [spendid.mentora.stream](https://spendid.mentora.stream) (works best on a phone; add it to your home screen)
+**Live:** [spendid.stream](https://spendid.stream) (works best on a phone; add it to your home screen)
 
 <img src="docs/screenshots/home-desktop.png" alt="Spendid home on a laptop: safe to spend today with the last 7 days, and colour tiles for today, the month and bills" width="760">
 

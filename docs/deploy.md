@@ -9,7 +9,7 @@ Two ways to run it:
   certificate itself.
 - **Next to another site** that already uses 80/443: no ports at all, Cloudflare Tunnel
   instead. See [Next to another site](#next-to-another-site-cloudflare-tunnel). This is how
-  `https://spendid.mentora.stream` runs, beside Mentora on the same server.
+  `https://spendid.stream` runs, beside Mentora on the same server.
 
 ## 1. Settings
 
