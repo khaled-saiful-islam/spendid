@@ -240,6 +240,7 @@ const app = await buildApp({
 			settings,
 			sendEmail: outbox.send,
 			appUrl: env.APP_URL,
+			broadcast: notifications.broadcast,
 		}),
 	},
 	insights: { session, insights },
