@@ -25,7 +25,11 @@ import {
 	STEP_LABELS,
 	type ToolDeps,
 } from "./ask.tools";
-import { coverageProblems, planNameProblems } from "./coverage";
+import {
+	answerCategoryProblems,
+	coverageProblems,
+	planNameProblems,
+} from "./coverage";
 import { ungroundedNumbers } from "./grounding";
 import { questionLanguage, tellsAPurchase } from "./intent";
 import { repairToolCalls } from "./repair-tool-calls";
@@ -94,6 +98,7 @@ ${periodLine}
 - Keep answers short: one to four sentences, warm and plain. No jargon. Quote money exactly as the tools' "shown" values (e.g. "RM 12.50").
 - When you give a total, say which days it covers in plain words, e.g. "last week (5 to 11 Oct)".
 - Answer exactly the period and categories asked: answers are checked against the days and categories each tool looked at.
+- "Food" on its own means Eating out and Food delivery together: look up both, then give each by name and their total.
 - When a comparison or trend helps, call show_chart once with numbers a tool returned.
 - If the person tells you they spent money ("lunch 12 and grab 9", "Yesterday I spent RM49 on groceries", "semalam saya belanja 20 untuk makan"), that is a purchase to log, not a question: call propose_expenses, with daysAgo for the day they named. Don't check it against their data unless they ask ("did I…?", "how much…?").
 - To create or change things, use these tools. Each shows a card the person confirms; nothing changes until they tap it, so never say it's done or saved; say it's ready to confirm.
@@ -412,6 +417,13 @@ export function createAskAgent(deps: AgentDeps) {
 							lookups: side.lookups ?? [],
 							planRead: side.planRead,
 							cycles,
+						})
+					: []),
+				...(answer
+					? answerCategoryProblems({
+							question: input.question,
+							answer,
+							categories,
 						})
 					: []),
 				...(answer

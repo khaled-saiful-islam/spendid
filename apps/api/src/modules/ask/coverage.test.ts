@@ -2,6 +2,7 @@ import type { Category } from "@spendid/shared";
 import { describe, expect, it } from "vitest";
 import { periodLine } from "./ask.agent";
 import {
+	answerCategoryProblems,
 	coverageProblems,
 	type Lookup,
 	mentionedCategories,
@@ -253,6 +254,55 @@ describe("coverageProblems", () => {
 		expect(
 			asked("How much did I spend on food this month?", false),
 		).not.toEqual(expect.arrayContaining([expect.stringMatching(/transfers/)]));
+	});
+});
+
+describe("answerCategoryProblems", () => {
+	const check = (question: string, answer: string) =>
+		answerCategoryProblems({ question, answer, categories: CATEGORIES });
+
+	it("rejects an answer that leaves out a category the question asked about", () => {
+		const food = "How much did I spend on food this month?";
+		expect(
+			check(food, "You spent RM 34.70 on food delivery this month."),
+		).toEqual([expect.stringContaining("doesn't give Eating out")]);
+		// "Food" in an answer is only Eating out's name, so deliveries are still missing.
+		expect(check(food, "You spent RM 156.80 on food this month.")).toEqual([
+			expect.stringContaining("doesn't give Food delivery"),
+		]);
+		expect(
+			check(
+				"Did I spend more on groceries than eating out?",
+				"Groceries came to RM 200.00, so yes.",
+			),
+		).toEqual([expect.stringContaining("doesn't give Eating out")]);
+	});
+
+	it("accepts an answer that gives each one, in English or Malay", () => {
+		expect(
+			check(
+				"How much did I spend on food this month?",
+				"RM 191.50 on food: RM 156.80 eating out and RM 34.70 food delivery.",
+			),
+		).toEqual([]);
+		expect(
+			check(
+				"Berapa saya belanja untuk makan di luar dan penghantaran makanan?",
+				"Makan di luar RM 156.80 dan penghantaran makanan RM 34.70.",
+			),
+		).toEqual([]);
+		expect(
+			check(
+				"Did I spend more on groceries than eating out?",
+				"Yes: groceries RM 200.00, eating out RM 156.80.",
+			),
+		).toEqual([]);
+	});
+
+	it("leaves one-category questions alone", () => {
+		expect(check("How much on food delivery?", "RM 34.70 this month.")).toEqual(
+			[],
+		);
 	});
 });
 

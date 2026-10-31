@@ -135,9 +135,24 @@ export function mentionedCategories(
 	question: string,
 	categories: Category[],
 ): Category[] {
-	const text = question.toLowerCase().replace(/&/g, "and");
+	return namedIn(question, categories, true);
+}
+
+/**
+ * Categories a text names, in order. With `also`, words like "food" name every category they
+ * cover; without, only each category's own names count.
+ */
+function namedIn(
+	raw: string,
+	categories: Category[],
+	also: boolean,
+): Category[] {
+	const text = raw.toLowerCase().replace(/&/g, "and");
 	const found = categories.flatMap((c) => {
-		const words = [...categoryNames(c), ...(ALSO_NAMED[c.slug] ?? [])]
+		const words = [
+			...categoryNames(c),
+			...(also ? (ALSO_NAMED[c.slug] ?? []) : []),
+		]
 			.filter((n) => !TOO_COMMON.has(n))
 			.flatMap((n) => (n.includes(" ") ? [n] : forms(n)))
 			.filter((w) => w.length >= 3);
@@ -370,6 +385,27 @@ function spendingCoverage(input: {
 				);
 	}
 	return problems;
+}
+
+/**
+ * An answer to a question about two or more categories must give each one by name, so
+ * "food" is never answered with deliveries alone. "Food" in the answer is only Eating out.
+ */
+export function answerCategoryProblems(input: {
+	question: string;
+	answer: string;
+	categories: Category[];
+}): string[] {
+	const asked = mentionedCategories(input.question, input.categories);
+	if (asked.length < 2) return [];
+	const named = new Set(
+		namedIn(input.answer, input.categories, false).map((c) => c.id),
+	);
+	const missing = asked.filter((c) => !named.has(c.id));
+	if (missing.length === 0) return [];
+	return [
+		`The question asks about ${asked.map((c) => c.name).join(" and ")}, but the answer doesn't give ${missing.map((c) => c.name).join(" or ")}. Give each one's total by name, and their sum with calculate when the question asks for them together.`,
+	];
 }
 
 /** Each plan's name in English and Malay, as the app shows it. */
