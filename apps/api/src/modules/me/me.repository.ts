@@ -1,7 +1,8 @@
-import { type Db, profile, transaction, user } from "@spendid/db";
+import { type Db, payCycle, profile, transaction, user } from "@spendid/db";
 import type { Locale, Me, ProfileInput } from "@spendid/shared";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, gte, lte, sql } from "drizzle-orm";
 import { AppError } from "../../http/app-error";
+import { localDay, periodBounds } from "../money/period";
 
 export interface MeRepository {
 	find(userId: string): Promise<Me | null>;
@@ -51,9 +52,11 @@ export function createMeRepository(db: Db): MeRepository {
 
 	async function saveProfile(userId: string, input: ProfileInput): Promise<Me> {
 		const { name, ...money } = input;
+		// A cycle that just ended gets its draft first, so a new salary lands on today's cycle.
+		await periodBounds(db, userId);
 		await db.transaction(async (tx) => {
 			const [current] = await tx
-				.select({ homeCurrency: profile.homeCurrency })
+				.select({ homeCurrency: profile.homeCurrency, period: profile.period })
 				.from(profile)
 				.where(eq(profile.userId, userId))
 				.for("update")
@@ -81,6 +84,20 @@ export function createMeRepository(db: Db): MeRepository {
 						onboardedAt: sql`coalesce(${profile.onboardedAt}, now())`,
 					},
 				});
+			// On a cycle, the income is this cycle's salary (finished cycles keep theirs).
+			if (current?.period === "cycle" && money.monthlyIncomeMinor !== null) {
+				const today = localDay(money.timeZone);
+				await tx
+					.update(payCycle)
+					.set({ incomeMinor: money.monthlyIncomeMinor })
+					.where(
+						and(
+							eq(payCycle.userId, userId),
+							lte(payCycle.startsOn, today),
+							gte(payCycle.endsOn, today),
+						),
+					);
+			}
 		});
 		const me = await find(userId);
 		if (!me) throw new Error("profile saved but account not found");

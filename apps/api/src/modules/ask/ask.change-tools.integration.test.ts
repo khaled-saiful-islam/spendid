@@ -1,6 +1,6 @@
-import { createDb, profile, transaction } from "@spendid/db";
+import { createDb, payCycle, profile, transaction } from "@spendid/db";
 import type { AskAction, Category, Transaction } from "@spendid/shared";
-import { DEFAULT_PREFS } from "@spendid/shared";
+import { addDays, DEFAULT_PREFS } from "@spendid/shared";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createPerson, testDbUrl } from "../../../test/db";
@@ -335,6 +335,43 @@ describe.skipIf(!url)("ask change tools (real database)", () => {
 		});
 		await call("propose_budget", { category: "food", remove: true });
 		expect(actions[1]).toMatchObject({ kind: "budget", limitMinor: null });
+	});
+
+	it("on a cycle, the plan, limit and goal cards speak in cycles", async () => {
+		const cy = await createPerson(db);
+		const today = new Date().toLocaleDateString("en-CA", {
+			timeZone: "Asia/Kuala_Lumpur",
+		});
+		await db
+			.update(profile)
+			.set({ period: "cycle" })
+			.where(eq(profile.userId, cy));
+		await db.insert(payCycle).values({
+			userId: cy,
+			startsOn: addDays(today, -3),
+			endsOn: addDays(today, 10),
+			incomeMinor: 450_000,
+		});
+		const { call, actions } = run(cy);
+		await call("propose_plan_change", { monthlyIncome: 5000 });
+		expect(actions[0]).toMatchObject({
+			kind: "plan",
+			period: "cycle",
+			before: { incomeMinor: 450_000 },
+			input: { monthlyIncomeMinor: 500_000 },
+		});
+		await call("propose_budget", { category: "food", monthlyLimit: 300 });
+		expect(actions[1]).toMatchObject({ kind: "budget", period: "cycle" });
+		await call("propose_goal", {
+			name: "Trip",
+			target: 900,
+			byYear: Number(addDays(today, 24).slice(0, 4)),
+			byMonth: Number(addDays(today, 24).slice(5, 7)),
+		});
+		expect(actions[2]).toMatchObject({ kind: "goal", period: "cycle" });
+		expect(
+			(actions[2] as { neededMinor?: number }).neededMinor,
+		).toBeGreaterThan(0);
 	});
 
 	it("offers pay yourself first from no plan, and says when nothing would change", async () => {

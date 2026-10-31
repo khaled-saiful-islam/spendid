@@ -152,6 +152,12 @@ describe.skipIf(!url)("plan setup API (real database)", () => {
 		const s = await call<Summary>(maya, "GET", "/summary");
 		expect(s.body.data.period).toMatchObject({ kind: "cycle", start: day(-2) });
 		expect(s.body.data.incomeMinor).toBe(512_300);
+		// The profile's income follows, so setup and Me show the same salary.
+		const [p] = await db
+			.select({ income: profile.monthlyIncomeMinor })
+			.from(profile)
+			.where(eq(profile.userId, maya));
+		expect(p?.income).toBe(512_300);
 	});
 
 	it("edits the current cycle and moves the previous cycle's end", async () => {

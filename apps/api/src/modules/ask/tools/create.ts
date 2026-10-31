@@ -1,6 +1,12 @@
-import { MAX_DAYS_BACK, SUBSCRIPTION_BRANDS, toMinor } from "@spendid/shared";
+import {
+	goalCycleNeeded,
+	MAX_DAYS_BACK,
+	SUBSCRIPTION_BRANDS,
+	toMinor,
+} from "@spendid/shared";
 import { tool } from "langchain";
 import { z } from "zod";
+import { periodBounds } from "../../money/period";
 import {
 	type AskContext,
 	CategoryWord,
@@ -87,9 +93,23 @@ export function createTools(
 				: null;
 			if (targetDate && targetDate <= new Date().toISOString().slice(0, 10))
 				return "That date has passed. Ask for a date in the future.";
+			// On a cycle, the card says what the goal sets aside each cycle.
+			const period = await periodBounds(deps.db, ctx.userId);
+			const perCycle =
+				period.kind === "cycle"
+					? {
+							period: "cycle" as const,
+							neededMinor: goalCycleNeeded(
+								{ targetMinor, savedMinor: 0, targetDate },
+								period.start,
+								period.days,
+							),
+						}
+					: {};
 			return (
 				offer({
 					kind: "goal",
+					...perCycle,
 					name: capitalise(input.name.trim().slice(0, 60)),
 					emoji:
 						GOAL_ICONS[closestWord(input.icon, GOAL_ICON_WORDS) ?? "other"] ??
@@ -186,12 +206,13 @@ export function createTools(
 					spentMinor:
 						s.byCategory.find((c) => c.categoryId === found.id)?.spentMinor ??
 						0,
+					...(s.period.kind === "cycle" ? { period: "cycle" as const } : {}),
 				}) ?? NOT_SAVED
 			);
 		},
 		{
 			name: "propose_budget",
-			description: `Prepare a monthly spending limit for one category, for the person to confirm (e.g. "cap eating out at 400 a month"), or remove one (remove: true). Amount in ${cur}; 0 means no spending at all in it.`,
+			description: `Prepare a spending limit for one category, per month (or per cycle for people on a cycle), for the person to confirm (e.g. "cap eating out at 400 a month"), or remove one (remove: true). Amount in ${cur}; 0 means no spending at all in it.`,
 			schema: z.object({
 				category: CategoryWord,
 				monthlyLimit: z.number().min(0).nullish(),

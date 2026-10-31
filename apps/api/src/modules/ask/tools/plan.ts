@@ -3,6 +3,7 @@ import { type BUDGET_METHODS, toMinor } from "@spendid/shared";
 import { eq } from "drizzle-orm";
 import { tool } from "langchain";
 import { z } from "zod";
+import { periodBounds } from "../../money/period";
 import {
 	type AskContext,
 	closestWord,
@@ -42,20 +43,25 @@ export function planTools(deps: ToolDeps, ctx: AskContext, side: SideChannel) {
 				.limit(1);
 			if (!row) return "The person's plan isn't set up yet.";
 			const { p } = row;
+			// On a cycle, "income" is this cycle's salary.
+			const period = await periodBounds(db, ctx.userId);
+			const cycle = period.kind === "cycle";
+			const currentIncome = cycle ? period.incomeMinor : p.monthlyIncomeMinor;
 			const styleWord = closestWord(input.style, Object.keys(STYLE_WORDS));
 			const method = styleWord ? STYLE_WORDS[styleWord] : p.budgetMethod;
 			const incomeMinor =
 				input.monthlyIncome !== null && input.monthlyIncome !== undefined
 					? toMinor(input.monthlyIncome, cur)
-					: p.monthlyIncomeMinor;
-			if (method === p.budgetMethod && incomeMinor === p.monthlyIncomeMinor)
+					: currentIncome;
+			if (method === p.budgetMethod && incomeMinor === currentIncome)
 				return "Nothing to change was given. Ask for the new monthly income or budget style.";
 			return (
 				offer({
 					kind: "plan",
 					currency: cur,
+					...(cycle ? { period: "cycle" as const } : {}),
 					before: {
-						incomeMinor: p.monthlyIncomeMinor,
+						incomeMinor: currentIncome,
 						method: p.budgetMethod,
 					},
 					input: {
@@ -71,7 +77,7 @@ export function planTools(deps: ToolDeps, ctx: AskContext, side: SideChannel) {
 		},
 		{
 			name: "propose_plan_change",
-			description: `Change the person's monthly take-home income ("my salary is now 6000") or budget style ("switch to envelopes"): 50/30/20, envelope, zero-based or pay yourself first (salary minus monthly transfers is what's left to spend). Amount in ${cur}. Safe-to-spend is worked out from these.`,
+			description: `Change the person's take-home income ("my salary is now 6000"; on a cycle, this cycle's salary) or budget style ("switch to envelopes"): 50/30/20, envelope, zero-based or pay yourself first (salary minus monthly transfers is what's left to spend). Amount in ${cur}. Safe-to-spend is worked out from these.`,
 			schema: z.object({
 				monthlyIncome: z.number().min(0).nullish(),
 				style: WordSchema(Object.keys(STYLE_WORDS)).nullish(),

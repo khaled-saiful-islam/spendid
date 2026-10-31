@@ -39,15 +39,25 @@ function GoalBody({
 			<Title>{action.name}</Title>
 			<p className="num font-semibold">{money(action.targetMinor)}</p>
 			<Note>
-				{action.targetDate && months
-					? t("{amount} a month to make it by {date}.", {
-							amount: money(Math.ceil(action.targetMinor / months)),
+				{action.targetDate &&
+				action.period === "cycle" &&
+				action.neededMinor !== undefined
+					? t("{amount} a cycle to make it by {date}.", {
+							amount: money(action.neededMinor),
 							date: formatDay(action.targetDate, {
 								month: "short",
 								year: "numeric",
 							}),
 						})
-					: t("No deadline. Add whenever you like.")}
+					: action.targetDate && months
+						? t("{amount} a month to make it by {date}.", {
+								amount: money(Math.ceil(action.targetMinor / months)),
+								date: formatDay(action.targetDate, {
+									month: "short",
+									year: "numeric",
+								}),
+							})
+						: t("No deadline. Add whenever you like.")}
 			</Note>
 		</Row>
 	);
@@ -104,9 +114,16 @@ function BudgetBody({ action }: { action: ActionOf<"budget"> }) {
 			>
 				<Title>{t(action.categoryName)}</Title>
 				<Note>
-					{t("No monthly limit any more. {amount} spent so far this month.", {
-						amount: money(action.spentMinor),
-					})}
+					{action.period === "cycle"
+						? t("No limit any more. {amount} spent so far this cycle.", {
+								amount: money(action.spentMinor),
+							})
+						: t(
+								"No monthly limit any more. {amount} spent so far this month.",
+								{
+									amount: money(action.spentMinor),
+								},
+							)}
 				</Note>
 			</Row>
 		);
@@ -116,7 +133,9 @@ function BudgetBody({ action }: { action: ActionOf<"budget"> }) {
 		<Row visual={<CategoryIcon icon={cat?.icon} tint={cat?.tint} size="lg" />}>
 			<Title>{t(action.categoryName)}</Title>
 			<p className="num font-semibold">
-				{t("{amount} a month", { amount: money(limit) })}
+				{action.period === "cycle"
+					? t("{amount} a cycle", { amount: money(limit) })
+					: t("{amount} a month", { amount: money(limit) })}
 			</p>
 			<div className="h-2.5 overflow-hidden rounded-full bg-surface-2">
 				<motion.div

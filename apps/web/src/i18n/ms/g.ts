@@ -56,4 +56,7 @@ export const msG: Record<string, string> = {
 	"{amount} less than all of last cycle":
 		"{amount} kurang daripada seluruh kitaran lepas",
 	"No spending this cycle yet.": "Belum ada perbelanjaan kitaran ini.",
+	"No limit any more. {amount} spent so far this cycle.":
+		"Tiada had lagi. {amount} dibelanjakan setakat ini dalam kitaran ini.",
+	"{amount} a cycle": "{amount} setiap kitaran",
 };

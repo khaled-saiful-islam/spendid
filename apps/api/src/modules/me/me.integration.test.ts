@@ -1,4 +1,6 @@
-import { createDb, transaction } from "@spendid/db";
+import { createDb, payCycle, profile, transaction } from "@spendid/db";
+import { addDays } from "@spendid/shared";
+import { asc, eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createPerson, testDbUrl } from "../../../test/db";
 import { seedCategories } from "../../scripts/categories";
@@ -78,5 +80,40 @@ describe.skipIf(!url)("profile (real database)", () => {
 			monthlyIncomeMinor: 650_000,
 		});
 		expect(ok.profile.monthlyIncomeMinor).toBe(650_000);
+	});
+	it("on a cycle, a new income becomes this cycle's salary (finished cycles keep theirs)", async () => {
+		const id = await createPerson(db);
+		const today = new Date().toLocaleDateString("en-CA", {
+			timeZone: "Asia/Kuala_Lumpur",
+		});
+		await db
+			.update(profile)
+			.set({ period: "cycle" })
+			.where(eq(profile.userId, id));
+		await db.insert(payCycle).values([
+			{
+				userId: id,
+				startsOn: addDays(today, -40),
+				endsOn: addDays(today, -11),
+				incomeMinor: 400_000,
+			},
+			{
+				userId: id,
+				startsOn: addDays(today, -10),
+				endsOn: addDays(today, 20),
+				incomeMinor: 450_000,
+			},
+		]);
+		await me.saveProfile(id, {
+			...base,
+			homeCurrency: "MYR",
+			monthlyIncomeMinor: 520_000,
+		});
+		const rows = await db
+			.select({ incomeMinor: payCycle.incomeMinor })
+			.from(payCycle)
+			.where(eq(payCycle.userId, id))
+			.orderBy(asc(payCycle.startsOn));
+		expect(rows.map((r) => r.incomeMinor)).toEqual([400_000, 520_000]);
 	});
 });

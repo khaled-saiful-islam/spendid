@@ -245,7 +245,11 @@ function PlanBody({ action }: { action: ActionOf<"plan"> }) {
 			<Title>{t("Your plan")}</Title>
 			{b.incomeMinor !== n.monthlyIncomeMinor && (
 				<>
-					<Note>{t("Take-home pay each month")}</Note>
+					<Note>
+						{action.period === "cycle"
+							? t("Salary this cycle")
+							: t("Take-home pay each month")}
+					</Note>
 					<Change
 						from={money(b.incomeMinor)}
 						to={money(n.monthlyIncomeMinor)}

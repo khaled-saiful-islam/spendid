@@ -137,7 +137,12 @@ export function createPlanSetupService(db: Db, summary: SummaryService) {
 			else await tx.insert(payCycle).values({ userId, ...values });
 			await tx
 				.update(profile)
-				.set({ period: "cycle", budgetMethod: input.method })
+				// The profile's income follows, so setup and Me show the same salary.
+				.set({
+					period: "cycle",
+					budgetMethod: input.method,
+					monthlyIncomeMinor: input.incomeMinor,
+				})
 				.where(eq(profile.userId, userId));
 		});
 		return get(userId);

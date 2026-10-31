@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { CHALLENGE_KINDS } from "./challenges";
+import { PERIOD_KINDS } from "./cycle";
 import { RELATIONS, SHARE_LEVELS } from "./family";
 import { EMAIL_GROUPS } from "./notifications";
 import { LOCALES, ProfileInputSchema } from "./profile";
@@ -61,6 +62,10 @@ export const AskActionSchema = z.discriminatedUnion("kind", [
 		targetMinor: z.number().int().positive(),
 		currency: z.string().length(3),
 		targetDate: z.string().nullable(),
+		/** Set for people on a cycle: the card speaks per cycle. */
+		period: z.enum(PERIOD_KINDS).optional(),
+		/** What the goal sets aside each cycle (with `period: "cycle"`). */
+		neededMinor: z.number().int().min(0).optional(),
 	}),
 	z.object({
 		kind: z.literal("deposit"),
@@ -81,7 +86,10 @@ export const AskActionSchema = z.discriminatedUnion("kind", [
 		/** null removes the limit. */
 		limitMinor: z.number().int().min(0).nullable(),
 		currency: z.string().length(3),
+		/** Spent in the current period (the month, or the person's cycle). */
 		spentMinor: z.number().int(),
+		/** Set for people on a cycle: the limit is per cycle. */
+		period: z.enum(PERIOD_KINDS).optional(),
 	}),
 	z.object({
 		kind: z.literal("subscription"),
@@ -170,6 +178,8 @@ export const AskActionSchema = z.discriminatedUnion("kind", [
 	z.object({
 		kind: z.literal("plan"),
 		currency: z.string().length(3),
+		/** Set for people on a cycle: the income is this cycle's salary. */
+		period: z.enum(PERIOD_KINDS).optional(),
 		before: z.object({
 			incomeMinor: z.number().int().nullable(),
 			method: z.string().nullable(),
