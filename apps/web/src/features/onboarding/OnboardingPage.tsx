@@ -9,7 +9,7 @@ import {
 } from "@spendid/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useRouter } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { type FormEvent, useState } from "react";
 import { Logo } from "@/components/brand/Logo";
@@ -68,6 +68,12 @@ export function OnboardingPage({ me }: { me: Me }) {
 	const [errors, setErrors] = useState<Record<string, string>>({});
 	const [pending, setPending] = useState(false);
 	const [revealed, setRevealed] = useState<Summary | null>(null);
+	// Changing a plan already set up can be left at any step, unsaved; first setup can't.
+	const editing = !me.needsOnboarding;
+	const leave = () => {
+		if (router.history.canGoBack()) router.history.back();
+		else void navigate({ to: "/app" });
+	};
 	const {
 		data: savedTransfers,
 		isError: transfersFailed,
@@ -169,11 +175,23 @@ export function OnboardingPage({ me }: { me: Me }) {
 				className="pointer-events-none absolute bottom-[-30%] left-[-25%] h-[40rem] w-[40rem] rounded-full bg-[radial-gradient(closest-side,rgb(122_79_196/0.35),transparent)]"
 			/>
 			<div className="relative mx-auto grid grid-cols-1 min-h-dvh max-w-6xl gap-6 px-4 pt-5 pb-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-center lg:gap-12 lg:py-10">
-				<div className="flex items-center justify-between lg:col-span-2">
+				<div className="flex flex-wrap items-center justify-between gap-3 lg:col-span-2">
 					<Logo className="text-plum-50" />
-					<span className="text-[0.95rem] font-medium text-plum-200">
-						{t("Step {n} of {total}", { n: step + 1, total: STEPS.length })}
-					</span>
+					<div className="flex items-center gap-3">
+						<span className="text-[0.95rem] font-medium text-plum-200">
+							{t("Step {n} of {total}", { n: step + 1, total: STEPS.length })}
+						</span>
+						{editing && (
+							<button
+								type="button"
+								onClick={leave}
+								className="inline-flex h-11 items-center gap-1.5 rounded-full border-2 border-plum-300/40 px-4 font-semibold text-plum-50 hover:bg-plum-50/10"
+							>
+								<X className="size-4" aria-hidden="true" />
+								{t("Cancel")}
+							</button>
+						)}
+					</div>
 				</div>
 
 				<div className="hidden lg:order-2 lg:block">

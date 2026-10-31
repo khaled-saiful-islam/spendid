@@ -200,6 +200,37 @@ test("the sheet fits a small phone and passes accessibility checks", async ({
 	await expectNoSeriousIssues(page, "plan sheet at 360px");
 });
 
+test("the sheet's close button stays in reach after scrolling to the bottom", async ({
+	page,
+}) => {
+	await page.setViewportSize({ width: 360, height: 640 });
+	const sheet = await openSheet(page);
+	await pick(sheet, "My own dates");
+	await sheet.getByRole("button", { name: "Save" }).scrollIntoViewIfNeeded();
+	const close = sheet.getByRole("button", { name: "Close" });
+	await expect(close).toBeInViewport({ ratio: 1 });
+	await close.click();
+	await expect(sheet).toHaveCount(0);
+	expect((await getSetup(page.request)).period).toBe(saved.period);
+});
+
+test("Me → Change: Cancel goes back without saving", async ({
+	page,
+	request,
+}) => {
+	await page.goto("/app/me");
+	await page
+		.getByRole("region", { name: "Money settings" })
+		.getByRole("link", { name: "Change" })
+		.click();
+	await expect(page).toHaveURL(/\/onboarding/);
+	await page.getByLabel("What should we call you?").fill("Someone else");
+	await page.getByRole("button", { name: "Cancel" }).click();
+	await expect(page).toHaveURL(/\/app\/me$/);
+	await expect(page.getByText("Someone else")).toHaveCount(0);
+	expect(await getSetup(request)).toEqual(saved);
+});
+
 test("in Bahasa Melayu the sheet is translated", async ({ page, request }) => {
 	await data(await request.put("/api/me/locale", { data: { locale: "ms" } }));
 	await page.goto("/app/plan");

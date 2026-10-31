@@ -74,6 +74,7 @@ export const msA: Record<string, string> = {
 	"Choose a photo": "Pilih gambar",
 	"Choose which emails you get in Spendid's settings instead.":
 		"Pilih e-mel yang anda mahu dalam tetapan Spendid.",
+	Cancel: "Batal",
 	Close: "Tutup",
 	"Close camera": "Tutup kamera",
 	Continue: "Teruskan",

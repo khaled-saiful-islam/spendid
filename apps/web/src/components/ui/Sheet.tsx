@@ -49,7 +49,8 @@ export function Sheet({ open, onClose, title, children }: SheetProps) {
 						transition={{ type: "spring", stiffness: 420, damping: 38 }}
 					>
 						<div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-line sm:hidden" />
-						<div className="mb-4 flex items-center justify-between gap-3">
+						{/* Stays at the top while the sheet scrolls, so Close is always in reach. */}
+						<div className="sticky -top-5 z-10 -mx-5 mb-4 flex items-center justify-between gap-3 bg-surface px-5 py-1">
 							<h2 id={titleId} className="text-[1.6rem] font-bold">
 								{title}
 							</h2>
