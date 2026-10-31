@@ -43,6 +43,8 @@ Rules:
 - The text is a speech transcript with little punctuation. Split it into separate purchases; each has its own amount.
 - An amount belongs to the item named right before or right after it. "Grab 15" is a Grab ride costing 15.
 - Grab, Uber, Gojek, taxi, LRT, petrol = transport. Coffee, lunch, dinner, kopi, teh = food.
+- Food ordered online or delivered (GrabFood, Foodpanda, ShopeeFood, "food delivery") = food-delivery.
+- If no category fits, use other.
 - Currency: use one only if said ("ringgit" = MYR, "dollars" = USD unless context says otherwise), else null.
 - Split bills: amount is the whole bill, yourShare is what the speaker paid, splitWith is the other person.
 - daysAgo counts back from today (given below): "yesterday" / "semalam" = 1, "kelmarin" / "day before yesterday" = 2, "3 days ago" = 3, a weekday ("on Monday", "hari Isnin") = the most recent one, a date ("3 October", "3/10" is day/month) = the days from that date to today. Otherwise 0. Never a future day.

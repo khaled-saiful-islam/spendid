@@ -51,10 +51,31 @@ export const SYSTEM_CATEGORIES: SystemCategory[] = [
 			"zus",
 			"subway",
 			"dominos",
-			"grabfood",
-			"foodpanda",
 			"drinks",
 			"meal",
+		],
+	},
+	{
+		slug: "food-delivery",
+		name: "Food delivery",
+		icon: "Motorbike",
+		tint: "amber",
+		kind: "want",
+		keywords: [
+			"grabfood",
+			"grab food",
+			"foodpanda",
+			"food panda",
+			"shopeefood",
+			"shopee food",
+			"airasia food",
+			"food delivery",
+			"delivery food",
+			"online food",
+			"food online",
+			"food order",
+			"order food",
+			"penghantaran makanan",
 		],
 	},
 	{
@@ -684,11 +705,28 @@ export const SYSTEM_CATEGORIES: SystemCategory[] = [
 	},
 ];
 
-/** Best category for free text, by keyword. Null when nothing matches. */
+/** Checked first: "grabfood nasi lemak" is a delivery, though nasi lemak is also Eating out. */
+const GUESS_ORDER = [
+	...SYSTEM_CATEGORIES.filter((c) => c.slug === "food-delivery"),
+	...SYSTEM_CATEGORIES.filter((c) => c.slug !== "food-delivery"),
+];
+
+/**
+ * Best category for free text, by keyword. Phrases ("grab food") are checked before single
+ * words ("grab", "food"), each in GUESS_ORDER. Null when nothing matches.
+ */
 export function guessCategorySlug(text: string): string | null {
-	const lower = ` ${text.toLowerCase().replace(/[^\p{L}\p{N}\s-]/gu, " ")} `;
-	for (const c of SYSTEM_CATEGORIES) {
-		if (c.keywords.some((k) => lower.includes(` ${k} `))) return c.slug;
-	}
+	const lower = ` ${text
+		.toLowerCase()
+		.replace(/[^\p{L}\p{N}\s-]/gu, " ")
+		.replace(/\s+/g, " ")} `;
+	for (const phrase of [true, false])
+		for (const c of GUESS_ORDER)
+			if (
+				c.keywords.some(
+					(k) => k.includes(" ") === phrase && lower.includes(` ${k} `),
+				)
+			)
+				return c.slug;
 	return null;
 }

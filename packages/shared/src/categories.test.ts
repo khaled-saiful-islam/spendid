@@ -34,4 +34,25 @@ describe("system categories", () => {
 		for (const [text, slug] of cases)
 			expect([text, guessCategorySlug(text)]).toEqual([text, slug]);
 	});
+
+	it("files food ordered online as Food delivery, and eating out stays Eating out", () => {
+		const cases: [string, string][] = [
+			["grabfood nasi lemak", "food-delivery"],
+			["grab food dinner", "food-delivery"],
+			["foodpanda", "food-delivery"],
+			["shopee food", "food-delivery"],
+			["food delivery", "food-delivery"],
+			["food online order", "food-delivery"],
+			["online food order", "food-delivery"],
+			["lunch", "food"],
+			["mamak dinner", "food"],
+			["grab to office", "transport"],
+		];
+		for (const [text, slug] of cases)
+			expect([text, guessCategorySlug(text)]).toEqual([text, slug]);
+	});
+
+	it("finds nothing for words it doesn't know, so the app can fall back to Other", () => {
+		expect(guessCategorySlug("xyz thing")).toBeNull();
+	});
 });

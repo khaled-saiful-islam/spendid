@@ -50,6 +50,46 @@ test("add an expense by typing, see it in Activity, then remove it", async ({ pa
 	await expect(page.getByText(shop)).toHaveCount(0);
 });
 
+test("an expense no category fits is saved as Other, and lists show it without a minus", async ({ page }) => {
+	const shop = "Zqx playwright thing";
+	await removeLeftovers(page.request, shop);
+	await page.goto("/app");
+	await page.getByRole("button", { name: /^Add spending/ }).click();
+	await page
+		.getByRole("dialog", { name: "Add spending" })
+		.getByRole("button", { name: /^Type it/ })
+		.click();
+	const sheet = page.getByRole("dialog", { name: "Add an expense" });
+	await sheet.getByLabel("What was it?").fill(shop);
+	await sheet.getByLabel("Amount").fill("7.30");
+	await expect(sheet.getByRole("button", { name: "Other", exact: true })).toHaveAttribute("aria-pressed", "true");
+	await sheet.getByRole("button", { name: "Add RM 7.30" }).click();
+	await expect(sheet).toBeHidden();
+
+	await page.goto("/app/activity");
+	const row = page.getByRole("button", { name: new RegExp(shop) }).first();
+	await expect(row).toContainText("Other");
+	await expect(row).toContainText("RM 7.30");
+	await expect(row).not.toContainText(/[-−]\s?RM/);
+	await row.click();
+	await page.getByRole("dialog").getByRole("button", { name: "Remove this expense" }).click();
+	await expect(page.getByText("Expense removed.")).toBeVisible();
+});
+
+test("food ordered on GrabFood is filed as Food delivery", async ({ page }) => {
+	await page.goto("/app");
+	await page.getByRole("button", { name: /^Add spending/ }).click();
+	await page
+		.getByRole("dialog", { name: "Add spending" })
+		.getByRole("button", { name: /^Type it/ })
+		.click();
+	const sheet = page.getByRole("dialog", { name: "Add an expense" });
+	await sheet.getByLabel("Type it like you'd say it").fill("GrabFood nasi lemak 18");
+	await expect(sheet.getByRole("button", { name: "Food delivery", exact: true })).toHaveAttribute("aria-pressed", "true");
+	await page.keyboard.press("Escape");
+	await expect(sheet).toBeHidden();
+});
+
 test("a typed sentence that says 'yesterday' is saved on yesterday, named for what it was", async ({ page }) => {
 	const shop = "Groceries";
 	const amount = 4_937;

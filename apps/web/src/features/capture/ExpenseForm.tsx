@@ -78,7 +78,10 @@ export function ExpenseForm({
 	}, [sharedText, categories]);
 
 	const minor = draftMinor(draft);
-	const category = categories.find((c) => c.id === draft.categoryId);
+	// Nothing picked and nothing guessed: Other, so an expense never waits on a category.
+	const chosenId =
+		draft.categoryId || categories.find((c) => c.slug === "other")?.id || "";
+	const category = categories.find((c) => c.id === chosenId);
 	const { popular } = currencyOptions("en");
 	const currencies = [
 		homeCurrency,
@@ -89,13 +92,13 @@ export function ExpenseForm({
 	async function onSubmit(e: FormEvent) {
 		e.preventDefault();
 		if (minor === null) return setError(t("Enter how much it was."));
-		if (!draft.categoryId) return setError(t("Pick a category."));
+		if (!chosenId) return setError(t("Pick a category."));
 		setPending(true);
 		setError(null);
 		const body = {
 			amountMinor: minor,
 			currency: draft.currency,
-			categoryId: draft.categoryId,
+			categoryId: chosenId,
 			merchant: draft.merchant.trim() || null,
 			occurredAt: draftOccurredAt(draft.day),
 		};
@@ -156,9 +159,7 @@ export function ExpenseForm({
 	// The ten most common first; the rest one tap away. The picked one always shows.
 	const shownCategories = allCategories
 		? categories
-		: categories.filter(
-				(c, i) => i < COMMON_CATEGORIES || c.id === draft.categoryId,
-			);
+		: categories.filter((c, i) => i < COMMON_CATEGORIES || c.id === chosenId);
 	const today = appToday();
 	/** The four days before yesterday, one tap each. */
 	const recentDays = [2, 3, 4, 5].map((n) => addDays(today, -n));
@@ -312,7 +313,7 @@ export function ExpenseForm({
 						<button
 							key={c.id}
 							type="button"
-							aria-pressed={draft.categoryId === c.id}
+							aria-pressed={chosenId === c.id}
 							onClick={() => {
 								setPickedByHand(true);
 								patch({ categoryId: c.id });
@@ -320,7 +321,7 @@ export function ExpenseForm({
 							className={cn(
 								chip,
 								"pl-1.5",
-								draft.categoryId === c.id ? chipOn : chipOff,
+								chosenId === c.id ? chipOn : chipOff,
 							)}
 						>
 							<CategoryIcon

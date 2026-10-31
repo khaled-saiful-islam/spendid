@@ -77,6 +77,7 @@ const norm = (s: string) =>
 /** The app's Malay names for the built-in categories, so questions in Malay are understood. */
 const MS_NAMES: Record<string, string> = {
 	food: "Makan di luar",
+	"food-delivery": "Penghantaran makanan",
 	groceries: "Barang dapur",
 	transport: "Pengangkutan",
 	car: "Kereta & minyak",

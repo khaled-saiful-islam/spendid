@@ -81,8 +81,12 @@ export function ReceiptReview({
 	const [error, setError] = useState<string | null>(null);
 
 	const memory = new Map(receipt.priceMemory.map((p) => [p.itemName, p]));
+	// The receipt's category, or Other when it couldn't tell, so saving never waits on a pick.
 	const chosenCategory =
-		categoryId || categories.find((c) => c.slug === d?.categorySlug)?.id || "";
+		categoryId ||
+		categories.find((c) => c.slug === d?.categorySlug)?.id ||
+		categories.find((c) => c.slug === "other")?.id ||
+		"";
 	const itemsSum = lines.reduce(
 		(s, l) => s + toMinor(toNum(l.totalText) || 0, cur),
 		0,

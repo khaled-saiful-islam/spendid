@@ -122,29 +122,49 @@ export function mentionedPeriods(question: string): Period[] {
 
 const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+/** More words that name a category in a question: "food" means deliveries as well as eating out. */
+const ALSO_NAMED: Record<string, string[]> = { "food-delivery": ["food"] };
+
+interface Match {
+	at: number;
+	end: number;
+}
+
 /** Categories the question names, in the order it names them. */
 export function mentionedCategories(
 	question: string,
 	categories: Category[],
 ): Category[] {
 	const text = question.toLowerCase().replace(/&/g, "and");
-	const found: { c: Category; at: number }[] = [];
-	for (const c of categories) {
-		const words = categoryNames(c)
+	const found = categories.flatMap((c) => {
+		const words = [...categoryNames(c), ...(ALSO_NAMED[c.slug] ?? [])]
 			.filter((n) => !TOO_COMMON.has(n))
 			.flatMap((n) => (n.includes(" ") ? [n] : forms(n)))
 			.filter((w) => w.length >= 3);
-		let at = -1;
-		for (const w of new Set(words)) {
-			const m = new RegExp(
-				`(?<![\\p{L}-])${escapeRegex(w)}(?![\\p{L}-])`,
-				"iu",
-			).exec(text);
-			if (m && (at < 0 || m.index < at)) at = m.index;
-		}
-		if (at >= 0) found.push({ c, at });
-	}
-	return found.sort((a, b) => a.at - b.at).map((f) => f.c);
+		const matches = [...new Set(words)].flatMap((w) =>
+			[
+				...text.matchAll(
+					new RegExp(`(?<![\\p{L}-])${escapeRegex(w)}(?![\\p{L}-])`, "giu"),
+				),
+			].map((m): Match => ({ at: m.index, end: m.index + m[0].length })),
+		);
+		return matches.length > 0 ? [{ c, matches }] : [];
+	});
+	// "food" inside "food delivery" names Food delivery only, not Eating out as well.
+	const inside = (m: Match, o: Match) =>
+		o.at <= m.at && m.end <= o.end && o.end - o.at > m.end - m.at;
+	return found
+		.map(({ c, matches }) => ({
+			c,
+			matches: matches.filter(
+				(m) =>
+					!found.some((f) => f.c !== c && f.matches.some((o) => inside(m, o))),
+			),
+		}))
+		.filter((f) => f.matches.length > 0)
+		.map((f) => ({ c: f.c, at: Math.min(...f.matches.map((m) => m.at)) }))
+		.sort((a, b) => a.at - b.at)
+		.map((f) => f.c);
 }
 
 /** Days a question is about: how to name them, how to look them up, and how finely. */

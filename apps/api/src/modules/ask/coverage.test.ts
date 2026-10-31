@@ -14,6 +14,7 @@ const cat = (slug: string, name: string): Category =>
 	({ id: `id-${slug}`, slug, name }) as Category;
 const CATEGORIES = [
 	cat("food", "Eating out"),
+	cat("food-delivery", "Food delivery"),
 	cat("groceries", "Groceries"),
 	cat("transport", "Transport"),
 	cat("health", "Health"),
@@ -52,10 +53,33 @@ describe("mentionedCategories", () => {
 		["bil api air bulan ini, bills", ["bills"]],
 		["anything other than that?", []],
 		["How much on coffee?", []],
+		// "Food" alone is both ways of buying a meal, so an answer can't leave deliveries out.
+		["How much on food this month?", ["food", "food-delivery"]],
+		["How much on food delivery?", ["food-delivery"]],
+		["Berapa untuk penghantaran makanan?", ["food-delivery"]],
+		["eating out vs food delivery", ["food", "food-delivery"]],
+		["How much on GrabFood?", []],
 	])("%s", (question, slugs) => {
 		expect(
 			mentionedCategories(question, CATEGORIES).map((c) => c.slug),
 		).toEqual(slugs);
+	});
+
+	it("asks for deliveries too when the question says food", () => {
+		const eatingOut: Lookup = {
+			from: "2026-10-01",
+			to: "2026-10-18",
+			groupBy: "category",
+			categoryId: "id-food",
+		};
+		expect(
+			coverageProblems({
+				question: "How much did I spend on food this month?",
+				today: TODAY,
+				categories: CATEGORIES,
+				lookups: [eatingOut],
+			}),
+		).toEqual([expect.stringContaining("Food delivery for this month")]);
 	});
 });
 

@@ -289,6 +289,7 @@ export const msD: Record<string, string> = {
 
 	// Categories (seeded system categories)
 	"Eating out": "Makan di luar",
+	"Food delivery": "Penghantaran makanan",
 	Groceries: "Barang dapur",
 	Transport: "Pengangkutan",
 	Bills: "Bil",

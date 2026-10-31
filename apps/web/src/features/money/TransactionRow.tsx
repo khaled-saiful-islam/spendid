@@ -53,7 +53,7 @@ export function TransactionRow({
 				</span>
 				<span className="shrink-0 text-right">
 					<span className="num block font-bold">
-						{formatMinor(-t.homeAmountMinor, t.homeCurrency)}
+						{formatMinor(t.homeAmountMinor, t.homeCurrency)}
 					</span>
 					{foreign && (
 						<span className="num block text-[0.8rem] text-ink-soft">

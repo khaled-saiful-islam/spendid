@@ -29,7 +29,9 @@ const ReadSchema = z.object({
 	tax: z.number().min(0).nullable(),
 	category: z
 		.enum(SLUGS)
-		.describe("Best single category for the whole receipt"),
+		.describe(
+			"Best single category for the whole receipt. A food delivery order (GrabFood, Foodpanda, ShopeeFood) is food-delivery. If none fits, other.",
+		),
 	items: z
 		.array(
 			z.object({

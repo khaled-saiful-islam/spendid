@@ -106,7 +106,7 @@ export function AuthShowcase({
 									{item.name}
 								</span>
 								<span className="num font-semibold text-plum-100">
-									−RM {(item.minor / 100).toFixed(2)}
+									RM {(item.minor / 100).toFixed(2)}
 								</span>
 							</motion.li>
 						))}
