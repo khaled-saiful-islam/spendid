@@ -507,6 +507,41 @@ describe.skipIf(!url)("ask accuracy (real database)", () => {
 				]);
 		});
 
+		it("says when 'last cycle' is really last month (no earlier cycle)", async () => {
+			const side: SideChannel = { charts: [], drafts: [], actions: [] };
+			const tools = createAskTools(
+				{
+					db,
+					summary: createSummaryService(db),
+					plan: createPlanRepository(db),
+				},
+				{
+					userId: cyc,
+					timeZone: KL,
+					homeCurrency: "MYR",
+					categories,
+					today: "2025-03-10",
+					cycles: { current: cycles.current, previous: null },
+				},
+				side,
+			);
+			const totals = tools.find(
+				(t) => t.name === "spending_totals",
+			) as unknown as {
+				invoke: (i: unknown) => Promise<string>;
+			};
+			const out = JSON.parse(
+				await totals.invoke({ period: "last_cycle", groupBy: "category" }),
+			);
+			expect([out.from, out.to]).toEqual(["2025-02-01", "2025-02-28"]);
+			expect(out.periodNote).toMatch(/no earlier cycle/i);
+			const withCycle = await run("spending_totals", {
+				period: "last_cycle",
+				groupBy: "category",
+			});
+			expect(withCycle.periodNote).toBeUndefined();
+		});
+
 		it("this cycle, this month and last cycle are each exact", async () => {
 			const cycle = await run("spending_totals", {
 				period: "this_cycle",

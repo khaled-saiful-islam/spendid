@@ -1,6 +1,6 @@
 # Pay cycle and the "Your plan" sheet
 
-Status: design agreed in chat on 2026-10-31, waiting for spec review.
+Status: built (see `docs/superpowers/plans/2026-10-31-pay-cycle-and-plan-sheet.md`).
 
 ## Goal
 

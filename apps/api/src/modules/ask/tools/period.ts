@@ -87,3 +87,20 @@ export function periodRange(
 			return { from: addDays(today, -29), to: today };
 	}
 }
+
+/**
+ * When "this cycle" or "last cycle" had to fall back to a calendar month, the words that say
+ * so (null when it really is a cycle). The answer must tell the person.
+ */
+export function cycleFallbackNote(
+	period: Period | undefined,
+	cycles: CycleSpans | null | undefined,
+): string | null {
+	if (period === "this_cycle" && !cycles?.current)
+		return "They budget by calendar month and have no cycle, so these days are this calendar month. Say so.";
+	if (period === "last_cycle" && !cycles?.previous)
+		return cycles?.current
+			? "No earlier cycle: before this cycle they used calendar months, so these days are last calendar month. Say so."
+			: "They budget by calendar month and have no cycle, so these days are last calendar month. Say so.";
+	return null;
+}

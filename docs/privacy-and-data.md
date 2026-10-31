@@ -24,6 +24,7 @@ The zip contains a `README.txt` plus:
 | `account.json` | Account, settings, email choices |
 | `transactions.csv` / `.json` | Every expense (CSV opens in Excel, Numbers, Google Sheets) |
 | `categories.json`, `budgets.json`, `goals.json` | Plan data, goal deposits included |
+| Budget cycles | The dates and salary of each cycle, if you budget by your own dates |
 | `receipts.json` + `receipts/` | What was read from each receipt, and the photos |
 | `warranties.json`, `wishlist.json`, `check-ins.json` | Reminders, impulse-pause items, nightly check-ins |
 | `family.json` | Circle members, relation, and what each side shares |

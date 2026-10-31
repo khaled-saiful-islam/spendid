@@ -36,6 +36,7 @@ import {
 	resolveCategory,
 	resolveRange,
 } from "./filters";
+import { cycleFallbackNote } from "./period";
 
 /** Most groups listed in one result; totals always cover every group. */
 const MAX_GROUPS = 31;
@@ -69,6 +70,11 @@ export function spendingTools(
 	const cur = ctx.homeCurrency;
 	const localDay = sql`(${transaction.occurredAt} at time zone ${ctx.timeZone})::date`;
 	const dayText = sql<string>`to_char(${localDay}, 'YYYY-MM-DD')`;
+	/** Says when "this cycle" / "last cycle" is really a calendar month. */
+	const withPeriodNote = (period: Scope["period"]) => {
+		const note = cycleFallbackNote(period, ctx.cycles);
+		return note ? { periodNote: note } : {};
+	};
 
 	function scope(input: Scope): Resolved<Scoped> {
 		const range = resolveRange(input, ctx);
@@ -206,6 +212,7 @@ export function spendingTools(
 				currency: cur,
 				from: s.ok.from,
 				to: s.ok.to,
+				...withPeriodNote(input.period),
 				groupBy: input.groupBy,
 				...(s.ok.category ? { category: s.ok.category } : {}),
 				total: major(total, cur),
@@ -316,6 +323,7 @@ export function spendingTools(
 				currency: cur,
 				from: s.ok.from,
 				to: s.ok.to,
+				...withPeriodNote(input.period),
 				...(s.ok.category ? { category: s.ok.category } : {}),
 				matching,
 				matchingTotal: major(minor, cur),

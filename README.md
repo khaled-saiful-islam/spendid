@@ -205,6 +205,11 @@ maya and adam are already in each other's circle (spouses) and save into maya's 
 - **Insights → Where your money flowed**: one bar of what came in, then categories ranked.
 - **Receipts**: photos, screenshots or PDFs. Installed on Android, Spendid is in the share menu.
 - **Onboarding** (Me → change style, or a new account): watch your pay sorted live, then the reveal.
+- **Your plan sheet** (Plan → **Change**): budget by the calendar month or by **your own dates**
+  (payday to payday, 7 to 62 days), with the salary for that cycle and your plan style, all on one
+  sheet with a live daily amount. Home, Plan, alerts and Ask then follow the cycle. When a cycle ends,
+  Spendid starts the next one with the same length and salary and asks you to confirm it on Home.
+  In Ask, "this month" is still the calendar month; "this cycle" and "last cycle" use your cycle.
 
 ## Commands
 
