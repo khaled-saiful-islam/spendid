@@ -18,6 +18,7 @@ import { goalTint } from "../plan/goal-tint";
 import { PendingReceipts } from "../scan/PendingReceipts";
 import { DueSoonCard } from "../subscriptions/DueSoonCard";
 import { AskCard } from "./AskCard";
+import { DraftCycleCard } from "./DraftCycleCard";
 import { InstallNudge } from "./InstallNudge";
 import { MonthPace } from "./MonthPace";
 import { SafeCard } from "./SafeCard";
@@ -55,6 +56,7 @@ export function HomePage() {
 			<InstallNudge />
 			<PendingReceipts />
 
+			{summary && <DraftCycleCard summary={summary} />}
 			{summary ? (
 				<SafeCard summary={summary} />
 			) : (

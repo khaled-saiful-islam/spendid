@@ -1,4 +1,5 @@
 import {
+	addDays,
 	formatMinor,
 	goalWeeksSooner,
 	monthPace,
@@ -14,8 +15,8 @@ import { useId, useState } from "react";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { dateLocale, t } from "@/i18n";
 import { cn } from "@/lib/cn";
-import { heatmapQuery, thisMonth } from "@/lib/insights-api";
 import { goalsQuery } from "@/lib/money-api";
+import { shortDay } from "@/lib/period-words";
 import { useWidth } from "@/lib/use-width";
 
 /** The chart keeps one short height on every screen and draws at its real width. */
@@ -24,26 +25,29 @@ const PAD = { l: 4, r: 4, t: 18, b: 6 };
 
 /** Where the month is heading: spent so far vs an even pace, the forecast, and a what-if. */
 export function MonthPace({ summary }: { summary: Summary }) {
-	const month = thisMonth();
-	const { data: heat } = useQuery(heatmapQuery(month));
 	const { data: goals = [] } = useQuery(goalsQuery);
 	const [cut, setCut] = useState(0);
 	const [whatIfOpen, setWhatIfOpen] = useState(false);
 	const sliderId = useId();
 	const whatIfId = useId();
-	if (!heat || summary.incomeMinor === null) return null;
+	if (summary.incomeMinor === null) return null;
 
 	const cur = summary.homeCurrency;
 	const money = (m: number) => formatMinor(m, cur);
-	const todayN = Number(heat.today.slice(8, 10));
-	const [y, m] = month.split("-").map(Number) as [number, number];
-	const daysInMonth = new Date(y, m, 0).getDate();
-	const byDay = new Map(
-		heat.days.map((d) => [Number(d.day.slice(8, 10)), d.minor]),
-	);
+	// Day 1 is the period's first day: the 1st, or the first day of the person's cycle.
+	const { period } = summary;
+	const cycle = period.kind === "cycle";
+	const todayN = summary.dailyMinor.length;
+	const [y, m] = period.start.split("-").map(Number) as [number, number];
+	const daysInMonth = period.days;
+	const dayOf = (n: number) =>
+		new Date(`${addDays(period.start, n - 1)}T12:00:00Z`).toLocaleDateString(
+			dateLocale(),
+			{ day: "numeric", month: "short", timeZone: "UTC" },
+		);
 	const pace = monthPace({
 		budgetMinor: summary.incomeMinor - summary.reservedMinor,
-		dailyMinor: Array.from({ length: todayN }, (_, i) => byDay.get(i + 1) ?? 0),
+		dailyMinor: summary.dailyMinor,
 		daysInMonth,
 		billsDueMinor: summary.bills.minor,
 	});
@@ -59,18 +63,16 @@ export function MonthPace({ summary }: { summary: Summary }) {
 	const headline =
 		pace.runsOutOn !== null
 			? t("At this pace, the money runs out around {date}.", {
-					date: new Date(y, m - 1, pace.runsOutOn).toLocaleDateString(
-						dateLocale(),
-						{
-							day: "numeric",
-							month: "short",
-						},
-					),
+					date: dayOf(pace.runsOutOn),
 				})
-			: t("At this pace, you'll finish {month} with {amount} to spare.", {
-					month: monthName,
-					amount: money(pace.landingMinor),
-				});
+			: cycle
+				? t("At this pace, you'll finish the cycle with {amount} to spare.", {
+						amount: money(pace.landingMinor),
+					})
+				: t("At this pace, you'll finish {month} with {amount} to spare.", {
+						month: monthName,
+						amount: money(pace.landingMinor),
+					});
 
 	const status =
 		pace.runsOutOn !== null
@@ -91,7 +93,11 @@ export function MonthPace({ summary }: { summary: Summary }) {
 		<section aria-labelledby="pace-title" className="space-y-3">
 			<SectionHeader
 				id="pace-title"
-				title={t("Where your month is heading")}
+				title={
+					cycle
+						? t("Where your cycle is heading")
+						: t("Where your month is heading")
+				}
 				icon={TrendingUp}
 				tint="sky"
 				action={
@@ -127,6 +133,9 @@ export function MonthPace({ summary }: { summary: Summary }) {
 					daysInMonth={daysInMonth}
 					todayN={todayN}
 					money={money}
+					dayLabel={
+						cycle ? (n) => shortDay(addDays(period.start, n - 1)) : null
+					}
 				/>
 
 				<button
@@ -229,11 +238,14 @@ function PaceChart({
 	daysInMonth,
 	todayN,
 	money,
+	dayLabel,
 }: {
 	pace: Pace;
 	daysInMonth: number;
 	todayN: number;
 	money: (m: number) => string;
+	/** A cycle's days are named by date ("29 Oct"); a month's by number. */
+	dayLabel: ((day: number) => string) | null;
 }) {
 	const reduce = useReducedMotion();
 	const [hover, setHover] = useState<number | null>(null);
@@ -366,8 +378,8 @@ function PaceChart({
 				className="mt-1 flex justify-between text-[0.75rem] text-ink-soft"
 				aria-hidden="true"
 			>
-				<span>1</span>
-				<span>{daysInMonth}</span>
+				<span>{dayLabel ? dayLabel(1) : 1}</span>
+				<span>{dayLabel ? dayLabel(daysInMonth) : daysInMonth}</span>
 			</div>
 			<figcaption className="mt-1.5 flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[0.8rem] text-ink-soft">
 				<span className="inline-flex items-center gap-1.5">
@@ -393,7 +405,15 @@ function PaceChart({
 					className="num ml-auto font-semibold text-ink"
 					aria-live="polite"
 				>
-					{t("Day {d}: {amount}", { d: shown, amount: money(valueAt(shown)) })}
+					{dayLabel
+						? t("{date}: {amount}", {
+								date: dayLabel(shown),
+								amount: money(valueAt(shown)),
+							})
+						: t("Day {d}: {amount}", {
+								d: shown,
+								amount: money(valueAt(shown)),
+							})}
 					{shown > todayN ? ` ${t("(forecast)")}` : ""}
 				</span>
 			</figcaption>

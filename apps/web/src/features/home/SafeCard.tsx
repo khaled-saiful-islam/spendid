@@ -1,9 +1,10 @@
-import { formatMinor, type Summary } from "@spendid/shared";
+import { addDays, formatMinor, type Summary } from "@spendid/shared";
 import { Link } from "@tanstack/react-router";
 import { CountUp } from "@/components/money/CountUp";
 import { SafeDial } from "@/components/money/SafeDial";
 import { buttonClass } from "@/components/ui/Button";
 import { t } from "@/i18n";
+import { shortDay } from "@/lib/period-words";
 import { WeekRhythm } from "./WeekRhythm";
 
 /** The heart of Spendid: one number, with the reason behind it in a sentence. */
@@ -48,8 +49,13 @@ export function SafeCard({ summary }: { summary: Summary }) {
 		Math.floor(safe.leftThisMonthMinor / tomorrowDays),
 	);
 
+	const cycle = summary.period.kind === "cycle";
 	const reason = monthOver
-		? t("Keep today to the essentials. The 1st brings a fresh month.")
+		? cycle
+			? t("Keep today to the essentials. Your next cycle starts {date}.", {
+					date: shortDay(addDays(summary.period.end, 1)),
+				})
+			: t("Keep today to the essentials. The 1st brings a fresh month.")
 		: over
 			? t("No stress — tomorrow starts fresh at about {amount}.", {
 					amount: money(tomorrow),
@@ -82,7 +88,9 @@ export function SafeCard({ summary }: { summary: Summary }) {
 				<div className="min-w-0 flex-1">
 					<p className="text-[0.9rem] font-medium text-plum-200">
 						{monthOver
-							? t("This month is over budget by")
+							? cycle
+								? t("This cycle is over budget by")
+								: t("This month is over budget by")
 							: over
 								? t("Over today's amount by")
 								: t("Safe to spend today")}

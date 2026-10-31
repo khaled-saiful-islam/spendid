@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { TINTS } from "@/components/money/CategoryIcon";
 import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
+import { periodWords } from "@/lib/period-words";
 import { goalTint } from "../plan/goal-tint";
 
 type Path = "/app/activity" | "/app/plan" | "/app/subscriptions";
@@ -64,7 +65,10 @@ export function StatTiles({
 			to: "/app/plan",
 			tint: TINTS.lime ?? "",
 			icon: badge(TINTS.lime ?? "", <Wallet className="size-3.5" />),
-			label: left < 0 ? t("Over this month") : t("Left this month"),
+			label:
+				left < 0
+					? periodWords(summary.period.kind).over
+					: periodWords(summary.period.kind).left,
 			value: money(Math.abs(left)),
 			sub: t(summary.daysLeft === 1 ? "1 day to go" : "{n} days to go", {
 				n: summary.daysLeft,

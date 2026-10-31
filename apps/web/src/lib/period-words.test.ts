@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cycleDates, periodWords } from "./period-words";
+import { cycleDates, periodWords, shortDay } from "./period-words";
 
 describe("period words", () => {
 	it("writes a cycle's dates the short way", () => {
@@ -12,6 +12,10 @@ describe("period words", () => {
 		expect(cycleDates("2026-12-20", "2027-01-19", "2026-12-25")).toBe(
 			"20 Dec 2026 → 19 Jan 2027",
 		);
+	});
+
+	it("writes one day the short way", () => {
+		expect(shortDay("2026-11-29")).toBe("29 Nov");
 	});
 
 	it("says cycle or month", () => {

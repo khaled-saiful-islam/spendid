@@ -368,6 +368,7 @@ describe.skipIf(!url)("family circle (real database)", () => {
 				kind: "cycle",
 				from: start,
 				to: addDays(start, 30),
+				beforeKind: "cycle",
 			});
 			expect(JSON.stringify(view.body.data)).not.toContain("777777");
 		} finally {

@@ -4,13 +4,13 @@
  */
 
 export interface PaceInput {
-	/** Money for spending this month: income minus what's kept aside for savings. */
+	/** Money for spending this period: income minus what's kept aside for savings. */
 	budgetMinor: number;
-	/** Spending per day so far this month (index 0 = the 1st), today included. */
+	/** Spending per day so far this period (index 0 = its first day), today included. */
 	dailyMinor: number[];
-	/** Days in this month. */
+	/** Days in this period (a month, or the person's cycle). */
 	daysInMonth: number;
-	/** Bills and subscriptions still expected this month. */
+	/** Bills and subscriptions still expected this period. */
 	billsDueMinor: number;
 }
 
@@ -26,7 +26,7 @@ export interface Pace {
 	perDayMinor: number;
 	/** Budget left at month end at this pace (negative = short). */
 	landingMinor: number;
-	/** Day of the month the money would run out at this pace, or null if it lasts. */
+	/** Day of the period (1 = its first day) the money would run out at this pace, or null if it lasts. */
 	runsOutOn: number | null;
 	/** Ahead of (negative) or behind (positive) the even pace today. */
 	vsEvenMinor: number;

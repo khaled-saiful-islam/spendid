@@ -8,14 +8,20 @@ import { dateLocale, t } from "@/i18n";
 export function cycleDates(start: string, end: string, today: string): string {
 	const year = today.slice(0, 4);
 	const sameYear = start.slice(0, 4) === year && end.slice(0, 4) === year;
-	const fmt = (day: string) =>
-		new Date(`${day}T12:00:00Z`).toLocaleDateString(dateLocale() ?? "en-GB", {
+	return `${shortDay(start, !sameYear)} → ${shortDay(end, !sameYear)}`;
+}
+
+/** "29 Nov" (or "29 Nov 2026"), day first. */
+export function shortDay(day: string, withYear = false): string {
+	return new Date(`${day}T12:00:00Z`).toLocaleDateString(
+		dateLocale() ?? "en-GB",
+		{
 			day: "numeric",
 			month: "short",
-			...(sameYear ? {} : { year: "numeric" }),
+			...(withYear ? { year: "numeric" } : {}),
 			timeZone: "UTC",
-		});
-	return `${fmt(start)} → ${fmt(end)}`;
+		},
+	);
 }
 
 /** The words that change when the plan runs by cycle instead of by month. */

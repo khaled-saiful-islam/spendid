@@ -93,6 +93,7 @@ export async function buildSharedView(
 			kind: bounds.kind,
 			from: bounds.start,
 			to: bounds.end,
+			beforeKind: before.kind,
 		},
 	};
 	if (!levelIncludes(grant.level, "categories")) return view;

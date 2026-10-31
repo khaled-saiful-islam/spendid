@@ -1,4 +1,10 @@
-import { formatMinor, type Goal, parseAmount, toMinor } from "@spendid/shared";
+import {
+	formatMinor,
+	type Goal,
+	type PeriodKind,
+	parseAmount,
+	toMinor,
+} from "@spendid/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import confetti from "canvas-confetti";
 import { Plus, Target } from "lucide-react";
@@ -15,6 +21,7 @@ import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { ApiError } from "@/lib/http";
 import { moneyApi, refreshMoney } from "@/lib/money-api";
+import { periodWords } from "@/lib/period-words";
 import { formatDay } from "@/lib/time";
 import { currencySymbol } from "../onboarding/options";
 import { GoalJar } from "./GoalJar";
@@ -54,14 +61,14 @@ function MilestoneBar({ ratio, tint }: { ratio: number; tint: string }) {
 	);
 }
 
-function untilLabel(goal: Goal, cur: string): string {
+function untilLabel(goal: Goal, cur: string, kind: PeriodKind): string {
 	if (goal.savedMinor >= goal.targetMinor) return t("Done! Time to enjoy it.");
 	if (!goal.targetDate) return t("No deadline. Add whenever you like.");
 	const when = formatDay(goal.targetDate, { month: "short", year: "numeric" });
-	return t("{amount} a month to make it by {date}.", {
-		amount: formatMinor(goal.monthlyNeededMinor, cur),
-		date: when,
-	});
+	return periodWords(kind).goalShare(
+		formatMinor(goal.monthlyNeededMinor, cur),
+		when,
+	);
 }
 
 function DepositForm({
@@ -143,7 +150,15 @@ function DepositForm({
 	);
 }
 
-function NewGoalForm({ cur, onDone }: { cur: string; onDone: () => void }) {
+function NewGoalForm({
+	cur,
+	kind,
+	onDone,
+}: {
+	cur: string;
+	kind: PeriodKind;
+	onDone: () => void;
+}) {
 	const queryClient = useQueryClient();
 	const [name, setName] = useState("");
 	const [emoji, setEmoji] = useState("🎯");
@@ -216,7 +231,11 @@ function NewGoalForm({ cur, onDone }: { cur: string; onDone: () => void }) {
 				label={t("By when? (optional)")}
 				type="date"
 				value={date}
-				hint={t("With a date, Spendid sets aside enough each month.")}
+				hint={
+					kind === "cycle"
+						? t("With a date, Spendid sets aside enough each cycle.")
+						: t("With a date, Spendid sets aside enough each month.")
+				}
 				onChange={(e) => setDate(e.target.value)}
 			/>
 			<SubmitButton pending={pending}>{t("Create goal")}</SubmitButton>
@@ -225,7 +244,16 @@ function NewGoalForm({ cur, onDone }: { cur: string; onDone: () => void }) {
 }
 
 /** Goal jars with "add money" and a new-goal sheet. */
-export function GoalsSection({ goals, cur }: { goals: Goal[]; cur: string }) {
+export function GoalsSection({
+	goals,
+	cur,
+	kind,
+}: {
+	goals: Goal[];
+	cur: string;
+	/** Goals set money aside per period: a month, or the person's cycle. */
+	kind: PeriodKind;
+}) {
 	const [depositFor, setDepositFor] = useState<Goal | null>(null);
 	const [creating, setCreating] = useState(false);
 
@@ -324,7 +352,7 @@ export function GoalsSection({ goals, cur }: { goals: Goal[]; cur: string }) {
 										data-money
 										className="rounded-full bg-surface/80 px-3 py-1 text-[0.82rem] font-medium ring-1 ring-line"
 									>
-										{untilLabel(g, cur)}
+										{untilLabel(g, cur, kind)}
 									</span>
 									<button
 										type="button"
@@ -359,7 +387,7 @@ export function GoalsSection({ goals, cur }: { goals: Goal[]; cur: string }) {
 				onClose={() => setCreating(false)}
 				title={t("New goal")}
 			>
-				<NewGoalForm cur={cur} onDone={() => setCreating(false)} />
+				<NewGoalForm cur={cur} kind={kind} onDone={() => setCreating(false)} />
 			</Sheet>
 		</section>
 	);

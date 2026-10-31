@@ -84,6 +84,7 @@ export function PlanPage() {
 					<TransfersSection
 						currency={summary.homeCurrency}
 						incomeMinor={summary.incomeMinor}
+						kind={summary.period.kind}
 					/>
 				)}
 
@@ -108,7 +109,11 @@ export function PlanPage() {
 					</section>
 				)}
 
-			<GoalsSection goals={goals} cur={summary.homeCurrency} />
+			<GoalsSection
+				goals={goals}
+				cur={summary.homeCurrency}
+				kind={summary.period.kind}
+			/>
 			<Challenges />
 			<div className="grid grid-cols-1 gap-5 lg:grid-cols-2 lg:items-start">
 				<SubscriptionsDoorway />

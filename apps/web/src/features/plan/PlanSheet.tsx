@@ -92,7 +92,7 @@ export function PlanSheet({
 	const [error, setError] = useState<string | null>(null);
 	const [pending, setPending] = useState(false);
 	const [daily, setDaily] = useState<number | null>(null);
-	const periodId = useId();
+	const periodName = useId();
 
 	// Start from the saved plan each time the sheet opens.
 	useEffect(() => {
@@ -171,34 +171,32 @@ export function PlanSheet({
 				<p className="text-ink-soft">{t("Loading…")}</p>
 			) : (
 				<form onSubmit={onSubmit} noValidate className="space-y-5">
-					<div className="space-y-2">
-						<p id={periodId} className="font-semibold">
-							{t("Budget period")}
-						</p>
-						<div
-							role="radiogroup"
-							aria-labelledby={periodId}
-							className="grid grid-cols-2 gap-2"
-						>
+					<fieldset className="space-y-2">
+						<legend className="font-semibold">{t("Budget period")}</legend>
+						<div className="grid grid-cols-2 gap-2">
 							{(["month", "cycle"] as const).map((kind) => (
-								<button
+								<label
 									key={kind}
-									type="button"
-									role="radio"
-									aria-checked={draft.period === kind}
-									onClick={() => set({ period: kind })}
 									className={cn(
-										"min-h-11 rounded-full border-2 px-3 py-2 leading-snug font-semibold",
+										"grid min-h-11 cursor-pointer place-items-center rounded-full border-2 px-3 py-2 text-center leading-snug font-semibold has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-marigold",
 										draft.period === kind
 											? "border-plum-500 bg-plum-500/10"
 											: "border-line",
 									)}
 								>
+									<input
+										type="radio"
+										name={periodName}
+										value={kind}
+										checked={draft.period === kind}
+										onChange={() => set({ period: kind })}
+										className="sr-only"
+									/>
 									{kind === "month" ? t("Calendar month") : t("My own dates")}
-								</button>
+								</label>
 							))}
 						</div>
-					</div>
+					</fieldset>
 
 					{draft.period === "cycle" && (
 						<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

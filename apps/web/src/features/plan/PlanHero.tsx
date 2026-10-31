@@ -9,6 +9,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { TINTS } from "@/components/money/CategoryIcon";
 import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
+import { cycleDates, periodWords } from "@/lib/period-words";
 import { appToday } from "@/lib/time";
 import { transferFill } from "./transfer-drafts";
 
@@ -199,7 +200,7 @@ export function PlanHero({
 						id="plan-hero-title"
 						className="font-sans text-[0.9rem] font-medium text-plum-200"
 					>
-						{t("Monthly income")}
+						{periodWords(summary.period.kind).income}
 					</h2>
 					<p
 						data-money
@@ -207,6 +208,11 @@ export function PlanHero({
 					>
 						{money(income)}
 					</p>
+					{summary.period.kind === "cycle" && (
+						<p className="text-[0.9rem] text-plum-200">
+							{cycleDates(summary.period.start, summary.period.end, appToday())}
+						</p>
+					)}
 				</div>
 				<button
 					type="button"

@@ -1,4 +1,4 @@
-import { formatMinor } from "@spendid/shared";
+import { formatMinor, type PeriodKind } from "@spendid/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowUpRight, Plus, X } from "lucide-react";
 import {
@@ -156,9 +156,12 @@ export function TransfersLoading({
 export function TransfersSection({
 	currency,
 	incomeMinor,
+	kind,
 }: {
 	currency: string;
 	incomeMinor: number;
+	/** Transfers go out each period: a month, or the person's cycle. */
+	kind: PeriodKind;
 }) {
 	const queryClient = useQueryClient();
 	const { data: saved, isError, refetch } = useQuery(transfersQuery);
@@ -200,7 +203,11 @@ export function TransfersSection({
 				title={t("Your transfers")}
 				icon={ArrowUpRight}
 				tint="amber"
-				sub={t("What goes out each month when salary lands")}
+				sub={
+					kind === "cycle"
+						? t("What goes out each cycle when salary lands")
+						: t("What goes out each month when salary lands")
+				}
 			/>
 			{saved === undefined ? (
 				<div className="rounded-panel border border-line bg-surface p-3 sm:p-4">
@@ -225,7 +232,9 @@ export function TransfersSection({
 					<dl className="grid grid-cols-2 gap-3 border-t border-line pt-3">
 						<div>
 							<dt className="text-[0.85rem] text-ink-soft">
-								{t("Transfers each month")}
+								{kind === "cycle"
+									? t("Transfers each cycle")
+									: t("Transfers each month")}
 							</dt>
 							<dd data-money className="num text-[1.1rem] font-bold">
 								{formatMinor(total, currency)}

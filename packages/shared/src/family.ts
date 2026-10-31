@@ -187,6 +187,8 @@ export interface SharedView {
 		kind: PeriodKind;
 		from: string;
 		to: string;
+		/** What `lastMonthMinor` covers: the cycle before, or (before any) last month. */
+		beforeKind: PeriodKind;
 	} | null;
 	categories:
 		| { name: string; icon: string; tint: string; spentMinor: number }[]

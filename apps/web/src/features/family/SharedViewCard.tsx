@@ -13,7 +13,8 @@ import { Sheet } from "@/components/ui/Sheet";
 import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { receiptImageUrl } from "@/lib/family-api";
-import { formatMoment } from "@/lib/time";
+import { cycleDates } from "@/lib/period-words";
+import { appToday, formatMoment } from "@/lib/time";
 
 const day = (iso: string) =>
 	formatMoment(iso, {
@@ -29,7 +30,13 @@ function Month({ view }: { view: SharedView }) {
 	const Trend = diff > 0 ? TrendingUp : TrendingDown;
 	return (
 		<div>
-			<p className="text-ink-soft">{t("Spent this month")}</p>
+			<p className="text-ink-soft">
+				{m.kind === "cycle"
+					? t("Spent this cycle ({dates})", {
+							dates: cycleDates(m.from, m.to, appToday()),
+						})
+					: t("Spent this month")}
+			</p>
 			<p className="num mt-1 text-[clamp(2.2rem,9vw,3rem)] leading-none font-extrabold">
 				{formatMinor(m.spentMinor, view.currency)}
 			</p>
@@ -41,9 +48,13 @@ function Month({ view }: { view: SharedView }) {
 					<span className="inline-flex items-center gap-1">
 						<Trend className="size-4 shrink-0" aria-hidden="true" />
 						{t(
-							diff > 0
-								? "{amount} more than all of last month"
-								: "{amount} less than all of last month",
+							m.beforeKind === "cycle"
+								? diff > 0
+									? "{amount} more than all of last cycle"
+									: "{amount} less than all of last cycle"
+								: diff > 0
+									? "{amount} more than all of last month"
+									: "{amount} less than all of last month",
 							{
 								amount: formatMinor(Math.abs(diff), view.currency),
 							},
@@ -60,7 +71,13 @@ function Categories({ view }: { view: SharedView }) {
 	const list = view.categories;
 	if (!list) return null;
 	if (list.length === 0)
-		return <p className="text-ink-soft">{t("No spending this month yet.")}</p>;
+		return (
+			<p className="text-ink-soft">
+				{view.month?.kind === "cycle"
+					? t("No spending this cycle yet.")
+					: t("No spending this month yet.")}
+			</p>
+		);
 	const max = Math.max(...list.map((c) => c.spentMinor), 1);
 	return (
 		<ul className="space-y-3">

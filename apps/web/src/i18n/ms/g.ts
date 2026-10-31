@@ -33,4 +33,27 @@ export const msG: Record<string, string> = {
 	"each cycle": "setiap kitaran",
 	"{amount} a cycle to make it by {date}.":
 		"{amount} setiap kitaran untuk capai sebelum {date}.",
+	"Your cycle ended on {date}.": "Kitaran anda tamat pada {date}.",
+	"Next: {dates}, salary {amount}.": "Seterusnya: {dates}, gaji {amount}.",
+	"Looks right": "Betul",
+	"Your new cycle is set.": "Kitaran baharu anda sudah ditetapkan.",
+	"Keep today to the essentials. Your next cycle starts {date}.":
+		"Hari ini belanja yang perlu sahaja. Kitaran seterusnya bermula {date}.",
+	"This cycle is over budget by": "Kitaran ini melebihi bajet sebanyak",
+	"Where your cycle is heading": "Ke mana kitaran anda menuju",
+	"At this pace, you'll finish the cycle with {amount} to spare.":
+		"Pada kadar ini, anda akan tamatkan kitaran dengan baki {amount}.",
+	"{date}: {amount}": "{date}: {amount}",
+	"With a date, Spendid sets aside enough each cycle.":
+		"Dengan tarikh, Spendid mengasingkan secukupnya setiap kitaran.",
+	"Limit per cycle for {category}": "Had setiap kitaran untuk {category}",
+	"What goes out each cycle when salary lands":
+		"Apa yang keluar setiap kitaran bila gaji masuk",
+	"Transfers each cycle": "Pindahan setiap kitaran",
+	"Spent this cycle ({dates})": "Dibelanjakan kitaran ini ({dates})",
+	"{amount} more than all of last cycle":
+		"{amount} lebih daripada seluruh kitaran lepas",
+	"{amount} less than all of last cycle":
+		"{amount} kurang daripada seluruh kitaran lepas",
+	"No spending this cycle yet.": "Belum ada perbelanjaan kitaran ini.",
 };

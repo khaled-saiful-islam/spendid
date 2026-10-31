@@ -14,6 +14,7 @@ import { CategoryIcon } from "@/components/money/CategoryIcon";
 import { t } from "@/i18n";
 import { cn } from "@/lib/cn";
 import { moneyApi, refreshMoney } from "@/lib/money-api";
+import { periodWords } from "@/lib/period-words";
 
 function Bar({
 	spent,
@@ -56,6 +57,7 @@ export function CategoryBudgets({
 	const [value, setValue] = useState("");
 	const [error, setError] = useState<string>();
 	const cur = summary.homeCurrency;
+	const cycle = summary.period.kind === "cycle";
 	const limitOf = new Map(
 		budgets.map((b) => [b.categoryId, b.monthlyLimitMinor]),
 	);
@@ -158,10 +160,16 @@ export function CategoryBudgets({
 									<input
 										ref={(el) => el?.focus()}
 										inputMode="decimal"
-										aria-label={t("Monthly limit for {category}", {
-											category: t(c.name),
-										})}
-										placeholder={t("Monthly limit")}
+										aria-label={
+											cycle
+												? t("Limit per cycle for {category}", {
+														category: t(c.name),
+													})
+												: t("Monthly limit for {category}", {
+														category: t(c.name),
+													})
+										}
+										placeholder={periodWords(summary.period.kind).limit}
 										aria-invalid={error ? true : undefined}
 										aria-describedby={error ? `limit-error-${c.id}` : undefined}
 										value={value}
