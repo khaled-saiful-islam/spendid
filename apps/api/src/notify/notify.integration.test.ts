@@ -3,11 +3,13 @@ import {
 	category,
 	createDb,
 	notificationPref,
+	payCycle,
 	profile,
 	transaction,
 	user,
 } from "@spendid/db";
 import type { EmailJob } from "@spendid/emails";
+import { addDays } from "@spendid/shared";
 import { eq } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
@@ -492,6 +494,51 @@ describe.skipIf(!url)("email notifications (real database)", () => {
 			"Eating out: 80% of your budget used",
 			"Eating out: budget used up",
 		]);
+	});
+
+	it("budget alerts follow the cycle", async () => {
+		const cy = await createPerson(db);
+		const today = localParts("Asia/Kuala_Lumpur").date;
+		await db
+			.update(profile)
+			.set({ period: "cycle" })
+			.where(eq(profile.userId, cy));
+		await db.insert(payCycle).values({
+			userId: cy,
+			startsOn: addDays(today, -3),
+			endsOn: addDays(today, 27),
+			incomeMinor: 450_000,
+		});
+		await db
+			.insert(budget)
+			.values({ userId: cy, categoryId: food, monthlyLimitMinor: 10_000 });
+		const row = (minor: number, merchant: string, occurredAt: Date) => ({
+			userId: cy,
+			amountMinor: minor,
+			currency: "MYR",
+			homeAmountMinor: minor,
+			homeCurrency: "MYR",
+			categoryId: food,
+			merchant,
+			occurredAt,
+		});
+		// RM 50 the day before the cycle doesn't count; RM 85 inside it is 85%.
+		await db
+			.insert(transaction)
+			.values(row(5_000, "Old", new Date(`${addDays(today, -4)}T04:00:00Z`)));
+		const [inside] = await db
+			.insert(transaction)
+			.values(row(8_500, "Nasi lemak", new Date()))
+			.returning({ id: transaction.id });
+		await alerts.afterExpense(cy, inside?.id ?? "");
+		const jobs = sent.flatMap((s) =>
+			s.job.type === "notice" && s.job.kind === "budget-alert" ? [s.job] : [],
+		);
+		expect(jobs.map((j) => j.subject)).toEqual([
+			"Eating out: 80% of your budget used",
+		]);
+		expect(jobs[0]?.preview).toContain("with 28 days to go");
+		expect(JSON.stringify(jobs[0])).toContain("this cycle's");
 	});
 
 	it("spots the same charge twice", async () => {

@@ -1,4 +1,11 @@
-import { createDb, fxRate, split as splitTable, user } from "@spendid/db";
+import {
+	createDb,
+	fxRate,
+	payCycle,
+	profile,
+	split as splitTable,
+	user,
+} from "@spendid/db";
 import type { EmailJob } from "@spendid/emails";
 import type {
 	Category,
@@ -10,7 +17,7 @@ import type {
 	SharedView,
 	SplitDto,
 } from "@spendid/shared";
-import { formatMinor } from "@spendid/shared";
+import { addDays, formatMinor } from "@spendid/shared";
 import { eq } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -326,6 +333,50 @@ describe.skipIf(!url)("family circle (real database)", () => {
 
 		const outsider = await call(stranger, "GET", `/family/people/${maya}/view`);
 		expect(outsider.status).toBe(404);
+	});
+
+	it("follows the owner's cycle, with its dates and never the salary", async () => {
+		const today = new Date().toLocaleDateString("en-CA", {
+			timeZone: "Asia/Kuala_Lumpur",
+		});
+		const start = addDays(today, -2);
+		await db
+			.update(profile)
+			.set({ period: "cycle" })
+			.where(eq(profile.userId, maya));
+		await db.insert(payCycle).values([
+			{
+				userId: maya,
+				startsOn: addDays(start, -30),
+				endsOn: addDays(start, -1),
+				incomeMinor: 777_777,
+			},
+			{
+				userId: maya,
+				startsOn: start,
+				endsOn: addDays(start, 30),
+				incomeMinor: 777_777,
+			},
+		]);
+		try {
+			const view = await call<SharedView>(
+				adam,
+				"GET",
+				`/family/people/${maya}/view`,
+			);
+			expect(view.body.data.month).toMatchObject({
+				kind: "cycle",
+				from: start,
+				to: addDays(start, 30),
+			});
+			expect(JSON.stringify(view.body.data)).not.toContain("777777");
+		} finally {
+			await db
+				.update(profile)
+				.set({ period: "month" })
+				.where(eq(profile.userId, maya));
+			await db.delete(payCycle).where(eq(payCycle.userId, maya));
+		}
 	});
 
 	it("pause hides everything at once", async () => {

@@ -7,13 +7,14 @@ import {
 	user,
 } from "@spendid/db";
 import {
+	addDays,
 	levelIncludes,
 	type SharedView,
 	type ShareState,
 } from "@spendid/shared";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { onLocalDays } from "../money/local-days";
-import { monthBounds } from "../money/summary.service";
+import { periodBounds, previousPeriod } from "../money/period";
 
 const RECENT_EXPENSES = 30;
 
@@ -51,7 +52,8 @@ export async function buildSharedView(
 		return base;
 
 	const timeZone = owner.timeZone ?? "UTC";
-	const bounds = await monthBounds(db, timeZone);
+	const bounds = await periodBounds(db, ownerId);
+	const before = await previousPeriod(db, ownerId, bounds);
 	const live = and(
 		eq(transaction.userId, ownerId),
 		isNull(transaction.deletedAt),
@@ -61,8 +63,8 @@ export async function buildSharedView(
 		onLocalDays(
 			transaction.occurredAt,
 			timeZone,
-			bounds.monthStart,
-			bounds.nextMonth,
+			bounds.start,
+			bounds.nextStart,
 		),
 	);
 	const lastMonth = and(
@@ -70,12 +72,12 @@ export async function buildSharedView(
 		onLocalDays(
 			transaction.occurredAt,
 			timeZone,
-			sql`${bounds.monthStart}::date - interval '1 month'`,
-			bounds.monthStart,
+			before.start,
+			addDays(before.end, 1),
 		),
 	);
 	const total = sql<number>`coalesce(sum(${transaction.homeAmountMinor}), 0)::bigint`;
-	const [[now], [before]] = await Promise.all([
+	const [[now], [earlier]] = await Promise.all([
 		db
 			.select({ spent: total, count: sql<number>`count(*)::int` })
 			.from(transaction)
@@ -86,8 +88,11 @@ export async function buildSharedView(
 		...base,
 		month: {
 			spentMinor: Number(now?.spent ?? 0),
-			lastMonthMinor: Number(before?.spent ?? 0),
+			lastMonthMinor: Number(earlier?.spent ?? 0),
 			count: now?.count ?? 0,
+			kind: bounds.kind,
+			from: bounds.start,
+			to: bounds.end,
 		},
 	};
 	if (!levelIncludes(grant.level, "categories")) return view;

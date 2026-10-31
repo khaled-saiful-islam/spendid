@@ -8,7 +8,7 @@ import {
 } from "@spendid/db";
 import { and, desc, eq, gte, isNull, lt, ne, sql } from "drizzle-orm";
 import { onLocalDays } from "../modules/money/local-days";
-import { monthBounds } from "../modules/money/summary.service";
+import { periodBounds } from "../modules/money/period";
 import type { Notifier } from "./notifier";
 
 const UNUSUAL_TIMES = 3;
@@ -40,7 +40,8 @@ export function createMoneyAlerts(deps: { db: Db; notifier: Notifier }) {
 			.where(and(eq(budget.userId, userId), eq(budget.categoryId, categoryId)))
 			.limit(1);
 		if (!limit || limit.minor <= 0) return;
-		const bounds = await monthBounds(db, timeZone);
+		const bounds = await periodBounds(db, userId);
+		const span = bounds.kind === "cycle" ? "cycle" : "month";
 		const [{ spent } = { spent: "0" }] = await db
 			.select({
 				spent: sql<string>`coalesce(sum(${transaction.homeAmountMinor}), 0)`,
@@ -54,8 +55,8 @@ export function createMoneyAlerts(deps: { db: Db; notifier: Notifier }) {
 					onLocalDays(
 						transaction.occurredAt,
 						timeZone,
-						bounds.monthStart,
-						bounds.nextMonth,
+						bounds.start,
+						bounds.nextStart,
 					),
 				),
 			);
@@ -68,11 +69,12 @@ export function createMoneyAlerts(deps: { db: Db; notifier: Notifier }) {
 			.where(eq(profile.userId, userId))
 			.limit(1);
 		const cur = p?.cur ?? "MYR";
-		const month = bounds.today.slice(0, 7);
 		await notifier.notify(userId, {
 			kind: "budget-alert",
 			group: "budget",
-			dedupeKey: `${categoryId}:${month}:${step}`,
+			// One alert per step per period. Months keep their old key (YYYY-MM), so nothing
+			// already sent this month goes out again.
+			dedupeKey: `${categoryId}:${span === "cycle" ? bounds.start : bounds.start.slice(0, 7)}:${step}`,
 			build: ({ money, appUrl }) => ({
 				subject:
 					step === 100
@@ -85,11 +87,14 @@ export function createMoneyAlerts(deps: { db: Db; notifier: Notifier }) {
 						: `${limit.name} is at 80%`,
 				body:
 					step === 100
-						? `You've spent your whole ${limit.name.toLowerCase()} budget for this month. Anything more comes out of the rest of your month.`
-						: `You've used 80% of this month's ${limit.name.toLowerCase()} budget. A little care for the next ${bounds.daysLeft} days keeps you on plan.`,
+						? `You've spent your whole ${limit.name.toLowerCase()} budget for this ${span}. Anything more comes out of the rest of your ${span}.`
+						: `You've used 80% of this ${span}'s ${limit.name.toLowerCase()} budget. A little care for the next ${bounds.daysLeft} days keeps you on plan.`,
 				rows: [
 					{ label: "Spent", value: money(Number(spent), cur) },
-					{ label: "Monthly limit", value: money(limit.minor, cur) },
+					{
+						label: span === "cycle" ? "Limit per cycle" : "Monthly limit",
+						value: money(limit.minor, cur),
+					},
 					{ label: "Days left", value: String(bounds.daysLeft) },
 				],
 				action: "See my plan",

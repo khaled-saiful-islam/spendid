@@ -10,6 +10,7 @@ import {
 	type Goal,
 	type GoalInput,
 	GoalInputSchema,
+	goalCycleNeeded,
 	goalMonthlyNeeded,
 	type Transfer,
 	type TransferInput,
@@ -17,14 +18,12 @@ import {
 } from "@spendid/shared";
 import { and, asc, eq, isNull, sql } from "drizzle-orm";
 import { badRequest, notFound } from "../../http/app-error";
+import { periodBounds } from "./period";
 
 type GoalRow = typeof goal.$inferSelect;
 
-function todayIso(): string {
-	return new Date().toISOString().slice(0, 10);
-}
-
-function goalDto(g: GoalRow): Goal {
+/** `neededMinor`: what the goal needs this period (a month, or the person's cycle). */
+function goalDto(g: GoalRow, neededMinor: number): Goal {
 	return {
 		id: g.id,
 		name: g.name,
@@ -32,12 +31,20 @@ function goalDto(g: GoalRow): Goal {
 		targetMinor: g.targetMinor,
 		savedMinor: g.savedMinor,
 		targetDate: g.targetDate,
-		monthlyNeededMinor: goalMonthlyNeeded(g, todayIso()),
+		monthlyNeededMinor: neededMinor,
 	};
 }
 
 /** Budgets (monthly limit per category) and savings goals. All scoped by user id. */
 export function createPlanRepository(db: Db) {
+	/** How much each goal needs per period: the cycle's share, or the month's. */
+	async function neededFor(userId: string): Promise<(g: GoalRow) => number> {
+		const bounds = await periodBounds(db, userId);
+		return (g) =>
+			bounds.kind === "cycle"
+				? goalCycleNeeded(g, bounds.start, bounds.days)
+				: goalMonthlyNeeded(g, bounds.today);
+	}
 	const ownedGoal = (userId: string, id: string) =>
 		and(eq(goal.userId, userId), eq(goal.id, id), isNull(goal.archivedAt));
 
@@ -86,7 +93,8 @@ export function createPlanRepository(db: Db) {
 				.from(goal)
 				.where(and(eq(goal.userId, userId), isNull(goal.archivedAt)))
 				.orderBy(asc(goal.createdAt));
-			return rows.map(goalDto);
+			const need = await neededFor(userId);
+			return rows.map((g) => goalDto(g, need(g)));
 		},
 
 		async createGoal(userId: string, raw: GoalInput): Promise<Goal> {
@@ -96,7 +104,7 @@ export function createPlanRepository(db: Db) {
 				.values({ userId, ...input, targetDate: input.targetDate ?? null })
 				.returning();
 			if (!row) throw new Error("goal insert returned nothing");
-			return goalDto(row);
+			return goalDto(row, (await neededFor(userId))(row));
 		},
 
 		async updateGoal(
@@ -111,7 +119,7 @@ export function createPlanRepository(db: Db) {
 				.where(ownedGoal(userId, id))
 				.returning();
 			if (!row) throw notFound("Goal");
-			return goalDto(row);
+			return goalDto(row, (await neededFor(userId))(row));
 		},
 
 		/** Adds (or with a negative amount, takes out) money; never more than is saved. */
@@ -148,7 +156,7 @@ export function createPlanRepository(db: Db) {
 				if (exists) throw badRequest("You can't take out more than is saved.");
 				throw notFound("Goal");
 			}
-			return goalDto(row);
+			return goalDto(row, (await neededFor(userId))(row));
 		},
 
 		/** Pay yourself first: what goes out when salary lands, in the order listed. */

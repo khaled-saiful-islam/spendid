@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { PeriodKind } from "./cycle";
 
 export const RELATIONS = [
 	"spouse",
@@ -178,7 +179,15 @@ export interface SharedView {
 	level: ShareLevel;
 	paused: boolean;
 	/** null while paused. */
-	month: { spentMinor: number; lastMonthMinor: number; count: number } | null;
+	/** The owner's current period (their cycle, or the calendar month), never their salary. */
+	month: {
+		spentMinor: number;
+		lastMonthMinor: number;
+		count: number;
+		kind: PeriodKind;
+		from: string;
+		to: string;
+	} | null;
 	categories:
 		| { name: string; icon: string; tint: string; spentMinor: number }[]
 		| null;

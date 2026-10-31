@@ -400,6 +400,35 @@ describe.skipIf(!url)("money API (real database)", () => {
 			);
 		});
 
+		it("a goal's share is per cycle", async () => {
+			const bo = await createPerson(db);
+			await db
+				.update(profile)
+				.set({ period: "cycle" })
+				.where(eq(profile.userId, bo));
+			await db.insert(payCycle).values({
+				userId: bo,
+				startsOn: day(-3),
+				endsOn: day(10),
+				incomeMinor: 200_000,
+			});
+			// 28 days from the cycle's start to the date: two 14-day cycles, half each.
+			await call(bo, "POST", "/goals", {
+				name: "Trip",
+				emoji: "✈️",
+				targetMinor: 90_000,
+				targetDate: day(24),
+			});
+			const goals = await call<{ name: string; monthlyNeededMinor: number }[]>(
+				bo,
+				"GET",
+				"/goals",
+			);
+			expect(
+				goals.body.data.find((g) => g.name === "Trip")?.monthlyNeededMinor,
+			).toBe(45_000);
+		});
+
 		it("keeps the calendar month for everyone else", async () => {
 			const { body } = await call<Summary>(maya, "GET", "/summary");
 			expect(body.data.period).toMatchObject({
