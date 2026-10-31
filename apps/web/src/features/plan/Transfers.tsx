@@ -190,7 +190,11 @@ export function TransfersSection({
 	}
 
 	return (
-		<section aria-labelledby="transfers-heading" className="space-y-3">
+		<section
+			id="transfers"
+			aria-labelledby="transfers-heading"
+			className="scroll-mt-24 space-y-3"
+		>
 			<SectionHeader
 				id="transfers-heading"
 				title={t("Your transfers")}

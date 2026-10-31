@@ -4,6 +4,7 @@ import { msC } from "./ms/c";
 import { msD } from "./ms/d";
 import { msE } from "./ms/e";
 import { msF } from "./ms/f";
+import { msG } from "./ms/g";
 
 /**
  * Bahasa Melayu. Keys are the English text exactly as written in the app.
@@ -16,4 +17,5 @@ export const ms: Record<string, string> = {
 	...msD,
 	...msE,
 	...msF,
+	...msG,
 };

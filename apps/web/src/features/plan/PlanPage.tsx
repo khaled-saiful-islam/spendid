@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
 import { SlidersHorizontal } from "lucide-react";
 import { buttonClass } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -18,6 +17,7 @@ import { Challenges } from "./Challenges";
 import { GoalsSection } from "./GoalsSection";
 import { ImpulsePause } from "./ImpulsePause";
 import { PlanHero } from "./PlanHero";
+import { usePlanSheet } from "./PlanSheet";
 import { CategoryBudgets } from "./StyleBudgets";
 import { TransfersSection } from "./Transfers";
 import { WarrantyVault } from "./WarrantyVault";
@@ -28,6 +28,7 @@ export function PlanPage() {
 	const { data: budgets = [] } = useQuery(budgetsQuery);
 	const { data: goals = [] } = useQuery(goalsQuery);
 	const categoryMap = useCategoryMap();
+	const plan = usePlanSheet();
 
 	if (!summary)
 		return <div className="h-64 animate-pulse rounded-panel bg-surface-2" />;
@@ -36,6 +37,7 @@ export function PlanPage() {
 	return (
 		<div className="space-y-5">
 			<PageHeader title={t("Your plan")} />
+			{plan.sheet}
 
 			{summary.incomeMinor !== null && summary.method === null ? (
 				<section className="rounded-panel border-2 border-dashed border-line p-5">
@@ -45,26 +47,26 @@ export function PlanPage() {
 							"Safe to spend already works from your income. A plan shows where your money goes each month.",
 						)}
 					</p>
-					<Link
-						to="/onboarding"
-						search={{ edit: true }}
+					<button
+						type="button"
+						onClick={plan.open}
 						className={buttonClass("coin", "md", "mt-3")}
 					>
 						{t("Pick a plan")}
-					</Link>
+					</button>
 				</section>
 			) : summary.incomeMinor === null ? (
 				<section className="rounded-panel border-2 border-dashed border-line p-5">
 					<p className="font-semibold">
 						{t("Add your monthly income to plan your budget.")}
 					</p>
-					<Link
-						to="/onboarding"
-						search={{ edit: true }}
+					<button
+						type="button"
+						onClick={plan.open}
 						className={buttonClass("coin", "md", "mt-3")}
 					>
 						{t("Add income")}
-					</Link>
+					</button>
 				</section>
 			) : (
 				<PlanHero
@@ -73,6 +75,7 @@ export function PlanPage() {
 					categories={categories}
 					budgets={budgets}
 					methodTitle={method?.title ?? t("Budget")}
+					onChangePlan={plan.open}
 				/>
 			)}
 

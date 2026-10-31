@@ -4,7 +4,6 @@ import {
 	formatMinor,
 	type Summary,
 } from "@spendid/shared";
-import { Link } from "@tanstack/react-router";
 import { Lightbulb, Lock } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { TINTS } from "@/components/money/CategoryIcon";
@@ -165,12 +164,15 @@ export function PlanHero({
 	categories,
 	budgets,
 	methodTitle,
+	onChangePlan,
 }: {
 	summary: Summary;
 	categoryMap: Map<string, Category>;
 	categories: Category[];
 	budgets: BudgetLine[];
 	methodTitle: string;
+	/** Opens the "Your plan" sheet. */
+	onChangePlan: () => void;
 }) {
 	const reduce = useReducedMotion();
 	const cur = summary.homeCurrency;
@@ -206,14 +208,14 @@ export function PlanHero({
 						{money(income)}
 					</p>
 				</div>
-				<Link
-					to="/onboarding"
-					search={{ edit: true }}
+				<button
+					type="button"
+					onClick={onChangePlan}
 					className="inline-flex min-h-10 items-center gap-2 rounded-full bg-white/10 px-3.5 text-[0.9rem] font-semibold ring-1 ring-white/15 hover:bg-white/15"
 				>
 					{methodTitle}
 					<span className="text-plum-200">{t("Change")}</span>
-				</Link>
+				</button>
 			</div>
 
 			{blocks.length === 0 ? (
