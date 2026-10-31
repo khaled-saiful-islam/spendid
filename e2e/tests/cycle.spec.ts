@@ -1,4 +1,10 @@
-import { type APIRequestContext, expect, type Locator, type Page, test } from "@playwright/test";
+import {
+	type APIRequestContext,
+	expect,
+	type Locator,
+	type Page,
+	test,
+} from "@playwright/test";
 import { stateFile } from "./support/accounts";
 import { expectNoSeriousIssues } from "./support/axe";
 
@@ -13,13 +19,18 @@ interface Setup {
 	today: string;
 }
 
-const data = async <T>(res: Awaited<ReturnType<APIRequestContext["get"]>>): Promise<T> => {
+const data = async <T>(
+	res: Awaited<ReturnType<APIRequestContext["get"]>>,
+): Promise<T> => {
 	expect(res.ok(), `${res.url()} → ${res.status()}`).toBe(true);
 	return ((await res.json()) as { data: T }).data;
 };
-const getSetup = (r: APIRequestContext) => r.get("/api/plan/setup").then((x) => data<Setup>(x));
+const getSetup = (r: APIRequestContext) =>
+	r.get("/api/plan/setup").then((x) => data<Setup>(x));
 const addDays = (day: string, n: number) =>
-	new Date(Date.parse(`${day}T00:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
+	new Date(Date.parse(`${day}T00:00:00Z`) + n * 86_400_000)
+		.toISOString()
+		.slice(0, 10);
 
 let saved: Setup;
 
@@ -30,7 +41,12 @@ test.beforeEach(async ({ request }) => {
 test.afterEach(async ({ request }) => {
 	await data(
 		await request.put("/api/plan/setup", {
-			data: { period: "month", cycle: null, incomeMinor: saved.incomeMinor ?? 0, method: saved.method },
+			data: {
+				period: "month",
+				cycle: null,
+				incomeMinor: saved.incomeMinor ?? 0,
+				method: saved.method,
+			},
 		}),
 	);
 	await data(await request.put("/api/me/locale", { data: { locale: "en" } }));
@@ -49,7 +65,10 @@ async function openSheet(page: Page) {
 	return page.getByRole("dialog", { name: "Your plan" });
 }
 
-test("switch to my own dates: Plan and Home show the cycle and its salary", async ({ page, request }) => {
+test("switch to my own dates: Plan and Home show the cycle and its salary", async ({
+	page,
+	request,
+}) => {
 	const { today } = saved;
 	const sheet = await openSheet(page);
 	await pick(sheet, "My own dates");
@@ -57,10 +76,14 @@ test("switch to my own dates: Plan and Home show the cycle and its salary", asyn
 	await sheet.getByLabel("Ends", { exact: true }).fill(addDays(today, 28));
 	await expect(sheet.getByText("31 days")).toBeVisible();
 	await sheet.getByLabel("Salary this cycle", { exact: true }).fill("4,500");
-	await expect(sheet.getByText(/About RM\s?[\d,.]+ a day to spend\./)).toBeVisible();
+	await expect(
+		sheet.getByText(/About RM\s?[\d,.]+ a day to spend\./),
+	).toBeVisible();
 	await sheet.getByRole("button", { name: "Save" }).click();
 	await expect(page.getByText("Plan saved.")).toBeVisible();
-	await expect(page.getByRole("heading", { name: "Salary this cycle" })).toBeVisible();
+	await expect(
+		page.getByRole("heading", { name: "Salary this cycle" }),
+	).toBeVisible();
 
 	expect(await getSetup(request)).toMatchObject({
 		period: "cycle",
@@ -68,10 +91,20 @@ test("switch to my own dates: Plan and Home show the cycle and its salary", asyn
 		incomeMinor: 450_000,
 	});
 	await page.goto("/app");
-	await expect(page.getByText(/Left this cycle|Over this cycle/).first()).toBeVisible();
+	await expect(
+		page.getByText(/Left this cycle|Over this cycle/).first(),
+	).toBeVisible();
+	// Me shows the cycle's salary and dates, not the old monthly income.
+	await page.goto("/app/me");
+	await expect(page.getByText("Salary this cycle")).toBeVisible();
+	await expect(page.getByText("RM 4,500.00")).toBeVisible();
+	await expect(page.getByText("Monthly income")).toHaveCount(0);
 });
 
-test("empty dates are refused and nothing is saved", async ({ page, request }) => {
+test("empty dates are refused and nothing is saved", async ({
+	page,
+	request,
+}) => {
 	const sheet = await openSheet(page);
 	await pick(sheet, "My own dates");
 	await sheet.getByLabel("Starts", { exact: true }).fill("");
@@ -81,7 +114,10 @@ test("empty dates are refused and nothing is saved", async ({ page, request }) =
 	expect((await getSetup(request)).period).toBe(saved.period);
 });
 
-test("a too-short cycle shows the rule next to the field", async ({ page, request }) => {
+test("a too-short cycle shows the rule next to the field", async ({
+	page,
+	request,
+}) => {
 	const { today } = saved;
 	const sheet = await openSheet(page);
 	await pick(sheet, "My own dates");
@@ -109,10 +145,14 @@ test("back to the calendar month", async ({ page, request }) => {
 	await sheet.getByRole("button", { name: "Save" }).click();
 	await expect(page.getByText("Plan saved.")).toBeVisible();
 	expect((await getSetup(request)).period).toBe("month");
-	await expect(page.getByRole("heading", { name: "Monthly income" })).toBeVisible();
+	await expect(
+		page.getByRole("heading", { name: "Monthly income" }),
+	).toBeVisible();
 });
 
-test("the next-cycle card: Change opens the sheet, Looks right confirms", async ({ page }) => {
+test("the next-cycle card: Change opens the sheet, Looks right confirms", async ({
+	page,
+}) => {
 	// A drafted cycle needs the server's clock to pass a cycle's end, so the summary is mocked
 	// here; drafting itself is covered by the API tests.
 	const { today } = saved;
@@ -146,12 +186,16 @@ test("the next-cycle card: Change opens the sheet, Looks right confirms", async 
 	expect(confirmed).toBe(true);
 });
 
-test("the sheet fits a small phone and passes accessibility checks", async ({ page }) => {
+test("the sheet fits a small phone and passes accessibility checks", async ({
+	page,
+}) => {
 	await page.setViewportSize({ width: 360, height: 740 });
 	const sheet = await openSheet(page);
 	await pick(sheet, "My own dates");
 	await expect(sheet.getByLabel("Starts", { exact: true })).toBeVisible();
-	const wide = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+	const wide = await page.evaluate(
+		() => document.documentElement.scrollWidth > window.innerWidth + 1,
+	);
 	expect(wide, "the sheet scrolls sideways at 360px").toBe(false);
 	await expectNoSeriousIssues(page, "plan sheet at 360px");
 });
@@ -164,5 +208,7 @@ test("in Bahasa Melayu the sheet is translated", async ({ page, request }) => {
 	const sheet = page.getByRole("dialog", { name: "Rancangan anda" });
 	await expect(sheet).toBeVisible();
 	await pick(sheet, "Tarikh saya sendiri");
-	await expect(sheet.getByLabel("Gaji kitaran ini", { exact: true })).toBeVisible();
+	await expect(
+		sheet.getByLabel("Gaji kitaran ini", { exact: true }),
+	).toBeVisible();
 });

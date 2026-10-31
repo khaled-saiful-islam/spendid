@@ -204,6 +204,12 @@ test.describe("on a small phone (360 px wide, like most Android phones)", () => 
 
 test("subscriptions: add one, see it coming up, then remove it", async ({ page }) => {
 	const name = "Playwright Prime";
+	// A run that failed halfway may have left one behind; start clean.
+	const before = (await (await page.request.get("/api/subscriptions")).json()).data as {
+		active: { id: string; name: string }[];
+	};
+	for (const s of before.active.filter((x) => x.name === name))
+		await page.request.delete(`/api/subscriptions/${s.id}`);
 	await page.goto("/app/subscriptions");
 	await page.getByRole("main").getByRole("button", { name: /^Add( your first)?$/ }).first().click();
 	const sheet = page.getByRole("dialog", { name: "Add a subscription" });

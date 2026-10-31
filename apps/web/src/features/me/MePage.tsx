@@ -1,5 +1,5 @@
 import { formatMinor, type Me } from "@spendid/shared";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Languages, LogOut, Wallet } from "lucide-react";
 import { LanguageSwitch } from "@/components/system/LanguageSwitch";
@@ -8,6 +8,9 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { dateLocale, t } from "@/i18n";
 import { authClient } from "@/lib/auth-client";
+import { summaryQuery } from "@/lib/money-api";
+import { cycleDates } from "@/lib/period-words";
+import { appToday } from "@/lib/time";
 import { PushSwitch } from "../notices/PushSwitch";
 import { METHODS } from "../onboarding/options";
 import { EmailSettings } from "./EmailSettings";
@@ -27,7 +30,10 @@ function initials(name: string): string {
 export function MePage({ me }: { me: Me }) {
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
+	const { data: summary } = useQuery(summaryQuery);
 	const { user, profile } = me;
+	// On a cycle the plan uses the cycle's salary, not the monthly income.
+	const cycle = summary?.period.kind === "cycle" ? summary : null;
 	const method =
 		METHODS.find((m) => m.id === profile.budgetMethod)?.title ??
 		t("No plan yet");
@@ -45,12 +51,25 @@ export function MePage({ me }: { me: Me }) {
 				profile.homeCurrency,
 			) ?? profile.homeCurrency,
 		],
-		[
-			t("Monthly income"),
-			profile.monthlyIncomeMinor === null
-				? t("Not set")
-				: formatMinor(profile.monthlyIncomeMinor, profile.homeCurrency),
-		],
+		...(cycle
+			? ([
+					[
+						t("Budget period"),
+						cycleDates(cycle.period.start, cycle.period.end, appToday()),
+					],
+					[
+						t("Salary this cycle"),
+						formatMinor(cycle.incomeMinor ?? 0, profile.homeCurrency),
+					],
+				] as [string, string][])
+			: ([
+					[
+						t("Monthly income"),
+						profile.monthlyIncomeMinor === null
+							? t("Not set")
+							: formatMinor(profile.monthlyIncomeMinor, profile.homeCurrency),
+					],
+				] as [string, string][])),
 		[t("Budget style"), method],
 	];
 
