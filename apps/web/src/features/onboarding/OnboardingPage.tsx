@@ -177,7 +177,7 @@ export function OnboardingPage({ me }: { me: Me }) {
 			<div className="relative mx-auto grid grid-cols-1 min-h-dvh max-w-6xl gap-6 px-4 pt-5 pb-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-center lg:gap-12 lg:py-10">
 				<div className="flex flex-wrap items-center justify-between gap-3 lg:col-span-2">
 					<Logo className="text-plum-50" />
-					<div className="flex items-center gap-3">
+					<div className="ml-auto flex items-center gap-3">
 						<span className="text-[0.95rem] font-medium text-plum-200">
 							{t("Step {n} of {total}", { n: step + 1, total: STEPS.length })}
 						</span>
