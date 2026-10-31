@@ -76,10 +76,11 @@ export function NoticesBell({ className }: { className?: string }) {
 			<button
 				type="button"
 				onClick={() => setOpen(true)}
+				// The name says what the badge shows ("9+"), so it matches what people see.
 				aria-label={
 					unread > 0
 						? t(unread === 1 ? "Alerts, 1 new" : "Alerts, {n} new", {
-								n: unread,
+								n: unread > 9 ? "9+" : unread,
 							})
 						: t("Alerts")
 				}
@@ -92,7 +93,7 @@ export function NoticesBell({ className }: { className?: string }) {
 				{unread > 0 && (
 					<span
 						aria-hidden="true"
-						className="num absolute top-1 right-1 grid min-w-5 place-items-center rounded-full bg-coral px-1 text-[0.7rem] leading-5 font-bold text-white ring-2 ring-bg"
+						className="num absolute top-1 right-1 grid min-w-5 place-items-center rounded-full bg-coral px-1 text-[0.7rem] leading-5 font-bold text-plum-950 ring-2 ring-bg"
 					>
 						{unread > 9 ? "9+" : unread}
 					</span>

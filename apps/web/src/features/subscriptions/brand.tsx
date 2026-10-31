@@ -253,8 +253,11 @@ export function dueLabel(
 
 export const TONE_CLASS: Record<DueTone, string> = {
 	paid: "bg-jade/12 text-safe",
-	overdue: "bg-coral/14 text-over",
-	today: "bg-coral/14 text-over",
+	// Small text on a pink tint needs a deeper red than --over to stay readable (4.5:1).
+	overdue:
+		"bg-coral/14 text-[color-mix(in_oklab,var(--over)_80%,black)] dark:text-over",
+	today:
+		"bg-coral/14 text-[color-mix(in_oklab,var(--over)_80%,black)] dark:text-over",
 	soon: "bg-marigold/22 text-warn",
 	later: "bg-surface-2 text-ink-soft",
 };
