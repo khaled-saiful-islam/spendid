@@ -144,25 +144,24 @@ export function detectRecurring(charges: Charge[], today: string): Recurring[] {
 }
 
 /**
- * Bills still expected this month: every upcoming (or late, not yet seen) occurrence from
- * the start of the month up to `monthEnd`. A bill already charged this month has moved its
- * next date into a later month, so it isn't counted twice.
+ * Bills still expected in a period: every upcoming (or late, not yet seen) occurrence from
+ * `from` to `to` (both included). A bill already charged in the period has moved its next
+ * date past it, so it isn't counted twice.
  */
 export function billsStillDue(
 	recurring: Recurring[],
-	today: string,
-	monthEnd: string,
+	from: string,
+	to: string,
 ): {
 	minor: number;
 	items: { merchant: string; day: string; amountMinor: number }[];
 } {
-	const monthStart = `${today.slice(0, 7)}-01`;
 	const items: { merchant: string; day: string; amountMinor: number }[] = [];
 	for (const r of recurring) {
 		for (let n = 1; n <= 6; n++) {
 			const day = addCadence(r.lastDay, r.cadence, n);
-			if (day > monthEnd) break;
-			if (day >= monthStart)
+			if (day > to) break;
+			if (day >= from)
 				items.push({ merchant: r.merchant, day, amountMinor: r.amountMinor });
 		}
 	}

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PeriodSchema } from "./cycle";
 import { BUDGET_METHODS, CurrencyCodeSchema } from "./profile";
 
 const MAX_MINOR = 1_000_000_000_000;
@@ -68,12 +69,19 @@ export const SummarySchema = z.object({
 	homeCurrency: z.string(),
 	/** Null when no plan has been chosen. */
 	method: z.enum(BUDGET_METHODS).nullable(),
+	/** What every number below covers: the calendar month or the person's cycle. */
+	period: PeriodSchema,
+	/** The period's income: the cycle's salary, or the monthly income. */
 	incomeMinor: z.number().nullable(),
 	reservedMinor: z.number(),
 	/** Money sent out first when salary lands (the pay-yourself-first plan). */
 	transfers: z.array(z.object({ name: z.string(), amountMinor: z.number() })),
+	/** Days left in the period, today included. */
 	daysLeft: z.number(),
+	/** Spent in the period so far (the name is from before cycles). */
 	monthSpentMinor: z.number(),
+	/** Spending per day from the period's first day to today (today last). */
+	dailyMinor: z.array(z.number()),
 	safe: z.object({
 		status: z.enum(["ok", "over", "no-income"]),
 		dailyAllowanceMinor: z.number(),
@@ -84,7 +92,7 @@ export const SummarySchema = z.object({
 	byCategory: z.array(
 		z.object({ categoryId: z.uuid(), spentMinor: z.number() }),
 	),
-	/** Bills and subscriptions still expected this month (already taken out of safe-to-spend). */
+	/** Bills and subscriptions still expected this period (already taken out of safe-to-spend). */
 	bills: z.object({
 		minor: z.number(),
 		items: z.array(

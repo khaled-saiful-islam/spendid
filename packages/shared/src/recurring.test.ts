@@ -109,9 +109,36 @@ describe("billsStillDue", () => {
 			],
 			"2026-10-16",
 		);
-		expect(billsStillDue(recurring, "2026-10-16", "2026-10-31")).toEqual({
+		expect(billsStillDue(recurring, "2026-10-01", "2026-10-31")).toEqual({
 			minor: 12900,
 			items: [{ merchant: "Unifi", day: "2026-10-20", amountMinor: 12900 }],
 		});
+	});
+
+	it("counts bills due inside a cycle that crosses a month", () => {
+		const recurring = detectRecurring(
+			[
+				c("TNB", "2026-08-05", 12000),
+				c("TNB", "2026-09-05", 12000),
+				c("TNB", "2026-10-05", 12000),
+			],
+			"2026-10-31",
+		);
+		// The next TNB is 5 Nov: inside 29 Oct → 28 Nov, outside 1 → 31 Oct.
+		expect(billsStillDue(recurring, "2026-10-29", "2026-11-28").minor).toBe(
+			12000,
+		);
+		expect(billsStillDue(recurring, "2026-10-01", "2026-10-31").minor).toBe(0);
+	});
+
+	it("leaves out a late bill from before the cycle began", () => {
+		const recurring = detectRecurring(
+			[c("Astro", "2026-08-20", 9900), c("Astro", "2026-09-20", 9900)],
+			"2026-10-29",
+		);
+		// 20 Oct (late) is before the cycle; only 20 Nov falls inside 29 Oct → 28 Nov.
+		expect(billsStillDue(recurring, "2026-10-29", "2026-11-28").items).toEqual([
+			{ merchant: "Astro", day: "2026-11-20", amountMinor: 9900 },
+		]);
 	});
 });

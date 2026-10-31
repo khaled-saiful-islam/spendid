@@ -1,4 +1,11 @@
-import { createDb, fxRate, goal, profile } from "@spendid/db";
+import {
+	createDb,
+	fxRate,
+	goal,
+	payCycle,
+	profile,
+	transaction,
+} from "@spendid/db";
 import type {
 	Category,
 	Summary,
@@ -325,5 +332,82 @@ describe.skipIf(!url)("money API (real database)", () => {
 			(await call(admin, "PUT", "/transfers", [{ name: "x", amountMinor: 1 }]))
 				.status,
 		).toBe(403);
+	});
+	describe("on a cycle", () => {
+		let ali: string;
+		const today = new Date().toLocaleDateString("en-CA", {
+			timeZone: "Asia/Kuala_Lumpur",
+		});
+		const day = (n: number) =>
+			new Date(Date.parse(`${today}T00:00:00Z`) + n * 86_400_000)
+				.toISOString()
+				.slice(0, 10);
+		// 04:00 UTC is noon in Kuala Lumpur.
+		const noonKl = (d: string) => new Date(`${d}T04:00:00Z`);
+
+		beforeAll(async () => {
+			ali = await createPerson(db, { incomeMinor: 999_999 });
+			await db
+				.update(profile)
+				.set({ period: "cycle", budgetMethod: "pay_yourself_first" })
+				.where(eq(profile.userId, ali));
+			await db.insert(payCycle).values({
+				userId: ali,
+				startsOn: day(-3),
+				endsOn: day(27),
+				incomeMinor: 450_000,
+			});
+			await call(ali, "PUT", "/transfers", [
+				{ name: "ASB", amountMinor: 50_000 },
+			]);
+			const row = (minor: number, d: string, deleted = false) => ({
+				userId: ali,
+				categoryId: food.id,
+				merchant: "Kedai",
+				amountMinor: minor,
+				currency: "MYR",
+				homeAmountMinor: minor,
+				homeCurrency: "MYR",
+				occurredAt: noonKl(d),
+				deletedAt: deleted ? new Date() : null,
+			});
+			await db.insert(transaction).values([
+				row(7_000, day(-4)), // the day before the cycle: not counted
+				row(1_250, day(-3)), // the cycle's first day
+				row(2_000, day(-1)),
+				row(3_000, day(-1), true), // removed: never counted
+				row(500, today),
+			]);
+		});
+
+		it("cycle totals match a hand calculation", async () => {
+			const { body } = await call<Summary>(ali, "GET", "/summary");
+			const s = body.data;
+			expect(s.period).toMatchObject({
+				kind: "cycle",
+				start: day(-3),
+				end: day(27),
+				days: 31,
+				status: "set",
+			});
+			expect(s.incomeMinor).toBe(450_000);
+			expect(s.reservedMinor).toBe(50_000);
+			expect(s.monthSpentMinor).toBe(1_250 + 2_000 + 500);
+			expect(s.daysLeft).toBe(28);
+			expect(s.dailyMinor).toEqual([1_250, 0, 2_000, 500]);
+			expect(s.safe.leftThisMonthMinor).toBe(
+				450_000 - 50_000 - s.bills.minor - 3_750,
+			);
+		});
+
+		it("keeps the calendar month for everyone else", async () => {
+			const { body } = await call<Summary>(maya, "GET", "/summary");
+			expect(body.data.period).toMatchObject({
+				kind: "month",
+				start: `${today.slice(0, 8)}01`,
+				status: null,
+			});
+			expect(body.data.dailyMinor).toHaveLength(Number(today.slice(8, 10)));
+		});
 	});
 });
