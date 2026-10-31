@@ -22,6 +22,7 @@ import {
 import { recurringFor } from "../modules/insights/charges";
 import type { InsightsService } from "../modules/insights/insights.service";
 import { onLocalDays } from "../modules/money/local-days";
+import { periodBounds } from "../modules/money/period";
 import type { SummaryService } from "../modules/money/summary.service";
 import type { SubscriptionService } from "../modules/subscriptions/subscriptions.service";
 import { localParts, type Notifier } from "./notifier";
@@ -268,6 +269,27 @@ export function createDigests(deps: {
 		});
 	}
 
+	/** On a cycle's last day: tomorrow a drafted cycle starts with the same dates and salary. */
+	async function cycleEnding(userId: string, today: string): Promise<void> {
+		const bounds = await periodBounds(db, userId);
+		if (bounds.kind !== "cycle" || bounds.end !== today || !bounds.cycleId)
+			return;
+		await notifier.notify(userId, {
+			kind: "cycle-ending",
+			group: "budget",
+			dedupeKey: bounds.cycleId,
+			build: ({ appUrl }) => ({
+				subject: "Your cycle ends today",
+				preview:
+					"Tomorrow a new cycle starts with the same length and salary. Change it if your pay is different.",
+				heading: "Your cycle ends today",
+				body: "Tomorrow Spendid starts your next cycle with the same length and salary. If your pay day or salary is different this time, change it in a tap.",
+				action: "Check my next cycle",
+				url: `${appUrl}/app/plan`,
+			}),
+		});
+	}
+
 	async function warranties(userId: string, today: string): Promise<void> {
 		for (const days of WARRANTY_NOTICE_DAYS) {
 			const ending = await db
@@ -384,6 +406,7 @@ export function createDigests(deps: {
 	return {
 		/** One pass over everyone. Errors for one person never stop the others. */
 		evening,
+		cycleEnding,
 
 		async tick(at = new Date()): Promise<number> {
 			const people = await db
@@ -409,6 +432,7 @@ export function createDigests(deps: {
 						bills(p.id, local.date, p.currency),
 						subscriptionReminders(p.id, local.date),
 						warranties(p.id, local.date),
+						cycleEnding(p.id, local.date),
 					],
 					"subscription-month": () => [subscriptionMonth(p.id, local.date)],
 					wrapped: () => [wrapped(p.id, local.date)],

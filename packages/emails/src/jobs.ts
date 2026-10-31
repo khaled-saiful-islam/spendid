@@ -15,6 +15,7 @@ const base = {
 export const NOTICE_KINDS = [
 	"weekly-summary",
 	"budget-alert",
+	"cycle-ending",
 	"unusual-charge",
 	"duplicate-charge",
 	"bill-due",

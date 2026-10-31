@@ -342,6 +342,40 @@ describe.skipIf(!url)("email notifications (real database)", () => {
 		expect(buzzed).toHaveLength(2);
 	});
 
+	it("reminds a cycle user on the cycle's last day, once, and nobody else", async () => {
+		const digests = createDigests({
+			db,
+			notifier,
+			summary: createSummaryService(db),
+			insights: createInsightsService(db),
+			logError: () => {},
+		});
+		const today = localParts("Asia/Kuala_Lumpur").date;
+		const onCycle = async (startsOn: string, endsOn: string) => {
+			const id = await createPerson(db);
+			await db
+				.update(profile)
+				.set({ period: "cycle" })
+				.where(eq(profile.userId, id));
+			await db
+				.insert(payCycle)
+				.values({ userId: id, startsOn, endsOn, incomeMinor: 450_000 });
+			return id;
+		};
+		const ending = await onCycle(addDays(today, -30), today);
+		const early = await onCycle(addDays(today, -3), addDays(today, 27));
+		const sam = await createPerson(db);
+
+		for (const id of [ending, ending, early, sam])
+			await digests.cycleEnding(id, today);
+
+		const reminders = sent.filter(
+			(s) => s.job.type === "notice" && s.job.kind === "cycle-ending",
+		);
+		expect(reminders).toHaveLength(1);
+		expect(reminders[0]?.job.to).toBe(`${ending}@test.local`);
+	});
+
 	it("lets a phone turn notifications on, test them and turn them off", async () => {
 		const zoe = await createPerson(db);
 		const as = { "x-test-user": zoe };

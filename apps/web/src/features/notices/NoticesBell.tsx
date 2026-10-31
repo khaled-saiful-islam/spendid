@@ -36,6 +36,7 @@ const LOOK: Record<string, { Icon: LucideIcon; tint: string }> = {
 	"bill-due": { Icon: CalendarClock, tint: "amber" },
 	"price-rise": { Icon: TrendingUp, tint: "rose" },
 	"budget-alert": { Icon: BadgeAlert, tint: "orange" },
+	"cycle-ending": { Icon: CalendarClock, tint: "violet" },
 	"unusual-charge": { Icon: BadgeAlert, tint: "red" },
 	"duplicate-charge": { Icon: BadgeAlert, tint: "red" },
 	"goal-reached": { Icon: Target, tint: "lime" },
