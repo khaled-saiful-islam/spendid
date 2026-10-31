@@ -1,4 +1,11 @@
-import { BellOff, BellRing, Moon, Send, Smartphone } from "lucide-react";
+import {
+	BellOff,
+	BellRing,
+	Moon,
+	Send,
+	Smartphone,
+	Sunrise,
+} from "lucide-react";
 import { useState } from "react";
 import { InstallSheet } from "@/components/system/InstallSheet";
 import { buttonClass } from "@/components/ui/Button";
@@ -172,18 +179,30 @@ export function PushSwitch({ compact = false }: { compact?: boolean }) {
 				sub={statusLine(state)}
 			/>
 			{actions}
-			<EveningReminder />
+			<DailyReminders />
 			{sheet}
 		</section>
 	);
 }
 
-/** 8 pm: how today went, and a nudge to add anything missed. Off until switched on. */
-function EveningReminder() {
+/**
+ * 8 am: what yesterday cost and how the period is going (on until switched off).
+ * 8 pm: how today went, and a nudge to add anything missed (off until switched on).
+ */
+function DailyReminders() {
 	const { data, save } = useNotificationPrefs();
 	if (!data) return null;
 	return (
-		<div className="mt-4 rounded-tile bg-bg px-4">
+		<div className="mt-4 divide-y divide-line rounded-tile bg-bg px-4">
+			<Toggle
+				icon={<Sunrise className="size-4 text-plum-500" aria-hidden="true" />}
+				label={t("Morning summary")}
+				about={t(
+					"At 8 am: what you spent yesterday, and how this month or cycle is going. On your phone and in the bell, never by email.",
+				)}
+				checked={data.morningRecap}
+				onChange={(on) => void save({ morningRecap: on })}
+			/>
 			<Toggle
 				icon={<Moon className="size-4 text-plum-500" aria-hidden="true" />}
 				label={t("Evening reminder")}

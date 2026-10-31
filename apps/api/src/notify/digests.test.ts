@@ -9,25 +9,33 @@ const at = (weekday: number, day: number, hour: number) => ({
 
 describe("dueDigests", () => {
 	it("sends the Monday summary at 8 and the daily checks at 9", () => {
-		expect(dueDigests(at(1, 13, 8))).toEqual(["weekly"]);
-		expect(dueDigests(at(1, 13, 9))).toEqual(["weekly", "daily"]);
-		expect(dueDigests(at(2, 14, 9))).toEqual(["daily"]);
+		expect(dueDigests(at(1, 13, 8))).toEqual(["morning", "weekly"]);
+		expect(dueDigests(at(1, 13, 9))).toEqual(["morning", "weekly", "daily"]);
+		expect(dueDigests(at(2, 14, 9))).toEqual(["morning", "daily"]);
 	});
 
 	it("still sends after a missed hour, but not all day", () => {
-		expect(dueDigests(at(1, 13, 10))).toEqual(["weekly", "daily"]);
+		expect(dueDigests(at(1, 13, 10))).toEqual(["morning", "weekly", "daily"]);
 		expect(dueDigests(at(2, 14, 11))).toEqual(["daily"]);
 		expect(dueDigests(at(2, 14, 12))).toEqual([]);
 		expect(dueDigests(at(2, 14, 7))).toEqual([]);
 	});
 
 	it("adds the monthly plan and Wrapped on the 1st", () => {
-		expect(dueDigests(at(3, 1, 8))).toEqual(["subscription-month"]);
+		expect(dueDigests(at(3, 1, 8))).toEqual(["morning", "subscription-month"]);
 		expect(dueDigests(at(3, 1, 9))).toEqual([
+			"morning",
 			"daily",
 			"subscription-month",
 			"wrapped",
 		]);
+	});
+
+	it("sends the morning summary from 8, catching up for a few hours", () => {
+		expect(dueDigests(at(2, 14, 7))).not.toContain("morning");
+		expect(dueDigests(at(2, 14, 8))).toContain("morning");
+		expect(dueDigests(at(2, 14, 10))).toContain("morning");
+		expect(dueDigests(at(2, 14, 11))).not.toContain("morning");
 	});
 
 	it("nudges in the evening at 8, or 9 if that hour was missed", () => {

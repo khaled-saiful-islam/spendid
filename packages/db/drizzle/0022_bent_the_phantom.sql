@@ -1,0 +1,1 @@
+ALTER TABLE "notification_pref" ADD COLUMN "morning_recap" boolean DEFAULT true NOT NULL;

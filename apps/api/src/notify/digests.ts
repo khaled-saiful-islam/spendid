@@ -7,7 +7,7 @@ import {
 	warranty,
 } from "@spendid/db";
 import { type ErrorLog, stderrLog } from "@spendid/server";
-import { daysUntil } from "@spendid/shared";
+import { daysUntil, quietDelayMs } from "@spendid/shared";
 import {
 	and,
 	desc,
@@ -52,7 +52,8 @@ export type DigestKind =
 	| "daily"
 	| "subscription-month"
 	| "wrapped"
-	| "evening";
+	| "evening"
+	| "morning";
 
 /** The evening nudge's hour, and the one after in case a tick was missed (22:00 is quiet). */
 const EVENING_HOURS = [20, 21];
@@ -67,6 +68,7 @@ export function dueDigests(local: {
 	hour: number;
 }): DigestKind[] {
 	const due: DigestKind[] = [];
+	if (within(local.hour, 8)) due.push("morning");
 	if (local.weekday === 1 && within(local.hour, 8)) due.push("weekly");
 	if (within(local.hour, 9)) due.push("daily");
 	if (local.day === 1 && within(local.hour, 8)) due.push("subscription-month");
@@ -406,9 +408,75 @@ export function createDigests(deps: {
 		});
 	}
 
+	/**
+	 * 8 am, unless switched off: what yesterday cost, and how the month or cycle is going with
+	 * Home's own numbers. Phone and the bell only.
+	 */
+	async function morning(
+		userId: string,
+		today: string,
+		currency: string,
+	): Promise<void> {
+		const p = await notifier.prefs(userId);
+		if (!p.morningRecap) return;
+		const [who] = await db
+			.select({ timeZone: profile.timeZone })
+			.from(profile)
+			.where(eq(profile.userId, userId))
+			.limit(1);
+		const timeZone = who?.timeZone ?? "UTC";
+		// Still quiet: a later hour's tick sends it, so the phone gets it once quiet hours end.
+		if (quietDelayMs(localParts(timeZone), p.quietStart, p.quietEnd) > 0)
+			return;
+		const yesterday = addDays(today, -1);
+		const [[day], summary] = await Promise.all([
+			db
+				.select({
+					count: sql<number>`count(*)::int`,
+					minor: sql<string>`coalesce(sum(${transaction.homeAmountMinor}), 0)`,
+				})
+				.from(transaction)
+				.where(
+					and(
+						eq(transaction.userId, userId),
+						isNull(transaction.deletedAt),
+						onLocalDays(transaction.occurredAt, timeZone, yesterday, today),
+					),
+				),
+			deps.summary.forUser(userId),
+		]);
+		const count = day?.count ?? 0;
+		const minor = Number(day?.minor ?? 0);
+		const period = summary.period.kind === "cycle" ? "cycle" : "month";
+		const left = summary.safe.leftThisMonthMinor;
+		await notifier.nudge(userId, {
+			kind: "morning",
+			group: null,
+			dedupeKey: today,
+			build: ({ money, appUrl }) => {
+				if (count === 0)
+					return {
+						title: "Nothing logged yesterday",
+						body: "Spent anything? Add it now.",
+						url: `${appUrl}/app`,
+					};
+				const spent = money(summary.monthSpentMinor, currency);
+				return {
+					title: `Yesterday: ${money(minor, currency)} on ${count} ${count === 1 ? "expense" : "expenses"}`,
+					body:
+						summary.safe.status === "no-income"
+							? `This ${period} so far: ${spent} spent.`
+							: `This ${period} so far: ${spent} spent, ${money(Math.abs(left), currency)} ${left < 0 ? "over" : "left"}.`,
+					url: `${appUrl}/app/activity`,
+				};
+			},
+		});
+	}
+
 	return {
 		/** One pass over everyone. Errors for one person never stop the others. */
 		evening,
+		morning,
 		cycleEnding,
 		weekly,
 
@@ -441,6 +509,7 @@ export function createDigests(deps: {
 					"subscription-month": () => [subscriptionMonth(p.id, local.date)],
 					wrapped: () => [wrapped(p.id, local.date)],
 					evening: () => [evening(p.id, local.date, p.currency)],
+					morning: () => [morning(p.id, local.date, p.currency)],
 				};
 				const jobs = dueDigests(local).flatMap((kind) => start[kind]());
 				for (const r of await Promise.allSettled(jobs))

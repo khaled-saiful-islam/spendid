@@ -503,6 +503,23 @@ test("phone notifications: turn on, send a test, turn off", async ({ page }) => 
 	await expect(card.getByRole("button", { name: "Turn on" })).toBeVisible();
 });
 
+test("the morning summary is on by default and can be switched off", async ({ page }) => {
+	await page.goto("/app/me");
+	const card = page.getByRole("region", { name: "Notifications on this phone" });
+	const morning = card.getByRole("switch", { name: /Morning summary/ });
+	// The switch sits inside its label; people tap the row.
+	const row = card.locator("label").filter({ hasText: "Morning summary" });
+	await expect(morning).toBeChecked();
+	await row.click();
+	await expect(morning).not.toBeChecked();
+	await page.reload();
+	await expect(morning).not.toBeChecked();
+	await row.click();
+	await expect(morning).toBeChecked();
+	await page.reload();
+	await expect(morning).toBeChecked();
+});
+
 test("on an iPhone in Safari, notifications ask to install Spendid first", async ({ browser }) => {
 	const ctx = await browser.newContext({
 		storageState: stateFile("maya"),

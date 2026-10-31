@@ -60,7 +60,8 @@ export type NudgeKind =
 	| "family-share"
 	| "family-jar"
 	| "family-cheer"
-	| "evening";
+	| "evening"
+	| "morning";
 
 export interface NudgeNotice {
 	kind: NudgeKind;

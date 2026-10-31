@@ -15,6 +15,7 @@ import {
 	ShieldAlert,
 	ShieldCheck,
 	Sparkles,
+	Sunrise,
 	Target,
 	TrendingUp,
 	UserPlus,
@@ -53,6 +54,7 @@ const LOOK: Record<string, { Icon: LucideIcon; tint: string }> = {
 	"family-jar": { Icon: Coins, tint: "lime" },
 	"family-cheer": { Icon: HeartHandshake, tint: "pink" },
 	evening: { Icon: Moon, tint: "indigo" },
+	morning: { Icon: Sunrise, tint: "amber" },
 };
 
 const when = (iso: string) =>

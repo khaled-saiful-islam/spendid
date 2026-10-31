@@ -70,6 +70,8 @@ export const NotificationPrefsSchema = z.object({
 	hideAmounts: z.boolean(),
 	/** 8 pm: a nudge to log today's spending. Phone and the bell only, never email. */
 	eveningNudge: z.boolean(),
+	/** 8 am: what yesterday cost and how the period is going. Phone and the bell only. */
+	morningRecap: z.boolean(),
 	quietStart: z.number().int().min(0).max(23),
 	quietEnd: z.number().int().min(0).max(23),
 });
@@ -87,6 +89,7 @@ export const DEFAULT_PREFS: NotificationPrefs = {
 	product: true,
 	hideAmounts: false,
 	eveningNudge: false,
+	morningRecap: true,
 	quietStart: 22,
 	quietEnd: 8,
 };

@@ -67,6 +67,8 @@ export const notificationPref = pgTable("notification_pref", {
 	hideAmounts: boolean().notNull().default(false),
 	/** 8 pm nudge to log today's spending (phone and the bell, never email). */
 	eveningNudge: boolean().notNull().default(false),
+	/** 8 am summary of yesterday's spending (phone and the bell, never email). */
+	morningRecap: boolean().notNull().default(true),
 	/** Local hours; emails that would land inside wait until quietEnd. Equal hours = no quiet time. */
 	quietStart: smallint().notNull().default(22),
 	quietEnd: smallint().notNull().default(8),

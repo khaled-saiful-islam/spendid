@@ -9,7 +9,7 @@ import {
 	user,
 } from "@spendid/db";
 import type { EmailJob } from "@spendid/emails";
-import { addDays } from "@spendid/shared";
+import { addDays, formatMinor } from "@spendid/shared";
 import { eq } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
@@ -340,6 +340,166 @@ describe.skipIf(!url)("email notifications (real database)", () => {
 		// Once a day.
 		await digests.evening(rib, today, "MYR");
 		expect(buzzed).toHaveLength(2);
+	});
+
+	it("the morning summary: yesterday's spending and how the period is going, on by default", async () => {
+		const buzzed: { title: string; body: string }[] = [];
+		const n = createNotifier({
+			db,
+			links,
+			appUrl: "http://spendid.test",
+			sendEmail: async () => {},
+			push: {
+				deliver: async (_userId, message) => {
+					buzzed.push({ title: message.title, body: message.body });
+					return 1;
+				},
+			},
+		});
+		const summary = createSummaryService(db);
+		const digests = createDigests({
+			db,
+			notifier: n,
+			summary,
+			insights: createInsightsService(db),
+			logError: () => {},
+		});
+		const local = localParts("Asia/Kuala_Lumpur");
+		const today = local.date;
+		const yesterday = addDays(today, -1);
+		const at = (day: string, time = "12:00") =>
+			new Date(`${day}T${time}:00+08:00`);
+		const rm = (minor: number) => formatMinor(minor, "MYR");
+		const spend = (
+			userId: string,
+			minor: number,
+			when: Date,
+			deletedAt: Date | null = null,
+		) => ({
+			userId,
+			categoryId: food,
+			merchant: "Kopi",
+			amountMinor: minor,
+			currency: "MYR",
+			homeAmountMinor: minor,
+			homeCurrency: "MYR",
+			occurredAt: when,
+			deletedAt,
+		});
+		const onCycle = async (userId: string, incomeMinor: number) => {
+			await db
+				.update(profile)
+				.set({ period: "cycle" })
+				.where(eq(profile.userId, userId));
+			await db.insert(payCycle).values({
+				userId,
+				startsOn: addDays(today, -5),
+				endsOn: addDays(today, 24),
+				incomeMinor,
+			});
+		};
+
+		// A cycle: yesterday's two expenses (local days, deleted ones never count), and the
+		// cycle so far with the same numbers as Home.
+		const kim = await createPerson(db);
+		expect((await n.prefs(kim)).morningRecap).toBe(true);
+		await n.setPrefs(kim, { quietStart: 0, quietEnd: 0 });
+		await onCycle(kim, 300_000);
+		await db
+			.insert(transaction)
+			.values([
+				spend(kim, 1250, at(yesterday, "00:00")),
+				spend(kim, 680, at(yesterday, "23:59")),
+				spend(kim, 5000, at(yesterday), new Date()),
+				spend(kim, 999, at(addDays(today, -2), "23:59")),
+				spend(kim, 300, at(today, "00:00")),
+			]);
+		await digests.morning(kim, today, "MYR");
+		const kimSummary = await summary.forUser(kim);
+		expect(kimSummary.monthSpentMinor).toBe(1250 + 680 + 999 + 300);
+		expect(buzzed.at(-1)).toEqual({
+			title: "Yesterday: RM 19.30 on 2 expenses",
+			body: `This cycle so far: ${rm(3229)} spent, ${rm(kimSummary.safe.leftThisMonthMinor)} left.`,
+		});
+		expect((await n.inbox(kim)).items[0]?.title).toBe(
+			"Yesterday: RM 19.30 on 2 expenses",
+		);
+		// Once a day.
+		await digests.morning(kim, today, "MYR");
+		expect(buzzed).toHaveLength(1);
+
+		// Over the cycle's salary: says how much over.
+		const ned = await createPerson(db);
+		await n.setPrefs(ned, { quietStart: 0, quietEnd: 0 });
+		await onCycle(ned, 1_000);
+		await db.insert(transaction).values([spend(ned, 1930, at(yesterday))]);
+		await digests.morning(ned, today, "MYR");
+		const nedLeft = (await summary.forUser(ned)).safe.leftThisMonthMinor;
+		expect(nedLeft).toBeLessThan(0);
+		expect(buzzed.at(-1)).toEqual({
+			title: "Yesterday: RM 19.30 on 1 expense",
+			body: `This cycle so far: ${rm(1930)} spent, ${rm(-nedLeft)} over.`,
+		});
+
+		// Calendar month.
+		const ola = await createPerson(db);
+		await n.setPrefs(ola, { quietStart: 0, quietEnd: 0 });
+		await db.insert(transaction).values([spend(ola, 800, at(yesterday))]);
+		await digests.morning(ola, today, "MYR");
+		const olaSummary = await summary.forUser(ola);
+		expect(buzzed.at(-1)).toEqual({
+			title: "Yesterday: RM 8.00 on 1 expense",
+			body: `This month so far: ${rm(olaSummary.monthSpentMinor)} spent, ${rm(olaSummary.safe.leftThisMonthMinor)} left.`,
+		});
+
+		// No income set: just what was spent.
+		const ivy = await createPerson(db);
+		await n.setPrefs(ivy, { quietStart: 0, quietEnd: 0 });
+		await db
+			.update(profile)
+			.set({ monthlyIncomeMinor: null })
+			.where(eq(profile.userId, ivy));
+		await db.insert(transaction).values([spend(ivy, 800, at(yesterday))]);
+		await digests.morning(ivy, today, "MYR");
+		const ivySpent = (await summary.forUser(ivy)).monthSpentMinor;
+		expect(buzzed.at(-1)).toEqual({
+			title: "Yesterday: RM 8.00 on 1 expense",
+			body: `This month so far: ${rm(ivySpent)} spent.`,
+		});
+
+		// Nothing yesterday.
+		const lea = await createPerson(db);
+		await n.setPrefs(lea, { quietStart: 0, quietEnd: 0 });
+		await digests.morning(lea, today, "MYR");
+		expect(buzzed.at(-1)).toEqual({
+			title: "Nothing logged yesterday",
+			body: "Spent anything? Add it now.",
+		});
+		const sent = buzzed.length;
+
+		// Switched off: nothing.
+		const max = await createPerson(db);
+		await n.setPrefs(max, {
+			quietStart: 0,
+			quietEnd: 0,
+			morningRecap: false,
+		});
+		await digests.morning(max, today, "MYR");
+		expect(buzzed).toHaveLength(sent);
+		expect((await n.inbox(max)).items).toHaveLength(0);
+
+		// In quiet hours it waits for a later hour instead of being lost.
+		const quinn = await createPerson(db);
+		await n.setPrefs(quinn, {
+			quietStart: local.hour,
+			quietEnd: (local.hour + 2) % 24,
+		});
+		await digests.morning(quinn, today, "MYR");
+		expect(buzzed).toHaveLength(sent);
+		expect((await n.inbox(quinn)).items).toHaveLength(0);
+		await n.setPrefs(quinn, { quietStart: 0, quietEnd: 0 });
+		await digests.morning(quinn, today, "MYR");
+		expect(buzzed).toHaveLength(sent + 1);
 	});
 
 	it("reminds a cycle user on the cycle's last day, once, and nobody else", async () => {

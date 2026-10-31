@@ -277,6 +277,9 @@ export const msF: Record<string, string> = {
 	"After tax. A rough number is fine, or skip it. Change it any time in Profile, under Money settings.":
 		"Selepas cukai. Anggaran pun tidak mengapa, atau langkau. Ubah bila-bila masa di Profil, bahagian Tetapan wang.",
 	"Evening reminder": "Peringatan waktu malam",
+	"Morning summary": "Ringkasan pagi",
+	"At 8 am: what you spent yesterday, and how this month or cycle is going. On your phone and in the bell, never by email.":
+		"Pada 8 pagi: perbelanjaan anda semalam, dan keadaan bulan atau kitaran ini. Di telefon dan loceng, tidak sekali-kali melalui e-mel.",
 	"At 8 pm: how today went, and a nudge to add anything you missed. On your phone and in the bell, never by email.":
 		"Pada 8 malam: ringkasan hari ini, dan peringatan untuk menambah apa yang terlupa. Di telefon dan loceng, tidak sekali-kali melalui e-mel.",
 	"Sign-in, security and account emails always come. Choose the rest; one you turn off stays off your phone too, and still shows in the bell.":
