@@ -13,6 +13,7 @@ import { requireMember, type SessionLookup } from "../../auth/guards";
 import { badRequest } from "../../http/app-error";
 import type { CategoryRepository } from "./categories.repository";
 import type { PlanRepository } from "./plan.repository";
+import type { PlanSetupService } from "./plan-setup.service";
 import type { SummaryService } from "./summary.service";
 import type { TransactionRepository } from "./transactions.repository";
 import type { TransactionService } from "./transactions.service";
@@ -24,6 +25,8 @@ export interface MoneyDeps {
 	transactionService: TransactionService;
 	summary: SummaryService;
 	plan: PlanRepository;
+	/** The "Your plan" sheet (period, cycle, salary, style). */
+	planSetup?: PlanSetupService;
 	merchants?: MerchantMemory;
 	/** After money goes into a goal (goal-reached email). Never awaited. */
 	onDeposit?: (userId: string, goalId: string) => Promise<unknown>;
@@ -142,6 +145,26 @@ export async function moneyRoutes(
 		);
 		return { success: true, data: await deps.plan.transfers(uid(req)) };
 	});
+
+	if (deps.planSetup) {
+		const setup = deps.planSetup;
+		app.get("/plan/setup", async (req) => ({
+			success: true,
+			data: await setup.get(uid(req)),
+		}));
+		app.put("/plan/setup", async (req) => ({
+			success: true,
+			data: await setup.save(uid(req), req.body),
+		}));
+		app.post("/plan/setup/preview", async (req) => ({
+			success: true,
+			data: await setup.preview(uid(req), req.body),
+		}));
+		app.post("/plan/cycle/confirm", async (req) => ({
+			success: true,
+			data: await setup.confirm(uid(req)),
+		}));
+	}
 
 	app.get("/goals", async (req) => ({
 		success: true,

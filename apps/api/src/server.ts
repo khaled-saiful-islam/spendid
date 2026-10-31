@@ -40,6 +40,7 @@ import { createMeRepository } from "./modules/me/me.repository";
 import { createCategoryRepository } from "./modules/money/categories.repository";
 import { createFxRepository } from "./modules/money/fx.repository";
 import { createPlanRepository } from "./modules/money/plan.repository";
+import { createPlanSetupService } from "./modules/money/plan-setup.service";
 import { createSummaryService } from "./modules/money/summary.service";
 import { createTransactionRepository } from "./modules/money/transactions.repository";
 import { createTransactionService } from "./modules/money/transactions.service";
@@ -223,6 +224,7 @@ const app = await buildApp({
 		transactionService,
 		summary,
 		plan,
+		planSetup: createPlanSetupService(database.db, summary),
 		merchants,
 		onDeposit: notifications.alerts.afterDeposit,
 	},
