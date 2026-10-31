@@ -8,11 +8,11 @@ export const msG: Record<string, string> = {
 	Ends: "Tamat",
 	"{n} days": "{n} hari",
 	"Salary this cycle": "Gaji kitaran ini",
-	"Plan style": "Gaya pelan",
+	"Plan style": "Gaya rancangan",
 	"Your daily amount shows here.": "Jumlah harian anda dipaparkan di sini.",
 	"About {amount} a day to spend.":
 		"Kira-kira {amount} sehari untuk dibelanjakan.",
-	"Plan saved.": "Pelan disimpan.",
+	"Plan saved.": "Rancangan disimpan.",
 	"Add your salary.": "Masukkan gaji anda.",
 	"Pick the start and end dates.": "Pilih tarikh mula dan tamat.",
 	"The end has to be after the start.":

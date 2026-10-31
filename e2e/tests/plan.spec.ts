@@ -133,7 +133,7 @@ test("pay yourself first: transfers set in setup show everywhere, and the sums a
 
 	await page.goto("/app/plan");
 	const hero = page.locator("section").filter({ has: page.getByRole("heading", { name: "Monthly income" }) });
-	await expect(hero.getByRole("link", { name: /Pay yourself first/ })).toBeVisible();
+	await expect(hero.getByRole("button", { name: /Pay yourself first/ })).toBeVisible();
 	await expect(hero.getByText("E2E Savings", { exact: true })).toBeVisible();
 	await expect(hero.getByText("E2E Mum", { exact: true })).toBeVisible();
 	await expect(hero.getByText("To spend", { exact: true })).toBeVisible();
@@ -235,15 +235,15 @@ test("a plan is optional: skip it, see 'Pick a plan', then pick one and the tran
 	await page.goto("/app");
 	await expect(page.getByText("Safe to spend today").first()).toBeVisible();
 
+	// The Plan page now changes the plan in one sheet.
 	await page.goto("/app/plan");
-	await page.getByRole("link", { name: "Pick a plan" }).click();
-	await expect(page).toHaveURL(/\/onboarding/);
-	await page.getByRole("button", { name: "Continue" }).click();
-	await page.getByRole("button", { name: "Continue" }).click();
-	await planCard(page, "Pay yourself first").click();
+	await page.getByRole("button", { name: "Pick a plan" }).click();
+	const sheet = page.getByRole("dialog", { name: "Your plan" });
+	await sheet.locator("label").filter({ hasText: "Pay yourself first" }).click();
+	await sheet.getByRole("button", { name: "Save" }).click();
+	await expect(page.getByText("Plan saved.")).toBeVisible();
+	await expect(page.getByRole("heading", { name: "Your transfers" })).toBeVisible();
 	await expect(page.getByRole("textbox", { name: "Transfer 1 name" })).toHaveValue("Savings");
-	await page.getByRole("button", { name: "Show my safe-to-spend" }).click();
-	await expect(page.getByRole("button", { name: "Let's go" })).toBeVisible();
 	s = await getSummary(request);
 	expect(s.method).toBe("pay_yourself_first");
 	expect(s.reservedMinor).toBe(50_000);
@@ -285,7 +285,7 @@ test("in Bahasa Melayu the new plan and its words are translated", async ({ page
 
 	await page.goto("/app/plan");
 	await expect(page.getByRole("heading", { name: "Pindahan anda" })).toBeVisible();
-	await expect(page.getByRole("link", { name: /Bayar diri sendiri dahulu/ })).toBeVisible();
+	await expect(page.getByRole("button", { name: /Bayar diri sendiri dahulu/ })).toBeVisible();
 	await expect(page.getByRole("button", { name: "Simpan pindahan" })).toBeVisible();
 	await page.goto("/onboarding?edit=true");
 	await page.getByRole("button", { name: "Teruskan" }).click();

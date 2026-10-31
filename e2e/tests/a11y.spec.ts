@@ -33,6 +33,19 @@ test.describe("member", () => {
 		});
 	}
 
+	test("axe: the alerts bell with more than 9 new", async ({ page }) => {
+		// Many unread alerts show "9+"; the badge must be readable and its name must say so.
+		await page.route("**/api/notices", async (route) => {
+			const res = await route.fetch();
+			const body = await res.json();
+			body.data.unread = 12;
+			await route.fulfill({ response: res, json: body });
+		});
+		await page.goto("/app");
+		await expect(page.getByRole("button", { name: "Alerts, 9+ new" }).first()).toBeVisible();
+		await expectNoSeriousIssues(page, "/app with 12 new alerts");
+	});
+
 	test("keyboard focus stays inside an open sheet, and Esc closes it", async ({
 		page,
 	}) => {
