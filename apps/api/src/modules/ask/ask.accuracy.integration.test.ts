@@ -1,5 +1,5 @@
-import { createDb, profile, transaction } from "@spendid/db";
-import type { Category } from "@spendid/shared";
+import { createDb, payCycle, profile, transaction } from "@spendid/db";
+import { addDays, type Category } from "@spendid/shared";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createPerson, testDbUrl } from "../../../test/db";
@@ -408,5 +408,122 @@ describe.skipIf(!url)("ask accuracy (real database)", () => {
 		expect(other.budgetStyle).toBe("envelopes");
 		expect(other.monthlyTransfers).toMatch(/^none/);
 		expect(other.monthlyTransfersOutFirst).toBeUndefined();
+	});
+	it("budget_overview speaks in cycles for a cycle user, and covers the cycle's days", async () => {
+		const today = new Date().toLocaleDateString("en-CA", { timeZone: KL });
+		const who = await createPerson(db);
+		await db
+			.update(profile)
+			.set({ period: "cycle", budgetMethod: "envelope" })
+			.where(eq(profile.userId, who));
+		await db.insert(payCycle).values({
+			userId: who,
+			startsOn: addDays(today, -3),
+			endsOn: addDays(today, 27),
+			incomeMinor: 450_000,
+		});
+		const side: SideChannel = { charts: [], drafts: [], actions: [] };
+		const tool = createAskTools(
+			{ db, summary: createSummaryService(db), plan: createPlanRepository(db) },
+			{ userId: who, timeZone: KL, homeCurrency: "MYR", categories },
+			side,
+		).find((t) => t.name === "budget_overview") as unknown as {
+			invoke: (i: unknown) => Promise<string>;
+		};
+		const out = JSON.parse(await tool.invoke({}));
+		expect(out.period).toEqual({
+			kind: "cycle",
+			from: addDays(today, -3),
+			to: addDays(today, 27),
+		});
+		expect(out.incomeThisCycle).toBe(4500);
+		expect(out.daysLeftInCycle).toBe(28);
+		expect(out).toHaveProperty("spentThisCycle");
+		expect(out).toHaveProperty("leftThisCycle");
+		expect(out).not.toHaveProperty("monthlyIncome");
+		expect(out).not.toHaveProperty("spentThisMonth");
+		expect(side.lookups?.[0]).toEqual({
+			from: addDays(today, -3),
+			to: today,
+			groupBy: "category",
+		});
+	});
+
+	describe("on a cycle (27 Feb → 28 Mar 2025, today 10 Mar)", () => {
+		// Last cycle 27 Jan → 26 Feb: 30.00 on 26 Feb. This cycle: 12.00 on 27 Feb, 8.50 on
+		// 2 Mar, a removed 20.00 on 9 Mar, 4.20 on 10 Mar. So this cycle so far = 24.70,
+		// this calendar month (1–10 Mar) = 12.70, last cycle = 30.00.
+		const cycles = {
+			current: { from: "2025-02-27", to: "2025-03-28" },
+			previous: { from: "2025-01-27", to: "2025-02-26" },
+		};
+		let cyc: string;
+		const run = async (name: string, input: unknown) => {
+			const side: SideChannel = { charts: [], drafts: [], actions: [] };
+			const all = createAskTools(
+				{
+					db,
+					summary: createSummaryService(db),
+					plan: createPlanRepository(db),
+				},
+				{
+					userId: cyc,
+					timeZone: KL,
+					homeCurrency: "MYR",
+					categories,
+					today: "2025-03-10",
+					cycles,
+				},
+				side,
+			);
+			const found = all.find((t) => t.name === name) as unknown as {
+				invoke: (i: unknown) => Promise<string>;
+			};
+			return JSON.parse(await found.invoke(input));
+		};
+
+		beforeAll(async () => {
+			cyc = await createPerson(db);
+			const food = categories.find((c) => c.slug === "food")?.id ?? "";
+			const row = (minor: number, day: string, deleted = false) => ({
+				userId: cyc,
+				categoryId: food,
+				merchant: "Kedai",
+				amountMinor: minor,
+				currency: "MYR",
+				homeAmountMinor: minor,
+				homeCurrency: "MYR",
+				occurredAt: new Date(`${day}T04:00:00Z`),
+				deletedAt: deleted ? new Date() : null,
+			});
+			await db
+				.insert(transaction)
+				.values([
+					row(3_000, "2025-02-26"),
+					row(1_200, "2025-02-27"),
+					row(850, "2025-03-02"),
+					row(2_000, "2025-03-09", true),
+					row(420, "2025-03-10"),
+				]);
+		});
+
+		it("this cycle, this month and last cycle are each exact", async () => {
+			const cycle = await run("spending_totals", {
+				period: "this_cycle",
+				groupBy: "category",
+			});
+			const month = await run("spending_totals", {
+				period: "this_month",
+				groupBy: "category",
+			});
+			const last = await run("spending_totals", {
+				period: "last_cycle",
+				groupBy: "category",
+			});
+			expect(cycle.total).toBe(24.7);
+			expect(cycle.expenses).toBe(3);
+			expect(month.total).toBe(12.7);
+			expect(last.total).toBe(30);
+		});
 	});
 });

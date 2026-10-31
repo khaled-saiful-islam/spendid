@@ -2,6 +2,7 @@ import { toMinor } from "@spendid/shared";
 import { tool } from "langchain";
 import { z } from "zod";
 import { recurringFor } from "../../insights/charges";
+import { periodBounds } from "../../money/period";
 import { isGrounded } from "../grounding";
 import { calculateTool } from "./calculate";
 import {
@@ -30,11 +31,11 @@ export function readTools(deps: ToolDeps, ctx: AskContext, side: SideChannel) {
 		async () => {
 			const s = await deps.summary.forUser(ctx.userId);
 			side.planRead = true;
-			// This month so far, by category, and today: what its numbers cover.
+			// The period so far (month or cycle), by category, and today: what its numbers cover.
 			const today = ctx.today ?? localToday(ctx.timeZone);
 			side.lookups ??= [];
 			side.lookups.push(
-				{ from: `${today.slice(0, 8)}01`, to: today, groupBy: "category" },
+				{ from: s.period.start, to: today, groupBy: "category" },
 				{ from: today, to: today, groupBy: "category" },
 			);
 			const limits = await deps.plan.budgets(ctx.userId);
@@ -42,21 +43,41 @@ export function readTools(deps: ToolDeps, ctx: AskContext, side: SideChannel) {
 			const spent = new Map(
 				s.byCategory.map((c) => [c.categoryId, c.spentMinor]),
 			);
+			// Cycle users get cycle names, so an answer never calls a cycle "this month".
+			const cycle = s.period.kind === "cycle";
+			const n = (month: string, cycleName: string) =>
+				cycle ? cycleName : month;
 			return JSON.stringify({
 				currency: cur,
+				...(cycle
+					? {
+							period: {
+								kind: "cycle",
+								from: s.period.start,
+								to: s.period.end,
+								...(s.period.status === "draft"
+									? { note: "drafted by Spendid, not confirmed yet" }
+									: {}),
+							},
+						}
+					: {}),
 				budgetStyle: s.method
 					? (STYLE_NAME[s.method] ?? s.method)
 					: "none chosen yet",
-				monthlyIncome:
+				[n("monthlyIncome", "incomeThisCycle")]:
 					s.incomeMinor === null ? null : major(s.incomeMinor, cur),
 				...(s.method === "pay_yourself_first"
 					? {
 							// Pay yourself first: these go out when salary lands; the rest is to spend.
-							monthlyTransfersOutFirst: s.transfers.map((t) => ({
-								name: t.name,
-								amount: major(t.amountMinor, cur),
-							})),
-							monthlyTransfersTotal: major(s.reservedMinor, cur),
+							[n("monthlyTransfersOutFirst", "transfersOutFirstEachCycle")]:
+								s.transfers.map((t) => ({
+									name: t.name,
+									amount: major(t.amountMinor, cur),
+								})),
+							[n("monthlyTransfersTotal", "transfersTotalEachCycle")]: major(
+								s.reservedMinor,
+								cur,
+							),
 							incomeLeftAfterTransfers:
 								s.incomeMinor === null
 									? null
@@ -64,16 +85,21 @@ export function readTools(deps: ToolDeps, ctx: AskContext, side: SideChannel) {
 						}
 					: {
 							keptAsideForSavings: major(s.reservedMinor, cur),
-							monthlyTransfers: "none: this plan has no monthly transfers",
+							[n("monthlyTransfers", "transfers")]: cycle
+								? "none: this plan has no transfers"
+								: "none: this plan has no monthly transfers",
 						}),
 				safeToSpendToday: major(s.safe.safeTodayMinor, cur),
 				dailyAllowance: major(s.safe.dailyAllowanceMinor, cur),
-				daysLeftInMonth: s.daysLeft,
-				spentThisMonth: major(s.monthSpentMinor, cur),
-				leftThisMonth: major(s.safe.leftThisMonthMinor, cur),
+				[n("daysLeftInMonth", "daysLeftInCycle")]: s.daysLeft,
+				[n("spentThisMonth", "spentThisCycle")]: major(s.monthSpentMinor, cur),
+				[n("leftThisMonth", "leftThisCycle")]: major(
+					s.safe.leftThisMonthMinor,
+					cur,
+				),
 				categoryLimits: limits.map((l) => ({
 					category: byId.get(l.categoryId)?.name ?? "Other",
-					limit: major(l.monthlyLimitMinor, cur),
+					[n("limit", "limitPerCycle")]: major(l.monthlyLimitMinor, cur),
 					spent: major(spent.get(l.categoryId) ?? 0, cur),
 				})),
 			});
@@ -81,7 +107,7 @@ export function readTools(deps: ToolDeps, ctx: AskContext, side: SideChannel) {
 		{
 			name: "budget_overview",
 			description:
-				"The person's plan and this month: budget style, income, savings kept aside, safe to spend today, days left, spent so far, category limits. Also the ONLY source for monthly transfers (pindahan bulanan: savings, family, ASB sent out when salary lands, in the pay yourself first plan) and the income left after them. Transfers are planned amounts, not expenses: never look for them with the spending tools.",
+				"The person's plan and current period (the calendar month, or their cycle with its dates): budget style, income, savings kept aside, safe to spend today, days left, spent so far, category limits. Also the ONLY source for transfers (pindahan bulanan: savings, family, ASB sent out when salary lands, in the pay yourself first plan) and the income left after them. Transfers are planned amounts, not expenses: never look for them with the spending tools.",
 			schema: z.object({}),
 		},
 	);
@@ -89,6 +115,8 @@ export function readTools(deps: ToolDeps, ctx: AskContext, side: SideChannel) {
 	const goalsOverview = tool(
 		async () => {
 			const goals = await deps.plan.goals(ctx.userId);
+			// A goal's need is per period: the person's cycle, or the month.
+			const cycle = (await periodBounds(db, ctx.userId)).kind === "cycle";
 			return JSON.stringify({
 				currency: cur,
 				goals: goals.map((g) => ({
@@ -96,7 +124,10 @@ export function readTools(deps: ToolDeps, ctx: AskContext, side: SideChannel) {
 					saved: major(g.savedMinor, cur),
 					target: major(g.targetMinor, cur),
 					byDate: g.targetDate,
-					neededPerMonth: major(g.monthlyNeededMinor, cur),
+					[cycle ? "neededPerCycle" : "neededPerMonth"]: major(
+						g.monthlyNeededMinor,
+						cur,
+					),
 				})),
 			});
 		},

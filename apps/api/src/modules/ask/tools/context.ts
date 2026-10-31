@@ -18,6 +18,7 @@ import type { PlanRepository } from "../../money/plan.repository";
 import type { SummaryService } from "../../money/summary.service";
 import type { SubscriptionService } from "../../subscriptions/subscriptions.service";
 import type { Lookup } from "../coverage";
+import type { CycleSpans } from "./period";
 
 export const SLUGS = SYSTEM_CATEGORIES.map((c) => c.slug) as [
 	string,
@@ -40,6 +41,8 @@ export interface AskContext {
 	receipt?: { id: string; draft: ReceiptDraft } | null;
 	/** A fixed "today" (YYYY-MM-DD) for tests; the server leaves it out and uses the clock. */
 	today?: string;
+	/** The person's current and previous cycle (null: calendar months). Set by the server. */
+	cycles?: CycleSpans | null;
 }
 
 /** Where tools put what the app should render beside the answer. */

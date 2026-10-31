@@ -42,10 +42,10 @@ function realDate(day: string): boolean {
 /** The exact days asked about, or why they can't be used. */
 export function resolveRange(
 	input: RangeInput,
-	ctx: Pick<AskContext, "timeZone" | "today">,
+	ctx: Pick<AskContext, "timeZone" | "today" | "cycles">,
 ): Resolved<{ from: string; to: string }> {
 	const today = ctx.today ?? localToday(ctx.timeZone);
-	if (input.period) return { ok: periodRange(input.period, today) };
+	if (input.period) return { ok: periodRange(input.period, today, ctx.cycles) };
 	if (input.lastDays) {
 		const from = new Date(
 			Date.parse(`${today}T00:00:00Z`) - (input.lastDays - 1) * 86_400_000,

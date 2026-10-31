@@ -6,12 +6,20 @@ export const PERIODS = [
 	"last_week",
 	"this_month",
 	"last_month",
+	"this_cycle",
+	"last_cycle",
 	"this_year",
 	"last_year",
 	"last_7_days",
 	"last_30_days",
 ] as const;
 export type Period = (typeof PERIODS)[number];
+
+/** The person's cycles as day spans (inclusive); null when they budget by calendar month. */
+export interface CycleSpans {
+	current: { from: string; to: string } | null;
+	previous: { from: string; to: string } | null;
+}
 
 const DAY_MS = 86_400_000;
 
@@ -33,10 +41,14 @@ function mondayOf(day: string): string {
 	return addDays(day, -weekday);
 }
 
-/** First and last day (inclusive, YYYY-MM-DD) of `period`, seen from `today`. */
+/**
+ * First and last day (inclusive, YYYY-MM-DD) of `period`, seen from `today`. Without a cycle,
+ * this_cycle and last_cycle are this and last calendar month.
+ */
 export function periodRange(
 	period: Period,
 	today: string,
+	cycles?: CycleSpans | null,
 ): { from: string; to: string } {
 	const [y, m] = today.split("-").map(Number) as [number, number];
 	switch (period) {
@@ -59,6 +71,12 @@ export function periodRange(
 				from: format(new Date(Date.UTC(y, m - 2, 1))),
 				to: format(new Date(Date.UTC(y, m - 1, 0))),
 			};
+		case "this_cycle":
+			return cycles?.current
+				? { from: cycles.current.from, to: today }
+				: periodRange("this_month", today);
+		case "last_cycle":
+			return cycles?.previous ?? periodRange("last_month", today);
 		case "this_year":
 			return { from: `${y}-01-01`, to: today };
 		case "last_year":

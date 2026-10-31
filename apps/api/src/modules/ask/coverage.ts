@@ -4,7 +4,7 @@ import {
 	SYSTEM_CATEGORIES,
 } from "@spendid/shared";
 import { categoryNames, forms } from "./tools/filters";
-import { type Period, periodRange } from "./tools/period";
+import { type CycleSpans, type Period, periodRange } from "./tools/period";
 
 /**
  * The second half of the red line: the numbers must be for what was asked. The question's
@@ -31,6 +31,11 @@ const PERIOD_WORDS: [Period, RegExp][] = [
 	["last_week", /\b(?:last|previous)\s+week\b|\bminggu\s+(?:lepas|lalu)\b/i],
 	["this_month", /\bthis\s+month\b|\bbulan\s+ini\b/i],
 	["last_month", /\b(?:last|previous)\s+month\b|\bbulan\s+(?:lepas|lalu)\b/i],
+	[
+		"this_cycle",
+		/\bthis\s+cycle\b|\bcurrent\s+cycle\b|\bsince\s+(?:my\s+)?pay\s*day\b|\bkitaran\s+ini\b|\bsejak\s+gaji\b/i,
+	],
+	["last_cycle", /\b(?:last|previous)\s+cycle\b|\bkitaran\s+(?:lepas|lalu)\b/i],
 	["this_year", /\bthis\s+year\b|\btahun\s+ini\b/i],
 	["last_year", /\b(?:last|previous)\s+year\b|\btahun\s+(?:lepas|lalu)\b/i],
 	[
@@ -50,6 +55,8 @@ const PERIOD_LABEL: Record<Period, string> = {
 	last_week: "last week",
 	this_month: "this month",
 	last_month: "last month",
+	this_cycle: "this cycle",
+	last_cycle: "last cycle",
 	this_year: "this year",
 	last_year: "last year",
 	last_7_days: "the last 7 days",
@@ -64,6 +71,8 @@ const GRAINS: Record<Period, Lookup["groupBy"][]> = {
 	last_week: ["day", "week"],
 	this_month: ["day", "month"],
 	last_month: ["day", "month"],
+	this_cycle: ["day"],
+	last_cycle: ["day"],
 	this_year: ["day", "month"],
 	last_year: ["day", "month"],
 	last_7_days: ["day"],
@@ -190,11 +199,15 @@ export function mentionedLastDays(question: string): number[] {
 }
 
 /** The periods and "last N days" a question names, as spans of days. */
-function spansIn(question: string, today: string): Span[] {
+function spansIn(
+	question: string,
+	today: string,
+	cycles?: CycleSpans | null,
+): Span[] {
 	const spans: Span[] = mentionedPeriods(question).map((period) => ({
 		label: PERIOD_LABEL[period],
 		use: `period ${period}`,
-		...periodRange(period, today),
+		...periodRange(period, today, cycles),
 		grains: GRAINS[period],
 	}));
 	for (const n of mentionedLastDays(question)) {
@@ -271,13 +284,15 @@ export function coverageProblems(input: {
 	today: string;
 	categories: Category[];
 	lookups: Lookup[];
+	/** The person's cycles, for "this cycle" and "last cycle" (null: calendar months). */
+	cycles?: CycleSpans | null;
 	/** budget_overview was called for this question. */
 	planRead?: boolean;
 }): string[] {
 	const plan =
 		TRANSFERS.test(input.question) && !input.planRead
 			? [
-					"The question is about monthly transfers, which are part of the plan, not spending. Call budget_overview and answer from monthlyTransfersOutFirst, monthlyTransfersTotal and incomeLeftAfterTransfers (or say the plan has none).",
+					"The question is about transfers, which are part of the plan, not spending. Call budget_overview and answer from its transfers out first, their total and the income left after them (or say the plan has none).",
 				]
 			: [];
 	return [...plan, ...spendingCoverage(input)];
@@ -288,8 +303,10 @@ function spendingCoverage(input: {
 	today: string;
 	categories: Category[];
 	lookups: Lookup[];
+	/** The person's cycles, for "this cycle" and "last cycle" (null: calendar months). */
+	cycles?: CycleSpans | null;
 }): string[] {
-	const periods = spansIn(input.question, input.today);
+	const periods = spansIn(input.question, input.today, input.cycles);
 	const cats = mentionedCategories(input.question, input.categories);
 	const { lookups } = input;
 	const span = (t: Span) => `${t.label} (${t.from} to ${t.to})`;

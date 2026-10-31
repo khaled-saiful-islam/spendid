@@ -13,6 +13,7 @@ import {
 	SystemMessage,
 } from "langchain";
 import type { CategoryRepository } from "../money/categories.repository";
+import { periodBounds, previousPeriod } from "../money/period";
 import type { PlanRepository } from "../money/plan.repository";
 import type { SummaryService } from "../money/summary.service";
 import {
@@ -28,6 +29,7 @@ import { coverageProblems, planNameProblems } from "./coverage";
 import { ungroundedNumbers } from "./grounding";
 import { questionLanguage, tellsAPurchase } from "./intent";
 import { repairToolCalls } from "./repair-tool-calls";
+import type { CycleSpans } from "./tools/period";
 
 interface AgentDeps extends Omit<ToolDeps, "db" | "summary" | "plan"> {
 	db: Db;
@@ -45,6 +47,28 @@ interface AgentDeps extends Omit<ToolDeps, "db" | "summary" | "plan"> {
 	ilmu: { baseUrl: string; apiKey: string; model: string };
 }
 
+/** The person's current and previous cycle, or null when they budget by calendar month. */
+async function cycleSpans(db: Db, userId: string): Promise<CycleSpans | null> {
+	const period = await periodBounds(db, userId);
+	if (period.kind !== "cycle") return null;
+	const before = await previousPeriod(db, userId, period);
+	return {
+		current: { from: period.start, to: period.end },
+		previous:
+			before.kind === "cycle" ? { from: before.start, to: before.end } : null,
+	};
+}
+
+/** One prompt line on what "this month" and "this cycle" mean for this person. */
+export function periodLine(cycles: CycleSpans | null): string {
+	if (!cycles?.current)
+		return "- Their budget runs by calendar month; they have no cycle. If they ask about a cycle, use this_month or last_month and say they budget by calendar month.";
+	const last = cycles.previous
+		? `, last cycle was ${cycles.previous.from} to ${cycles.previous.to}`
+		: " (no earlier cycle: before it they used calendar months, so 'last cycle' means last month; say so)";
+	return `- Their budget runs by cycle: this cycle is ${cycles.current.from} to ${cycles.current.to}${last}. "This month" and month names are calendar months; "this cycle", "last cycle" and "since payday" use the cycle (period this_cycle or last_cycle). What's left, am I over and safe today come from budget_overview, which covers the cycle. Always say the cycle's dates.`;
+}
+
 function systemPrompt(
 	today: string,
 	weekday: string,
@@ -52,13 +76,15 @@ function systemPrompt(
 	currency: string,
 	locale: string,
 	capabilities: string,
+	periodLine: string,
 ): string {
 	return `You are Spendid's money assistant for one person. Today is ${weekday} ${today} (time zone ${timeZone}). Their home currency is ${currency}.
 How to answer (money must be exact; a wrong or made-up number is never acceptable):
 - Get every number from the tools, fresh for this question. Expenses may have been added, changed or removed since earlier messages, so never reuse numbers from the conversation.
 - Every amount, percentage and count you write must be exactly one the tools returned. For ANY sum, difference, average, share or percentage, call calculate; never work numbers out yourself. Answers are checked, and numbers that aren't from the tools are rejected.
 - For the biggest or smallest expenses, use find_expenses with sort "biggest" or "smallest".
-- For dates, prefer the period option (today, yesterday, this_week, last_week, this_month, last_month, this_year, last_year, last_7_days, last_30_days), or lastDays for "the last N days" (including today); the tools work out the days. Weeks run Monday to Sunday. For totals use spending_totals; to find particular expenses use find_expenses (it can search by shop word, category or amount).
+- For dates, prefer the period option (today, yesterday, this_week, last_week, this_month, last_month, this_cycle, last_cycle, this_year, last_year, last_7_days, last_30_days), or lastDays for "the last N days" (including today); the tools work out the days. Weeks run Monday to Sunday. For totals use spending_totals; to find particular expenses use find_expenses (it can search by shop word, category or amount).
+${periodLine}
 - For several days ("last 3 days", "the past 2 days including today"), make ONE spending_totals call over the whole range with groupBy day: it gives every day and the total. Never add days up yourself.
 - If a list says more: true, only some are listed: never present them as all of them, and use the total the tool gives.
 - If a tool returns an error, fix the call (a word that isn't a category goes in search). Never turn an error into "nothing" or zero.
@@ -182,6 +208,7 @@ export function createAskAgent(deps: AgentDeps) {
 
 		const side: SideChannel = { charts: [], drafts: [], actions: [] };
 		const categories = await deps.categories.listFor(userId);
+		const cycles = await cycleSpans(deps.db, userId);
 		const tools = createAskTools(
 			deps,
 			{
@@ -192,6 +219,7 @@ export function createAskAgent(deps: AgentDeps) {
 				name: row?.name,
 				locale: p?.locale === "ms" ? "ms" : "en",
 				receipt,
+				cycles,
 			},
 			side,
 			areas,
@@ -222,6 +250,7 @@ export function createAskAgent(deps: AgentDeps) {
 				homeCurrency,
 				p?.locale ?? "en",
 				capabilityLines(tools),
+				periodLine(cycles),
 			) + (input.tone ? TONES[input.tone] : "");
 		const agent = createAgent({
 			model: llm,
@@ -382,6 +411,7 @@ export function createAskAgent(deps: AgentDeps) {
 							categories,
 							lookups: side.lookups ?? [],
 							planRead: side.planRead,
+							cycles,
 						})
 					: []),
 				...(answer

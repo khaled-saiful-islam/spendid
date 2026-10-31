@@ -1,5 +1,6 @@
 import type { Category } from "@spendid/shared";
 import { describe, expect, it } from "vitest";
+import { periodLine } from "./ask.agent";
 import {
 	coverageProblems,
 	type Lookup,
@@ -326,5 +327,102 @@ describe("the last N days", () => {
 				{ from: "2026-10-17", to: "2026-10-18", groupBy: "day" },
 			]),
 		).toEqual([]);
+	});
+});
+
+describe("cycles", () => {
+	const cycles = {
+		current: { from: "2026-10-29", to: "2026-11-28" },
+		previous: { from: "2026-09-29", to: "2026-10-28" },
+	};
+	const ask = (question: string, lookups: Lookup[], withCycles = true) =>
+		coverageProblems({
+			question,
+			today: "2026-11-10",
+			categories: [],
+			lookups,
+			cycles: withCycles ? cycles : null,
+		});
+
+	it("reads 'this cycle' and 'last cycle' in English and Malay", () => {
+		expect(mentionedPeriods("how much did I spend this cycle?")).toEqual([
+			"this_cycle",
+		]);
+		expect(mentionedPeriods("berapa saya belanja kitaran lepas")).toEqual([
+			"last_cycle",
+		]);
+		expect(mentionedPeriods("what have I spent since payday")).toEqual([
+			"this_cycle",
+		]);
+	});
+
+	it("needs the cycle's days, not the calendar month", () => {
+		const problems = ask("how much did I spend this cycle?", [
+			{ from: "2026-11-01", to: "2026-11-10", groupBy: "category" },
+		]);
+		expect(problems.join(" ")).toContain(
+			"this cycle (2026-10-29 to 2026-11-10)",
+		);
+		expect(
+			ask("how much did I spend this cycle?", [
+				{ from: "2026-10-29", to: "2026-11-10", groupBy: "category" },
+			]),
+		).toEqual([]);
+	});
+
+	it("needs the whole previous cycle for 'last cycle'", () => {
+		expect(
+			ask("how much did I spend last cycle?", [
+				{ from: "2026-09-29", to: "2026-10-28", groupBy: "category" },
+			]),
+		).toEqual([]);
+		expect(
+			ask("how much did I spend last cycle?", [
+				{ from: "2026-10-01", to: "2026-10-31", groupBy: "category" },
+			]).length,
+		).toBeGreaterThan(0);
+	});
+
+	it("keeps 'this month' as the calendar month for cycle users", () => {
+		expect(
+			ask("how much did I spend this month?", [
+				{ from: "2026-10-29", to: "2026-11-10", groupBy: "category" },
+			]).length,
+		).toBeGreaterThan(0);
+	});
+
+	it("uses calendar months for 'this cycle' when there is no cycle", () => {
+		expect(
+			ask(
+				"how much did I spend this cycle?",
+				[{ from: "2026-11-01", to: "2026-11-10", groupBy: "category" }],
+				false,
+			),
+		).toEqual([]);
+	});
+});
+
+describe("periodLine", () => {
+	it("tells the model the cycle's dates and that 'this month' is the calendar month", () => {
+		const line = periodLine({
+			current: { from: "2026-10-29", to: "2026-11-28" },
+			previous: { from: "2026-09-29", to: "2026-10-28" },
+		});
+		expect(line).toContain("this cycle is 2026-10-29 to 2026-11-28");
+		expect(line).toContain("last cycle was 2026-09-29 to 2026-10-28");
+		expect(line).toContain('"This month" and month names are calendar months');
+	});
+
+	it("says 'last cycle' means last month before the first cycle", () => {
+		expect(
+			periodLine({
+				current: { from: "2026-10-29", to: "2026-11-28" },
+				previous: null,
+			}),
+		).toContain("'last cycle' means last month");
+	});
+
+	it("says there's no cycle for calendar users", () => {
+		expect(periodLine(null)).toContain("they have no cycle");
 	});
 });
