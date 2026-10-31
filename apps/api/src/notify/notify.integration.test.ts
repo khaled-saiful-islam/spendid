@@ -376,6 +376,35 @@ describe.skipIf(!url)("email notifications (real database)", () => {
 		expect(reminders[0]?.job.to).toBe(`${ending}@test.local`);
 	});
 
+	it("the weekly email names the cycle for a cycle user's bills", async () => {
+		const digests = createDigests({
+			db,
+			notifier,
+			summary: createSummaryService(db),
+			insights: createInsightsService(db),
+			logError: () => {},
+		});
+		const today = localParts("Asia/Kuala_Lumpur").date;
+		const wk = await createPerson(db);
+		await db
+			.update(profile)
+			.set({ period: "cycle" })
+			.where(eq(profile.userId, wk));
+		await db.insert(payCycle).values({
+			userId: wk,
+			startsOn: addDays(today, -3),
+			endsOn: addDays(today, 27),
+			incomeMinor: 450_000,
+		});
+		await digests.weekly(wk, "Asia/Kuala_Lumpur", today, "MYR");
+		const job = sent.find(
+			(s) => s.job.type === "notice" && s.job.kind === "weekly-summary",
+		)?.job;
+		const labels = JSON.stringify(job);
+		expect(labels).toContain("Bills still due this cycle");
+		expect(labels).not.toContain("Bills still due this month");
+	});
+
 	it("lets a phone turn notifications on, test them and turn them off", async () => {
 		const zoe = await createPerson(db);
 		const as = { "x-test-user": zoe };

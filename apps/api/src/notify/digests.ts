@@ -159,7 +159,10 @@ export function createDigests(deps: {
 						{ label: "Expenses", value: String(week?.count ?? 0) },
 						...(top ? [{ label: "Most went to", value: top.name }] : []),
 						{
-							label: "Bills still due this month",
+							label:
+								summary.period.kind === "cycle"
+									? "Bills still due this cycle"
+									: "Bills still due this month",
 							value: money(summary.bills.minor, currency),
 						},
 					],
@@ -407,6 +410,7 @@ export function createDigests(deps: {
 		/** One pass over everyone. Errors for one person never stop the others. */
 		evening,
 		cycleEnding,
+		weekly,
 
 		async tick(at = new Date()): Promise<number> {
 			const people = await db
