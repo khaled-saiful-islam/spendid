@@ -11,6 +11,7 @@ import {
 	merchant,
 	monthlyTransfer,
 	notificationPref,
+	payCycle,
 	profile,
 	receipt,
 	shareGrant,
@@ -214,6 +215,16 @@ export async function gatherExport(db: Db, store: FileStore, userId: string) {
 			.from(monthlyTransfer)
 			.where(eq(monthlyTransfer.userId, userId))
 			.orderBy(monthlyTransfer.position),
+		cycles: await db
+			.select({
+				startsOn: payCycle.startsOn,
+				endsOn: payCycle.endsOn,
+				incomeMinor: payCycle.incomeMinor,
+				status: payCycle.status,
+			})
+			.from(payCycle)
+			.where(eq(payCycle.userId, userId))
+			.orderBy(payCycle.startsOn),
 		goals: goals.map((g) => ({
 			...g,
 			deposits: deposits.filter((d) => d.goalId === g.id),

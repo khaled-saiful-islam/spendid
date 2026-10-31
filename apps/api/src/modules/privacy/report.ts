@@ -409,6 +409,22 @@ export function renderReport(
 		);
 	}
 
+	if (data.cycles.length > 0) {
+		r.section("Budget cycles");
+		r.table(
+			[
+				{ label: "From", width: 2 },
+				{ label: "To", width: 2 },
+				{ label: "Salary", width: 2, align: "right" },
+			],
+			data.cycles.map((c) => [
+				c.startsOn,
+				c.endsOn,
+				money(c.incomeMinor, home),
+			]),
+		);
+	}
+
 	r.section("Subscriptions and bills");
 	if (data.subscriptions.length === 0) r.empty("None added.");
 	else

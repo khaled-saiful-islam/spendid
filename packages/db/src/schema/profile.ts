@@ -17,6 +17,9 @@ export const budgetMethod = pgEnum("budget_method", [
 	"pay_yourself_first",
 ]);
 
+/** Calendar month, or the person's own cycles (`pay_cycle`). */
+export const periodKind = pgEnum("period_kind", ["month", "cycle"]);
+
 /** One row per person: money settings chosen during onboarding. */
 export const profile = pgTable(
 	"profile",
@@ -30,6 +33,8 @@ export const profile = pgTable(
 		monthlyIncomeMinor: bigint({ mode: "number" }),
 		/** Null until the person picks a plan (optional in onboarding). */
 		budgetMethod: budgetMethod(),
+		/** What "this period" means for the plan; cycles live in `pay_cycle`. */
+		period: periodKind().notNull().default("month"),
 		onboardedAt: timestamp({ withTimezone: true }),
 		createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
 		updatedAt: timestamp({ withTimezone: true })
